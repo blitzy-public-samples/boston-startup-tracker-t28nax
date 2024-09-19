@@ -1,0 +1,46 @@
+# Elasticsearch configuration for Boston Startup Tracker
+
+# Cluster Settings
+cluster.name: boston-startup-tracker
+
+# Node Settings
+node.name: node-1
+node.master: true
+node.data: true
+node.ingest: true
+
+# Path Settings
+path.data: /var/lib/elasticsearch
+path.logs: /var/log/elasticsearch
+
+# Network Settings
+network.host: 0.0.0.0
+http.port: 9200
+
+# Discovery Settings
+discovery.type: single-node
+
+# Memory Settings
+bootstrap.memory_lock: true
+
+# X-Pack Settings
+xpack.security.enabled: false
+xpack.monitoring.enabled: true
+
+# Index Buffer Size
+indices.memory.index_buffer_size: 10%
+
+# Thread Pool Settings
+thread_pool.write.queue_size: 1000
+
+# Human Tasks (To be addressed before production deployment):
+# - Review and adjust the cluster name for production use
+# - Configure appropriate node roles for a multi-node cluster in production
+# - Set up proper network.host and discovery settings for a production cluster
+# - Enable and configure X-Pack security for authentication and encryption in production
+# - Adjust JVM heap size in jvm.options file based on available system memory
+# - Configure index lifecycle management policies for efficient data retention
+# - Set up proper backup and snapshot policies
+# - Implement monitoring and alerting for Elasticsearch cluster health
+# - Optimize index settings and mappings for the specific needs of the Boston Startup Tracker
+# - Consider implementing cross-cluster replication for disaster recovery if needed
