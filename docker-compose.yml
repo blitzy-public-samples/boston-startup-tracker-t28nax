@@ -1,0 +1,103 @@
+version: '3.8'
+
+services:
+  # Backend service
+  backend:
+    build:
+      context: ./src/backend
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@db:5432/boston_startup_tracker
+      - REDIS_URL=redis://redis:6379/0
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+    depends_on:
+      - db
+      - redis
+      - elasticsearch
+    volumes:
+      - ./src/backend:/app
+    command: gunicorn --bind 0.0.0.0:5000 wsgi:app
+
+  # Frontend service
+  frontend:
+    build:
+      context: ./src/frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./src/frontend:/app
+      - /app/node_modules
+    environment:
+      - REACT_APP_API_URL=http://localhost:5000/api
+
+  # Database service
+  db:
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=boston_startup_tracker
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # Redis service
+  redis:
+    image: redis:6
+    volumes:
+      - redis_data:/data
+
+  # Elasticsearch service
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.14.0
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+
+  # Celery worker service
+  celery_worker:
+    build:
+      context: ./src/backend
+      dockerfile: Dockerfile
+    command: celery -A tasks worker --loglevel=info
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@db:5432/boston_startup_tracker
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - backend
+      - db
+      - redis
+
+  # Celery beat service
+  celery_beat:
+    build:
+      context: ./src/backend
+      dockerfile: Dockerfile
+    command: celery -A tasks beat --loglevel=info
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@db:5432/boston_startup_tracker
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - backend
+      - db
+      - redis
+
+volumes:
+  postgres_data:
+  redis_data:
+  elasticsearch_data:
+
+# Human tasks:
+# - Review and adjust resource allocations (e.g., memory limits) for each service based on expected load
+# - Implement proper secret management for sensitive environment variables
+# - Set up health checks for each service to ensure proper orchestration
+# - Configure logging drivers to centralize log collection
+# - Implement a reverse proxy (e.g., Nginx) for better request routing and SSL termination
+# - Set up network segmentation for improved security
+# - Configure volume backup strategies for persistent data
+# - Implement monitoring and alerting for all services
+# - Optimize Dockerfiles for each service to reduce image sizes
+# - Set up CI/CD pipeline to automatically build and deploy Docker images
