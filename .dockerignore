@@ -1,0 +1,56 @@
+**/.git
+
+# Exclude Git ignore file
+**/.gitignore
+
+# Exclude Visual Studio Code configuration files
+**/.vscode
+
+# Exclude Node.js dependencies
+**/node_modules
+
+# Exclude Python virtual environment
+**/venv
+
+# Exclude Python bytecode cache
+**/__pycache__
+
+# Exclude Python compiled files
+**/*.pyc
+
+# Exclude Python optimized files
+**/*.pyo
+
+# Exclude Python dynamic libraries
+**/*.pyd
+
+# Exclude macOS system files
+**/.DS_Store
+
+# Exclude Windows thumbnail cache files
+**/Thumbs.db
+
+# Exclude README file
+**/README.md
+
+# Exclude license file
+**/LICENSE
+
+# Exclude Docker Compose file
+**/docker-compose.yml
+
+# Exclude Dockerfile
+**/Dockerfile
+
+# Exclude test directories
+**/tests
+
+# Exclude documentation
+**/docs
+
+# Human tasks:
+# - Review and update the .dockerignore file periodically to ensure it reflects the current project structure
+# - Consider adding patterns for any new development tools or temporary files used in the project
+# - Ensure that no sensitive information (e.g., .env files, credentials) is accidentally included in Docker builds
+# - Optimize the .dockerignore file to reduce Docker build context size and improve build performance
+# - Verify that all necessary files for the application to run are not being inadvertently ignored
