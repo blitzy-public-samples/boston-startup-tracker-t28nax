@@ -1,0 +1,54 @@
+{
+  "compilerOptions": {
+    // Specify ECMAScript target version
+    "target": "es5",
+    // List of library files to be included in the compilation
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    // Allow JavaScript files to be compiled
+    "allowJs": true,
+    // Skip type checking of declaration files
+    "skipLibCheck": true,
+    // Enables emit interoperability between CommonJS and ES Modules
+    "esModuleInterop": true,
+    // Allow default imports from modules with no default export
+    "allowSyntheticDefaultImports": true,
+    // Enable all strict type-checking options
+    "strict": true,
+    // Ensure that casing is correct in imports
+    "forceConsistentCasingInFileNames": true,
+    // Report errors for fallthrough cases in switch statements
+    "noFallthroughCasesInSwitch": true,
+    // Specify module code generation
+    "module": "esnext",
+    // Specify module resolution strategy
+    "moduleResolution": "node",
+    // Include modules imported with .json extension
+    "resolveJsonModule": true,
+    // Ensure that each file can be safely transpiled without relying on other imports
+    "isolatedModules": true,
+    // Do not emit output (only perform type checking)
+    "noEmit": true,
+    // Support JSX in .tsx files
+    "jsx": "react-jsx"
+  },
+  // Specifies a list of glob patterns that match files to be included in compilation
+  "include": [
+    "src"
+  ]
+}
+
+// Human tasks:
+// TODO: Review and adjust the 'target' option based on the minimum supported browser versions
+// TODO: Consider enabling 'strictNullChecks' for more rigorous null and undefined checking
+// TODO: Review the 'lib' array and add or remove libraries as needed for the project
+// TODO: Consider adding 'baseUrl' and 'paths' options for custom module resolution
+// TODO: If using absolute imports, configure the 'baseUrl' accordingly
+// TODO: Review and possibly enable additional strict type-checking options
+// TODO: If using decorators, consider adding the 'experimentalDecorators' option
+// TODO: If targeting Node.js, consider adding relevant 'lib' entries like 'es2015.promise'
+// TODO: If using Jest for testing, consider adding a separate tsconfig.test.json for test files
+// TODO: Regularly review and update the TypeScript version in package.json to leverage new features and improvements
