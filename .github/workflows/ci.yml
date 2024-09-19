@@ -1,0 +1,89 @@
+name: Boston Startup Tracker CI
+
+on:
+  push:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run backend tests
+        run: pytest tests/backend
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+
+      - name: Install frontend dependencies
+        run: |
+          cd src/frontend
+          npm ci
+
+      - name: Run frontend tests
+        run: |
+          cd src/frontend
+          npm test
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 black
+
+      - name: Run linters
+        run: |
+          flake8 src/backend tests
+          black --check src/backend tests
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+
+      - name: Install frontend dependencies
+        run: |
+          cd src/frontend
+          npm ci
+
+      - name: Run frontend linter
+        run: |
+          cd src/frontend
+          npm run lint
+
+# Human tasks:
+# - Add a job for running integration tests
+# - Configure code coverage reporting and set up coverage thresholds
+# - Add a job for building and testing Docker images
+# - Set up caching for pip and npm dependencies to speed up workflows
+# - Configure notifications for workflow failures
+# - Add a job for security scanning (e.g., using Snyk or OWASP Dependency-Check)
+# - Set up automatic deployment to a staging environment on successful builds
+# - Add performance testing job for critical parts of the application
+# - Configure branch protection rules to require CI checks to pass before merging
