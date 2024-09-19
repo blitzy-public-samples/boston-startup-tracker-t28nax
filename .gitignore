@@ -1,0 +1,45 @@
+*.py[cod]
+__pycache__/
+*.so
+
+# Virtual Environment
+venv/
+env/
+
+# Node.js
+node_modules/
+npm-debug.log
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.swp
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Project specific
+*.log
+*.sqlite3
+.env
+
+# Build outputs
+dist/
+build/
+*.egg-info/
+
+# Test coverage
+htmlcov/
+.coverage
+
+# Temporary files
+*.tmp
+*.bak
+
+# Human tasks:
+# - Review and update the .gitignore file periodically to ensure it reflects the current project structure and tools used
+# - Consider adding patterns for any new development tools or build outputs introduced to the project
+# - Ensure that no sensitive information (e.g., API keys, credentials) is accidentally committed to the repository
+# - Verify that all necessary files for the application to run are not being inadvertently ignored
+# - Consider using a tool like gitignore.io to generate comprehensive .gitignore files for specific tech stacks
