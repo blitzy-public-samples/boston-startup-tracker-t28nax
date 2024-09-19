@@ -1,0 +1,23 @@
+{
+  "semi": true,
+  "trailingComma": "es5",
+  "singleQuote": true,
+  "printWidth": 100,
+  "tabWidth": 2,
+  "useTabs": false,
+  "bracketSpacing": true,
+  "arrowParens": "always",
+  "endOfLine": "lf"
+}
+
+// Human tasks:
+// - Review and adjust the 'printWidth' value based on team preferences and monitor readability
+// - Consider adding 'overrides' for specific file types if needed
+// - Ensure this configuration aligns with the ESLint rules in .eslintrc.js
+// - Verify that all team members' editors are configured to use this Prettier config
+// - Consider adding a .editorconfig file to ensure consistent formatting across different editors
+// - Regularly review and update Prettier to leverage new features and improvements
+// - Discuss and agree on any project-specific formatting preferences not covered by default options
+// - Set up pre-commit hooks to automatically format code using this configuration
+// - Add documentation in the project README about the use of Prettier and how to configure editors
+// - Consider integrating Prettier with your CI/CD pipeline to ensure formatted code in all PRs
