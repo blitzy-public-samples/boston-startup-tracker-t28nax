@@ -32,7 +32,7 @@ The repository has no pre-existing CSV convention, so the dialect is specified h
 - **Field delimiter** — a comma (`,`).
 - **Quoting character** — the double quote (`"`).
 - **Escaping** — a literal double quote inside a quoted field is escaped by doubling it (`""`).
-- **When to quote** — fields are quoted only where they contain a comma, a double quote or a line break. Every other field is unquoted.
+- **When to quote** — fields are quoted where they contain a comma, a double quote or a line break, and where a designed leading or trailing space must survive the round trip. Every other field is unquoted.
 - **Encoding** — UTF-8 **without** a byte-order mark.
 - **Line endings** — LF (`\n`). Not CRLF.
 - **Header** — exactly one header row, the first line of the file.
@@ -274,7 +274,7 @@ Some rows are **deliberately defective** so that a load exercises all four of th
 | 1. Trim whitespace on all string fields | All six files: the three `crunchbase_*_sample.csv` files and the three `linkedin_*_sample.csv` files, at least one row each | A quoted string value with leading or trailing space, for example `" Example Labs"` | The value is trimmed and the row loads and transforms normally. The trimmed value is what reaches the entity record. |
 | 2. Deduplicate Startup records on `name` plus `headquarters_location`, case-insensitively | `crunchbase_startups_sample.csv` only | A pair of rows whose `startup_name` and `headquarters_location` match when both are lowercased and trimmed, but whose `startup_website` values differ | One Startup record survives the pair. The second row is recognised as a duplicate and does not create a second record. |
 | 3. Normalise `industry`, `funding_stage` and `round_type`, mapping an unmatched value to `Other` and logging it | `crunchbase_startups_sample.csv` (`industry`, `funding_stage`) and `crunchbase_funding_rounds_sample.csv` (`round_type`) | A value that appears in no choice list, for example an `industry` of `Cleantech` or a `funding_stage` of `Series C` without the `+` | The value is stored as `Other` and `IngestionLogger` records it as an unmatched value. The row otherwise loads and transforms normally. |
-| 4. Reject records missing mandatory fields rather than inserting partial records | All six files: the three `crunchbase_*_sample.csv` files and the three `linkedin_*_sample.csv` files. `crunchbase_startups_sample.csv` carries two rows, one for each of its two mandatory string columns; every other file carries one row | A blank in a column marked mandatory for that record type: `startup_name` or `headquarters_location` on startups, `investor_name` on investors, `startup_name` or `round_date` on funding rounds, `person_name` or `startup_name` on founders and executives, `startup_name` or `job_title` on job postings | `import_state` becomes `rejected`, `error_message` names the missing field, and **no** entity record is created. |
+| 4. Reject records missing mandatory fields rather than inserting partial records | All six files: the three `crunchbase_*_sample.csv` files and the three `linkedin_*_sample.csv` files. Each file carries one row per mandatory column of its record type, so `crunchbase_investors_sample.csv`, whose only mandatory column is `investor_name`, carries one row and each of the other five files carries two | A blank in a column marked mandatory for that record type: `startup_name` or `headquarters_location` on startups, `investor_name` on investors, `startup_name` or `round_date` on funding rounds, `person_name` or `startup_name` on founders and executives, `startup_name` or `job_title` on job postings | `import_state` becomes `rejected`, `error_message` names the missing field, and **no** entity record is created. |
 
 Rule 2's duplicate pair differs on `startup_website` on purpose: the pair is the fixture that distinguishes a deduplication keyed on name plus headquarters location, which is what prompt section 4.0 specifies, from one keyed on name plus website, which would not catch this pair.
 
@@ -286,20 +286,32 @@ Which fixture sits in which file, so a count can be reconciled file by file.
 | --- | --- | --- | --- | --- |
 | `crunchbase_startups_sample.csv` | Three rows | One pair | `industry` and `funding_stage`, plus one unmatched `employee_count_range` | Two rows: one blank `startup_name`, one blank `headquarters_location` |
 | `crunchbase_investors_sample.csv` | At least one row | Not applicable | None; see the `investor_type` note above | One row |
-| `crunchbase_funding_rounds_sample.csv` | At least one row | Not applicable | `round_type` | One row |
-| `linkedin_founders_sample.csv` | At least one row | Not applicable | None | One row |
-| `linkedin_executives_sample.csv` | At least one row | Not applicable | None | One row |
-| `linkedin_job_postings_sample.csv` | At least one row | Not applicable | None | One row |
+| `crunchbase_funding_rounds_sample.csv` | Two rows | Not applicable | `round_type` | Two rows: one blank `startup_name`, one blank `round_date` |
+| `linkedin_founders_sample.csv` | Two rows | Not applicable | None; one unmatched `person_title`, outside rule 3, see below | Two rows: one blank `person_name`, one blank `startup_name` |
+| `linkedin_executives_sample.csv` | At least one row | Not applicable | None | Two rows: one blank `person_name`, one blank `startup_name` |
+| `linkedin_job_postings_sample.csv` | Two rows | Not applicable | None; one unmatched `department`, one unmatched `remote_type` and one unmatched `seniority`, all outside rule 3, see below | Two rows: one blank `startup_name`, one blank `job_title` |
 
-Three facts explain the shape of that map. Rule 2 deduplicates Startup records, so only the startups file can carry it. Rule 3 normalises `industry`, `funding_stage` and `round_type`, so only the startups and funding rounds files carry a rule 3 fixture; the remaining choice columns are loaded already matching their choice lists. Rule 4 has one fixture per file, except `crunchbase_startups_sample.csv`, which carries one for each of its two mandatory string columns, so seven rows out of the sixty-four loaded are rejected.
+Three facts explain the shape of that map. Rule 2 deduplicates Startup records, so only the startups file can carry it. Rule 3 normalises `industry`, `funding_stage` and `round_type`, so only the startups and funding rounds files carry a rule 3 fixture; the other choice columns that carry an unmatched value are outside rule 3's scope and are handled as set out immediately below. Rule 4 has one fixture per mandatory column of the record type, so `crunchbase_investors_sample.csv` carries one row and each of the other five files carries two, and eleven rows out of the sixty-four loaded are rejected.
 
-`crunchbase_startups_sample.csv` additionally carries one row whose `employee_count_range` matches no choice value, listed in its rule 3 cell above. `Startup.employee_count_range` has **no `Other` member**, so, as with `investor_type`, there is no value to normalise to: the unmatched value is logged by `IngestionLogger` and the field is left empty on the entity record rather than coerced. The row is otherwise valid and transforms normally.
+### Unmatched values in choice columns outside rule 3
+
+Cleaning rule 3 covers `industry`, `funding_stage` and `round_type` and no other column. Five further rows carry a value that matches no member of its target choice list in a column rule 3 does not cover. They are fixtures too, and the outcome depends on whether the target list has an `Other` member.
+
+| File | Column | Target choice list | Has `Other` | Outcome |
+| --- | --- | --- | --- | --- |
+| `crunchbase_startups_sample.csv` | `employee_count_range` | `Startup.employee_count_range` | No | Logged by `IngestionLogger`; the field is left empty on the entity record. |
+| `linkedin_founders_sample.csv` | `person_title` | `Founder.title` | Yes | Stored as `Other` and logged by `IngestionLogger`. |
+| `linkedin_job_postings_sample.csv` | `department` | `JobPosting.department` | Yes | Stored as `Other` and logged by `IngestionLogger`. |
+| `linkedin_job_postings_sample.csv` | `remote_type` | `JobPosting.remote_type` | No | Logged by `IngestionLogger`; the field is left empty on the entity record. |
+| `linkedin_job_postings_sample.csv` | `seniority` | `JobPosting.seniority` | No | Logged by `IngestionLogger`; the field is left empty on the entity record. |
+
+A list with no `Other` member offers no value to normalise to, so, as with `investor_type`, the unmatched value is logged and the field left empty rather than coerced. **Do not add an `Other` choice to any of these lists**: prompt section 1.0 declares the field and choice definitions binding and complete. Each of the five rows is otherwise valid and transforms normally.
 
 ### Non-resolving references
 
 Every `startup_name`, `lead_investor_name` and `participating_investor_names` value in every child file resolves to a `name` present in `crunchbase_startups_sample.csv` or `crunchbase_investors_sample.csv`, with one class of exception.
 
-The exception is the rule 4 fixtures. A row authored to be rejected for a blank mandatory field is the **only** kind of row whose natural-key reference may fail to resolve, and in those rows the failure is the blank itself: a blank `startup_name` on a founder, executive, funding round or job posting row cannot resolve to a Startup, which is precisely the condition rule 4 rejects. Recognise them by the blank column, one row per child file, as listed in the rule 4 entry and the per-file defect map above. A non-resolving reference in any row that is **not** a rule 4 fixture is a mistake, not a designed defect, and should be reported.
+The exception is the rule 4 fixtures. A row authored to be rejected for a blank mandatory field is the **only** kind of row whose natural-key reference may fail to resolve, and in those rows the failure is the blank itself: a blank `startup_name` on a founder, executive, funding round or job posting row cannot resolve to a Startup, which is precisely the condition rule 4 rejects. Recognise them by the blank column. Each child file carries exactly one such row, the fixture whose `startup_name` is blank; that file's other rule 4 fixture blanks a different mandatory column — `round_date` on funding rounds, `person_name` on founders and executives, `job_title` on job postings — and its `startup_name` still resolves. A non-resolving reference in any row that is **not** a rule 4 fixture is a mistake, not a designed defect, and should be reported.
 
 ## Data Import Wizard procedure
 
