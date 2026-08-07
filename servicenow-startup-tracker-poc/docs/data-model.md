@@ -117,7 +117,11 @@ Label **Startup**. Twelve columns. The display column is `name`.
 
 `active` and `headquarters_location` are the two columns the startup inclusion criteria test. `institutional_funding_last_5yrs` is a premium-gated display attribute and is not part of that predicate. See [The startup inclusion criteria](#the-startup-inclusion-criteria).
 
-`active` is mandatory **and** carries the dictionary default `true`. `IngestionMapper` applies the declared defaults before it runs the mandatory-field check, and the REST create operation lets the default apply rather than demanding the key, so a blank `active` resolves to `true` and can never reject a record. The mandatory columns that can reject a record are the ones with no default: `name` and `headquarters_location`. The same holds for `x_bst_startuptrk_jobposting.active`.
+`active` is mandatory **and** carries the dictionary default `true`, and those two facts belong to two different surfaces. **Dictionary defaulting is a write-time platform behaviour**: when a record is inserted without the column being set — through the REST create operation, whose specification does not mark `active` mandatory, through a platform form, or through an ingestion insert that supplies no value — the platform applies `true`, and the mandatory flag is satisfied by the defaulted value. **Cleaning rule 4 is a transform-time application behaviour** and it does not default anything: `IngestionMapper` declares `active` in `MANDATORY.startup` and rejects an incoming row that leaves it blank, rather than inventing a value for a column the source did not report. A blank `active` therefore behaves differently by route, deliberately: an omitted key in a REST create body means "use the declared default", while a blank `active` on a staged row or a live payload means "the source did not tell us", which rule 4 refuses. Two shipped fixtures encode exactly that refusal, both in `crunchbase_startups_sample.csv`: `Jamaica Plain Sensorworks` on data row 11 blanks `headquarters_location` **and** `active`, so the rejection names both, and `Charles River Telemetry` on data row 13 blanks `active` alone, which is the narrower case proving `active` is rejected on its own rather than quietly defaulted. Their expected outcomes are recorded in [`../sample-data/README.md`](../sample-data/README.md).
+
+The same split holds for `x_bst_startuptrk_jobposting.active`, with one difference that follows from the same rule: it is **not** mandatory, so `MANDATORY.job_posting` does not list it and a blank value neither rejects the row nor is defaulted by the transform — the column is simply left unset and the platform's `true` applies on insert.
+
+The consequence for an **update** is what makes the split matter beyond documentation: because the transform defaults nothing, an ingestion run that does not carry `active` cannot overwrite a stored `false` with the dictionary's `true`. The same applies to `institutional_funding_last_5yrs`, whose default is `false` and which neither source system publishes.
 
 Five child tables reference this table through a mandatory `startup` column: `_founder`, `_executive`, `_fundinground`, `_jobposting` and `_newsarticle`.
 
@@ -168,7 +172,7 @@ Label **Investor**. Six columns. The display column is `name`.
 
 `portfolio_count` is a **calculated** value, declared Integer by prompt section 1.4. It is stored on the record, maintained by business rules, and **read-only in the dictionary** so that `InvestorPortfolioService` is its only writer. Its definition, its owning Script Include, its maintenance triggers and the precise reach of that read-only flag are in [Investor.portfolio_count](#investorportfolio_count).
 
-The `type` choice list has **no `Other` member**, so an unmatched incoming investor type is logged and the field left empty rather than coerced. See [One closed-choice rule for all eleven choice columns](#one-closed-choice-rule-for-all-eleven-choice-columns).
+The `type` choice list has **no `Other` member**, so an unmatched incoming investor type is logged and the field left unwritten rather than coerced. See [One closed-choice rule for all eleven choice columns](#one-closed-choice-rule-for-all-eleven-choice-columns).
 
 ### 5. `x_bst_startuptrk_fundinground`
 
@@ -181,7 +185,7 @@ Label **Funding round**. Eight columns. The table declares no display column; a 
 | `amount_usd` | `currency` | — | — | — | — | P |
 | `round_date` | `glide_date` | — | M | — | — | — |
 | `lead_investor` | `reference` to `x_bst_startuptrk_investor` | 32 | — | — | — | — |
-| `participating_investors` | `glide_list` to `x_bst_startuptrk_investor`, read-only | 1000 | — | — | — | — |
+| `participating_investors` | `glide_list` to `x_bst_startuptrk_investor`, read-only | 4000 | — | — | — | — |
 | `valuation_usd` | `currency` | — | — | — | — | P |
 | `source_url` | `string` | 255 | — | — | — | — |
 
@@ -189,7 +193,11 @@ Label **Funding round**. Eight columns. The table declares no display column; a 
 
 `lead_investor` is a first-class reference and carries the lead-versus-participating distinction.
 
-`participating_investors` is a **list of references** to `x_bst_startuptrk_investor` — the platform's List type, which is what prompt section 1.5 declares — and it is **stored, read-only and derived**. It is a one-way projection of the join table `x_bst_startuptrk_m2m_round_investor`, which stays authoritative and remains the only write target for participation; `InvestorPortfolioService.refreshRoundParticipants()` rewrites the column whenever a link row is inserted, updated or deleted. Nothing writes both. This interpretation of prompt section 1.5's List declaration is recorded in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
+`participating_investors` is a **list of references** to `x_bst_startuptrk_investor` — the platform's List type, which is what prompt section 1.5 declares — and it is **stored, read-only and derived**. It is a one-way projection of the join table `x_bst_startuptrk_m2m_round_investor`, which stays authoritative and remains the only write target for participation; `InvestorPortfolioService.refreshRoundParticipants()` rewrites the column whenever a link row is inserted, updated or deleted. Nothing writes both. This interpretation of prompt section 1.5's List declaration is recorded in [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md).
+
+**The projection is bounded, and the bound is enforced rather than assumed.** A `glide_list` stores its members as comma-separated 32-character identifiers, so each member costs 33 characters and the declared `max_length` of 4000 holds **121** investors. The join table itself is unbounded, so a round could in principle link more. `refreshRoundParticipants()` therefore measures the derived value against the declared length before writing it: within the bound it stores the complete list, and beyond the bound it **empties the projection and records the overflow** through `gs.error` tagged `[x_bst_startuptrk.InvestorPortfolioService]`, naming the round, the number of investors linked and the capacity. It never stores a partial identifier list, because a partial list is indistinguishable from a complete one when read and would misrepresent participation. The two numbers are declared once, as `PROJECTION_LENGTH` with `PROJECTION_CAPACITY` derived from it, so raising the column length raises the capacity with it.
+
+Nothing downstream depends on the projection: the four funding-round REST operations assemble their `participating_investors` array from the join table, and `countPortfolio()` unions the lead-investor and join-table paths. An emptied projection therefore costs the platform list view its inline display for that one round and costs the API nothing.
 
 The one-way property is enumerable, and the enumeration is the check to repeat after any change to this table or to the join table:
 
@@ -317,7 +325,7 @@ Seven columns, present on every row whatever its record type.
 
 #### Flattened scalar columns, by record type
 
-Thirty-three columns. They carry the prompt section 1.0 column names of the entity table each record type becomes, with references expressed as the natural keys `startup_name`, `lead_investor_name` and `participating_investor_names`. A CSV cannot carry a `sys_id` for a record that does not exist yet, so every reference travels as the target record's natural key and the transform resolves it at load time. `participating_investor_names` carries a comma separated list of names; `IngestionMapper.parseInvestorNames()` splits it on the comma, trims each member, drops an empty member and keeps a repeated member once.
+Thirty-three columns. They carry the prompt section 1.0 column names of the entity table each record type becomes, with references expressed as the natural keys `startup_name`, `lead_investor_name` and `participating_investor_names`. A CSV cannot carry a `sys_id` for a record that does not exist yet, so every reference travels as the target record's natural key and the transform resolves it at load time. `participating_investor_names` carries a comma separated list of names; `IngestionMapper.resolveParticipants()` splits it on the comma, trims each member, drops an empty member, resolves each remaining member to exactly one Investor record, keeps a repeated member once, and warns and skips a member it cannot resolve to exactly one record.
 
 Because the column names are the entity column names, a name shared by more than one entity is **one** staging column read by more than one record type rather than one column per entity. Five columns are shared:
 
@@ -607,19 +615,56 @@ The filter tests **only** two columns: `x_bst_startuptrk_startup.active` and `x_
 
 The two location tokens are read from the system property `x_bst_startuptrk.inclusion.location_tokens`, whose shipped value is `Boston,Cambridge, MA`. Changing the property changes the tokens the predicate tests, with no code change.
 
-`StartupSearchService.buildInclusionConditions()` returns the predicate as a **condition list** — a list of descriptors applied through `addQuery`, with the location tokens carried as one **or-grouped** descriptor:
+The predicate is built and applied in two steps, and the split is what lets one predicate serve both the page and its count. `StartupSearchService.buildPlan(filters, applyInclusion)` returns a **query plan** — a plain object carrying the inclusion flag, the location tokens read from the property, and the validated `name`, `industry` and `location` filters:
 
 ```text
-[ { active = true },
-  { or: [ headquarters_location CONTAINS Boston,
-          headquarters_location CONTAINS Cambridge, MA ] } ]
+{ inclusion: true,
+  tokens: [ 'Boston', 'Cambridge, MA' ],
+  name: '', industry: '', location: '' }
 ```
+
+`StartupSearchService.applyPlan(query, plan)` then applies that plan to a `GlideRecordSecure` through the condition API: `addQuery('active', true)`, then `addQuery('headquarters_location', 'CONTAINS', tokens[0])` whose returned condition carries an `addOrCondition('headquarters_location', 'CONTAINS', …)` for every remaining token, then one `addQuery` per supplied caller filter. `search(plan, limit, offset)` applies the plan, orders by `name` then `sys_id` and positions the window; the access-controlled count applies **the same plan object** to its own query, which is what makes `total_count` agree with the page contents by construction rather than by coincidence.
 
 The or-group carries the and-of-or grouping the criteria require: `active` true, and either location token matching. `CONTAINS` is a case-insensitive substring comparison.
 
 In encoded-query form the equivalent predicate is `active=true^headquarters_locationLIKEBoston^ORheadquarters_locationLIKECambridge, MA`, where the grouping comes from `^OR` binding to the immediately preceding clause. The application does not build the predicate that way: every filter value is validated and bound as a parameter, and the validation contract is in [`./api-reference.md`](./api-reference.md).
 
 One operational requirement applies to every caller of the filter: **the criteria are a query filter, not an ACL.** The platform does not apply them, so they must be applied identically to the result set **and** to the `total_count` returned with a paginated response. Applying them to one and not the other makes the count disagree with the page contents. Record-level read access to all seven entity tables is granted to all three roles, and the role difference is at field level only; see [`./access-control.md`](./access-control.md).
+
+## How the ingestion transform respects this dictionary
+
+Everything above is a declaration. This section is the contract the one writer that builds records dynamically — `IngestionMapper`, serving both flows and the staging transform — holds itself to, so a declaration here and a write there cannot disagree. The REST layer's equivalent contract, which validates a caller-supplied body rather than a source payload, is in [`./api-reference.md`](./api-reference.md).
+
+### Only the columns of this document are writable, and only the writable ones
+
+The mapper does not write whatever keys a source happens to send. It carries a **target field allowlist per record type**, and the write loop iterates the allowlist rather than the incoming record, so a key with no entry is read and discarded rather than written. Two consequences are the point of it:
+
+- **`Investor.portfolio_count` is unreachable from ingestion.** It has no allowlist entry, so no payload key, no flattened staging column and no crafted `raw_payload` can set it. It is a derived column, and its only writers are the two business rules and `InvestorPortfolioService`, as described under [Investor.portfolio_count](#investorportfolio_count). This closes the gap that the dictionary `read_only` flag alone leaves open, since that flag does not stop an unsecured server-side write.
+- **`FundingRound.participating_investors` is unreachable too.** It is the read-only projection of the join table. The mapper carries the incoming participant list as a **transport** value that is resolved into join rows and then removed before the write, so participation is only ever recorded where it is authoritative. See [5. `x_bst_startuptrk_fundinground`](#5-x_bst_startuptrk_fundinground).
+
+Between them, the allowlist is what makes "the join table stays authoritative" and "the derivation is derived" enforceable rather than merely intended.
+
+### A value that does not match its declared type is refused, never repaired
+
+Each of the three non-string scalar kinds is parsed strictly, and a value that does not match is **refused**: it is logged, and the field is not written. Nothing is coerced into a plausible-looking substitute, because a repaired value is indistinguishable from a correct one once stored.
+
+| Kind | Accepted exactly | Refused |
+| --- | --- | --- |
+| `currency` — `total_funding_usd`, `aum_usd`, `amount_usd`, `valuation_usd` | Optionally signed digits, at most 15 of them, with at most two decimal places | Anything else, including a thousands separator, a currency symbol, and a magnitude suffix such as `4.2M` or `900K` |
+| `glide_date` — `round_date`, `posted_date`, `published_date` | `YYYY-MM-DD`; a full ISO 8601 timestamp, whose date part is taken; or an epoch value of exactly 10 digits (seconds) or 13 digits (milliseconds), which is what LinkedIn publishes for `listedAt`. The result must be a **real calendar day** | A date-like prefix inside longer text such as `2024-03-07 or thereabouts`, a digit run of any other length, and an impossible day such as `2023-02-30` or `2025-02-29` |
+| `founded_year` | Four digits forming a year between 1900 and 2999 | A four-digit prefix of something longer, and a year outside the range |
+
+The calendar check has exactly one implementation: `IngestionMapper.calendar()` resolves `RestQueryHelper` and calls its `isCalendarDate()`, so the Gregorian leap-year rule lives in one place and the ingestion path and the REST path can never disagree about whether a day exists. That single-home discipline is the same one applied to the inclusion criteria and the cleaning rules.
+
+A refusal is not automatically a rejection. The field is dropped and the run continues; the record is rejected **only if the refused field was mandatory** — a funding round whose `round_date` will not parse has no usable identity and is rejected, while a startup whose `founded_year` will not parse is created without one. This is the same skip-the-record-and-continue-the-run semantics prompt section 8.0 requires.
+
+### A value longer than its column is rejected, never truncated
+
+Every allowlisted string value is measured against the `max_length` this document declares for its column **before** anything is written. An over-length value rejects the row, with a reason naming the field and the limit — `name exceeds 100 characters` — and the run continues. Nothing is shortened.
+
+Truncating would be the more convenient behaviour and is the wrong one, for a specific reason rather than a general preference: several of these columns are **identity**. `Startup.name` at 100 characters and `headquarters_location` at 100 are the de-duplication key of cleaning rule 2, and a truncated name silently becomes a *different* startup — one that will not match the record a later run means to update, and that no child row's `startup_name` will resolve to. A rejected row is visible in the log and fixable at source; a truncated one is invisible and corrupts identity.
+
+A natural key is measured against the column it **resolves against**, not against the reference column that stores the result. A `startup_name` of 140 characters is rejected with `startup exceeds 100 characters` — the 100 being what `Startup.name` declares — rather than being measured against the 32-character reference column that will hold the resolved identifier, which would be meaningless. The reason names the **target** field, `startup`, because that is the field the record carries by the time it is measured.
 
 ## Legacy provenance
 
@@ -698,11 +743,19 @@ Consequently **no old-to-new mapping table exists**.
 
 ### One closed-choice rule for all eleven choice columns
 
-`IngestionMapper.normaliseChoice()` applies a single rule to every closed-choice column, in this order:
+Two steps run in sequence, and the order matters: a source vocabulary is translated **before** anything is judged unmatched.
+
+**Step 1 — source-vocabulary translation.** A live payload states its values in the source system's own code vocabulary, not in target values. Crunchbase publishes `series_b`, `c_00051_c_00200`, `private_equity` and `Science and Engineering`; LinkedIn publishes `eng`, `HYBRID` and `MID_SENIOR_LEVEL`. `IngestionMapper` carries a translation table per source system and field, keyed on the lowercased source code, and applies it first. A code the table knows becomes its target value — `series_b` becomes `Series B`, `c_00051_c_00200` becomes `51-200`. A code the table does not know is passed through untouched, so it reaches step 2 and is judged there. A code the table knows to have **no** target member — `debt_financing`, `grant` and `initial_coin_offering` are funding types that correspond to no member of the eight-value stage list — resolves to nothing, and the event is logged as `recognised <source> code with no target member, left unwritten` so it reads distinctly from a genuinely unrecognised value.
+
+Without this step every live value on a closed-choice column would fall to step 3 below, and the columns would populate with `Other` or with nothing at all across the board. The tables cover the documented upstream vocabularies; a source that adds a code later simply falls through to step 2 and is logged, which is the intended degradation.
+
+**Step 2 — `IngestionMapper.normaliseChoice()`,** applied to every closed-choice column, in this order:
 
 1. **Exact match** against the column's choice list. The value is stored as supplied.
 2. **Case-insensitive match**. The value is stored with the choice list's own spelling, so `vp engineering` is stored as `VP Engineering`.
-3. **No match.** The value is stored as `Other` **only where the column's choice list declares an `Other` member**. Where the list declares no `Other`, the field is **left empty**. Either way `IngestionLogger` records a `choice_unmatched` event naming the column, the supplied value and which of the two outcomes was applied.
+3. **No match.** The value is stored as `Other` **only where the column's choice list declares an `Other` member**. Where the list declares no `Other`, the field is **left unwritten**. Either way `IngestionLogger` records a `choice_unmatched` event naming the column, the supplied value and which of the two outcomes was applied.
+
+"Left unwritten" is precise, and it is not the same as "emptied". The mapper removes the field from the record it is about to write rather than writing an empty value into it, so on an **insert** the column is simply empty, while on an **update** whatever the column already stores survives. An unmatched incoming value therefore never destroys a good stored value — which is the same no-clear rule that governs absent fields generally, described under [`../sample-data/README.md`](../sample-data/README.md). Clearing one of these columns is an administrative act through a REST update or the platform form, never an ingestion outcome.
 
 **No value outside a column's choice list is ever stored.** None of the eleven columns is mandatory, so an unmatched value never rejects the record: rejection is reserved for a record missing a mandatory field.
 
@@ -711,16 +764,16 @@ Which columns take which outcome:
 | Choice column | Declares `Other` | Outcome for an unmatched value |
 | --- | --- | --- |
 | `x_bst_startuptrk_startup.industry` | Yes | Stored as `Other`, logged |
-| `x_bst_startuptrk_startup.funding_stage` | **No** | Left empty, logged |
-| `x_bst_startuptrk_startup.employee_count_range` | **No** | Left empty, logged |
+| `x_bst_startuptrk_startup.funding_stage` | **No** | Left unwritten, logged |
+| `x_bst_startuptrk_startup.employee_count_range` | **No** | Left unwritten, logged |
 | `x_bst_startuptrk_founder.title` | Yes | Stored as `Other`, logged |
 | `x_bst_startuptrk_executive.title` | Yes | Stored as `Other`, logged |
-| `x_bst_startuptrk_investor.type` | **No** | Left empty, logged |
+| `x_bst_startuptrk_investor.type` | **No** | Left unwritten, logged |
 | `x_bst_startuptrk_investor.focus_areas` | Yes | Each unmatched token stored as `Other`, de-duplicated, logged |
-| `x_bst_startuptrk_fundinground.round_type` | **No** | Left empty, logged |
+| `x_bst_startuptrk_fundinground.round_type` | **No** | Left unwritten, logged |
 | `x_bst_startuptrk_jobposting.department` | Yes | Stored as `Other`, logged |
-| `x_bst_startuptrk_jobposting.remote_type` | **No** | Left empty, logged |
-| `x_bst_startuptrk_jobposting.seniority` | **No** | Left empty, logged |
+| `x_bst_startuptrk_jobposting.remote_type` | **No** | Left unwritten, logged |
+| `x_bst_startuptrk_jobposting.seniority` | **No** | Left unwritten, logged |
 
 **Do not add an `Other` member to any of the six lists that lack one** — `startup.funding_stage`, `startup.employee_count_range`, `investor.type`, `fundinground.round_type`, `jobposting.remote_type` and `jobposting.seniority`. Prompt section 1.0's field and choice definitions are binding and complete, and the `sys_choice` inventory in the Update Set is exactly the 63 entity choice values those definitions declare.
 

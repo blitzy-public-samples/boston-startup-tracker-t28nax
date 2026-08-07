@@ -108,20 +108,29 @@ The column names below are the dictionary element names exactly as the Update Se
 
 ### The `_name` natural-key convention
 
-A CSV cannot carry a `sys_id` for a record that does not exist yet, so every reference travels as the target record's natural key — its `name` value — and the transform resolves it at load time. No column carries a `sys_id`. Three columns are natural keys: `startup_name` resolves to a `x_bst_startuptrk_startup` record, and `lead_investor_name` and `participating_investor_names` resolve to `x_bst_startuptrk_investor` records. The transform's resolution steps are to be specified in [`../docs/manual-build/06-staging-table-csv-import.md` (planned)](../docs/manual-build/06-staging-table-csv-import.md); the resolution `IngestionMapper` performs is described under [Natural keys](#natural-keys).
+A CSV cannot carry a `sys_id` for a record that does not exist yet, so every reference travels as the target record's natural key — its `name` value — and the transform resolves it at load time. No column carries a `sys_id`. Three columns are natural keys: `startup_name` resolves to a `x_bst_startuptrk_startup` record, and `lead_investor_name` and `participating_investor_names` resolve to `x_bst_startuptrk_investor` records. The transform's resolution steps are to be specified in [`../docs/manual-build/06-staging-table-csv-import.md` (planned)](../docs/manual-build/06-staging-table-csv-import.md); the resolution `IngestionMapper` performs is described under [Parent resolution is by `startup_name` alone](#parent-resolution-is-by-startup_name-alone).
 
 `startup_name` appears only on the four child record types, where it names the parent Startup. A `startup` row carries its own name in `name`, and an `investor` row likewise carries its own name in `name`.
 
 #### Parent resolution is by `startup_name` alone
 
-`IngestionMapper.resolveStartup()` matches `startup_name` against `x_bst_startuptrk_startup.name`, trimming and lowering both sides, and resolves only when exactly one startup carries the name. Resolution is deterministic in every case, and never approximate:
+`IngestionMapper.resolveStartup()` matches `startup_name` against `x_bst_startuptrk_startup.name`, trimming and lowering both sides, and resolves only when **exactly one** startup carries the name. Resolution is deterministic in every case, and never approximate:
 
 | Row carries | Startups matching | Outcome |
 | --- | --- | --- |
-| `startup_name` | Exactly one carrying that name | Resolved. |
-| `startup_name` | More than one carrying that name | Logged as a skip reporting the parent as **ambiguous**; no entity record is created. |
-| `startup_name` | None | Logged as a skip naming the value; no entity record is created. |
-| `startup_name` blank | Not attempted | Cleaning rule 4 rejects the row for a missing mandatory `startup`, which is the documented rule 4 outcome rather than a resolution failure. |
+| `startup_name` | Exactly one carrying that name | Resolved. `{ ok: true, sys_id: <that record>, matches: 1 }`. |
+| `startup_name` | More than one carrying that name | Unresolved, `matches` reporting how many, reason `the name is ambiguous across <n> startups`. The row is rejected and logged as a skip; no entity record is created and **no candidate is chosen**. |
+| `startup_name` | None | Unresolved, reason `no startup carries the name`. The row is rejected and logged as a skip; no entity record is created. |
+| `startup_name` blank | Not attempted | Reason `the value is blank`, though cleaning rule 4 has already rejected the row for a missing mandatory `startup`, so this is the rule 4 outcome rather than a resolution failure. |
+
+`resolveStartup()`, `resolveInvestor()`, `findExistingStartup()` and `findExistingInvestor()` all answer the same object — `{ ok, sys_id, matches, reason }` — rather than a bare identifier or an empty string. A caller cannot therefore mistake "no match" for "one match that happens to be empty", and the reason is what the skip log reports, so a rejected row always names which of the two failure modes it hit. `resolveInvestor()` reports `no investor carries the name` and `the name is ambiguous across <n> investors` on the same policy.
+
+**A natural key is never read as a record identifier.** These columns carry names, and only names. A value that happens to be 32 hexadecimal characters is still matched against the `name` column, so it resolves only if a record is genuinely named that, and otherwise reports `no startup carries the name` like any other unmatched value. No column in these files may carry a `sys_id`, and supplying one is a data error the transform reports rather than a shortcut it honours.
+
+Two references are optional rather than mandatory, so an unresolved value there does not reject the row:
+
+- `lead_investor_name`, on a `funding_round` row. An unresolved value is logged as a warning naming the reason, and the reference is **left unwritten** — the funding round is still created, without a lead investor. It is not written as a blank, because an ingestion run never clears a stored value.
+- Each member of `participating_investor_names`. An unresolved member is logged as a warning naming the reason and contributes no join row; the members that do resolve still become join rows.
 
 Cleaning rule 2 de-duplicates Startup records on `name` **plus** `headquarters_location`, so a Startup's identity within the startups file is that pair. A resolved parent is consequently the single record that survived that de-duplication, and a child row needs only its name to reach it.
 
@@ -185,7 +194,7 @@ source_system,record_type,import_run,import_state,run_provenance,error_message,r
 | `website` | String, 255 | No | Absolute URL. Writes `Investor.website`. |
 | `aum_usd` | Decimal on staging; Currency on `Investor.aum_usd` | No | Plain USD amount. Premium-gated. |
 
-`portfolio_count` is deliberately **absent** from this file and from the staging dictionary. Prompt section 1.4 declares `Investor.portfolio_count` calculated, and it is derived by the `InvestorPortfolioService` Script Include and maintained by the two portfolio business rules on `x_bst_startuptrk_fundinground` and `x_bst_startuptrk_m2m_round_investor`. The column is read-only in the dictionary, so an import that mapped a staged value onto it would be refused; the value is established by running `InvestorPortfolioService.recalculateAll()` from a background script once the funding rounds and join rows have loaded, as [`../docs/manual-build/06-staging-table-csv-import.md`](../docs/manual-build/06-staging-table-csv-import.md) requires. Its derivation is described in [`../docs/data-model.md`](../docs/data-model.md) and the decision is recorded in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
+`portfolio_count` is deliberately **absent** from this file and from the staging dictionary. Prompt section 1.4 declares `Investor.portfolio_count` calculated, and it is derived by the `InvestorPortfolioService` Script Include and maintained by the two portfolio business rules on `x_bst_startuptrk_fundinground` and `x_bst_startuptrk_m2m_round_investor`. The column is read-only in the dictionary, so an import that mapped a staged value onto it would be refused; the value is established by running `InvestorPortfolioService.recalculateAll()` from a background script once the funding rounds and join rows have loaded, as [`../docs/manual-build/06-staging-table-csv-import.md` (planned)](../docs/manual-build/06-staging-table-csv-import.md) requires. Its derivation is described in [`../docs/data-model.md`](../docs/data-model.md) and the decision is recorded in [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md).
 
 ### `crunchbase_funding_rounds_sample.csv`
 
@@ -203,12 +212,12 @@ source_system,record_type,import_run,import_state,run_provenance,error_message,r
 | `valuation_usd` | Decimal on staging; Currency on `FundingRound.valuation_usd` | No | Plain USD amount. Premium-gated. |
 | `round_date` | Date (`glide_date`) | Yes | `YYYY-MM-DD`. |
 | `lead_investor_name` | String, 100; natural key to `x_bst_startuptrk_investor` | No | An existing Investor `name`. Writes the `FundingRound.lead_investor` reference. |
-| `participating_investor_names` | String, 1000; multi-valued natural keys to `x_bst_startuptrk_investor` | No | **Comma separated** Investor `name` values inside one double-quoted field, each separated by a bare comma with no following space, for example `"Emerald Necklace Angels,Chickatawbut Seed Partners"`. `IngestionMapper.parseInvestorNames()` splits on the comma, trims each member, drops an empty member and keeps a repeated member once. An empty field means no participants. |
+| `participating_investor_names` | String, 1000; multi-valued natural keys to `x_bst_startuptrk_investor` | No | **Comma separated** Investor `name` values inside one double-quoted field, each separated by a bare comma with no following space, for example `"Emerald Necklace Angels,Chickatawbut Seed Partners"`. `IngestionMapper.resolveParticipants()` splits on the comma, trims each member, drops an empty member, resolves each remaining member to exactly one Investor and keeps a repeated member once. An empty field means no participants. |
 | `source_url` | String, 255 | No | Absolute URL. Writes `FundingRound.source_url`. |
 
 `lead_investor_name` and `participating_investor_names` are distinct columns with distinct destinations. The lead investor is a first-class reference field on the funding round. Each participating investor becomes one row in the join table `x_bst_startuptrk_m2m_round_investor`, which is the **only** table the transform writes for participation. An investor may appear in both columns on the same row.
 
-The join table is authoritative. Two surfaces are derived from it and neither is a second place to write: the read-only `FundingRound.participating_investors` column, a stored list of investor references that the round-investor-link business rule projects from the join table, and the REST `participating_investors` array, which the API assembles from the join table directly. The transform must therefore create join rows and must **not** attempt to write `FundingRound.participating_investors`; the column is read-only and the projection maintains itself. `InvestorPortfolioService.linkInvestorToRound()` is the method to create a join row: it is idempotent, so re-running a load cannot create a duplicate pair, and a unique composite index on `(funding_round, investor)` enforces that whatever the write path. The semantics are in [`../docs/data-model.md`](../docs/data-model.md).
+The join table is authoritative. Two surfaces are derived from it and neither is a second place to write: the read-only `FundingRound.participating_investors` column, a stored list of investor references that the round-investor-link business rule projects from the join table, and the REST `participating_investors` array, which the API assembles from the join table directly. The transform must therefore create join rows and must **not** attempt to write `FundingRound.participating_investors`; the column is read-only, the projection maintains itself, and `IngestionMapper` cannot reach it in any case because the column is absent from the record type's target-field allowlist. The projection holds 121 investors — the declared 4000-character column length divided by the 33 characters each member costs — and a round linking more has its projection emptied and the overflow logged rather than a partial list stored; the join table remains the complete record either way. The largest round in this dataset links five investors, so no shipped row approaches the bound. `InvestorPortfolioService.linkInvestorToRound()` is the method to create a join row: it is idempotent, so re-running a load cannot create a duplicate pair, and a unique composite index on `(funding_round, investor)` enforces that whatever the write path. The semantics are in [`../docs/data-model.md`](../docs/data-model.md).
 
 ### `linkedin_founders_sample.csv`
 
@@ -290,34 +299,89 @@ All four operations carry an explicit access control rather than relying on the 
 | Booleans | Lowercase `true` or `false` only. Never `TRUE`, `True`, `1`, `0`, `yes`, `no`, `Y` or `N`. | `true` |
 | Multi-valued choice fields | `focus_areas` is comma separated inside one double-quoted field. A bare comma separates values, with **no** space after it. Each element is spelled exactly as its choice list spells it. A comma is safe here because no choice value contains one. | `"Fintech,SaaS,Deeptech"` |
 | Multi-valued natural keys | `participating_investor_names` is comma separated inside one double-quoted field, on the same convention as `focus_areas`. A bare comma separates values, with **no** space after it. Each element is an Investor `name` spelled as that record spells it. An empty field means no participants. | `"Emerald Necklace Angels,Chickatawbut Seed Partners"` |
-| Empty means absent | An empty field means the value is absent. No sentinel string is ever used. On `active`, a String column on staging, a blank therefore reaches the transform as a blank and cleaning rule 4 rejects the row. On `institutional_funding_last_5yrs`, a True/False column carrying a dictionary default of `false`, a blank resolves to that default — it is not mandatory, and every shipped row supplies it, so no row relies on the distinction. | `,,` |
+| Empty means absent | An empty field means the value is absent. No sentinel string is ever used. On `active` — a String column on staging — a blank therefore reaches the transform as a blank, and cleaning rule 4 rejects a `startup` row for it because `active` is mandatory there. On `institutional_funding_last_5yrs` — a True/False column on staging carrying a dictionary default of `false` — a blank cell is defaulted **by the staging dictionary at import time**, so the transform reads `false` as a value the row supplied rather than as an absence. Every shipped row supplies it explicitly, so no row relies on that. | `,,` |
 | Integers | Digits only, unquoted, no separators. | `2019` |
 | URLs | Absolute, including the scheme. | `https://example.com/careers` |
+
+These conventions are enforced, and violating one has a defined outcome rather than an approximate one. **A value that does not match its declared type is refused, not repaired**: a currency of `4.2M` or `42,500,000`, a date of `2023-02-30`, and a year of `2019x` are each logged and the field left unwritten, and the row is rejected only where the refused field is mandatory. **A value longer than its target column is rejected, not truncated**: a `name` of 101 characters rejects the row with `name exceeds 100 characters`. Nothing is shortened, because a truncated `name` would silently become a different startup under the rule 2 de-duplication key. Both contracts, with the accepted and refused forms field by field, are stated in [`../docs/data-model.md`](../docs/data-model.md).
 
 ### No sentinel values
 
 The strings `Unknown`, `N/A`, `null` and `None` appear nowhere in these files and must not be introduced. Prompt section 4.0 requires a record missing a mandatory field to be **rejected**, not filled, so a blank field must stay blank in order for cleaning rule 4 to see it.
 
+### Absent is not blank, and ingestion never clears a stored value
+
+A source that does not supply a field and a source that supplies an empty value are two different statements, and the transform keeps them apart. `IngestionMapper` reads every field through one accessor that reports whether the source carried the key at all; a key the source did not carry, and a key whose coerced value comes out empty, are both **omitted from the write** rather than written as an empty string.
+
+The consequence is the one that matters on an update, and it is deliberate: **an ingestion run can add and change values, but it can never clear one.** A startup that already stores a `website`, a founder that already stores a `contact_email`, or an investor that already stores an `aum_usd` keeps that value when a later run's payload omits the field — which is the normal case for a partial API response, and for every one of the optional-field differences catalogued under [Live and fallback are not identical in their optional fields](#live-and-fallback-are-not-identical-in-their-optional-fields). Two further paths behave the same way for the same reason: an unmatched value on a choice list with no `Other` member leaves the column unwritten rather than emptying it, and an unresolvable optional reference such as `lead_investor_name` is left unwritten rather than blanked.
+
+Clearing a value is therefore an **explicit administrative act**, not an ingestion side effect. It is performed by a `PUT` to the resource naming the field with an empty value, or on the platform form by an administrator holding `x_bst_startuptrk.admin`. The REST layer draws the same absent-versus-blank distinction from the other side: a field the request body omits is left alone, while a field the body supplies as empty is written as empty. A **mandatory** field cannot be cleared by either route — a `PUT` supplying `name` as empty is refused with `name is required` — so the columns that carry identity are safe from being emptied at all. A blank cell in these files never clears anything, and adding one to request it will not work.
+
+The one path that does remove data is the privacy lifecycle, which is a separate deliberate mechanism rather than a mapping outcome: `PrivacyRetentionService` minimises and prunes **staging** rows on the retention bounds, and `eraseSubject()` services an erasure request. Those are described under [Retention of the loaded rows](#retention-of-the-loaded-rows).
+
 ### `raw_payload`
 
 `raw_payload` is a JSON object carried as one double-quoted CSV field with every inner double quote doubled. It uses the **source system's own key vocabulary**, not the flattened platform column names. Prompt section 4.0 requires the staging shape to mimic the expected API response, and this column carries that shape.
 
-- **Crunchbase** organisation reads expose their fields under `data.properties`, with keys such as `name`, `short_description`, `founded_on`, `homepage_url`, `linkedin_url` and `num_employees_enum`. Funding rounds arrive under `data.items`.
-- **LinkedIn** company, employee and job reads expose an `elements` array with keys such as `id`, `name`, `title`, `description`, `website`, `industry`, `companySize.value`, `foundedYear` and `location.name`. In this dataset that array is carried under the same `data` wrapper the Crunchbase fixtures use, so all six files share one envelope shape. `IngestionMapper.unwrapLive()` accepts the collection at the root of the payload or under `data`, so a live LinkedIn response that places `elements` at the root — as the reader at `src/data_collection/api_integrators/linkedin_integrator.py:L31`, `:L50` and `:L69` does — is unwrapped identically.
+- **Crunchbase** organisation reads expose their fields under `data.properties`. Funding rounds arrive under `data.items`.
+- **LinkedIn** company, employee and job reads expose an `elements` array. In this dataset that array is carried under the same `data` wrapper the Crunchbase fixtures use, so all six files share one envelope shape. `IngestionMapper.unwrapLive()` accepts the collection at the root of the payload or under `data`, so a live LinkedIn response that places `elements` at the root — as the reader at `src/data_collection/api_integrators/linkedin_integrator.py:L31`, `:L50` and `:L69` does — is unwrapped identically.
 
-`participating_investor_names` does **not** use the JSON convention. It is a comma separated list of investor names, and `IngestionMapper.parseInvestorNames()` splits it on the comma, trims each member, drops an empty member and keeps a repeated member once. A value that yields no name at all is logged by `IngestionLogger.invalidEncoding()`. The delimiter is safe for this dataset because no investor name in `crunchbase_investors_sample.csv` contains a comma; an incoming live name that did would have to be corrected at source before it could be staged.
+#### Every payload supplies every mandatory value its record type needs
 
-Each payload carries a handful of representative keys and stays well inside the 8000-character column limit. A payload for one startup row therefore reads like the following, before CSV quoting is applied:
+This is a **contract, not a convenience**, and it is what makes these files usable as a live-path fixture rather than only as a fallback dataset. The live path never reads a flattened column: `IngestionMapper.mapLiveRecord()` reads `raw_payload` alone, through `LIVE_ALIASES`. A payload that omits the source key behind a mandatory field therefore produces a row that cleaning rule 4 rejects — the record is skipped, the run continues, and the file silently exercises none of the live path for that record type. Each payload consequently carries the source key every mandatory field resolves through:
+
+| File | Envelope | Source keys supplying the mandatory values | Mandatory fields they satisfy |
+| --- | --- | --- | --- |
+| `crunchbase_startups_sample.csv` | `data.properties` | `name`, `location_identifiers`, `operating_status` | `name`, `headquarters_location`, `active` |
+| `crunchbase_investors_sample.csv` | `data.properties` | `name` | `name` |
+| `crunchbase_funding_rounds_sample.csv` | `data.items` | `funded_organization_identifier`, `announced_on` | `startup`, `round_date` |
+| `linkedin_founders_sample.csv` | `data.elements` | `name`, `companyName` | `name`, `startup` |
+| `linkedin_executives_sample.csv` | `data.elements` | `name`, `companyName` | `name`, `startup` |
+| `linkedin_job_postings_sample.csv` | `data.elements` | `companyName`, `title` | `startup`, `title` |
+
+`location_identifiers` is an ordered array of `{ "value", "location_type" }` objects, which is the shape a Crunchbase organisation read returns; `IngestionMapper` flattens it to the comma separated location string the `headquarters_location` column holds. `funded_organization_identifier` is a `{ "value", "permalink" }` object naming the funded company, and the mapper reads its `value` as the parent Startup's natural key. Both are read through the alias chains declared for `crunchbase.startup.headquarters_location` and `crunchbase.funding_round.startup`.
+
+#### The rule these payloads follow
+
+A payload **carries the source system's own key wherever the source publishes one**. Where the alias chain declares a same-named passthrough and the source publishes no distinct code of its own — `source_url` on a funding round is the only such case — the passthrough name is used. A target value the source publishes **no** code for is simply not published, and the field is then absent rather than blank; the entries in the catalogue below are exactly those cases. Nothing in a payload is invented to make a column populate, because a fixture that supplied a key the real API does not would prove the mapper works against a shape it will never meet.
+
+Each payload stays far inside the 8000-character column limit; the largest shipped payload is 608 characters.
+
+#### The designed partial-response fixture
+
+One payload deliberately omits optional keys the others carry: the `crunchbase_investors_sample.csv` row for **Menotomy Capital Group** publishes `name`, `short_description`, `homepage_url` and `num_investments`, and **no** `investor_type`, `investment_categories` or `assets_under_management`. A real API read returns partial objects, and this row is the fixture that proves the absent-versus-blank rule holds under one: the flattened columns on the same staging row do carry a type, focus areas and an AUM, so the fallback path writes what it can while the live path writes neither the focus areas nor the AUM — and, critically, a later live run over this payload leaves both stored values untouched rather than clearing them. Restoring the omitted keys would remove the only coverage of that behaviour.
+
+This row does double duty, and the second job is worth naming because it is easy to misread as a bug. Its flattened `type` is `Family Office`, which is **not** a member of the `type` choice list — and that list, unlike `focus_areas`, declares no `Other` member. Cleaning rule 3 therefore normalises the value to nothing and the column is left unwritten, so `type` is absent on the **fallback** path too, not only on the live one. The row is consequently both the partial-response fixture and the fixture for an unmatched value on a list with no `Other` member; the two behaviours meet here deliberately.
+
+Two other investor payloads omit a key as well, and those omissions are consistent rather than partial: `Nahanton Square Accelerator` omits `investment_categories` and `Chickatawbut Seed Partners` omits `assets_under_management`, and in both rows the matching flattened column is blank. Where a flattened column carries no value, the payload publishes no key for it, so the two paths agree.
+
+`participating_investor_names` does **not** use the JSON convention. It is a comma separated list of investor names, and `IngestionMapper.resolveParticipants()` splits it on the comma and then, for each member: trims it, drops it if it is empty, resolves it through `resolveInvestor()`, keeps it once if the same investor is named twice, and — if it resolves to no Investor or to more than one — logs a warning naming the reason and links no join row for it. The remaining members become the join rows. A value that yields no name at all is logged by `IngestionLogger.invalidEncoding()`. The delimiter is safe for this dataset because no investor name in `crunchbase_investors_sample.csv` contains a comma; an incoming live name that did would have to be corrected at source before it could be staged.
+
+The live payloads carry the same list under the source's own `investors` key as a JSON array of names, which `IngestionMapper` flattens to the same comma separated form before resolving it, so both routes reach `resolveParticipants()` with the same value.
+
+#### Worked examples
+
+The three payloads below are the **first data row of three of the shipped files**, verbatim and before CSV quoting is applied, so each can be checked against the file it came from. A Crunchbase organisation read:
 
 ```json
-{"data":{"properties":{"name":"Example Labs","short_description":"Example analytics platform","founded_on":"2019-04-01","homepage_url":"https://examplelabs.example.com","num_employees_enum":"c_00051_c_00200"}}}
+{"data":{"properties":{"name":"Beacon Hill Robotics","short_description":"Autonomous inspection robots for commercial building operators.","founded_on":"2019-03-11","homepage_url":"https://beaconhillrobotics.example.com","num_employees_enum":"c_00051_c_00200","category_groups":["Science and Engineering"],"location_identifiers":[{"value":"Boston","location_type":"city"},{"value":"MA","location_type":"region"}],"image_url":"https://cdn.example.org/logos/beacon-hill-robotics.png","last_funding_type":"series_b","funding_total_usd":48000000,"operating_status":"active"}}}
 ```
 
-A LinkedIn payload for one founder row reads like this, with no wrapper above `elements`:
+Every value here is a source-vocabulary code rather than a target value: `c_00051_c_00200` becomes `51-200`, `series_b` becomes `Series B`, `Science and Engineering` becomes `Deeptech`, `operating_status` of `active` becomes the boolean `true`, and the `location_identifiers` array flattens to `Boston, MA`. The translation tables that do this are listed under [Choice values](#choice-values).
+
+A Crunchbase funding round read, which nests its parent company rather than naming it flat:
 
 ```json
-{"elements":[{"id":"ln-member-40118","name":"Example Person","title":"CEO","headline":"CEO at Example Labs","profileUrl":"https://people.example.com/in/example-person"}]}
+{"data":{"items":[{"funding_type":"seed","money_raised_usd":3200000,"announced_on":"2019-11-12","pre_money_valuation_usd":14000000,"lead_investor":"Emerald Necklace Angels","investors":["Emerald Necklace Angels","Chickatawbut Seed Partners"],"funded_organization_identifier":{"value":"Beacon Hill Robotics","permalink":"beacon-hill-robotics"},"source_url":"https://news.example.com/rounds/beacon-hill-robotics-seed"}]}}
 ```
+
+A LinkedIn member read, under the same `data` wrapper the Crunchbase fixtures use:
+
+```json
+{"data":{"elements":[{"id":"ln-member-40118","name":"Marisol Trevanion","title":"CEO","headline":"CEO at Beacon Hill Robotics","profileUrl":"https://people.example.com/in/marisol-trevanion","companyName":"Beacon Hill Robotics","summary":"Co-founded Beacon Hill Robotics after a decade in industrial controls, and now leads its commercial strategy.","emailAddress":"marisol.trevanion@example.com"}]}}
+```
+
+`companyName` is the key that makes this row's mandatory `startup` reference resolvable; `id` is carried because a real read returns it, and the mapper's allowlist has no target field for it, so it is read and discarded rather than written anywhere.
 
 ### Choice values
 
@@ -326,9 +390,32 @@ Every choice value is spelled exactly as its choice list spells it, including ca
 Cleaning rule 3 normalises **every** closed-choice column, not just some of them. `IngestionMapper.normaliseChoice()` matches an incoming value exactly, then case-insensitively, and where nothing matches it applies one of two outcomes:
 
 - The value is stored as `Other` **where the target choice list declares an `Other` member**.
-- The field is **left empty** where the target list declares no `Other` member.
+- The field is **left unwritten** where the target list declares no `Other` member.
 
 `IngestionLogger` records a `choice_unmatched` event either way, naming the record type, the column and which outcome was applied. **No value outside a choice list is ever stored on an entity record.** The staging columns for choice fields are plain strings with no choice list attached, so an unmatched value loads into staging unchanged and is normalised at transform time.
+
+#### Source vocabulary is translated before anything is judged unmatched
+
+The flattened columns in these files are authored in **target** vocabulary — `Series B`, `51-200`, `Hybrid` — so they match a choice list directly. `raw_payload` is authored in **source** vocabulary, and a source publishes codes, not target values. A step ahead of cleaning rule 3 therefore translates every source code to its target value, and only what survives untranslated is judged unmatched. Without it every live choice value would land on `Other` or on nothing.
+
+These are the codes the shipped payloads actually carry, and what each becomes. Each row is verifiable by running the payload through the mapper:
+
+| Source key | Target column | Codes in these files | Becomes |
+| --- | --- | --- | --- |
+| `num_employees_enum` | `Startup.employee_count_range` | `c_00001_c_00010`, `c_00011_c_00050`, `c_00051_c_00100`, `c_00051_c_00200`, `c_00201_c_00500`, `c_00501_c_01000` | `1-10`, `11-50`, `51-200`, `51-200`, `201-500`, `500+` |
+| `last_funding_type` | `Startup.funding_stage` | `pre_seed`, `seed`, `series_a`, `series_b`, `series_c`, `private_equity` | `Pre-Seed`, `Seed`, `Series A`, `Series B`, `Series C+`, `Growth` |
+| `funding_type` | `FundingRound.round_type` | the same six, plus `secondary_market` | the same six, plus `Growth` |
+| `category_groups` / `investment_categories` | `Startup.industry`, `Investor.focus_areas` | `Science and Engineering`, `Software`, `Financial Services`, `Health Care`, `Consumer Goods` | `Deeptech`, `SaaS`, `Fintech`, `Healthtech`, `Consumer` |
+| `operating_status` | `Startup.active` | `active`, `closed` | `true`, `false` |
+| `investor_type` | `Investor.type` | `angel`, `venture_capital`, `private_equity_firm`, `corporate_venture_capital`, `accelerator` | `Angel`, `VC`, `PE`, `Corporate`, `Accelerator` |
+| `jobFunction` | `JobPosting.department` | `eng`, `sale`, `mrkt`, `prdm`, `prod`, `othr` | `Engineering`, `Sales`, `Marketing`, `Product`, `Operations`, `Other` |
+| `workplaceType` | `JobPosting.remote_type` | `ON_SITE`, `HYBRID`, `REMOTE` | `Onsite`, `Hybrid`, `Remote` |
+| `experienceLevel` | `JobPosting.seniority` | `ENTRY_LEVEL`, `ASSOCIATE`, `MID_SENIOR_LEVEL`, `DIRECTOR`, `EXECUTIVE` | `Entry`, `Mid`, `Senior`, `Lead`, `Executive` |
+| `jobState` | `JobPosting.active` | `LISTED`, `CLOSED` | `true`, `false` |
+
+Three consequences are worth reading off that table. Crunchbase's employee bands are **finer** than the target's, so `c_00051_c_00100` and `c_00051_c_00200` both land on `51-200` — a deliberate many-to-one collapse, not a mistake. `private_equity` and `secondary_market` both land on `Growth`, for the same reason. And a Crunchbase category group is a free-form name rather than a closed enumeration, so `Cleantech` — the out-of-list industry fixture — is carried in the payload exactly as authored, falls through translation untouched, and is then stored as `Other` by cleaning rule 3, which is the identical outcome the flattened column produces.
+
+The tables cover more codes than these files use, including the funding types that correspond to no target member at all: `debt_financing`, `grant`, `non_equity_assistance`, `initial_coin_offering` and `undisclosed` are recognised and resolve to nothing, logged as `recognised crunchbase code with no target member, left unwritten` so an operator can tell a known-but-unmappable code from one nobody has seen before. No shipped payload carries one, because these files are a mapping fixture rather than an exhaustive vocabulary test; that coverage belongs to the ATF suites.
 
 **The supplied value itself is logged only when it is safe to log.** `IngestionLogger` applies one rule to every unmatched choice value before it reaches a log line:
 
@@ -345,7 +432,7 @@ The fingerprint is salted with the run identifier, so the same value fingerprint
 
 The same policy governs every other log line the ingestion pipeline writes. **No external name, email address, biography, URL, upstream message or raw payload fragment reaches the flow execution log or the system log.** Records are identified by an opaque reference — a kind prefix and a sanitised token, such as `startup:fp:1a2b3c4d` or `record:` followed by a platform record identifier — and never by name. Anyone reading a log line therefore cannot recover who a skipped record was about, which is why the erasure procedure in [`../docs/data-model.md`](../docs/data-model.md) covers three data surfaces and not the logs.
 
-Six of the eleven choice lists declare no `Other` member — `Startup.funding_stage`, `Startup.employee_count_range`, `Investor.type`, `FundingRound.round_type`, `JobPosting.remote_type` and `JobPosting.seniority` — and an unmatched value in any of them is logged and the field left empty. The other five — `Startup.industry`, `Investor.focus_areas`, `Founder.title`, `Executive.title` and `JobPosting.department` — declare `Other`, and an unmatched value in any of them is stored as `Other` and logged. **Do not add an `Other` choice to any of the six lists that lack one**: prompt section 1.0 declares the field and choice definitions binding and complete, and the `sys_choice` inventory in the Update Set is exactly the 63 entity choice values those definitions declare. The full column-by-column outcome table is in [`../docs/data-model.md`](../docs/data-model.md).
+Six of the eleven choice lists declare no `Other` member — `Startup.funding_stage`, `Startup.employee_count_range`, `Investor.type`, `FundingRound.round_type`, `JobPosting.remote_type` and `JobPosting.seniority` — and an unmatched value in any of them is logged and the field left unwritten. The other five — `Startup.industry`, `Investor.focus_areas`, `Founder.title`, `Executive.title` and `JobPosting.department` — declare `Other`, and an unmatched value in any of them is stored as `Other` and logged. **Do not add an `Other` choice to any of the six lists that lack one**: prompt section 1.0 declares the field and choice definitions binding and complete, and the `sys_choice` inventory in the Update Set is exactly the 63 entity choice values those definitions declare. The full column-by-column outcome table is in [`../docs/data-model.md`](../docs/data-model.md).
 
 ## Row counts and designed defects
 
@@ -376,7 +463,7 @@ Some rows are **deliberately defective** so that a load exercises all four of th
 | --- | --- | --- | --- |
 | 1. Trim whitespace on all string fields | All six files: the three `crunchbase_*_sample.csv` files and the three `linkedin_*_sample.csv` files, at least one row each | A quoted string value with leading or trailing space, for example `" Example Labs"` | The value is trimmed and the row loads and transforms normally. The trimmed value is what reaches the entity record. |
 | 2. Deduplicate Startup records on `name` plus `headquarters_location`, case-insensitively | `crunchbase_startups_sample.csv` only | A pair of rows whose `name` and `headquarters_location` match when both are lowercased and trimmed, but whose `website` values differ | One Startup record survives the pair. The second row is recognised as a duplicate and does not create a second record. |
-| 3. Normalise every choice-backed column, mapping an unmatched value to `Other` where the list defines one and logging it | All six files. Eleven values across ten rows carry an unmatched choice value; they are listed row by row in [Unmatched values in choice columns](#unmatched-values-in-choice-columns) | A value that appears in no choice list, for example a `funding_stage` of `Series C` without the `+`, an `employee_count_range` of `50-100`, or a `title` of `Founding Engineer` | The value becomes `Other` when the target list defines an `Other` member and is left empty when it does not; either way `IngestionLogger` records the value and names the outcome. The row otherwise loads and transforms normally. |
+| 3. Normalise every choice-backed column, mapping an unmatched value to `Other` where the list defines one and logging it | All six files. Eleven values across ten rows carry an unmatched choice value; they are listed row by row in [Unmatched values in choice columns](#unmatched-values-in-choice-columns) | A value that appears in no choice list, for example a `funding_stage` of `Series C` without the `+`, an `employee_count_range` of `50-100`, or a `title` of `Founding Engineer` | The value becomes `Other` when the target list defines an `Other` member and is left unwritten when it does not; either way `IngestionLogger` records the value and names the outcome. The row otherwise loads and transforms normally. |
 | 4. Reject records missing mandatory fields rather than inserting partial records | All six files: the three `crunchbase_*_sample.csv` files and the three `linkedin_*_sample.csv` files. Each file carries one row per mandatory column of its record type, so `crunchbase_investors_sample.csv`, whose only mandatory column is `name`, carries one row and each of the other five files carries two | A blank in a column marked mandatory for that record type: `name`, `headquarters_location` or `active` on startups, `name` on investors, `startup_name` or `round_date` on funding rounds, `name` or `startup_name` on founders and executives, `startup_name` or `title` on job postings | `import_state` becomes `rejected`, `error_message` names **every** missing mandatory column on that row, and **no** entity record is created. |
 
 Rule 2's duplicate pair differs on `website` on purpose: the pair is the fixture that distinguishes a deduplication keyed on name plus headquarters location, which is what prompt section 4.0 specifies, from one keyed on name plus website, which would not catch this pair.
@@ -403,24 +490,26 @@ Eleven values across ten rows match no member of their target choice list. All e
 | File | Data row | Value carried | Column | Target choice list | Has `Other` | Outcome |
 | --- | --- | --- | --- | --- | --- | --- |
 | `crunchbase_startups_sample.csv` | 8 | `Cleantech` | `industry` | `Startup.industry` | Yes | Stored as `Other` and logged. |
-| `crunchbase_startups_sample.csv` | 8 | `Series C` | `funding_stage` | `Startup.funding_stage` | No | Logged; the field is left empty on the entity record. |
-| `crunchbase_startups_sample.csv` | 10 | `50-100` | `employee_count_range` | `Startup.employee_count_range` | No | Logged; the field is left empty on the entity record. |
+| `crunchbase_startups_sample.csv` | 8 | `Series C` | `funding_stage` | `Startup.funding_stage` | No | Logged; the field is left unwritten on the entity record. |
+| `crunchbase_startups_sample.csv` | 10 | `50-100` | `employee_count_range` | `Startup.employee_count_range` | No | Logged; the field is left unwritten on the entity record. |
 | `crunchbase_investors_sample.csv` | 6 | `Cleantech` | `focus_areas` | `Investor.focus_areas` | Yes | The member becomes `Other` and is logged. The row's remaining member `Fintech` is unaffected, so the stored list is `Fintech,Other`. |
-| `crunchbase_investors_sample.csv` | 7 | `Family Office` | `type` | `Investor.type` | No | Logged; the field is left empty on the entity record. |
-| `crunchbase_funding_rounds_sample.csv` | 8 | `Series C` | `round_type` | `FundingRound.round_type` | No | Logged; the field is left empty on the entity record. |
+| `crunchbase_investors_sample.csv` | 7 | `Family Office` | `type` | `Investor.type` | No | Logged; the field is left unwritten on the entity record. |
+| `crunchbase_funding_rounds_sample.csv` | 8 | `Series C` | `round_type` | `FundingRound.round_type` | No | Logged; the field is left unwritten on the entity record. |
 | `linkedin_founders_sample.csv` | 8 | `Founding Engineer` | `title` | `Founder.title` | Yes | Stored as `Other` and logged. |
 | `linkedin_executives_sample.csv` | 8 | `Chief Revenue Officer` | `title` | `Executive.title` | Yes | Stored as `Other` and logged. |
 | `linkedin_job_postings_sample.csv` | 10 | `Customer Success` | `department` | `JobPosting.department` | Yes | Stored as `Other` and logged. |
-| `linkedin_job_postings_sample.csv` | 11 | `Flexible` | `remote_type` | `JobPosting.remote_type` | No | Logged; the field is left empty on the entity record. |
-| `linkedin_job_postings_sample.csv` | 12 | `Principal` | `seniority` | `JobPosting.seniority` | No | Logged; the field is left empty on the entity record. |
+| `linkedin_job_postings_sample.csv` | 11 | `Flexible` | `remote_type` | `JobPosting.remote_type` | No | Logged; the field is left unwritten on the entity record. |
+| `linkedin_job_postings_sample.csv` | 12 | `Principal` | `seniority` | `JobPosting.seniority` | No | Logged; the field is left unwritten on the entity record. |
 
-Every file carries at least one of these fixtures, and the eleven between them cover both halves of the policy: five values coerce to `Other` and six are logged and left empty.
+Every file carries at least one of these fixtures, and the eleven between them cover both halves of the policy: five values coerce to `Other` and six are logged and left unwritten.
 
 `Series C` appears twice on purpose, once on a startup and once on a funding round, because `Startup.funding_stage` and `FundingRound.round_type` share the same eight values and both must behave identically. `Cleantech` likewise appears twice, once as a `Startup.industry` value and once as a member of `Investor.focus_areas`, because `focus_areas` reuses the six `Startup.industry` values and both must behave identically — the difference being that `focus_areas` normalises member by member, so only the unmatched member becomes `Other`.
 
-`Investor.type` is the one column in this dataset whose unmatched value is neither coerced nor part of a list: the list is `VC`, `Angel`, `PE`, `Corporate`, `Accelerator` with no `Other` member, so `Family Office` on data row 7 is logged and `type` is left empty. Data row 7 is `Menotomy Capital Group`, the one investor no funding round references, so the row is otherwise unencumbered and its outcome is observable in isolation.
+`Investor.type` is the one column in this dataset whose unmatched value is neither coerced nor part of a list: the list is `VC`, `Angel`, `PE`, `Corporate`, `Accelerator` with no `Other` member, so `Family Office` on data row 7 is logged and `type` is left unwritten. Data row 7 is `Menotomy Capital Group`, the one investor no funding round references, so the row is otherwise unencumbered and its outcome is observable in isolation.
 
-A list with no `Other` member offers no value to normalise to, so the unmatched value is logged and the field left empty rather than coerced into a value the dictionary does not define. **Do not add an `Other` choice to any of these lists**: prompt section 1.0 declares the field and choice definitions binding and complete. Each of the ten rows is otherwise valid and transforms normally — an emptied choice column is not a rejection, and the record is still created.
+A list with no `Other` member offers no value to normalise to, so the unmatched value is logged and the field left unwritten rather than coerced into a value the dictionary does not define. **Do not add an `Other` choice to any of these lists**: prompt section 1.0 declares the field and choice definitions binding and complete. Each of the ten rows is otherwise valid and transforms normally — an unwritten choice column is not a rejection, and the record is still created.
+
+**Left unwritten is not the same as emptied.** The mapper removes the field from the record it is about to write rather than writing an empty value into it. On an insert the column is simply empty; on an **update** whatever the column already stores survives, so an unmatched incoming value never destroys a good stored value. That is the same rule described under [Absent is not blank, and ingestion never clears a stored value](#absent-is-not-blank-and-ingestion-never-clears-a-stored-value), and it is why the flow execution log names this outcome `left unwritten` rather than `left empty`.
 
 ### Non-resolving references
 
@@ -429,6 +518,27 @@ Every `startup_name` value, and every `lead_investor_name` and `participating_in
 The exception is the rule 4 fixtures. A row authored to be rejected for a blank mandatory field is the **only** kind of row whose natural-key reference may fail to resolve, and in those rows the failure is the blank itself: a blank `startup_name` on a founder, executive, funding round or job posting row cannot resolve to a Startup, which is precisely the condition rule 4 rejects. Recognise them by the blank column. Each child file carries exactly one such row, the fixture whose `startup_name` is blank; that file's other rule 4 fixture blanks a different mandatory column — `round_date` on funding rounds, `name` on founders and executives, `title` on job postings — and its `startup_name` still resolves. A non-resolving reference in any row that is **not** a rule 4 fixture is a mistake, not a designed defect, and should be reported.
 
 The three rejected startup rows create no Startup record, so no child row may reference them. Two of the three carry a blank `startup_name` or a blank `headquarters_location` and so have no usable name; the third names `Charles River Telemetry`, and **no row in any child file references that name**.
+
+### Live and fallback are not identical in their optional fields
+
+Both paths over this dataset accept the same 52 rows and reject the same 13, and every accepted record carries the same identity on both — the same `name`, `headquarters_location` and `active` on a startup, the same parent and `round_date` on a funding round, the same parent and `title` on a job posting. The two paths therefore describe the same entities, and the rule 2 de-duplication keys agree.
+
+They differ in **18 optional field values**, and every one of the 18 is a designed consequence of the two paths reading different vocabularies rather than a defect. The flattened columns are authored in target vocabulary, so they can carry a value the source publishes no code for and can carry a deliberately out-of-list rule 3 fixture value; `raw_payload` is authored in source vocabulary, so it carries only codes the source really publishes. Neither side is more correct — they are evidence of different things. The full catalogue:
+
+| # | Records | Field | Fallback writes | Live writes | Why |
+| --- | --- | --- | --- | --- | --- |
+| 1 | All **9** accepted startups | `institutional_funding_last_5yrs` | the row's value | nothing | Neither Crunchbase nor LinkedIn publishes any key for this field, so no alias can reach it and the payload rightly carries none. The entity dictionary default of `false` applies on insert. This is the single largest group, and it is the clearest case of a column that only a flattened import or an administrator can populate. |
+| 2 | `Esplanade Learning` | `funding_stage` | `Acquired` | nothing | `Acquired` is a company **status**, and Crunchbase's funding-type vocabulary has no code for it — an acquisition is not a funding round. The translation table maps no source code to `Acquired`, so the live path leaves the column unwritten rather than guessing. |
+| 3 | `Esplanade Learning` | `employee_count_range` | nothing | `51-200` | The flattened column deliberately carries `50-100`, an out-of-list rule 3 fixture value, and the list declares no `Other` member, so the fallback leaves it unwritten. The payload carries the valid source code `c_00051_c_00200`, which translates cleanly. |
+| 4 | `Menotomy Capital Group` | `focus_areas` | `Healthtech,Deeptech` | nothing | The designated partial-response fixture omits `investment_categories`. |
+| 5 | `Menotomy Capital Group` | `aum_usd` | `95000000` | nothing | The same fixture omits `assets_under_management`. |
+| 6 | `Copley Grid Systems` round of 2024-08-05 | `round_type` | nothing | `Series C+` | The flattened column deliberately carries `Series C`, an out-of-list rule 3 fixture value on a list with no `Other` member. The payload carries `series_c`, which translates to `Series C+`. |
+| 7 | `Casimir Pellworth`, `Rosalind Ebersole`, `Guinevere Halstrom` — **3** people | `bio` | nothing | the person's `headline` | These three rows carry no flattened `bio` and their payloads publish no `summary`. The `bio` alias chain declares `summary` then `headline`, so the live path falls back to the headline — which is the documented alias behaviour, and the only case in this dataset where a live value exists because of a second-choice alias. |
+| 8 | `Copley Grid Systems` `Customer Success Manager` | `department` | `Other` | nothing | The flattened column carries `Customer Success`, an out-of-list rule 3 fixture value, and `department` **does** declare an `Other` member, so the fallback stores `Other`. LinkedIn's `jobFunction` is a closed enumeration with no member for customer success, so the payload publishes no code and the live path leaves the column unwritten. This is the one row where the two rule 3 outcomes — store `Other`, or leave unwritten — are visible side by side on the same column. |
+
+Rows 3, 6 and 8 are the interesting ones for a reviewer: in each, the **fallback** path is the one exercising a designed defect while the live path succeeds, which is the opposite of the intuitive reading. Do not "repair" a flattened column to match its payload — doing so would delete a rule 3 fixture and reduce coverage of cleaning rule 3, and the counts under [Unmatched values in choice columns](#unmatched-values-in-choice-columns) would no longer hold.
+
+None of the 18 is a value **conflict**: there is no field where the two paths write two different non-empty values. Every difference is one path writing and the other leaving unwritten. That matters because of the no-clear rule — running the fallback import and then a live run, in either order, is additive, and neither run removes what the other wrote.
 
 ## Data Import Wizard procedure
 

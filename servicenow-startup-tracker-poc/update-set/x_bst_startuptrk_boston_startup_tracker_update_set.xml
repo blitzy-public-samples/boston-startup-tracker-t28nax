@@ -145,7 +145,7 @@
     <category>customer</category>
     <comments/>
     <name>sys_db_object_x_bst_startuptrk_fundinground</name>
-    <payload>&lt;record_update table="sys_db_object"&gt;&lt;sys_db_object action="INSERT_OR_UPDATE"&gt;&lt;access&gt;package_private&lt;/access&gt;&lt;actions_access&gt;false&lt;/actions_access&gt;&lt;alter_access&gt;false&lt;/alter_access&gt;&lt;caller_access/&gt;&lt;client_scripts_access&gt;false&lt;/client_scripts_access&gt;&lt;configuration_access&gt;false&lt;/configuration_access&gt;&lt;create_access&gt;false&lt;/create_access&gt;&lt;create_access_controls&gt;false&lt;/create_access_controls&gt;&lt;delete_access&gt;false&lt;/delete_access&gt;&lt;extension_model/&gt;&lt;is_extendable&gt;false&lt;/is_extendable&gt;&lt;label&gt;Funding round&lt;/label&gt;&lt;live_feed_enabled&gt;false&lt;/live_feed_enabled&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;number_ref/&gt;&lt;provider_class/&gt;&lt;read_access&gt;false&lt;/read_access&gt;&lt;scriptable_table&gt;false&lt;/scriptable_table&gt;&lt;sys_class_name&gt;sys_db_object&lt;/sys_class_name&gt;&lt;sys_id&gt;5663b376ed647393b0af28bd00d7c7eb&lt;/sys_id&gt;&lt;sys_name&gt;Funding round&lt;/sys_name&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;sys_policy/&gt;&lt;sys_update_name&gt;sys_db_object_x_bst_startuptrk_fundinground&lt;/sys_update_name&gt;&lt;super_class/&gt;&lt;update_access&gt;false&lt;/update_access&gt;&lt;user_role/&gt;&lt;ws_access&gt;false&lt;/ws_access&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_db_object&gt;&lt;sys_dictionary action="INSERT_OR_UPDATE"&gt;&lt;active&gt;true&lt;/active&gt;&lt;array&gt;false&lt;/array&gt;&lt;attributes/&gt;&lt;audit&gt;false&lt;/audit&gt;&lt;column_label&gt;Funding round&lt;/column_label&gt;&lt;display&gt;false&lt;/display&gt;&lt;element/&gt;&lt;internal_type display_value="Collection"&gt;collection&lt;/internal_type&gt;&lt;mandatory&gt;false&lt;/mandatory&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;primary&gt;false&lt;/primary&gt;&lt;read_only&gt;false&lt;/read_only&gt;&lt;sys_id&gt;ee2562afa1d58b3c3bf25866873b3684&lt;/sys_id&gt;&lt;sys_name&gt;Funding round&lt;/sys_name&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;unique&gt;false&lt;/unique&gt;&lt;virtual&gt;false&lt;/virtual&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_dictionary&gt;&lt;sys_dictionary action="INSERT_OR_UPDATE"&gt;&lt;active&gt;true&lt;/active&gt;&lt;array&gt;false&lt;/array&gt;&lt;attributes/&gt;&lt;audit&gt;false&lt;/audit&gt;&lt;calculation/&gt;&lt;choice/&gt;&lt;column_label&gt;Startup&lt;/column_label&gt;&lt;default_value/&gt;&lt;display&gt;false&lt;/display&gt;&lt;dynamic_default_value/&gt;&lt;element&gt;startup&lt;/element&gt;&lt;internal_type display_value="Reference"&gt;reference&lt;/internal_type&gt;&lt;mandatory&gt;true&lt;/mandatory&gt;&lt;max_length&gt;32&lt;/max_length&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;primary&gt;false&lt;/primary&gt;&lt;read_only&gt;false&lt;/read_only&gt;&lt;reference display_value="Startup"&gt;x_bst_startuptrk_startup&lt;/reference&gt;&lt;reference_cascade_rule display_value="Cascade"&gt;delete&lt;/reference_cascade_rule&gt;&lt;reference_floats&gt;false&lt;/reference_floats&gt;&lt;reference_type/&gt;&lt;sizeclass/&gt;&lt;spell_check&gt;false&lt;/spell_check&gt;&lt;staged&gt;false&lt;/staged&gt;&lt;sys_id&gt;cb89c5e865de4214eafc60d6f2ff7f9b&lt;/sys_id&gt;&lt;sys_name&gt;Startup&lt;/sys_name&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;table_reference&gt;false&lt;/table_reference&gt;&lt;text_index&gt;false&lt;/text_index&gt;&lt;unique&gt;false&lt;/unique&gt;&lt;use_dependent_field&gt;false&lt;/use_dependent_field&gt;&lt;use_dynamic_default&gt;false&lt;/use_dynamic_default&gt;&lt;virtual&gt;false&lt;/virtual&gt;&lt;widget/&gt;&lt;xml_view&gt;false&lt;/xml_view&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_dictionary&gt;&lt;sys_dictionary action="INSERT_OR_UPDATE"&gt;&lt;active&gt;true&lt;/active&gt;&lt;array&gt;false&lt;/array&gt;&lt;attributes/&gt;&lt;audit&gt;false&lt;/audit&gt;&lt;calculation/&gt;&lt;choice&gt;1&lt;/choice&gt;&lt;column_label&gt;Round type&lt;/column_label&gt;&lt;default_value/&gt;&lt;display&gt;false&lt;/display&gt;&lt;dynamic_default_value/&gt;&lt;element&gt;round_type&lt;/element&gt;&lt;internal_type display_value="String"&gt;string&lt;/internal_type&gt;&lt;mandatory&gt;false&lt;/mandatory&gt;&lt;max_length&gt;40&lt;/max_length&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;primary&gt;false&lt;/primary&gt;&lt;read_only&gt;false&lt;/read_only&gt;&lt;reference/&gt;&lt;reference_cascade_rule/&gt;&lt;reference_floats&gt;false&lt;/reference_floats&gt;&lt;reference_type/&gt;&lt;sizeclass/&gt;&lt;spell_check&gt;false&lt;/spell_check&gt;&lt;staged&gt;false&lt;/staged&gt;&lt;sys_id&gt;a854c27ce5ee684f3d36681c0a8c00b0&lt;/sys_id&gt;&lt;sys_name&gt;Round type&lt;/sys_name&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;table_reference&gt;false&lt;/table_reference&gt;&lt;text_index&gt;false&lt;/text_index&gt;&lt;unique&gt;false&lt;/unique&gt;&lt;use_dependent_field&gt;false&lt;/use_dependent_field&gt;&lt;use_dynamic_default&gt;false&lt;/use_dynamic_default&gt;&lt;virtual&gt;false&lt;/virtual&gt;&lt;widget/&gt;&lt;xml_view&gt;false&lt;/xml_view&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_dictionary&gt;&lt;sys_dictionary action="INSERT_OR_UPDATE"&gt;&lt;active&gt;true&lt;/active&gt;&lt;array&gt;false&lt;/array&gt;&lt;attributes/&gt;&lt;audit&gt;false&lt;/audit&gt;&lt;calculation/&gt;&lt;choice/&gt;&lt;column_label&gt;Amount USD&lt;/column_label&gt;&lt;default_value/&gt;&lt;display&gt;false&lt;/display&gt;&lt;dynamic_default_value/&gt;&lt;element&gt;amount_usd&lt;/element&gt;&lt;internal_type display_value="Currency"&gt;currency&lt;/internal_type&gt;&lt;mandatory&gt;false&lt;/mandatory&gt;&lt;max_length/&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;primary&gt;false&lt;/primary&gt;&lt;read_only&gt;false&lt;/read_only&gt;&lt;reference/&gt;&lt;reference_cascade_rule/&gt;&lt;reference_floats&gt;false&lt;/reference_floats&gt;&lt;reference_type/&gt;&lt;sizeclass/&gt;&lt;spell_check&gt;false&lt;/spell_check&gt;&lt;staged&gt;false&lt;/staged&gt;&lt;sys_id&gt;a2480c001c86673b16823d0f6cf3af5a&lt;/sys_id&gt;&lt;sys_name&gt;Amount USD&lt;/sys_name&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;table_reference&gt;false&lt;/table_reference&gt;&lt;text_index&gt;false&lt;/text_index&gt;&lt;unique&gt;false&lt;/unique&gt;&lt;use_dependent_field&gt;false&lt;/use_dependent_field&gt;&lt;use_dynamic_default&gt;false&lt;/use_dynamic_default&gt;&lt;virtual&gt;false&lt;/virtual&gt;&lt;widget/&gt;&lt;xml_view&gt;false&lt;/xml_view&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_dictionary&gt;&lt;sys_dictionary action="INSERT_OR_UPDATE"&gt;&lt;active&gt;true&lt;/active&gt;&lt;array&gt;false&lt;/array&gt;&lt;attributes/&gt;&lt;audit&gt;false&lt;/audit&gt;&lt;calculation/&gt;&lt;choice/&gt;&lt;column_label&gt;Round date&lt;/column_label&gt;&lt;default_value/&gt;&lt;display&gt;false&lt;/display&gt;&lt;dynamic_default_value/&gt;&lt;element&gt;round_date&lt;/element&gt;&lt;internal_type display_value="Date"&gt;glide_date&lt;/internal_type&gt;&lt;mandatory&gt;true&lt;/mandatory&gt;&lt;max_length/&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;primary&gt;false&lt;/primary&gt;&lt;read_only&gt;false&lt;/read_only&gt;&lt;reference/&gt;&lt;reference_cascade_rule/&gt;&lt;reference_floats&gt;false&lt;/reference_floats&gt;&lt;reference_type/&gt;&lt;sizeclass/&gt;&lt;spell_check&gt;false&lt;/spell_check&gt;&lt;staged&gt;false&lt;/staged&gt;&lt;sys_id&gt;524ccad849ee48106ca312673b19c156&lt;/sys_id&gt;&lt;sys_name&gt;Round date&lt;/sys_name&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;table_reference&gt;false&lt;/table_reference&gt;&lt;text_index&gt;false&lt;/text_index&gt;&lt;unique&gt;false&lt;/unique&gt;&lt;use_dependent_field&gt;false&lt;/use_dependent_field&gt;&lt;use_dynamic_default&gt;false&lt;/use_dynamic_default&gt;&lt;virtual&gt;false&lt;/virtual&gt;&lt;widget/&gt;&lt;xml_view&gt;false&lt;/xml_view&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_dictionary&gt;&lt;sys_dictionary action="INSERT_OR_UPDATE"&gt;&lt;active&gt;true&lt;/active&gt;&lt;array&gt;false&lt;/array&gt;&lt;attributes/&gt;&lt;audit&gt;false&lt;/audit&gt;&lt;calculation/&gt;&lt;choice/&gt;&lt;column_label&gt;Lead investor&lt;/column_label&gt;&lt;default_value/&gt;&lt;display&gt;false&lt;/display&gt;&lt;dynamic_default_value/&gt;&lt;element&gt;lead_investor&lt;/element&gt;&lt;internal_type display_value="Reference"&gt;reference&lt;/internal_type&gt;&lt;mandatory&gt;false&lt;/mandatory&gt;&lt;max_length&gt;32&lt;/max_length&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;primary&gt;false&lt;/primary&gt;&lt;read_only&gt;false&lt;/read_only&gt;&lt;reference display_value="Investor"&gt;x_bst_startuptrk_investor&lt;/reference&gt;&lt;reference_cascade_rule/&gt;&lt;reference_floats&gt;false&lt;/reference_floats&gt;&lt;reference_type/&gt;&lt;sizeclass/&gt;&lt;spell_check&gt;false&lt;/spell_check&gt;&lt;staged&gt;false&lt;/staged&gt;&lt;sys_id&gt;1f9f5dba2cebe034c88618f64cdce3c8&lt;/sys_id&gt;&lt;sys_name&gt;Lead investor&lt;/sys_name&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;table_reference&gt;false&lt;/table_reference&gt;&lt;text_index&gt;false&lt;/text_index&gt;&lt;unique&gt;false&lt;/unique&gt;&lt;use_dependent_field&gt;false&lt;/use_dependent_field&gt;&lt;use_dynamic_default&gt;false&lt;/use_dynamic_default&gt;&lt;virtual&gt;false&lt;/virtual&gt;&lt;widget/&gt;&lt;xml_view&gt;false&lt;/xml_view&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_dictionary&gt;&lt;sys_dictionary action="INSERT_OR_UPDATE"&gt;&lt;active&gt;true&lt;/active&gt;&lt;array&gt;false&lt;/array&gt;&lt;attributes/&gt;&lt;audit&gt;false&lt;/audit&gt;&lt;calculation/&gt;&lt;choice/&gt;&lt;column_label&gt;Participating investors&lt;/column_label&gt;&lt;default_value/&gt;&lt;display&gt;false&lt;/display&gt;&lt;dynamic_default_value/&gt;&lt;element&gt;participating_investors&lt;/element&gt;&lt;internal_type display_value="List"&gt;glide_list&lt;/internal_type&gt;&lt;mandatory&gt;false&lt;/mandatory&gt;&lt;max_length&gt;1000&lt;/max_length&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;primary&gt;false&lt;/primary&gt;&lt;read_only&gt;true&lt;/read_only&gt;&lt;reference&gt;x_bst_startuptrk_investor&lt;/reference&gt;&lt;reference_cascade_rule/&gt;&lt;reference_floats&gt;false&lt;/reference_floats&gt;&lt;reference_type/&gt;&lt;sizeclass/&gt;&lt;spell_check&gt;false&lt;/spell_check&gt;&lt;staged&gt;false&lt;/staged&gt;&lt;sys_id&gt;2ba0cac4221f51e40bc3fbfe788c059e&lt;/sys_id&gt;&lt;sys_name&gt;Participating investors&lt;/sys_name&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;table_reference&gt;false&lt;/table_reference&gt;&lt;text_index&gt;false&lt;/text_index&gt;&lt;unique&gt;false&lt;/unique&gt;&lt;use_dependent_field&gt;false&lt;/use_dependent_field&gt;&lt;use_dynamic_default&gt;false&lt;/use_dynamic_default&gt;&lt;virtual&gt;false&lt;/virtual&gt;&lt;widget/&gt;&lt;xml_view&gt;false&lt;/xml_view&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_dictionary&gt;&lt;sys_dictionary action="INSERT_OR_UPDATE"&gt;&lt;active&gt;true&lt;/active&gt;&lt;array&gt;false&lt;/array&gt;&lt;attributes/&gt;&lt;audit&gt;false&lt;/audit&gt;&lt;calculation/&gt;&lt;choice/&gt;&lt;column_label&gt;Valuation USD&lt;/column_label&gt;&lt;default_value/&gt;&lt;display&gt;false&lt;/display&gt;&lt;dynamic_default_value/&gt;&lt;element&gt;valuation_usd&lt;/element&gt;&lt;internal_type display_value="Currency"&gt;currency&lt;/internal_type&gt;&lt;mandatory&gt;false&lt;/mandatory&gt;&lt;max_length/&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;primary&gt;false&lt;/primary&gt;&lt;read_only&gt;false&lt;/read_only&gt;&lt;reference/&gt;&lt;reference_cascade_rule/&gt;&lt;reference_floats&gt;false&lt;/reference_floats&gt;&lt;reference_type/&gt;&lt;sizeclass/&gt;&lt;spell_check&gt;false&lt;/spell_check&gt;&lt;staged&gt;false&lt;/staged&gt;&lt;sys_id&gt;a3103e1f277e3e63b89681182892531d&lt;/sys_id&gt;&lt;sys_name&gt;Valuation USD&lt;/sys_name&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;table_reference&gt;false&lt;/table_reference&gt;&lt;text_index&gt;false&lt;/text_index&gt;&lt;unique&gt;false&lt;/unique&gt;&lt;use_dependent_field&gt;false&lt;/use_dependent_field&gt;&lt;use_dynamic_default&gt;false&lt;/use_dynamic_default&gt;&lt;virtual&gt;false&lt;/virtual&gt;&lt;widget/&gt;&lt;xml_view&gt;false&lt;/xml_view&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_dictionary&gt;&lt;sys_dictionary action="INSERT_OR_UPDATE"&gt;&lt;active&gt;true&lt;/active&gt;&lt;array&gt;false&lt;/array&gt;&lt;attributes/&gt;&lt;audit&gt;false&lt;/audit&gt;&lt;calculation/&gt;&lt;choice/&gt;&lt;column_label&gt;Source URL&lt;/column_label&gt;&lt;default_value/&gt;&lt;display&gt;false&lt;/display&gt;&lt;dynamic_default_value/&gt;&lt;element&gt;source_url&lt;/element&gt;&lt;internal_type display_value="String"&gt;string&lt;/internal_type&gt;&lt;mandatory&gt;false&lt;/mandatory&gt;&lt;max_length&gt;255&lt;/max_length&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;primary&gt;false&lt;/primary&gt;&lt;read_only&gt;false&lt;/read_only&gt;&lt;reference/&gt;&lt;reference_cascade_rule/&gt;&lt;reference_floats&gt;false&lt;/reference_floats&gt;&lt;reference_type/&gt;&lt;sizeclass/&gt;&lt;spell_check&gt;false&lt;/spell_check&gt;&lt;staged&gt;false&lt;/staged&gt;&lt;sys_id&gt;1f7d4a9b1b07e94e2514ebc49e1dd560&lt;/sys_id&gt;&lt;sys_name&gt;Source URL&lt;/sys_name&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;table_reference&gt;false&lt;/table_reference&gt;&lt;text_index&gt;false&lt;/text_index&gt;&lt;unique&gt;false&lt;/unique&gt;&lt;use_dependent_field&gt;false&lt;/use_dependent_field&gt;&lt;use_dynamic_default&gt;false&lt;/use_dynamic_default&gt;&lt;virtual&gt;false&lt;/virtual&gt;&lt;widget/&gt;&lt;xml_view&gt;false&lt;/xml_view&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_dictionary&gt;&lt;sys_documentation action="INSERT_OR_UPDATE"&gt;&lt;element/&gt;&lt;help/&gt;&lt;hint&gt;Funding round record. Implements prompt 1.5.&lt;/hint&gt;&lt;label&gt;Funding round&lt;/label&gt;&lt;language&gt;en&lt;/language&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;plural&gt;Funding rounds&lt;/plural&gt;&lt;sys_id&gt;6a21f3d955261a90c4f6774696e04213&lt;/sys_id&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;url/&gt;&lt;url_target/&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_documentation&gt;&lt;sys_documentation action="INSERT_OR_UPDATE"&gt;&lt;element&gt;startup&lt;/element&gt;&lt;help/&gt;&lt;hint&gt;Owning startup. Implements prompt 1.0 field list.&lt;/hint&gt;&lt;label&gt;Startup&lt;/label&gt;&lt;language&gt;en&lt;/language&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;plural/&gt;&lt;sys_id&gt;4f607f65edfb3b839e0e5552f65a91ea&lt;/sys_id&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;url/&gt;&lt;url_target/&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_documentation&gt;&lt;sys_documentation action="INSERT_OR_UPDATE"&gt;&lt;element&gt;round_type&lt;/element&gt;&lt;help/&gt;&lt;hint&gt;Round type carrying the Startup funding stage values. Implements prompt 1.0 field list.&lt;/hint&gt;&lt;label&gt;Round type&lt;/label&gt;&lt;language&gt;en&lt;/language&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;plural/&gt;&lt;sys_id&gt;70d94294b9cc0a8b76c50f5cf09dea24&lt;/sys_id&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;url/&gt;&lt;url_target/&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_documentation&gt;&lt;sys_documentation action="INSERT_OR_UPDATE"&gt;&lt;element&gt;amount_usd&lt;/element&gt;&lt;help/&gt;&lt;hint&gt;Round amount. Premium-gated by prompt 2.0.&lt;/hint&gt;&lt;label&gt;Amount USD&lt;/label&gt;&lt;language&gt;en&lt;/language&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;plural/&gt;&lt;sys_id&gt;5ee80c4e20f2f227eab571d15097cb93&lt;/sys_id&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;url/&gt;&lt;url_target/&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_documentation&gt;&lt;sys_documentation action="INSERT_OR_UPDATE"&gt;&lt;element&gt;round_date&lt;/element&gt;&lt;help/&gt;&lt;hint&gt;Date the round closed. Implements prompt 1.0 field list.&lt;/hint&gt;&lt;label&gt;Round date&lt;/label&gt;&lt;language&gt;en&lt;/language&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;plural/&gt;&lt;sys_id&gt;1d86be66f30e13995be40632b50ccf44&lt;/sys_id&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;url/&gt;&lt;url_target/&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_documentation&gt;&lt;sys_documentation action="INSERT_OR_UPDATE"&gt;&lt;element&gt;lead_investor&lt;/element&gt;&lt;help/&gt;&lt;hint&gt;Lead investor on the round. Implements prompt 1.0 field list.&lt;/hint&gt;&lt;label&gt;Lead investor&lt;/label&gt;&lt;language&gt;en&lt;/language&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;plural/&gt;&lt;sys_id&gt;0b82a2ebd63cdfeefb6c029e98f1e552&lt;/sys_id&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;url/&gt;&lt;url_target/&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_documentation&gt;&lt;sys_documentation action="INSERT_OR_UPDATE"&gt;&lt;element&gt;participating_investors&lt;/element&gt;&lt;help/&gt;&lt;hint&gt;Participating investors, a read-only list projected from the authoritative m2m join table and maintained by the round investor link business rule. Implements prompt 1.5.&lt;/hint&gt;&lt;label&gt;Participating investors&lt;/label&gt;&lt;language&gt;en&lt;/language&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;plural/&gt;&lt;sys_id&gt;87be54839cf55f6c627e5040bd6302d4&lt;/sys_id&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;url/&gt;&lt;url_target/&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_documentation&gt;&lt;sys_documentation action="INSERT_OR_UPDATE"&gt;&lt;element&gt;valuation_usd&lt;/element&gt;&lt;help/&gt;&lt;hint&gt;Post-round valuation. Premium-gated by prompt 2.0.&lt;/hint&gt;&lt;label&gt;Valuation USD&lt;/label&gt;&lt;language&gt;en&lt;/language&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;plural/&gt;&lt;sys_id&gt;24ced45689357f85ac8566ada953ba29&lt;/sys_id&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;url/&gt;&lt;url_target/&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_documentation&gt;&lt;sys_documentation action="INSERT_OR_UPDATE"&gt;&lt;element&gt;source_url&lt;/element&gt;&lt;help/&gt;&lt;hint&gt;Source URL for the round. Implements prompt 1.0 field list.&lt;/hint&gt;&lt;label&gt;Source URL&lt;/label&gt;&lt;language&gt;en&lt;/language&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;plural/&gt;&lt;sys_id&gt;732988a89f1599636202eed0c7a0c0e9&lt;/sys_id&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;url/&gt;&lt;url_target/&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_documentation&gt;&lt;/record_update&gt;</payload>
+    <payload>&lt;record_update table="sys_db_object"&gt;&lt;sys_db_object action="INSERT_OR_UPDATE"&gt;&lt;access&gt;package_private&lt;/access&gt;&lt;actions_access&gt;false&lt;/actions_access&gt;&lt;alter_access&gt;false&lt;/alter_access&gt;&lt;caller_access/&gt;&lt;client_scripts_access&gt;false&lt;/client_scripts_access&gt;&lt;configuration_access&gt;false&lt;/configuration_access&gt;&lt;create_access&gt;false&lt;/create_access&gt;&lt;create_access_controls&gt;false&lt;/create_access_controls&gt;&lt;delete_access&gt;false&lt;/delete_access&gt;&lt;extension_model/&gt;&lt;is_extendable&gt;false&lt;/is_extendable&gt;&lt;label&gt;Funding round&lt;/label&gt;&lt;live_feed_enabled&gt;false&lt;/live_feed_enabled&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;number_ref/&gt;&lt;provider_class/&gt;&lt;read_access&gt;false&lt;/read_access&gt;&lt;scriptable_table&gt;false&lt;/scriptable_table&gt;&lt;sys_class_name&gt;sys_db_object&lt;/sys_class_name&gt;&lt;sys_id&gt;5663b376ed647393b0af28bd00d7c7eb&lt;/sys_id&gt;&lt;sys_name&gt;Funding round&lt;/sys_name&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;sys_policy/&gt;&lt;sys_update_name&gt;sys_db_object_x_bst_startuptrk_fundinground&lt;/sys_update_name&gt;&lt;super_class/&gt;&lt;update_access&gt;false&lt;/update_access&gt;&lt;user_role/&gt;&lt;ws_access&gt;false&lt;/ws_access&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_db_object&gt;&lt;sys_dictionary action="INSERT_OR_UPDATE"&gt;&lt;active&gt;true&lt;/active&gt;&lt;array&gt;false&lt;/array&gt;&lt;attributes/&gt;&lt;audit&gt;false&lt;/audit&gt;&lt;column_label&gt;Funding round&lt;/column_label&gt;&lt;display&gt;false&lt;/display&gt;&lt;element/&gt;&lt;internal_type display_value="Collection"&gt;collection&lt;/internal_type&gt;&lt;mandatory&gt;false&lt;/mandatory&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;primary&gt;false&lt;/primary&gt;&lt;read_only&gt;false&lt;/read_only&gt;&lt;sys_id&gt;ee2562afa1d58b3c3bf25866873b3684&lt;/sys_id&gt;&lt;sys_name&gt;Funding round&lt;/sys_name&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;unique&gt;false&lt;/unique&gt;&lt;virtual&gt;false&lt;/virtual&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_dictionary&gt;&lt;sys_dictionary action="INSERT_OR_UPDATE"&gt;&lt;active&gt;true&lt;/active&gt;&lt;array&gt;false&lt;/array&gt;&lt;attributes/&gt;&lt;audit&gt;false&lt;/audit&gt;&lt;calculation/&gt;&lt;choice/&gt;&lt;column_label&gt;Startup&lt;/column_label&gt;&lt;default_value/&gt;&lt;display&gt;false&lt;/display&gt;&lt;dynamic_default_value/&gt;&lt;element&gt;startup&lt;/element&gt;&lt;internal_type display_value="Reference"&gt;reference&lt;/internal_type&gt;&lt;mandatory&gt;true&lt;/mandatory&gt;&lt;max_length&gt;32&lt;/max_length&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;primary&gt;false&lt;/primary&gt;&lt;read_only&gt;false&lt;/read_only&gt;&lt;reference display_value="Startup"&gt;x_bst_startuptrk_startup&lt;/reference&gt;&lt;reference_cascade_rule display_value="Cascade"&gt;delete&lt;/reference_cascade_rule&gt;&lt;reference_floats&gt;false&lt;/reference_floats&gt;&lt;reference_type/&gt;&lt;sizeclass/&gt;&lt;spell_check&gt;false&lt;/spell_check&gt;&lt;staged&gt;false&lt;/staged&gt;&lt;sys_id&gt;cb89c5e865de4214eafc60d6f2ff7f9b&lt;/sys_id&gt;&lt;sys_name&gt;Startup&lt;/sys_name&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;table_reference&gt;false&lt;/table_reference&gt;&lt;text_index&gt;false&lt;/text_index&gt;&lt;unique&gt;false&lt;/unique&gt;&lt;use_dependent_field&gt;false&lt;/use_dependent_field&gt;&lt;use_dynamic_default&gt;false&lt;/use_dynamic_default&gt;&lt;virtual&gt;false&lt;/virtual&gt;&lt;widget/&gt;&lt;xml_view&gt;false&lt;/xml_view&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_dictionary&gt;&lt;sys_dictionary action="INSERT_OR_UPDATE"&gt;&lt;active&gt;true&lt;/active&gt;&lt;array&gt;false&lt;/array&gt;&lt;attributes/&gt;&lt;audit&gt;false&lt;/audit&gt;&lt;calculation/&gt;&lt;choice&gt;1&lt;/choice&gt;&lt;column_label&gt;Round type&lt;/column_label&gt;&lt;default_value/&gt;&lt;display&gt;false&lt;/display&gt;&lt;dynamic_default_value/&gt;&lt;element&gt;round_type&lt;/element&gt;&lt;internal_type display_value="String"&gt;string&lt;/internal_type&gt;&lt;mandatory&gt;false&lt;/mandatory&gt;&lt;max_length&gt;40&lt;/max_length&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;primary&gt;false&lt;/primary&gt;&lt;read_only&gt;false&lt;/read_only&gt;&lt;reference/&gt;&lt;reference_cascade_rule/&gt;&lt;reference_floats&gt;false&lt;/reference_floats&gt;&lt;reference_type/&gt;&lt;sizeclass/&gt;&lt;spell_check&gt;false&lt;/spell_check&gt;&lt;staged&gt;false&lt;/staged&gt;&lt;sys_id&gt;a854c27ce5ee684f3d36681c0a8c00b0&lt;/sys_id&gt;&lt;sys_name&gt;Round type&lt;/sys_name&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;table_reference&gt;false&lt;/table_reference&gt;&lt;text_index&gt;false&lt;/text_index&gt;&lt;unique&gt;false&lt;/unique&gt;&lt;use_dependent_field&gt;false&lt;/use_dependent_field&gt;&lt;use_dynamic_default&gt;false&lt;/use_dynamic_default&gt;&lt;virtual&gt;false&lt;/virtual&gt;&lt;widget/&gt;&lt;xml_view&gt;false&lt;/xml_view&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_dictionary&gt;&lt;sys_dictionary action="INSERT_OR_UPDATE"&gt;&lt;active&gt;true&lt;/active&gt;&lt;array&gt;false&lt;/array&gt;&lt;attributes/&gt;&lt;audit&gt;false&lt;/audit&gt;&lt;calculation/&gt;&lt;choice/&gt;&lt;column_label&gt;Amount USD&lt;/column_label&gt;&lt;default_value/&gt;&lt;display&gt;false&lt;/display&gt;&lt;dynamic_default_value/&gt;&lt;element&gt;amount_usd&lt;/element&gt;&lt;internal_type display_value="Currency"&gt;currency&lt;/internal_type&gt;&lt;mandatory&gt;false&lt;/mandatory&gt;&lt;max_length/&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;primary&gt;false&lt;/primary&gt;&lt;read_only&gt;false&lt;/read_only&gt;&lt;reference/&gt;&lt;reference_cascade_rule/&gt;&lt;reference_floats&gt;false&lt;/reference_floats&gt;&lt;reference_type/&gt;&lt;sizeclass/&gt;&lt;spell_check&gt;false&lt;/spell_check&gt;&lt;staged&gt;false&lt;/staged&gt;&lt;sys_id&gt;a2480c001c86673b16823d0f6cf3af5a&lt;/sys_id&gt;&lt;sys_name&gt;Amount USD&lt;/sys_name&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;table_reference&gt;false&lt;/table_reference&gt;&lt;text_index&gt;false&lt;/text_index&gt;&lt;unique&gt;false&lt;/unique&gt;&lt;use_dependent_field&gt;false&lt;/use_dependent_field&gt;&lt;use_dynamic_default&gt;false&lt;/use_dynamic_default&gt;&lt;virtual&gt;false&lt;/virtual&gt;&lt;widget/&gt;&lt;xml_view&gt;false&lt;/xml_view&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_dictionary&gt;&lt;sys_dictionary action="INSERT_OR_UPDATE"&gt;&lt;active&gt;true&lt;/active&gt;&lt;array&gt;false&lt;/array&gt;&lt;attributes/&gt;&lt;audit&gt;false&lt;/audit&gt;&lt;calculation/&gt;&lt;choice/&gt;&lt;column_label&gt;Round date&lt;/column_label&gt;&lt;default_value/&gt;&lt;display&gt;false&lt;/display&gt;&lt;dynamic_default_value/&gt;&lt;element&gt;round_date&lt;/element&gt;&lt;internal_type display_value="Date"&gt;glide_date&lt;/internal_type&gt;&lt;mandatory&gt;true&lt;/mandatory&gt;&lt;max_length/&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;primary&gt;false&lt;/primary&gt;&lt;read_only&gt;false&lt;/read_only&gt;&lt;reference/&gt;&lt;reference_cascade_rule/&gt;&lt;reference_floats&gt;false&lt;/reference_floats&gt;&lt;reference_type/&gt;&lt;sizeclass/&gt;&lt;spell_check&gt;false&lt;/spell_check&gt;&lt;staged&gt;false&lt;/staged&gt;&lt;sys_id&gt;524ccad849ee48106ca312673b19c156&lt;/sys_id&gt;&lt;sys_name&gt;Round date&lt;/sys_name&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;table_reference&gt;false&lt;/table_reference&gt;&lt;text_index&gt;false&lt;/text_index&gt;&lt;unique&gt;false&lt;/unique&gt;&lt;use_dependent_field&gt;false&lt;/use_dependent_field&gt;&lt;use_dynamic_default&gt;false&lt;/use_dynamic_default&gt;&lt;virtual&gt;false&lt;/virtual&gt;&lt;widget/&gt;&lt;xml_view&gt;false&lt;/xml_view&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_dictionary&gt;&lt;sys_dictionary action="INSERT_OR_UPDATE"&gt;&lt;active&gt;true&lt;/active&gt;&lt;array&gt;false&lt;/array&gt;&lt;attributes/&gt;&lt;audit&gt;false&lt;/audit&gt;&lt;calculation/&gt;&lt;choice/&gt;&lt;column_label&gt;Lead investor&lt;/column_label&gt;&lt;default_value/&gt;&lt;display&gt;false&lt;/display&gt;&lt;dynamic_default_value/&gt;&lt;element&gt;lead_investor&lt;/element&gt;&lt;internal_type display_value="Reference"&gt;reference&lt;/internal_type&gt;&lt;mandatory&gt;false&lt;/mandatory&gt;&lt;max_length&gt;32&lt;/max_length&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;primary&gt;false&lt;/primary&gt;&lt;read_only&gt;false&lt;/read_only&gt;&lt;reference display_value="Investor"&gt;x_bst_startuptrk_investor&lt;/reference&gt;&lt;reference_cascade_rule/&gt;&lt;reference_floats&gt;false&lt;/reference_floats&gt;&lt;reference_type/&gt;&lt;sizeclass/&gt;&lt;spell_check&gt;false&lt;/spell_check&gt;&lt;staged&gt;false&lt;/staged&gt;&lt;sys_id&gt;1f9f5dba2cebe034c88618f64cdce3c8&lt;/sys_id&gt;&lt;sys_name&gt;Lead investor&lt;/sys_name&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;table_reference&gt;false&lt;/table_reference&gt;&lt;text_index&gt;false&lt;/text_index&gt;&lt;unique&gt;false&lt;/unique&gt;&lt;use_dependent_field&gt;false&lt;/use_dependent_field&gt;&lt;use_dynamic_default&gt;false&lt;/use_dynamic_default&gt;&lt;virtual&gt;false&lt;/virtual&gt;&lt;widget/&gt;&lt;xml_view&gt;false&lt;/xml_view&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_dictionary&gt;&lt;sys_dictionary action="INSERT_OR_UPDATE"&gt;&lt;active&gt;true&lt;/active&gt;&lt;array&gt;false&lt;/array&gt;&lt;attributes/&gt;&lt;audit&gt;false&lt;/audit&gt;&lt;calculation/&gt;&lt;choice/&gt;&lt;column_label&gt;Participating investors&lt;/column_label&gt;&lt;default_value/&gt;&lt;display&gt;false&lt;/display&gt;&lt;dynamic_default_value/&gt;&lt;element&gt;participating_investors&lt;/element&gt;&lt;internal_type display_value="List"&gt;glide_list&lt;/internal_type&gt;&lt;mandatory&gt;false&lt;/mandatory&gt;&lt;max_length&gt;4000&lt;/max_length&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;primary&gt;false&lt;/primary&gt;&lt;read_only&gt;true&lt;/read_only&gt;&lt;reference&gt;x_bst_startuptrk_investor&lt;/reference&gt;&lt;reference_cascade_rule/&gt;&lt;reference_floats&gt;false&lt;/reference_floats&gt;&lt;reference_type/&gt;&lt;sizeclass/&gt;&lt;spell_check&gt;false&lt;/spell_check&gt;&lt;staged&gt;false&lt;/staged&gt;&lt;sys_id&gt;2ba0cac4221f51e40bc3fbfe788c059e&lt;/sys_id&gt;&lt;sys_name&gt;Participating investors&lt;/sys_name&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;table_reference&gt;false&lt;/table_reference&gt;&lt;text_index&gt;false&lt;/text_index&gt;&lt;unique&gt;false&lt;/unique&gt;&lt;use_dependent_field&gt;false&lt;/use_dependent_field&gt;&lt;use_dynamic_default&gt;false&lt;/use_dynamic_default&gt;&lt;virtual&gt;false&lt;/virtual&gt;&lt;widget/&gt;&lt;xml_view&gt;false&lt;/xml_view&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_dictionary&gt;&lt;sys_dictionary action="INSERT_OR_UPDATE"&gt;&lt;active&gt;true&lt;/active&gt;&lt;array&gt;false&lt;/array&gt;&lt;attributes/&gt;&lt;audit&gt;false&lt;/audit&gt;&lt;calculation/&gt;&lt;choice/&gt;&lt;column_label&gt;Valuation USD&lt;/column_label&gt;&lt;default_value/&gt;&lt;display&gt;false&lt;/display&gt;&lt;dynamic_default_value/&gt;&lt;element&gt;valuation_usd&lt;/element&gt;&lt;internal_type display_value="Currency"&gt;currency&lt;/internal_type&gt;&lt;mandatory&gt;false&lt;/mandatory&gt;&lt;max_length/&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;primary&gt;false&lt;/primary&gt;&lt;read_only&gt;false&lt;/read_only&gt;&lt;reference/&gt;&lt;reference_cascade_rule/&gt;&lt;reference_floats&gt;false&lt;/reference_floats&gt;&lt;reference_type/&gt;&lt;sizeclass/&gt;&lt;spell_check&gt;false&lt;/spell_check&gt;&lt;staged&gt;false&lt;/staged&gt;&lt;sys_id&gt;a3103e1f277e3e63b89681182892531d&lt;/sys_id&gt;&lt;sys_name&gt;Valuation USD&lt;/sys_name&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;table_reference&gt;false&lt;/table_reference&gt;&lt;text_index&gt;false&lt;/text_index&gt;&lt;unique&gt;false&lt;/unique&gt;&lt;use_dependent_field&gt;false&lt;/use_dependent_field&gt;&lt;use_dynamic_default&gt;false&lt;/use_dynamic_default&gt;&lt;virtual&gt;false&lt;/virtual&gt;&lt;widget/&gt;&lt;xml_view&gt;false&lt;/xml_view&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_dictionary&gt;&lt;sys_dictionary action="INSERT_OR_UPDATE"&gt;&lt;active&gt;true&lt;/active&gt;&lt;array&gt;false&lt;/array&gt;&lt;attributes/&gt;&lt;audit&gt;false&lt;/audit&gt;&lt;calculation/&gt;&lt;choice/&gt;&lt;column_label&gt;Source URL&lt;/column_label&gt;&lt;default_value/&gt;&lt;display&gt;false&lt;/display&gt;&lt;dynamic_default_value/&gt;&lt;element&gt;source_url&lt;/element&gt;&lt;internal_type display_value="String"&gt;string&lt;/internal_type&gt;&lt;mandatory&gt;false&lt;/mandatory&gt;&lt;max_length&gt;255&lt;/max_length&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;primary&gt;false&lt;/primary&gt;&lt;read_only&gt;false&lt;/read_only&gt;&lt;reference/&gt;&lt;reference_cascade_rule/&gt;&lt;reference_floats&gt;false&lt;/reference_floats&gt;&lt;reference_type/&gt;&lt;sizeclass/&gt;&lt;spell_check&gt;false&lt;/spell_check&gt;&lt;staged&gt;false&lt;/staged&gt;&lt;sys_id&gt;1f7d4a9b1b07e94e2514ebc49e1dd560&lt;/sys_id&gt;&lt;sys_name&gt;Source URL&lt;/sys_name&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;table_reference&gt;false&lt;/table_reference&gt;&lt;text_index&gt;false&lt;/text_index&gt;&lt;unique&gt;false&lt;/unique&gt;&lt;use_dependent_field&gt;false&lt;/use_dependent_field&gt;&lt;use_dynamic_default&gt;false&lt;/use_dynamic_default&gt;&lt;virtual&gt;false&lt;/virtual&gt;&lt;widget/&gt;&lt;xml_view&gt;false&lt;/xml_view&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_dictionary&gt;&lt;sys_documentation action="INSERT_OR_UPDATE"&gt;&lt;element/&gt;&lt;help/&gt;&lt;hint&gt;Funding round record. Implements prompt 1.5.&lt;/hint&gt;&lt;label&gt;Funding round&lt;/label&gt;&lt;language&gt;en&lt;/language&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;plural&gt;Funding rounds&lt;/plural&gt;&lt;sys_id&gt;6a21f3d955261a90c4f6774696e04213&lt;/sys_id&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;url/&gt;&lt;url_target/&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_documentation&gt;&lt;sys_documentation action="INSERT_OR_UPDATE"&gt;&lt;element&gt;startup&lt;/element&gt;&lt;help/&gt;&lt;hint&gt;Owning startup. Implements prompt 1.0 field list.&lt;/hint&gt;&lt;label&gt;Startup&lt;/label&gt;&lt;language&gt;en&lt;/language&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;plural/&gt;&lt;sys_id&gt;4f607f65edfb3b839e0e5552f65a91ea&lt;/sys_id&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;url/&gt;&lt;url_target/&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_documentation&gt;&lt;sys_documentation action="INSERT_OR_UPDATE"&gt;&lt;element&gt;round_type&lt;/element&gt;&lt;help/&gt;&lt;hint&gt;Round type carrying the Startup funding stage values. Implements prompt 1.0 field list.&lt;/hint&gt;&lt;label&gt;Round type&lt;/label&gt;&lt;language&gt;en&lt;/language&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;plural/&gt;&lt;sys_id&gt;70d94294b9cc0a8b76c50f5cf09dea24&lt;/sys_id&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;url/&gt;&lt;url_target/&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_documentation&gt;&lt;sys_documentation action="INSERT_OR_UPDATE"&gt;&lt;element&gt;amount_usd&lt;/element&gt;&lt;help/&gt;&lt;hint&gt;Round amount. Premium-gated by prompt 2.0.&lt;/hint&gt;&lt;label&gt;Amount USD&lt;/label&gt;&lt;language&gt;en&lt;/language&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;plural/&gt;&lt;sys_id&gt;5ee80c4e20f2f227eab571d15097cb93&lt;/sys_id&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;url/&gt;&lt;url_target/&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_documentation&gt;&lt;sys_documentation action="INSERT_OR_UPDATE"&gt;&lt;element&gt;round_date&lt;/element&gt;&lt;help/&gt;&lt;hint&gt;Date the round closed. Implements prompt 1.0 field list.&lt;/hint&gt;&lt;label&gt;Round date&lt;/label&gt;&lt;language&gt;en&lt;/language&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;plural/&gt;&lt;sys_id&gt;1d86be66f30e13995be40632b50ccf44&lt;/sys_id&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;url/&gt;&lt;url_target/&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_documentation&gt;&lt;sys_documentation action="INSERT_OR_UPDATE"&gt;&lt;element&gt;lead_investor&lt;/element&gt;&lt;help/&gt;&lt;hint&gt;Lead investor on the round. Implements prompt 1.0 field list.&lt;/hint&gt;&lt;label&gt;Lead investor&lt;/label&gt;&lt;language&gt;en&lt;/language&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;plural/&gt;&lt;sys_id&gt;0b82a2ebd63cdfeefb6c029e98f1e552&lt;/sys_id&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;url/&gt;&lt;url_target/&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_documentation&gt;&lt;sys_documentation action="INSERT_OR_UPDATE"&gt;&lt;element&gt;participating_investors&lt;/element&gt;&lt;help/&gt;&lt;hint&gt;Participating investors, a read-only list projected from the authoritative m2m join table and maintained by the round investor link business rule. Implements prompt 1.5.&lt;/hint&gt;&lt;label&gt;Participating investors&lt;/label&gt;&lt;language&gt;en&lt;/language&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;plural/&gt;&lt;sys_id&gt;87be54839cf55f6c627e5040bd6302d4&lt;/sys_id&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;url/&gt;&lt;url_target/&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_documentation&gt;&lt;sys_documentation action="INSERT_OR_UPDATE"&gt;&lt;element&gt;valuation_usd&lt;/element&gt;&lt;help/&gt;&lt;hint&gt;Post-round valuation. Premium-gated by prompt 2.0.&lt;/hint&gt;&lt;label&gt;Valuation USD&lt;/label&gt;&lt;language&gt;en&lt;/language&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;plural/&gt;&lt;sys_id&gt;24ced45689357f85ac8566ada953ba29&lt;/sys_id&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;url/&gt;&lt;url_target/&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_documentation&gt;&lt;sys_documentation action="INSERT_OR_UPDATE"&gt;&lt;element&gt;source_url&lt;/element&gt;&lt;help/&gt;&lt;hint&gt;Source URL for the round. Implements prompt 1.0 field list.&lt;/hint&gt;&lt;label&gt;Source URL&lt;/label&gt;&lt;language&gt;en&lt;/language&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;plural/&gt;&lt;sys_id&gt;732988a89f1599636202eed0c7a0c0e9&lt;/sys_id&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;url/&gt;&lt;url_target/&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_documentation&gt;&lt;/record_update&gt;</payload>
     <payload_hash/>
     <remote_update_set/>
     <replace_on_upgrade>false</replace_on_upgrade>
@@ -5352,35 +5352,48 @@ RestQueryHelper.prototype = {
         return target.get(sysId);
     },
 
+    /* Returns the length a value of one field may not exceed: the column's own declared
+       maximum, bounded by the hard limit of its validation type where the type has one.
+       The field specific maximum is therefore always the authoritative one, and a field
+       that declares none falls back to the general text bound. */
+    _ceiling: function (rule) {
+        var limit = 0;
+        if (rule.type === 'url') {
+            limit = this.URL_LIMIT;
+        }
+        if (rule.type === 'email') {
+            limit = this.EMAIL_LIMIT;
+        }
+        if (!rule.max) {
+            return limit ? limit : this.TEXT_LIMIT;
+        }
+        if (!limit) {
+            return rule.max;
+        }
+        return Math.min(rule.max, limit);
+    },
+
     _coerce: function (rule, raw) {
         var type = rule.type;
         if (type === 'boolean') {
             return this._boolean(rule, raw);
         }
-        var value = this._text(raw, rule.max);
+        var ceiling = this._ceiling(rule);
+        if (this._normalise(raw).length &amp;gt; ceiling) {
+            return {
+                ok: false,
+                value: '',
+                error: rule.field + ' exceeds ' + ceiling + ' characters'
+            };
+        }
+        var value = this._text(raw, ceiling);
         if (value === '') {
             return { ok: true, value: '', error: '' };
         }
         if (type === 'string') {
-            if (rule.max) {
-                if (String(raw).trim().length &amp;gt; rule.max) {
-                    return {
-                        ok: false,
-                        value: '',
-                        error: rule.field + ' exceeds ' + rule.max + ' characters'
-                    };
-                }
-            }
             return { ok: true, value: value, error: '' };
         }
         if (type === 'url') {
-            if (String(raw).trim().length &amp;gt; this.URL_LIMIT) {
-                return {
-                    ok: false,
-                    value: '',
-                    error: rule.field + ' exceeds ' + this.URL_LIMIT + ' characters'
-                };
-            }
             if (!this.HTTPS_URL.test(value)) {
                 return {
                     ok: false,
@@ -5391,13 +5404,6 @@ RestQueryHelper.prototype = {
             return { ok: true, value: value, error: '' };
         }
         if (type === 'email') {
-            if (String(raw).trim().length &amp;gt; this.EMAIL_LIMIT) {
-                return {
-                    ok: false,
-                    value: '',
-                    error: rule.field + ' exceeds ' + this.EMAIL_LIMIT + ' characters'
-                };
-            }
             if (!this.EMAIL.test(value)) {
                 return {
                     ok: false,
@@ -5551,14 +5557,20 @@ RestQueryHelper.prototype = {
         return parsed;
     },
 
-    _text: function (value, max) {
+    /* Returns a value trimmed and stripped of control characters at its full length, so a
+       length check runs against what the caller actually supplied. */
+    _normalise: function (value) {
         if (value === null) {
             return '';
         }
         if (value === undefined) {
             return '';
         }
-        var text = String(value).replace(this.CONTROL, ' ').trim();
+        return String(value).replace(this.CONTROL, ' ').trim();
+    },
+
+    _text: function (value, max) {
+        var text = this._normalise(value);
         var ceiling = this.TEXT_LIMIT;
         if (max) {
             ceiling = max;
@@ -6325,6 +6337,11 @@ InvestorPortfolioService.prototype = {
         this.LINK = 'x_bst_startuptrk_m2m_round_investor';
         this.BATCH_SIZE = 200;
         this.LOG = 'x_bst_startuptrk.InvestorPortfolioService';
+        /* The declared max_length of the derived participating_investors column and the
+           number of 32 character identifiers a comma separated list of that length holds.
+           Implements prompt 1.5. */
+        this.PROJECTION_LENGTH = 4000;
+        this.PROJECTION_CAPACITY = Math.floor((this.PROJECTION_LENGTH + 1) / 33);
     },
 
     /* Counts the distinct startups reachable as lead investor or as a participating
@@ -6580,7 +6597,10 @@ InvestorPortfolioService.prototype = {
 
     /* Rewrites the derived FundingRound.participating_investors list from the
        authoritative join table, which is the only write target for participation. The
-       projection write runs without business rules. Implements prompt 1.5. */
+       projection write runs without business rules. A round linking more investors than
+       the declared column length holds has its projection emptied and the overflow
+       reported, so a partial identifier list is never stored and the join table stays the
+       only complete record of participation. Implements prompt 1.5. */
     refreshRoundParticipants: function (roundId) {
         if (!roundId) {
             return false;
@@ -6596,6 +6616,14 @@ InvestorPortfolioService.prototype = {
             ids.push(entries[i].value);
         }
         var derived = ids.join(',');
+        if (derived.length &amp;gt; this.PROJECTION_LENGTH) {
+            gs.error('[' + this.LOG + '] funding round ' + roundId + ' links '
+                + ids.length + ' investors and the derived participating_investors'
+                + ' column holds ' + this.PROJECTION_CAPACITY
+                + '; the projection was emptied rather than stored in part, and'
+                + ' x_bst_startuptrk_m2m_round_investor remains the complete record');
+            derived = '';
+        }
         if (String(round.getValue('participating_investors')) === derived) {
             return true;
         }
@@ -7145,7 +7173,14 @@ IngestionMapper.prototype = {
         this.STAGING = 'x_bst_startuptrk_ingest_staging';
         this.LINK = 'x_bst_startuptrk_m2m_round_investor';
         this.logger = null;
-        this.SYS_ID = /^[0-9a-f]{32}$/;
+        this.dates = null;
+        this.AMOUNT = /^-?[0-9]{1,15}(\.[0-9]{1,2})?$/;
+        this.ISO_DATE = /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/;
+        this.ISO_TIMESTAMP = new RegExp('^[0-9]{4}-[0-9]{2}-[0-9]{2}'
+            + '[Tt ][0-9]{2}:[0-9]{2}(:[0-9]{2}(\\.[0-9]{1,3})?)?'
+            + '([Zz]|[+-][0-9]{2}:?[0-9]{2})?$');
+        this.MIN_YEAR = 1900;
+        this.MAX_YEAR = 2999;
         this.TABLES = {
             startup: 'x_bst_startuptrk_startup',
             founder: 'x_bst_startuptrk_founder',
@@ -7194,24 +7229,77 @@ IngestionMapper.prototype = {
             funding_round: ['startup', 'round_date'],
             job_posting: ['startup', 'title']
         };
-        this.DEFAULTS = {
-            startup: { institutional_funding_last_5yrs: 'false' },
-            job_posting: { active: 'true' }
+        /* The writable entity field of each record type with the metadata of the
+           sys_dictionary column behind it: kind selects the coercion applied to an
+           incoming value, max is the column's max_length and key_max is the length of
+           the name column a natural key resolves against. This map is the allowlist
+           every write is projected through, so the derived Investor.portfolio_count and
+           the read-only FundingRound.participating_investors projection are unreachable
+           from any ingestion path. Implements prompt 1.0, prompt 1.4 and prompt 1.5. */
+        this.TARGET_FIELDS = {
+            startup: {
+                name: { max: 100 },
+                description: { max: 4000 },
+                industry: { max: 40 },
+                founded_year: { kind: 'year' },
+                headquarters_location: { kind: 'location', max: 100 },
+                website: { max: 255 },
+                logo_url: { max: 255 },
+                funding_stage: { max: 40 },
+                total_funding_usd: { kind: 'amount' },
+                active: { kind: 'boolean' },
+                institutional_funding_last_5yrs: { kind: 'boolean' },
+                employee_count_range: { max: 20 }
+            },
+            founder: {
+                name: { max: 100 },
+                startup: { kind: 'reference', key_max: 100 },
+                title: { max: 40 },
+                bio: { max: 2000 },
+                linkedin_url: { max: 255 },
+                contact_email: { max: 100 }
+            },
+            executive: {
+                name: { max: 100 },
+                startup: { kind: 'reference', key_max: 100 },
+                title: { max: 40 },
+                bio: { max: 2000 },
+                linkedin_url: { max: 255 },
+                contact_email: { max: 100 }
+            },
+            investor: {
+                name: { max: 100 },
+                type: { max: 30 },
+                focus_areas: { max: 255 },
+                website: { max: 255 },
+                aum_usd: { kind: 'amount' }
+            },
+            funding_round: {
+                startup: { kind: 'reference', key_max: 100 },
+                round_type: { max: 40 },
+                amount_usd: { kind: 'amount' },
+                round_date: { kind: 'date' },
+                lead_investor: { kind: 'reference', key_max: 100 },
+                valuation_usd: { kind: 'amount' },
+                source_url: { max: 255 }
+            },
+            job_posting: {
+                startup: { kind: 'reference', key_max: 100 },
+                title: { max: 150 },
+                department: { max: 40 },
+                location: { max: 100 },
+                remote_type: { max: 20 },
+                seniority: { max: 20 },
+                posted_date: { kind: 'date' },
+                url: { max: 255 },
+                active: { kind: 'boolean' }
+            }
         };
-        this.BOOLEANS = {
-            'startup.active': true,
-            'startup.institutional_funding_last_5yrs': true,
-            'job_posting.active': true
-        };
-        this.AMOUNTS = {
-            'startup.total_funding_usd': true,
-            'investor.aum_usd': true,
-            'funding_round.amount_usd': true,
-            'funding_round.valuation_usd': true
-        };
-        this.DATES = {
-            'funding_round.round_date': true,
-            'job_posting.posted_date': true
+        /* The value a record type carries through the pipeline without ever writing it to
+           its own table. participating_investors is resolved into join table rows.
+           Implements prompt 1.5. */
+        this.TRANSPORT_FIELDS = {
+            funding_round: { participating_investors: { max: 1000 } }
         };
         this.STAGING_COLUMNS = {
             startup: {
@@ -7282,23 +7370,24 @@ IngestionMapper.prototype = {
                 headquarters_location: ['headquarters_location', 'location_identifiers',
                     'headquarters', 'location'],
                 website: ['homepage_url', 'website'],
-                logo_url: ['logo_url', 'profile_image_url'],
+                logo_url: ['logo_url', 'image_url', 'profile_image_url'],
                 funding_stage: ['funding_stage', 'last_funding_type'],
                 total_funding_usd: ['total_funding_usd', 'funding_total_usd'],
-                active: ['active', 'is_active'],
+                active: ['active', 'is_active', 'operating_status', 'status'],
                 institutional_funding_last_5yrs: ['institutional_funding_last_5yrs'],
                 employee_count_range: ['employee_count_range', 'num_employees_enum']
             },
             'crunchbase.investor': {
                 name: ['name', 'investor_name'],
                 type: ['type', 'investor_type'],
-                focus_areas: ['focus_areas', 'investment_categories'],
+                focus_areas: ['focus_areas', 'investment_categories',
+                    'category_groups'],
                 website: ['homepage_url', 'website'],
                 aum_usd: ['aum_usd', 'assets_under_management']
             },
             'crunchbase.funding_round': {
                 startup: ['startup', 'startup_name', 'organization_name',
-                    'funded_organization'],
+                    'funded_organization_identifier', 'funded_organization'],
                 round_type: ['round_type', 'funding_type', 'investment_type'],
                 amount_usd: ['amount_usd', 'money_raised_usd'],
                 round_date: ['round_date', 'announced_on'],
@@ -7328,13 +7417,243 @@ IngestionMapper.prototype = {
                 startup: ['startup', 'startup_name', 'companyName', 'company'],
                 title: ['title', 'job_title'],
                 department: ['department', 'jobFunction'],
-                location: ['location', 'job_location'],
+                location: ['location', 'formattedLocation', 'job_location'],
                 remote_type: ['remote_type', 'workplaceType'],
                 seniority: ['seniority', 'experienceLevel'],
                 posted_date: ['posted_date', 'postedAt', 'listedAt'],
                 url: ['url', 'job_url', 'applyUrl'],
-                active: ['active', 'job_active']
+                active: ['active', 'job_active', 'jobState']
             }
+        };
+        this.SOURCE_VALUES = this._sourceValueTables();
+    },
+
+    /* The source system's own published code for a closed choice column, mapped onto the
+       prompt 1.0 choice member it means. A code mapped to the empty string is one the
+       source publishes and the target vocabulary has no member for; it is recorded as
+       recognised rather than unknown, and no value is stored. Only a code absent from
+       these tables is treated as genuinely unknown by cleaning rule 3. The tables are
+       applied to a live source payload only: the flattened fallback columns already
+       carry the target vocabulary. Implements prompt 4.0 cleaning rule 3. */
+    _sourceValueTables: function () {
+        var crunchbaseFundingTypes = {
+            'pre_seed': 'Pre-Seed',
+            'seed': 'Seed',
+            'angel': 'Seed',
+            'convertible_note': 'Seed',
+            'equity_crowdfunding': 'Seed',
+            'product_crowdfunding': 'Seed',
+            'series_a': 'Series A',
+            'series_b': 'Series B',
+            'series_c': 'Series C+',
+            'series_d': 'Series C+',
+            'series_e': 'Series C+',
+            'series_f': 'Series C+',
+            'series_g': 'Series C+',
+            'series_h': 'Series C+',
+            'series_i': 'Series C+',
+            'series_j': 'Series C+',
+            'series_unknown': 'Series C+',
+            'corporate_round': 'Growth',
+            'private_equity': 'Growth',
+            'secondary_market': 'Growth',
+            'post_ipo_equity': 'Public',
+            'post_ipo_debt': 'Public',
+            'post_ipo_secondary': 'Public',
+            'debt_financing': '',
+            'grant': '',
+            'non_equity_assistance': '',
+            'initial_coin_offering': '',
+            'undisclosed': ''
+        };
+        var crunchbaseCategoryGroups = {
+            'financial services': 'Fintech',
+            'lending and investments': 'Fintech',
+            'payments': 'Fintech',
+            'insurance': 'Fintech',
+            'health care': 'Healthtech',
+            'biotechnology': 'Healthtech',
+            'medical': 'Healthtech',
+            'medical devices': 'Healthtech',
+            'software': 'SaaS',
+            'apps': 'SaaS',
+            'data and analytics': 'SaaS',
+            'information technology': 'SaaS',
+            'internet services': 'SaaS',
+            'privacy and security': 'SaaS',
+            'sales and marketing': 'SaaS',
+            'advertising': 'SaaS',
+            'mobile': 'SaaS',
+            'platforms': 'SaaS',
+            'messaging and telecommunications': 'SaaS',
+            'navigation and mapping': 'SaaS',
+            'consumer goods': 'Consumer',
+            'consumer electronics': 'Consumer',
+            'commerce and shopping': 'Consumer',
+            'food and beverage': 'Consumer',
+            'clothing and apparel': 'Consumer',
+            'travel and tourism': 'Consumer',
+            'media and entertainment': 'Consumer',
+            'content and publishing': 'Consumer',
+            'music and audio': 'Consumer',
+            'video': 'Consumer',
+            'gaming': 'Consumer',
+            'sports': 'Consumer',
+            'science and engineering': 'Deeptech',
+            'artificial intelligence': 'Deeptech',
+            'hardware': 'Deeptech',
+            'manufacturing': 'Deeptech',
+            'energy': 'Deeptech',
+            'natural resources': 'Deeptech',
+            'sustainability': 'Deeptech',
+            'transportation': 'Deeptech',
+            'agriculture and farming': 'Deeptech',
+            'biotechnology and life sciences': 'Deeptech',
+            'administrative services': 'Other',
+            'community and lifestyle': 'Other',
+            'design': 'Other',
+            'education': 'Other',
+            'events': 'Other',
+            'government and military': 'Other',
+            'professional services': 'Other',
+            'real estate': 'Other',
+            'other': 'Other'
+        };
+        var personTitles = {
+            'chief executive officer': 'CEO',
+            'chief technology officer': 'CTO',
+            'chief technical officer': 'CTO',
+            'chief operating officer': 'COO',
+            'chief financial officer': 'CFO',
+            'chief product officer': 'Head of Product',
+            'founder': 'Co-Founder',
+            'cofounder': 'Co-Founder',
+            'co founder': 'Co-Founder',
+            'co-founder and ceo': 'CEO',
+            'co-founder and cto': 'CTO',
+            'vice president of engineering': 'VP Engineering',
+            'vice president engineering': 'VP Engineering',
+            'vp of engineering': 'VP Engineering',
+            'vice president of sales': 'VP Sales',
+            'vice president sales': 'VP Sales',
+            'vp of sales': 'VP Sales',
+            'vice president of marketing': 'VP Marketing',
+            'vice president marketing': 'VP Marketing',
+            'vp of marketing': 'VP Marketing',
+            'head of product management': 'Head of Product'
+        };
+        return {
+            'crunchbase.startup.funding_stage': crunchbaseFundingTypes,
+            'crunchbase.funding_round.round_type': crunchbaseFundingTypes,
+            'crunchbase.startup.industry': crunchbaseCategoryGroups,
+            'crunchbase.investor.focus_areas': crunchbaseCategoryGroups,
+            'crunchbase.startup.employee_count_range': {
+                'c_00001_c_00010': '1-10',
+                'c_00011_c_00050': '11-50',
+                'c_00051_c_00100': '51-200',
+                'c_00051_c_00200': '51-200',
+                'c_00101_c_00250': '51-200',
+                'c_00201_c_00500': '201-500',
+                'c_00251_c_00500': '201-500',
+                'c_00501_c_01000': '500+',
+                'c_01001_c_05000': '500+',
+                'c_05001_c_10000': '500+',
+                'c_10001_max': '500+'
+            },
+            'crunchbase.startup.active': {
+                'active': 'true',
+                'operating': 'true',
+                'ipo': 'true',
+                'closed': 'false',
+                'was_acquired': 'false',
+                'delisted': 'false'
+            },
+            'crunchbase.investor.type': {
+                'angel': 'Angel',
+                'individual': 'Angel',
+                'venture_capital': 'VC',
+                'micro_vc': 'VC',
+                'venture_debt': 'VC',
+                'syndicate': 'VC',
+                'private_equity_firm': 'PE',
+                'family_investment_office': 'PE',
+                'fund_of_funds': 'PE',
+                'hedge_fund': 'PE',
+                'investment_bank': 'PE',
+                'pension_funds': 'PE',
+                'secondary_purchaser': 'PE',
+                'corporate_venture_capital': 'Corporate',
+                'accelerator': 'Accelerator',
+                'incubator': 'Accelerator',
+                'co_working_space': 'Accelerator',
+                'entrepreneurship_program': 'Accelerator',
+                'startup_competition': 'Accelerator',
+                'university_program': 'Accelerator',
+                'government_office': ''
+            },
+            'linkedin.job_posting.department': {
+                'eng': 'Engineering',
+                'it': 'Engineering',
+                'qa': 'Engineering',
+                'rsch': 'Engineering',
+                'sci': 'Engineering',
+                'sale': 'Sales',
+                'bd': 'Sales',
+                'mrkt': 'Marketing',
+                'advr': 'Marketing',
+                'wrt': 'Marketing',
+                'prdm': 'Product',
+                'dsgn': 'Product',
+                'art': 'Product',
+                'prjm': 'Operations',
+                'prod': 'Operations',
+                'supl': 'Operations',
+                'dist': 'Operations',
+                'mnfc': 'Operations',
+                'cust': 'Operations',
+                'acct': 'Other',
+                'adm': 'Other',
+                'anls': 'Other',
+                'cnsl': 'Other',
+                'edu': 'Other',
+                'fin': 'Other',
+                'genb': 'Other',
+                'hcpr': 'Other',
+                'hr': 'Other',
+                'lgl': 'Other',
+                'mgmt': 'Other',
+                'prch': 'Other',
+                'strt': 'Other',
+                'trng': 'Other',
+                'othr': 'Other'
+            },
+            'linkedin.job_posting.remote_type': {
+                'on_site': 'Onsite',
+                'onsite': 'Onsite',
+                'on-site': 'Onsite',
+                '1': 'Onsite',
+                'remote': 'Remote',
+                '2': 'Remote',
+                'hybrid': 'Hybrid',
+                '3': 'Hybrid'
+            },
+            'linkedin.job_posting.seniority': {
+                'internship': 'Entry',
+                'entry_level': 'Entry',
+                'associate': 'Mid',
+                'mid_senior_level': 'Senior',
+                'director': 'Lead',
+                'executive': 'Executive'
+            },
+            'linkedin.job_posting.active': {
+                'listed': 'true',
+                'open': 'true',
+                'closed': 'false',
+                'expired': 'false',
+                'suspended': 'false'
+            },
+            'linkedin.founder.title': personTitles,
+            'linkedin.executive.title': personTitles
         };
     },
 
@@ -7371,29 +7690,9 @@ IngestionMapper.prototype = {
         return cleaned;
     },
 
-    /* Applies the dictionary defaults of a record type to blank values before the
-       mandatory field check. Implements prompt 4.0 cleaning rule 4. */
-    applyDefaults: function (recordType, data) {
-        var out = this._copy(data);
-        var defaults = this.DEFAULTS[recordType];
-        var key = '';
-        if (!defaults) {
-            return out;
-        }
-        for (key in defaults) {
-            if (!defaults.hasOwnProperty(key)) {
-                continue;
-            }
-            if (this._blank(out[key])) {
-                out[key] = defaults[key];
-            }
-        }
-        return out;
-    },
-
     /* Cleaning rule 3: normalises one value against its choice list by exact match then
        case insensitive match. A value matching nothing falls back to the list's own
-       Other member where the list declares one and is otherwise left empty, and every
+       Other member where the list declares one and is otherwise left unwritten, and every
        unmatched value is logged with the outcome applied. No value outside a choice list
        is ever stored. Implements prompt 4.0 cleaning rule 3. */
     normaliseChoice: function (runId, recordType, field, value) {
@@ -7413,7 +7712,7 @@ IngestionMapper.prototype = {
             return matched;
         }
         var fallback = '';
-        var outcome = 'left empty';
+        var outcome = 'left unwritten';
         if (this._member('Other', allowed)) {
             fallback = 'Other';
             outcome = 'stored as Other';
@@ -7438,8 +7737,13 @@ IngestionMapper.prototype = {
             if (out[parts[1]] === undefined) {
                 continue;
             }
-            out[parts[1]] = this.normaliseChoice(runId, recordType, parts[1],
+            var normalised = this.normaliseChoice(runId, recordType, parts[1],
                 out[parts[1]]);
+            if (normalised === '') {
+                delete out[parts[1]];
+            } else {
+                out[parts[1]] = normalised;
+            }
         }
         return out;
     },
@@ -7451,26 +7755,54 @@ IngestionMapper.prototype = {
             + this._string(headquarters).toLowerCase();
     },
 
-    /* Cleaning rule 2: returns the sys_id of an existing Startup matching name plus
-       headquarters_location case insensitively, or an empty string.
+    /* Cleaning rule 2: returns the one existing Startup matching name plus
+       headquarters_location case insensitively. An empty identifier with ok set reports
+       that no record matches, so the caller inserts. More than one match is reported as
+       not ok, so no caller can pick one arbitrarily.
        Implements prompt 4.0 deduplication. */
     findExistingStartup: function (name, headquarters) {
         var wanted = this._string(name);
         if (wanted === '') {
-            return '';
+            return { ok: true, sys_id: '', matches: 0, reason: '' };
         }
-        var candidate = new GlideRecord(this.TABLES.startup);
-        candidate.addQuery('name', wanted);
-        candidate.orderBy('sys_id');
-        candidate.query();
-        var key = this.startupKey(wanted, headquarters);
-        while (candidate.next()) {
-            if (this.startupKey(candidate.getValue('name'),
-                    candidate.getValue('headquarters_location')) === key) {
-                return candidate.getUniqueValue();
-            }
+        var matches = this._matchStartupKey(wanted, headquarters);
+        if (matches.length === 0) {
+            return { ok: true, sys_id: '', matches: 0, reason: '' };
         }
-        return '';
+        if (matches.length !== 1) {
+            return {
+                ok: false,
+                sys_id: '',
+                matches: matches.length,
+                reason: 'the name and headquarters location already match '
+                    + matches.length + ' startup records'
+            };
+        }
+        return { ok: true, sys_id: matches[0], matches: 1, reason: '' };
+    },
+
+    /* Returns the one existing Investor carrying a name case insensitively. An empty
+       identifier with ok set reports that no record matches, so the caller inserts.
+       Implements prompt 4.0 deduplication. */
+    findExistingInvestor: function (name) {
+        var wanted = this._string(name);
+        if (wanted === '') {
+            return { ok: true, sys_id: '', matches: 0, reason: '' };
+        }
+        var matches = this._matchName(this.TABLES.investor, wanted);
+        if (matches.length === 0) {
+            return { ok: true, sys_id: '', matches: 0, reason: '' };
+        }
+        if (matches.length !== 1) {
+            return {
+                ok: false,
+                sys_id: '',
+                matches: matches.length,
+                reason: 'the name already matches ' + matches.length
+                    + ' investor records'
+            };
+        }
+        return { ok: true, sys_id: matches[0], matches: 1, reason: '' };
     },
 
     /* Cleaning rule 2 helper: marks the Startup entries that repeat an earlier row of
@@ -7517,18 +7849,61 @@ IngestionMapper.prototype = {
         return missing;
     },
 
+    /* Reports every mapped value that is longer than the max_length of the column it is
+       destined for. A natural key is measured against the name column it resolves
+       against rather than against the reference column. No value is ever shortened to
+       fit. Implements prompt 1.0 declared column lengths. */
+    overlengthFields: function (recordType, data) {
+        var violations = [];
+        var field = '';
+        for (field in data) {
+            if (!data.hasOwnProperty(field)) {
+                continue;
+            }
+            var meta = this._meta(recordType, field);
+            var ceiling = meta.kind === 'reference' ? meta.key_max : meta.max;
+            if (!ceiling) {
+                continue;
+            }
+            if (this._string(data[field]).length &amp;gt; ceiling) {
+                violations.push(field + ' exceeds ' + ceiling + ' characters');
+            }
+        }
+        return violations;
+    },
+
     /* Applies all four cleaning rules to one mapped record and returns an accepted
-       flag, the cleaned values and the rejection reason. Implements prompt 4.0. */
-    clean: function (runId, recordType, data) {
+       flag, the cleaned values and the rejection reason. A value the mapper refused
+       because it matched no accepted format rejects the record when its field is
+       mandatory, and is otherwise left unwritten and logged. No value is defaulted here:
+       a column default is declared once in the dictionary and the platform applies it on
+       insert, so ingestion neither invents a mandatory value nor overwrites a stored one
+       with a default. Implements prompt 1.0 declared column lengths and prompt 4.0. */
+    clean: function (runId, recordType, mapped) {
+        var carried = mapped &amp;amp;&amp;amp; mapped.data ? mapped.data : {};
+        var refused = mapped &amp;amp;&amp;amp; mapped.invalid ? mapped.invalid : [];
         if (!this.TABLES[recordType]) {
             var unknown = 'unknown record type ' + this._token(recordType);
             this.log().rejectRecord(runId, this._token(recordType),
-                this._reference(runId, recordType, data), unknown);
-            return { accepted: false, data: this._copy(data), reason: unknown };
+                this._reference(runId, recordType, carried), unknown);
+            return { accepted: false, data: this._copy(carried), reason: unknown };
         }
-        var cleaned = this.trimStrings(data);
-        cleaned = this.applyDefaults(recordType, cleaned);
+        var cleaned = this.trimStrings(carried);
         cleaned = this.normaliseChoices(runId, recordType, cleaned);
+        var blocking = this._blockingRefusals(recordType, refused);
+        if (blocking.length !== 0) {
+            var refusal = 'refused value on mandatory ' + blocking.join(', ');
+            this.log().rejectRecord(runId, recordType,
+                this._reference(runId, recordType, cleaned), refusal);
+            return { accepted: false, data: cleaned, reason: refusal };
+        }
+        var overlength = this.overlengthFields(recordType, cleaned);
+        if (overlength.length !== 0) {
+            var tooLong = overlength.join(', ');
+            this.log().rejectRecord(runId, recordType,
+                this._reference(runId, recordType, cleaned), tooLong);
+            return { accepted: false, data: cleaned, reason: tooLong };
+        }
         var missing = this.missingMandatory(recordType, cleaned);
         if (missing.length !== 0) {
             var reason = 'missing mandatory ' + missing.join(' ');
@@ -7539,12 +7914,29 @@ IngestionMapper.prototype = {
         return { accepted: true, data: cleaned, reason: '' };
     },
 
-    /* Maps one staging row onto entity field values. Implements prompt 4.0 fallback
-       dataset mapping. */
-    mapStagingRow: function (staging) {
+    /* Returns the reasons among the mapper's refused values that fall on a mandatory
+       field of a record type, which are the ones that reject the record.
+       Implements prompt 4.0 cleaning rule 4. */
+    _blockingRefusals: function (recordType, refused) {
+        var blocking = [];
+        var i = 0;
+        for (i = 0; i !== refused.length; i++) {
+            if (this._member(refused[i].field, this.MANDATORY[recordType])) {
+                blocking.push(refused[i].reason);
+            }
+        }
+        return blocking;
+    },
+
+    /* Maps one staging row onto entity field values. The flattened staging columns
+       already carry the target vocabulary, so no source code translation is applied. A
+       column the row leaves blank is omitted rather than mapped to an empty value, so a
+       blank optional column cannot clear a stored value and a blank mandatory column is
+       still refused by cleaning rule 4. Implements prompt 4.0 fallback dataset mapping. */
+    mapStagingRow: function (runId, staging) {
         var recordType = this._string(staging.getValue('record_type'));
         var columns = this.STAGING_COLUMNS[recordType];
-        var data = {};
+        var mapped = { data: {}, invalid: [] };
         var field = '';
         if (!columns) {
             return null;
@@ -7553,17 +7945,44 @@ IngestionMapper.prototype = {
             if (!columns.hasOwnProperty(field)) {
                 continue;
             }
-            data[field] = this._typed(recordType, field,
-                staging.getValue(columns[field]));
+            this._assign(mapped, runId, '', recordType, field,
+                staging.getValue(columns[field]), false);
         }
-        return data;
+        return mapped;
+    },
+
+    /* Maps one already flattened object onto entity field values through the record
+       type's target field allowlist, so a caller cannot introduce a field the record type
+       does not own. The values carry the target vocabulary.
+       Implements prompt 1.4 and prompt 4.0. */
+    mapSuppliedRow: function (runId, recordType, supplied) {
+        var mapped = { data: {}, invalid: [] };
+        var fields = this._fieldNames(recordType);
+        var i = 0;
+        if (!supplied) {
+            return null;
+        }
+        if (fields.length === 0) {
+            return null;
+        }
+        for (i = 0; i !== fields.length; i++) {
+            if (!supplied.hasOwnProperty(fields[i])) {
+                continue;
+            }
+            this._assign(mapped, runId, '', recordType, fields[i],
+                supplied[fields[i]], false);
+        }
+        return mapped;
     },
 
     /* Maps one live source object onto entity field values through the source alias
-       table. Implements prompt 4.0 live source mapping. */
-    mapLiveRecord: function (sourceSystem, recordType, source) {
+       table, translating the source system's own published codes into the target choice
+       vocabulary. A field no alias of which the object carries is omitted rather than
+       mapped to an empty value, so a partial source response never clears a stored
+       value. Implements prompt 4.0 live source mapping. */
+    mapLiveRecord: function (runId, sourceSystem, recordType, source) {
         var aliases = this.LIVE_ALIASES[sourceSystem + '.' + recordType];
-        var data = {};
+        var mapped = { data: {}, invalid: [] };
         var field = '';
         if (!aliases) {
             return null;
@@ -7575,10 +7994,15 @@ IngestionMapper.prototype = {
             if (!aliases.hasOwnProperty(field)) {
                 continue;
             }
-            data[field] = this._typed(recordType, field,
-                this._pick(source, aliases[field]));
+            var picked = this._pickPresent(source, aliases[field],
+                this._meta(recordType, field));
+            if (!picked.present) {
+                continue;
+            }
+            this._assign(mapped, runId, sourceSystem, recordType, field, picked.value,
+                true);
         }
-        return data;
+        return mapped;
     },
 
     /* Expands the envelope of a live source payload into one row per source object.
@@ -7623,30 +8047,33 @@ IngestionMapper.prototype = {
         if (recordType !== 'startup') {
             if (recordType !== 'investor') {
                 var wanted = this._string(resolved.startup);
-                var startupId = this.resolveStartup(runId, wanted);
-                if (startupId === '') {
+                var parent = this.resolveStartup(wanted);
+                if (!parent.ok) {
                     return {
                         ok: false,
                         reason: 'startup natural key '
                     + this._reference(runId, 'startup', { name: wanted })
-                    + ' could not be resolved',
+                    + ' could not be resolved: ' + parent.reason,
                         data: resolved,
                         participants: participants
                     };
                 }
-                resolved.startup = startupId;
+                resolved.startup = parent.sys_id;
             }
         }
         if (recordType === 'funding_round') {
             var lead = this._string(resolved.lead_investor);
             if (lead !== '') {
-                var leadId = this.resolveInvestor(runId, lead);
-                if (leadId === '') {
+                var leadMatch = this.resolveInvestor(lead);
+                if (leadMatch.ok) {
+                    resolved.lead_investor = leadMatch.sys_id;
+                } else {
                     this.log().warn(runId, 'lead investor '
                         + this._reference(runId, 'investor', { name: lead })
-                        + ' could not be resolved and was left empty');
+                        + ' could not be resolved: ' + leadMatch.reason
+                        + ', the reference was left unwritten');
+                    delete resolved.lead_investor;
                 }
-                resolved.lead_investor = leadId;
             }
             participants = this.resolveParticipants(runId,
                 resolved.participating_investors);
@@ -7656,54 +8083,101 @@ IngestionMapper.prototype = {
         return { ok: true, reason: '', data: resolved, participants: participants };
     },
 
-    /* Returns the identifier of the Startup a natural key or identifier names.
+    /* Returns the one Startup a natural key names. A natural key resolves only when
+       exactly one record carries the name; a key matching none and a key matching more
+       than one are both reported as unresolved with the reason, and no identifier is
+       returned. A natural key is never read as a record identifier.
        Implements prompt 4.0 reference resolution. */
-    resolveStartup: function (runId, value) {
+    resolveStartup: function (value) {
         var wanted = this._string(value);
         if (wanted === '') {
-            return '';
+            return { ok: false, sys_id: '', matches: 0, reason: 'the value is blank' };
         }
-        if (this.SYS_ID.test(wanted)) {
-            return wanted;
-        }
-        var startup = new GlideRecord(this.TABLES.startup);
-        startup.addQuery('name', wanted);
-        startup.orderBy('sys_id');
-        startup.query();
-        var matches = [];
-        while (startup.next()) {
-            matches.push(startup.getUniqueValue());
-        }
+        var matches = this._matchName(this.TABLES.startup, wanted);
         if (matches.length === 0) {
-            return '';
+            return {
+                ok: false,
+                sys_id: '',
+                matches: 0,
+                reason: 'no startup carries the name'
+            };
         }
         if (matches.length !== 1) {
-            this.log().warn(runId, 'startup natural key '
-                + this._reference(runId, 'startup', { name: wanted }) + ' matched '
-                + matches.length + ' records, the first by sys_id was used');
+            return {
+                ok: false,
+                sys_id: '',
+                matches: matches.length,
+                reason: 'the name is ambiguous across ' + matches.length + ' startups'
+            };
         }
-        return matches[0];
+        return { ok: true, sys_id: matches[0], matches: 1, reason: '' };
     },
 
-    /* Returns the identifier of the Investor a natural key or identifier names.
-       Implements prompt 4.0 reference resolution. */
-    resolveInvestor: function (runId, value) {
+    /* Returns the one Investor a natural key names, on the same exactly one policy as
+       resolveStartup. Implements prompt 4.0 reference resolution. */
+    resolveInvestor: function (value) {
         var wanted = this._string(value);
         if (wanted === '') {
-            return '';
+            return { ok: false, sys_id: '', matches: 0, reason: 'the value is blank' };
         }
-        if (this.SYS_ID.test(wanted)) {
-            return wanted;
+        var matches = this._matchName(this.TABLES.investor, wanted);
+        if (matches.length === 0) {
+            return {
+                ok: false,
+                sys_id: '',
+                matches: 0,
+                reason: 'no investor carries the name'
+            };
         }
-        var investor = new GlideRecord(this.TABLES.investor);
-        investor.addQuery('name', wanted);
-        investor.orderBy('sys_id');
-        investor.setLimit(1);
-        investor.query();
-        if (investor.next()) {
-            return investor.getUniqueValue();
+        if (matches.length !== 1) {
+            return {
+                ok: false,
+                sys_id: '',
+                matches: matches.length,
+                reason: 'the name is ambiguous across ' + matches.length + ' investors'
+            };
         }
-        return '';
+        return { ok: true, sys_id: matches[0], matches: 1, reason: '' };
+    },
+
+    /* Returns every identifier on a table whose name column equals a value once both
+       sides are trimmed and lowered, so a match never depends on the database
+       collation. Implements prompt 4.0 reference resolution. */
+    _matchName: function (table, wanted) {
+        var matches = [];
+        var candidate = new GlideRecord(table);
+        candidate.addQuery('name', wanted);
+        candidate.orderBy('sys_id');
+        candidate.query();
+        while (candidate.next()) {
+            if (this._sameText(candidate.getValue('name'), wanted)) {
+                matches.push(candidate.getUniqueValue());
+            }
+        }
+        return matches;
+    },
+
+    /* Returns every Startup identifier whose name plus headquarters_location key equals
+       an incoming pair. Implements prompt 4.0 deduplication. */
+    _matchStartupKey: function (name, headquarters) {
+        var matches = [];
+        var key = this.startupKey(name, headquarters);
+        var candidate = new GlideRecord(this.TABLES.startup);
+        candidate.addQuery('name', this._string(name));
+        candidate.orderBy('sys_id');
+        candidate.query();
+        while (candidate.next()) {
+            if (this.startupKey(candidate.getValue('name'),
+                    candidate.getValue('headquarters_location')) === key) {
+                matches.push(candidate.getUniqueValue());
+            }
+        }
+        return matches;
+    },
+
+    /* Returns true when two values are equal once both are trimmed and lowered. */
+    _sameText: function (left, right) {
+        return this._string(left).toLowerCase() === this._string(right).toLowerCase();
     },
 
     /* Returns the de-duplicated identifiers of the participating investors a delimited
@@ -7724,18 +8198,19 @@ IngestionMapper.prototype = {
                 continue;
             }
             named = named + 1;
-            var investorId = this.resolveInvestor(runId, token);
-            if (investorId === '') {
+            var match = this.resolveInvestor(token);
+            if (!match.ok) {
                 this.log().warn(runId, 'participating investor '
                     + this._reference(runId, 'investor', { name: token })
-                    + ' could not be resolved and was not linked');
+                    + ' could not be resolved: ' + match.reason
+                    + ', and was not linked');
                 continue;
             }
-            if (seen[investorId]) {
+            if (seen[match.sys_id]) {
                 continue;
             }
-            seen[investorId] = true;
-            resolved.push(investorId);
+            seen[match.sys_id] = true;
+            resolved.push(match.sys_id);
         }
         if (named === 0) {
             this.log().invalidEncoding(runId, 'participating_investor_names', raw,
@@ -7744,12 +8219,16 @@ IngestionMapper.prototype = {
         return resolved;
     },
 
-    /* Inserts or updates one entity record, reusing an existing Startup or Investor
-       matched on its natural key, and reports the outcome of the write.
-       Implements prompt 4.0 deduplication. */
+    /* Inserts or updates one entity record, reusing the one existing Startup or Investor
+       its natural key matches, and reports the outcome of the write. Only a field the
+       incoming record actually carries is written, and only through the record type's
+       target field allowlist, so an absent value never clears a stored one and no
+       derived or read-only column is reachable.
+       Implements prompt 1.4, prompt 1.5 and prompt 4.0 deduplication. */
     upsert: function (runId, recordType, data, participants) {
         var table = this.TABLES[recordType];
-        if (!table) {
+        var allowed = this.TARGET_FIELDS[recordType];
+        if (!table || !allowed) {
             return {
                 ok: false,
                 reason: 'unknown record type ' + this._token(recordType),
@@ -7759,10 +8238,33 @@ IngestionMapper.prototype = {
         }
         var existing = '';
         if (recordType === 'startup') {
-            existing = this.findExistingStartup(data.name, data.headquarters_location);
+            var startupMatch = this.findExistingStartup(data.name,
+                data.headquarters_location);
+            if (!startupMatch.ok) {
+                return {
+                    ok: false,
+                    reason: 'startup natural key '
+                        + this._reference(runId, recordType, data) + ' is ambiguous: '
+                        + startupMatch.reason,
+                    sys_id: '',
+                    created: false
+                };
+            }
+            existing = startupMatch.sys_id;
         }
         if (recordType === 'investor') {
-            existing = this.resolveInvestor(runId, data.name);
+            var investorMatch = this.findExistingInvestor(data.name);
+            if (!investorMatch.ok) {
+                return {
+                    ok: false,
+                    reason: 'investor natural key '
+                        + this._reference(runId, recordType, data) + ' is ambiguous: '
+                        + investorMatch.reason,
+                    sys_id: '',
+                    created: false
+                };
+            }
+            existing = investorMatch.sys_id;
         }
         var record = new GlideRecord(table);
         if (existing !== '') {
@@ -7780,7 +8282,11 @@ IngestionMapper.prototype = {
             record.initialize();
         }
         var field = '';
-        for (field in data) {
+        var supplied = 0;
+        for (field in allowed) {
+            if (!allowed.hasOwnProperty(field)) {
+                continue;
+            }
             if (!data.hasOwnProperty(field)) {
                 continue;
             }
@@ -7791,6 +8297,15 @@ IngestionMapper.prototype = {
                 continue;
             }
             record.setValue(field, data[field]);
+            supplied = supplied + 1;
+        }
+        if (supplied === 0) {
+            return {
+                ok: false,
+                reason: 'the record carries no writable ' + table + ' field',
+                sys_id: '',
+                created: false
+            };
         }
         var written = '';
         if (existing !== '') {
@@ -7884,7 +8399,7 @@ IngestionMapper.prototype = {
             this.log().rejectRecord(runId, recordType, '', entry.reason);
             return entry;
         }
-        var raw = this.mapRow(sourceSystem, recordType, row);
+        var raw = this.mapRow(runId, sourceSystem, recordType, row);
         if (!raw) {
             entry.reason = 'row carries no mappable payload';
             this.log().rejectRecord(runId, recordType, '', entry.reason);
@@ -7905,19 +8420,19 @@ IngestionMapper.prototype = {
     /* Returns the entity field values of one incoming row, whichever carrier it uses:
        a staging record, an already flattened object, or a live source object.
        Implements prompt 4.0. */
-    mapRow: function (sourceSystem, recordType, row) {
+    mapRow: function (runId, sourceSystem, recordType, row) {
         if (row.staging_id) {
             var staging = new GlideRecord(this.STAGING);
             if (!staging.get(String(row.staging_id))) {
                 return null;
             }
-            return this.mapStagingRow(staging);
+            return this.mapStagingRow(runId, staging);
         }
         if (row.data) {
-            return this._copy(row.data);
+            return this.mapSuppliedRow(runId, recordType, row.data);
         }
         if (row.source) {
-            return this.mapLiveRecord(sourceSystem, recordType, row.source);
+            return this.mapLiveRecord(runId, sourceSystem, recordType, row.source);
         }
         return null;
     },
@@ -8081,21 +8596,163 @@ IngestionMapper.prototype = {
         return this.ingest(runId, sourceSystem, provenance, rows);
     },
 
-    _typed: function (recordType, field, value) {
-        var key = recordType + '.' + field;
-        if (this.BOOLEANS[key]) {
-            return this._boolean(value);
+    /* Returns the metadata of one field of a record type, whether it is a writable target
+       field or a value carried through the pipeline without being written. */
+    _meta: function (recordType, field) {
+        var target = this.TARGET_FIELDS[recordType];
+        if (target) {
+            if (target[field]) {
+                return target[field];
+            }
         }
-        if (this.AMOUNTS[key]) {
-            return this._amount(value);
+        var transport = this.TRANSPORT_FIELDS[recordType];
+        if (transport) {
+            if (transport[field]) {
+                return transport[field];
+            }
         }
-        if (this.DATES[key]) {
-            return this._date(value);
+        return {};
+    },
+
+    /* Returns the writable target field names of a record type followed by the values it
+       carries without writing them. */
+    _fieldNames: function (recordType) {
+        var names = [];
+        var field = '';
+        var target = this.TARGET_FIELDS[recordType];
+        var transport = this.TRANSPORT_FIELDS[recordType];
+        for (field in target) {
+            if (target.hasOwnProperty(field)) {
+                names.push(field);
+            }
         }
-        if (field === 'founded_year') {
-            return this._year(value);
+        for (field in transport) {
+            if (transport.hasOwnProperty(field)) {
+                names.push(field);
+            }
         }
-        return this._string(value);
+        return names;
+    },
+
+    /* Coerces one incoming value to the format of its column and records it on the
+       mapped record. A blank value is omitted so it can neither clear a stored value nor
+       satisfy a mandatory field, and a value matching no accepted format is refused,
+       logged and registered so cleaning rule 4 can reject the record when the field is
+       mandatory. Implements prompt 4.0. */
+    _assign: function (mapped, runId, sourceSystem, recordType, field, raw, translate) {
+        var coerced = this.coerceField(runId, sourceSystem, recordType, field, raw,
+            translate);
+        if (coerced.reason !== '') {
+            this.log().invalidEncoding(runId, field, raw, coerced.reason);
+            mapped.invalid.push({ field: field, reason: coerced.reason });
+            return mapped;
+        }
+        if (coerced.value === '') {
+            return mapped;
+        }
+        mapped.data[field] = coerced.value;
+        return mapped;
+    },
+
+    /* Returns the coerced value of one incoming field, or the reason the value was
+       refused for matching no accepted format. A live value is first translated out of
+       the source system's own published vocabulary. Implements prompt 4.0. */
+    coerceField: function (runId, sourceSystem, recordType, field, raw, translate) {
+        var text = this._string(raw);
+        if (text === '') {
+            return { value: '', reason: '' };
+        }
+        if (translate) {
+            text = this._translate(runId, sourceSystem, recordType, field, text);
+            if (text === '') {
+                return { value: '', reason: '' };
+            }
+        }
+        var kind = this._meta(recordType, field).kind;
+        if (kind === 'boolean') {
+            var flag = this._boolean(text);
+            if (flag === '') {
+                return { value: '', reason: field + ' is not a true or false value' };
+            }
+            return { value: flag, reason: '' };
+        }
+        if (kind === 'amount') {
+            var amount = this._amount(text);
+            if (amount === '') {
+                return {
+                    value: '',
+                    reason: field + ' is not a plain decimal amount'
+                };
+            }
+            return { value: amount, reason: '' };
+        }
+        if (kind === 'date') {
+            var day = this._date(text);
+            if (day === '') {
+                return {
+                    value: '',
+                    reason: field + ' is not a yyyy-MM-dd date, an ISO 8601 timestamp or'
+                        + ' an epoch value naming a day that exists'
+                };
+            }
+            return { value: day, reason: '' };
+        }
+        if (kind === 'year') {
+            var year = this._year(text);
+            if (year === '') {
+                return {
+                    value: '',
+                    reason: field + ' is not a four digit year between ' + this.MIN_YEAR
+                        + ' and ' + this.MAX_YEAR
+                };
+            }
+            return { value: year, reason: '' };
+        }
+        return { value: text, reason: '' };
+    },
+
+    /* Returns the target vocabulary member a source system's own published code means,
+       the value unchanged when the field carries no source code table, and the empty
+       string when the code is one the source publishes and the target vocabulary has no
+       member for. Implements prompt 4.0 cleaning rule 3. */
+    _translate: function (runId, sourceSystem, recordType, field, value) {
+        var table = this.SOURCE_VALUES[sourceSystem + '.' + recordType + '.' + field];
+        if (!table) {
+            return value;
+        }
+        if (this.MULTI_CHOICE[recordType + '.' + field]) {
+            var parts = String(value).split(',');
+            var picked = [];
+            var i = 0;
+            for (i = 0; i !== parts.length; i++) {
+                var one = this._translateOne(runId, sourceSystem, recordType, field,
+                    this._string(parts[i]), table);
+                if (one !== '') {
+                    picked.push(one);
+                }
+            }
+            return picked.join(',');
+        }
+        return this._translateOne(runId, sourceSystem, recordType, field, value, table);
+    },
+
+    /* Translates one source code, logging a code the source publishes that the target
+       vocabulary has no member for. Implements prompt 4.0 cleaning rule 3. */
+    _translateOne: function (runId, sourceSystem, recordType, field, value, table) {
+        var code = this._string(value).toLowerCase();
+        if (code === '') {
+            return '';
+        }
+        if (!table.hasOwnProperty(code)) {
+            return value;
+        }
+        if (table[code] === '') {
+            this.log().unmatchedChoice(runId, recordType, field, value,
+                'recognised ' + this._token(sourceSystem)
+                + ' code with no target member, left unwritten');
+            return '';
+        }
+        return table[code];
     },
 
     _boolean: function (value) {
@@ -8124,21 +8781,33 @@ IngestionMapper.prototype = {
         return '';
     },
 
+    /* Returns a decimal amount only when the whole value already is one. No character is
+       ever stripped out of a value to make it parse, so a value carrying a currency
+       symbol, a thousands separator or any other decoration is refused rather than
+       silently turned into a different number. */
     _amount: function (value) {
-        var text = this._string(value).replace(/[^0-9.\-]/g, '');
-        if (!/^-?[0-9]+(\.[0-9]+)?$/.test(text)) {
+        var text = this._string(value);
+        if (!this.AMOUNT.test(text)) {
             return '';
         }
         return text;
     },
 
+    /* Returns a yyyy-MM-dd date only when the whole value is one of the accepted source
+       formats and names a day that exists in the calendar: a yyyy-MM-dd date, a full
+       ISO 8601 timestamp, or a ten or thirteen digit epoch value. A prefix of a longer
+       value is never accepted, and the calendar rule is the one RestQueryHelper applies
+       to the REST create and update contract. */
     _date: function (value) {
         var text = this._string(value);
         if (text === '') {
             return '';
         }
-        if (/^[0-9]{4}-[0-9]{2}-[0-9]{2}/.test(text)) {
-            return text.substring(0, 10);
+        if (this.ISO_DATE.test(text)) {
+            return this._calendarDay(text);
+        }
+        if (this.ISO_TIMESTAMP.test(text)) {
+            return this._calendarDay(text.substring(0, 10));
         }
         if (/^[0-9]{10}$/.test(text)) {
             return this._epochDate(parseInt(text, 10) * 1000);
@@ -8149,33 +8818,96 @@ IngestionMapper.prototype = {
         return '';
     },
 
+    /* Returns a yyyy-MM-dd value only when the day it names exists. */
+    _calendarDay: function (day) {
+        if (!this.calendar().isCalendarDate(day)) {
+            return '';
+        }
+        return day;
+    },
+
+    /* Returns the calendar validator the REST create and update contract uses, so the
+       rule has one home. */
+    calendar: function () {
+        if (!this.dates) {
+            this.dates = new RestQueryHelper();
+        }
+        return this.dates;
+    },
+
     _epochDate: function (millis) {
         var moment = new GlideDateTime();
         moment.setNumericValue(millis);
         return String(moment.getDate().getValue());
     },
 
+    /* Returns a four digit year only when the whole value is a year, a yyyy-MM-dd date or
+       a full ISO 8601 timestamp naming a day that exists, and the year is inside the
+       supported range. A prefix of a longer value is never accepted. */
     _year: function (value) {
         var text = this._string(value);
-        var match = /^([0-9]{4})/.exec(text);
-        if (!match) {
+        var year = '';
+        if (/^[0-9]{4}$/.test(text)) {
+            year = text;
+        } else if (this.ISO_DATE.test(text) || this.ISO_TIMESTAMP.test(text)) {
+            if (this._calendarDay(text.substring(0, 10)) === '') {
+                return '';
+            }
+            year = text.substring(0, 4);
+        } else {
             return '';
         }
-        return match[1];
+        var numeric = parseInt(year, 10);
+        if (numeric &amp;lt; this.MIN_YEAR) {
+            return '';
+        }
+        if (numeric &amp;gt; this.MAX_YEAR) {
+            return '';
+        }
+        return year;
     },
 
-    _pick: function (source, keys) {
+    /* Returns the first alias key a source object actually carries, reporting separately
+       whether any alias was present at all: a field the response omits is absent and is
+       never written, while a field the response supplies blank is present and still
+       leaves the stored value untouched, because ingestion never clears a value.
+       Implements prompt 4.0 live source mapping. */
+    _pickPresent: function (source, keys, meta) {
         var i = 0;
+        var present = false;
         for (i = 0; i !== keys.length; i++) {
             if (source[keys[i]] === undefined) {
                 continue;
             }
-            var flattened = this._flatten(source[keys[i]]);
+            if (source[keys[i]] === null) {
+                continue;
+            }
+            present = true;
+            var flattened = meta.kind === 'location'
+                ? this._flattenLocation(source[keys[i]])
+                : this._flatten(source[keys[i]]);
             if (flattened !== '') {
-                return flattened;
+                return { present: true, value: flattened };
             }
         }
-        return '';
+        return { present: present, value: '' };
+    },
+
+    /* Returns a location as one display string, composing the ordered components of a
+       source location array most specific first. Implements prompt 1.1. */
+    _flattenLocation: function (value) {
+        var i = 0;
+        if (!Array.isArray(value)) {
+            return this._flatten(value);
+        }
+        var parts = [];
+        for (i = 0; i !== value.length; i++) {
+            var one = this._flatten(value[i]);
+            if (one !== '') {
+                parts.push(one);
+            }
+        }
+        return parts.join(', ');
     },
 
     _flatten: function (value) {
@@ -8227,7 +8959,7 @@ IngestionMapper.prototype = {
             var value = this._match(token, allowed);
             if (value === '') {
                 var fallback = '';
-                var outcome = 'left empty';
+                var outcome = 'left unwritten';
                 if (this._member('Other', allowed)) {
                     fallback = 'Other';
                     outcome = 'stored as Other';

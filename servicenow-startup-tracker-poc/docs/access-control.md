@@ -46,7 +46,7 @@ Before any access control is evaluated, the platform decides whether a caller's 
 
 This matters because unsecured server-side record access does not consult access controls. Leaving a table `public` with cross-scope read enabled would let a script in another scope read every premium field directly, and the 47 record access controls below would never be consulted — they would report no denial because they were never reached. Leaving `ws_access` true would expose a second route to the same rows that skips the rate limiter, the per-field read gate and the endpoint access controls of layer 5.
 
-The consequence for deployment is that the post-commit gates cannot read application tables over the Table API. [`./validation-gates.md`](./validation-gates.md) therefore verifies the tables through `sys_db_object` and `sys_dictionary` metadata instead, and gates the posture itself as `GATE-SEC-01` and `GATE-SEC-02`. That substitution is a deliberate departure from the AAP, recorded in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
+The consequence for deployment is that the post-commit gates cannot read application tables over the Table API. [`./validation-gates.md`](./validation-gates.md) therefore verifies the tables through `sys_db_object` and `sys_dictionary` metadata instead, and gates the posture itself as `GATE-SEC-01` and `GATE-SEC-02`. That substitution is a deliberate departure from the AAP, recorded in [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md).
 
 ## The five layers
 
