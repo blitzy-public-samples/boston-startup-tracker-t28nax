@@ -6,22 +6,29 @@ the outer update-set level and the nested per-record payload level before delive
 expressed as pre-delivery gates G-1 and G-2 of AAP section 0.11.1:
 
     gate G-1  outer update-set level: byte prologue (no byte-order mark, XML
-              declaration first), XML well-formedness, and the document shape
+              declaration first), XML well-formedness, the document shape
               <unload> / exactly one <sys_remote_update_set> / at least one
-              <sys_update_xml>.
+              <sys_update_xml>, and header linkage -- every <sys_update_xml>
+              carries a <remote_update_set> equal to the single
+              <sys_remote_update_set>'s <sys_id>.
     gate G-2  nested per-record payload level: the text of each <payload>
               parsed as an independent document whose root is <record_update>
-              carrying a non-empty table attribute. Every payload is examined
-              when --max-errors is 0; a nonzero --max-errors stops the stage
-              once that many payload failures have been collected, leaving the
-              rest unexamined, and the report states how many were examined.
+              carrying a non-empty table attribute, plus the update-name
+              contract -- each <sys_update_xml>'s <name> names the record its
+              payload carries, being either <table>_<sys_id> of the payload's
+              primary record or that record's own <sys_update_name>. Every
+              payload is examined whatever --max-errors is set to; the option
+              caps only how many failure diagnostics are written, and the
+              reported pass and failure counts stay complete.
 
 The remaining pre-delivery gates of AAP section 0.11.1 -- G-3 referential
-integrity, G-4 scope containment, G-5 secret hygiene, G-6 field-list fidelity,
-G-7 deliverable completeness, G-8 deck structure and G-9 governance
-completeness -- are outside this validator's scope. It checks well-formedness
-and document shape only; a file that passes G-1 and G-2 is not thereby
-certified against G-3 through G-9.
+integrity across payload records (dictionary collections to table names,
+reference targets, choice name and element pairs, ACL names, ACL-role joins,
+operations to the REST definition), G-4 scope containment, G-5 secret hygiene,
+G-6 field-list fidelity, G-7 deliverable completeness, G-8 deck structure and
+G-9 governance completeness -- are outside this validator's scope. It checks
+well-formedness, outer document shape and header linkage only; a file that
+passes G-1 and G-2 is not thereby certified against G-3 through G-9.
 
 Parser safety. The validator reads untrusted XML with the standard library's Expat
 binding, so three structural defences bound the work it will do at both levels, in
@@ -91,7 +98,15 @@ NESTED_TABLE_ATTR = "table"
 
 RECORD_TYPE_TAG = "type"
 RECORD_TARGET_TAG = "target_name"
+RECORD_LINK_TAG = "remote_update_set"
+RECORD_NAME_TAG = "name"
+HEADER_ID_TAG = "sys_id"
+PAYLOAD_ID_TAG = "sys_id"
+PAYLOAD_UPDATE_NAME_TAG = "sys_update_name"
 UNSET_FIELD = "<unset>"
+
+# gate G-1: how many unlinked update records the linkage diagnostic names
+LINKAGE_SAMPLE_LIMIT = 5
 
 XML_DECLARATION_PREFIX = b"<?xml"
 
@@ -190,11 +205,19 @@ class PayloadTally:
     """Complete gate G-2 counts plus the diagnostics retained under --max-errors.
 
     discovered counts every <payload> element visited, passed counts those that
-    satisfied gate G-2, and failure_count counts every failure whether or not its
+    were well-formed, named counts those whose update record names the record the
+    payload carries, and failure_count counts every failure whether or not its
     diagnostic was retained.
     """
 
-    __slots__ = ("discovered", "failure_count", "failures", "max_errors", "passed")
+    __slots__ = (
+        "discovered",
+        "failure_count",
+        "failures",
+        "max_errors",
+        "named",
+        "passed",
+    )
 
     def __init__(self, max_errors: int = 0) -> None:
         self.max_errors = max_errors
@@ -202,6 +225,7 @@ class PayloadTally:
         self.failure_count = 0
         self.discovered = 0
         self.passed = 0
+        self.named = 0
 
     def add_failure(self, detail: str) -> None:
         """Count one gate G-2 failure, retaining its diagnostic under the cap."""
@@ -361,6 +385,68 @@ def check_byte_prologue(data: bytes) -> list[Failure]:
     return []
 
 
+def check_header_linkage(
+    header: ET.Element, records: list[ET.Element], reporter: Reporter
+) -> list[Failure]:
+    """Gate G-1 linkage check: every update record carries the header's <sys_id>.
+
+    Each <sys_update_xml>'s <remote_update_set> is compared with the single
+    <sys_remote_update_set>'s <sys_id>. A record whose element is absent, empty
+    or unequal is unlinked. Every unlinked record is counted, the first
+    LINKAGE_SAMPLE_LIMIT of them are named in one diagnostic, and the
+    diagnostic states how many further ones were not named. Diagnostics name
+    the violated condition and the header identifier only; no other input
+    content is written to any stream, per the gate G-5 secret-hygiene
+    requirement.
+    """
+    header_id = (header.findtext(HEADER_ID_TAG) or "").strip()
+    if not header_id:
+        return [
+            Failure(
+                GATE_OUTER,
+                f"<{HEADER_TAG}> header record carries no non-empty "
+                f"<{HEADER_ID_TAG}>, so no <{RECORD_TAG}> record can carry it",
+            )
+        ]
+
+    total = len(records)
+    unlinked = 0
+    samples: list[str] = []
+    for ordinal, record in enumerate(records, 1):
+        element = record.find(RECORD_LINK_TAG)
+        if element is None:
+            condition = f"has no <{RECORD_LINK_TAG}> element"
+        elif not (element.text or "").strip():
+            condition = f"has an empty <{RECORD_LINK_TAG}> element"
+        elif element.text.strip() != header_id:
+            condition = (
+                f"has a <{RECORD_LINK_TAG}> other than the header "
+                f"<{HEADER_ID_TAG}>"
+            )
+        else:
+            continue
+        unlinked += 1
+        if len(samples) < LINKAGE_SAMPLE_LIMIT:
+            samples.append(f"{record_label(record, ordinal, total)} {condition}")
+
+    reporter.progress(
+        f"    {total - unlinked}/{total} update record(s) carry the header "
+        f"<{HEADER_ID_TAG}> {header_id}"
+    )
+    if not unlinked:
+        return []
+
+    detail = (
+        f"{unlinked} of {total} <{RECORD_TAG}> record(s) do not carry a "
+        f"<{RECORD_LINK_TAG}> equal to the header <{HEADER_ID_TAG}> "
+        f"{header_id}: " + "; ".join(samples)
+    )
+    withheld = unlinked - len(samples)
+    if withheld:
+        detail += f"; {withheld} further unlinked record(s) not named"
+    return [Failure(GATE_OUTER, detail)]
+
+
 def validate_outer(
     data: bytes, reporter: Reporter, limits: Limits, truncated: bool
 ) -> tuple[list[Failure], list[ET.Element]]:
@@ -443,6 +529,10 @@ def validate_outer(
         )
         records = []
 
+    # gate G-1: every update record carries the one header record's <sys_id>
+    if len(headers) == 1 and records:
+        failures.extend(check_header_linkage(headers[0], records, reporter))
+
     outcome = f"FAILED: {len(failures)} failure(s)" if failures else "PASS"
     reporter.progress(f"    gate {GATE_OUTER} {outcome}")
     return failures, records
@@ -463,23 +553,80 @@ def payload_label(prefix: str, index: int, siblings: int) -> str:
     return f"{prefix} payload {index}/{siblings}"
 
 
+def accepted_update_names(primary: ET.Element, table: str) -> list[str]:
+    """Return the update name(s) the platform accepts for one payload's record.
+
+    A customer update is named after the record it carries: <table>_<sys_id> of
+    the payload's primary record, or that record's own <sys_update_name> where the
+    payload declares one. An update named anything else cannot be resolved by the
+    platform when another record in the same update set references it.
+    """
+    accepted: list[str] = []
+    sys_id = (primary.findtext(PAYLOAD_ID_TAG) or "").strip()
+    if sys_id:
+        accepted.append(f"{table}_{sys_id}")
+    declared = (primary.findtext(PAYLOAD_UPDATE_NAME_TAG) or "").strip()
+    if declared:
+        accepted.append(declared)
+    return accepted
+
+
+def check_payload_update_name(
+    nested: ET.Element, table: str, update_name: str, label: str, tally: PayloadTally
+) -> None:
+    """Gate G-2 naming check: the update record names the record it carries.
+
+    The payload's primary record is its first child element whose tag is the
+    <record_update> table attribute. Its absence, a missing <sys_id> on it and an
+    update name that is neither accepted form are each one failure. Diagnostics
+    name the offending update name, the table and the accepted forms only.
+    """
+    primary = next((child for child in nested if child.tag == table), None)
+    if primary is None:
+        tally.add_failure(
+            f"{label}: nested <{NESTED_ROOT_TAG}> for table {table} carries no "
+            f"<{table}> record element"
+        )
+        return
+
+    accepted = accepted_update_names(primary, table)
+    if not accepted:
+        tally.add_failure(
+            f"{label}: the <{table}> record carries neither a non-empty "
+            f"<{PAYLOAD_ID_TAG}> nor a non-empty <{PAYLOAD_UPDATE_NAME_TAG}>, so "
+            "no update name can name it"
+        )
+        return
+
+    if update_name not in accepted:
+        tally.add_failure(
+            f"{label}: <{RECORD_NAME_TAG}> is {update_name or UNSET_FIELD}, which "
+            f"does not name the record the payload carries; expected "
+            f"{' or '.join(accepted)}"
+        )
+        return
+
+    tally.named += 1
+
+
 def validate_payload_document(
     payload: ET.Element,
     label: str,
     tally: PayloadTally,
     reporter: Reporter,
     limits: Limits,
-) -> None:
-    """Run gate G-2 over one <payload> parsed as an independent document.
+) -> ET.Element | None:
+    """Run gate G-2 well-formedness over one <payload> as an independent document.
 
     The payload text is measured against the payload ceiling and screened for
     declaration hygiene, then parsed directly with ET.fromstring; it is not
-    un-escaped again.
+    un-escaped again. The parsed nested document is returned when every check
+    passed, and None when any of them failed.
     """
     # gate G-2: an empty payload is a failure, never a TypeError
     if payload.text is None:
         tally.add_failure(f"{label}: <{PAYLOAD_TAG}> element carries no text")
-        return
+        return None
 
     # gate G-2: a bounded nested document
     payload_bytes = len(payload.text.encode("utf-8", errors="replace"))
@@ -488,41 +635,45 @@ def validate_payload_document(
             f"{label}: nested document is {payload_bytes} bytes, above the "
             f"{limits.max_payload_bytes} byte payload ceiling"
         )
-        return
+        return None
 
     # gate G-2: declaration hygiene runs before the nested parser
     hygiene = check_declaration_hygiene(payload.text, GATE_PAYLOAD, label)
     if hygiene:
         for failure in hygiene:
             tally.add_failure(failure.detail)
-        return
+        return None
 
     try:
         nested = ET.fromstring(payload.text)
     except ET.ParseError as exc:
         detail = format_parse_error(exc)
         tally.add_failure(f"{label}: nested document is not well-formed: {detail}")
-        return
+        return None
 
-    if nested.tag != NESTED_ROOT_TAG:
-        tally.add_failure(
-            f"{label}: unexpected nested root element: expected "
-            f"<{NESTED_ROOT_TAG}>, found <{nested.tag}>"
-        )
-        return
-
+    # gate G-2: the nested document is a <record_update> naming its table
     table = nested.get(NESTED_TABLE_ATTR)
-    if not table:
-        tally.add_failure(
-            f"{label}: nested <{NESTED_ROOT_TAG}> has no non-empty "
+    if nested.tag != NESTED_ROOT_TAG:
+        defect = (
+            f"unexpected nested root element: expected <{NESTED_ROOT_TAG}>, "
+            f"found <{nested.tag}>"
+        )
+    elif not table:
+        defect = (
+            f"nested <{NESTED_ROOT_TAG}> has no non-empty "
             f"{NESTED_TABLE_ATTR} attribute"
         )
-        return
+    else:
+        defect = ""
+    if defect:
+        tally.add_failure(f"{label}: {defect}")
+        return None
 
     tally.passed += 1
     reporter.payload_line(
         f'    {label} -> <{NESTED_ROOT_TAG} {NESTED_TABLE_ATTR}="{table}">'
     )
+    return nested
 
 
 def validate_payloads(
@@ -533,13 +684,15 @@ def validate_payloads(
     Every record and every one of its direct <payload> children is examined;
     max_errors caps only the diagnostics the returned tally retains. Each payload
     is measured against the payload ceiling and screened for declaration hygiene
-    before it is parsed.
+    before it is parsed, and each well-formed payload is checked against its
+    record's update name.
     """
     tally = PayloadTally(max_errors)
     total = len(records)
 
     for ordinal, record in enumerate(records, 1):
         prefix = record_label(record, ordinal, total)
+        update_name = (record.findtext(RECORD_NAME_TAG) or "").strip()
         payloads = record.findall(PAYLOAD_TAG)
         siblings = len(payloads)
         tally.discovered += siblings
@@ -555,13 +708,18 @@ def validate_payloads(
             )
 
         for index, payload in enumerate(payloads, 1):
-            validate_payload_document(
-                payload,
-                payload_label(prefix, index, siblings),
-                tally,
-                reporter,
-                limits,
+            label = payload_label(prefix, index, siblings)
+            nested = validate_payload_document(
+                payload, label, tally, reporter, limits
             )
+            if nested is not None:
+                check_payload_update_name(
+                    nested,
+                    nested.get(NESTED_TABLE_ATTR) or "",
+                    update_name,
+                    label,
+                    tally,
+                )
 
     return tally
 
@@ -629,6 +787,10 @@ def validate_file(
         f"    {tally.passed}/{tally.discovered} payload(s) well-formed across "
         f"{outcome.records_total} record(s)"
     )
+    reporter.progress(
+        f"    {tally.named}/{tally.discovered} update record(s) name the record "
+        "their payload carries"
+    )
     label = (
         f"FAILED: {tally.failure_count} failure(s)" if tally.failure_count else "PASS"
     )
@@ -681,8 +843,12 @@ def build_parser() -> argparse.ArgumentParser:
         prog=Path(__file__).name,
         description=(
             "Validate Boston Startup Tracker Update Set XML at the outer "
-            f"update-set level (gate {GATE_OUTER}) and the nested per-record "
-            f"payload level (gate {GATE_PAYLOAD})."
+            f"update-set level (gate {GATE_OUTER}: byte prologue, "
+            "well-formedness, document shape, and every update record "
+            f"carrying the header <{HEADER_ID_TAG}>) and the nested "
+            f"per-record payload level (gate {GATE_PAYLOAD}: nested "
+            "well-formedness and each record naming the record its payload "
+            "carries)."
         ),
         epilog=(
             "Exit codes: 0 every validated file passed both gates; 1 at least "
