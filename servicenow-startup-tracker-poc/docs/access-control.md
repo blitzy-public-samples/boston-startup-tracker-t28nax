@@ -1,14 +1,21 @@
 # Access control — `x_bst_startuptrk`
 
-This document is the authorization reference for the ServiceNow scoped application `x_bst_startuptrk`. It states the three roles the application declares, the four layers of access-control records that enforce them, the role-by-field matrix over the seven premium-gated fields, the enforcement rules every calling surface must honour, and the procedure by which the scheme is verified. Every access-control record is enumerated individually: by table, by operation, by field where one applies, and by the roles joined to it.
+This document is the authorization reference for the ServiceNow scoped application `x_bst_startuptrk`. It states the three roles the application declares, the scope-level table access posture beneath them, the five layers of access-control records that enforce them, the role-by-field matrix over the seven premium-gated fields, the enforcement rules every calling surface must honour, and the procedure by which the scheme is verified. Every access-control record is enumerated individually: by table, by operation, by field where one applies, and by the roles joined to it.
 
-The Update Set XML at [`../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`](../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml) is **authoritative** over this document. Everything below is a transcription of the three `sys_user_role` records, the 43 `sys_security_acl` records and the 66 `sys_security_acl_role` join records that file carries. Where this document and those records disagree about a role name, an ACL name, an operation, a field or a joined role, the records are correct and this document is corrected to match them, never the reverse.
+**Authority.** The frozen prompt and the Agent Action Plan are authoritative for all application content, and they govern the Update Set XML and this document alike. The Update Set XML at [`../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`](../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml) is the implementation of that specification and the transcription source for everything below: the three `sys_user_role` records, the 49 `sys_security_acl` records and the 74 `sys_security_acl_role` join records it carries. Where this document and those records disagree about a role name, an ACL name, an operation, a field or a joined role, the records are checked against the prompt and the plan first. Where the records match the specification, this document is corrected to them. Where the records depart from it, the records are corrected.
+
 
 The table names, column names and premium markers used below are the ones established in [`./data-model.md`](./data-model.md). The seven fields marked **P** there are the seven fields gated here, and the two documents carry the same seven names.
 
-This document carries no rationale. Every decision behind this scheme, every alternative considered and every risk it carries is recorded in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md), which is the single source of truth for "why".
+This document carries no rationale. Every decision behind this scheme, every alternative considered and every risk it carries is to be recorded in [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md), which is to be the single source of truth for "why".
 
-**Reviewer.** This document is the artifact validated by the **Security** reviewer entry in [`../../docs/review/CRITICAL_DECISIONS.md`](../../docs/review/CRITICAL_DECISIONS.md). That reviewer must check one thing above all others: that all twenty-one field-by-role assertions run under impersonated users each holding exactly one scoped role and none of the elevated platform roles. See [Verification procedure](#verification-procedure).
+## Referenced documents
+
+This document is self-contained. The three roles, the five ACL layers, every ACL and role join, the role-by-field matrix, the enforcement rules and the verification procedure are stated here in full; no statement of the scheme requires reading another file.
+
+Some documents named below are **planned artifacts of this package**. Every link to one carries the marker **(planned)** in its link text. A statement about a planned document describes what that document is required to contain; it is not a claim that the content can be read from it. The delivered package documents are the Update Set XML, `./data-model.md`, `./api-reference.md`, `./validation-gates.md` and `../sample-data/README.md`.
+
+**Reviewer.** This document is to be the artifact validated by the **Security** reviewer entry in [`../../docs/review/CRITICAL_DECISIONS.md` (planned)](../../docs/review/CRITICAL_DECISIONS.md). That reviewer must check one thing above all others: that all twenty-one field-by-role assertions run under impersonated users each holding exactly one scoped role and none of the elevated platform roles. That requirement is stated in full under [Verification procedure](#verification-procedure).
 
 ## The three roles
 
@@ -16,19 +23,34 @@ The application declares three roles. Their names are fully qualified and dotted
 
 | Role | Purpose | Capability |
 | --- | --- | --- |
-| `x_bst_startuptrk.admin` | Administers the application: maintains records on every table, loads the staging dataset and inspects the rate-limit counters. | Read, write, create and delete on all seven entity tables; reads all seven premium fields; sole role with any access to the staging and rate-limit counter tables. |
-| `x_bst_startuptrk.premium_user` | Entitled consumer of the full dataset over the portal and the REST API. | Read-only on all seven entity tables; reads all seven premium fields. |
-| `x_bst_startuptrk.user` | Base consumer of the non-premium dataset over the portal and the REST API. | Read-only on all seven entity tables; **denied** on all seven premium fields. |
+| `x_bst_startuptrk.admin` | Administers the application: maintains records on every table, loads the staging dataset and inspects the rate-limit counters. | Read, write, create and delete on all seven entity tables and on all three supporting tables; reads all seven premium fields; the only role joined to any access control on `x_bst_startuptrk_ingest_staging` or `x_bst_startuptrk_rate_limit_counter`, for read, write, create and delete alike; the only role permitted to execute a create, update or delete REST operation. |
+| `x_bst_startuptrk.premium_user` | Entitled consumer of the full dataset over the portal and the REST API. | Read-only on all seven entity tables; reads all seven premium fields; may execute the 13 read REST operations. |
+| `x_bst_startuptrk.user` | Base consumer of the non-premium dataset over the portal and the REST API. | Read-only on all seven entity tables; **denied** on all seven premium fields; may execute the 13 read REST operations. |
 
 Both non-administrative roles are **read-only**. Neither `x_bst_startuptrk.premium_user` nor `x_bst_startuptrk.user` is joined to any write, create or delete ACL on any table in the application, so neither can insert, modify or remove a record on any surface. The single role that can mutate data is `x_bst_startuptrk.admin`.
 
 The three roles are granted on platform `sys_user` records. **This application declares no custom identity table.** There is no user table, no credential column and no session record inside the `x_bst_startuptrk` scope; identity, authentication and role membership are all platform concerns, and the application reads the caller's effective roles from the platform.
 
-`sys_user` sits **outside** the `x_bst_startuptrk` scope. The application therefore creates no user records and grants no roles as part of the Update Set: the delivered XML contains three `sys_user_role` definitions and zero `sys_user_has_role` assignments. Granting a role to a person is an administrative act performed on the instance after the Update Set commits. The three purpose-built users the field-ACL assertions require are created by Automated Test Framework setup steps at run time, not shipped in the Update Set; see [`./manual-build/05-atf-test-suites.md`](./manual-build/05-atf-test-suites.md). Both points are recorded in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
+`sys_user` sits **outside** the `x_bst_startuptrk` scope. The application creates no user records and grants no roles as part of the Update Set: the delivered XML contains three `sys_user_role` definitions and zero `sys_user_has_role` assignments. Granting a role to a person is an administrative act performed on the instance after the Update Set commits. The three purpose-built users the field-ACL assertions require are created by Automated Test Framework setup steps at run time, and their required role membership is specified under [Verification procedure](#verification-procedure) below. The setup steps themselves are to be specified in [`./manual-build/05-atf-test-suites.md` (planned)](./manual-build/05-atf-test-suites.md). Both points are to be recorded in [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md).
 
-## The four layers
+## The table access posture
 
-Forty-three `sys_security_acl` records enforce the scheme, distributed across four layers, with 66 `sys_security_acl_role` records joining roles to them. Every ACL is of type `record`, is active, and carries `admin_overrides` true — the consequence of that last attribute is stated under [Verification procedure](#verification-procedure).
+Before any access control is evaluated, the platform decides whether a caller's **scope** may touch the table at all. All ten application tables are delivered with:
+
+| `sys_db_object` field | Delivered value | Effect |
+| --- | --- | --- |
+| `access` | `package_private` | The table is reachable from the `x_bst_startuptrk` scope only. A script in the Global scope or in any other scoped application cannot read, write or alter it, whatever roles its caller holds. |
+| `read_access`, `create_access`, `update_access`, `delete_access` | `false` | Cross-scope record operations are additionally denied field by field, so the posture is explicit and survives a later change of `access`. |
+| `alter_access`, `configuration_access`, `client_scripts_access`, `actions_access` | `false` | Cross-scope schema changes, configuration, client scripts and actions are denied. |
+| `ws_access` | `false` | The table is **not** served by the platform Table API at `/api/now/table/<table>`. |
+
+This matters because unsecured server-side record access does not consult access controls. Leaving a table `public` with cross-scope read enabled would let a script in another scope read every premium field directly, and the 47 record access controls below would never be consulted — they would report no denial because they were never reached. Leaving `ws_access` true would expose a second route to the same rows that skips the rate limiter, the per-field read gate and the endpoint access controls of layer 5.
+
+The consequence for deployment is that the post-commit gates cannot read application tables over the Table API. [`./validation-gates.md`](./validation-gates.md) therefore verifies the tables through `sys_db_object` and `sys_dictionary` metadata instead, and gates the posture itself as `GATE-SEC-01` and `GATE-SEC-02`. That substitution is a deliberate departure from the AAP, recorded in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
+
+## The five layers
+
+Forty-nine `sys_security_acl` records enforce the scheme, distributed across five layers, with 74 `sys_security_acl_role` records joining roles to them. Forty-seven are of type `record` and two are of type `REST_Endpoint`; every one is active and carries `admin_overrides` true — the consequence of that last attribute is stated under [Verification procedure](#verification-procedure).
 
 ### Layer 1 — table-level read, 7 ACLs
 
@@ -86,9 +108,9 @@ No write, create or delete ACL is declared at field level. Mutation is governed 
 
 Operational consequence: without these seven ACLs every premium field is readable by every role, because evaluation falls back to the table-level read grant of layer 1.
 
-### Layer 4 — supporting tables, 8 ACLs
+### Layer 4 — supporting tables, 12 ACLs
 
-Three supporting tables. `x_bst_startuptrk_m2m_round_investor` is readable by all three roles so that the participating investors of a funding round render on the funding-round view and in the REST response. `x_bst_startuptrk_ingest_staging` and `x_bst_startuptrk_rate_limit_counter` are reachable by `x_bst_startuptrk.admin` only, for read as well as for write.
+Three supporting tables. `x_bst_startuptrk_m2m_round_investor` is readable by all three roles so that the participating investors of a funding round render on the funding-round view and in the REST response. `x_bst_startuptrk_ingest_staging` and `x_bst_startuptrk_rate_limit_counter` are reachable by `x_bst_startuptrk.admin` only, and by that role for every one of the four operations.
 
 | # | ACL name | Operation | Roles joined | Joins |
 | --- | --- | --- | --- | --- |
@@ -98,12 +120,49 @@ Three supporting tables. `x_bst_startuptrk_m2m_round_investor` is readable by al
 | 4 | `x_bst_startuptrk_m2m_round_investor` | `delete` | `x_bst_startuptrk.admin` | 1 |
 | 5 | `x_bst_startuptrk_ingest_staging` | `read` | `x_bst_startuptrk.admin` | 1 |
 | 6 | `x_bst_startuptrk_ingest_staging` | `write` | `x_bst_startuptrk.admin` | 1 |
-| 7 | `x_bst_startuptrk_rate_limit_counter` | `read` | `x_bst_startuptrk.admin` | 1 |
-| 8 | `x_bst_startuptrk_rate_limit_counter` | `write` | `x_bst_startuptrk.admin` | 1 |
+| 7 | `x_bst_startuptrk_ingest_staging` | `create` | `x_bst_startuptrk.admin` | 1 |
+| 8 | `x_bst_startuptrk_ingest_staging` | `delete` | `x_bst_startuptrk.admin` | 1 |
+| 9 | `x_bst_startuptrk_rate_limit_counter` | `read` | `x_bst_startuptrk.admin` | 1 |
+| 10 | `x_bst_startuptrk_rate_limit_counter` | `write` | `x_bst_startuptrk.admin` | 1 |
+| 11 | `x_bst_startuptrk_rate_limit_counter` | `create` | `x_bst_startuptrk.admin` | 1 |
+| 12 | `x_bst_startuptrk_rate_limit_counter` | `delete` | `x_bst_startuptrk.admin` | 1 |
 
-8 ACLs, 3 + 1 + 1 + 1 + 1 + 1 + 1 + 1 = 10 role joins.
+12 ACLs, 3 + 1 + 1 + 1 + (1 + 1 + 1 + 1) + (1 + 1 + 1 + 1) = 14 role joins.
 
-The four `x_bst_startuptrk_m2m_round_investor` ACLs mirror the entity-table pattern: read for all three roles, mutation for `x_bst_startuptrk.admin` only. `x_bst_startuptrk_ingest_staging` and `x_bst_startuptrk_rate_limit_counter` each carry a `read` and a `write` ACL and no field-level ACL; neither declares a `create` or a `delete` ACL. No premium field exists on any of the three supporting tables, so layer 3 does not extend to them.
+Every one of the three supporting tables carries the **complete** set of four operations: `read`, `write`, `create` and `delete`. The four `x_bst_startuptrk_m2m_round_investor` controls mirror the entity-table pattern — read for all three roles, mutation for `x_bst_startuptrk.admin` only. `x_bst_startuptrk_ingest_staging` and `x_bst_startuptrk_rate_limit_counter` grant all four operations to `x_bst_startuptrk.admin` and to no other role.
+
+The `create` and `delete` controls on the two internal tables are stated explicitly rather than left to the instance's default-deny behaviour. An operation with no matching access control is denied only while the instance property that governs the default remains set that way; a shipped application must not depend on an instance-global setting it does not own, because the same Update Set may be imported onto an instance configured differently. Default-deny remains as defence in depth beneath these twelve controls, not as the only thing standing between a caller and the staging table.
+
+No premium field exists on any of the three supporting tables, so layer 3 does not extend to them.
+
+The `write` grant on `x_bst_startuptrk_m2m_round_investor` lets an administrator **re-point** an existing link row, not only create or delete one. The **Recalculate investor portfolio on round investor link** business rule is update-aware: it fires on insert, update and delete, and on an update it recalculates the `portfolio_count` of both the previous and the new `investor` and refreshes the derived `participating_investors` projection on both the previous and the new `funding_round`. The derivation and its triggers are in [`./data-model.md`](./data-model.md).
+
+### Layer 5 — REST endpoint execution, 2 ACLs
+
+Two `REST_Endpoint` access controls, both with operation `execute`, govern who may invoke the Scripted REST API at all. Layers 1 to 4 decide what a caller may see once an operation runs; layer 5 decides whether the operation runs.
+
+| # | ACL name | Type | Operation | Roles joined | Joins |
+| --- | --- | --- | --- | --- | --- |
+| 1 | `Boston Startup Tracker API read` | `REST_Endpoint` | `execute` | `x_bst_startuptrk.admin`, `x_bst_startuptrk.premium_user`, `x_bst_startuptrk.user` | 3 |
+| 2 | `Boston Startup Tracker API write` | `REST_Endpoint` | `execute` | `x_bst_startuptrk.admin` | 1 |
+
+2 ACLs, 3 + 1 = 4 role joins.
+
+They are bound to the API by the `enforce_acl` list field, which holds access-control identifiers:
+
+| Bound on | Record count | Bound control |
+| --- | --- | --- |
+| `sys_ws_definition` "Boston Startup Tracker API" | 1 | `Boston Startup Tracker API read` |
+| `sys_ws_operation` records with `http_method` `GET` | 13 | `Boston Startup Tracker API read` |
+| `sys_ws_operation` records with `http_method` `POST`, `PUT` or `DELETE` | 18 | `Boston Startup Tracker API write` |
+
+The definition-level binding applies the read control to every call, and the operation-level binding then applies the appropriate control, so a mutation requires both. `x_bst_startuptrk.admin` satisfies the read control as well, since it is one of the three roles joined to it.
+
+Without layer 5 a newly created Scripted REST API falls back to the platform's own default REST access control. That default denies the external-user role but is **not** a scoped-role control: any authenticated internal user satisfies it. Layer 5 is what makes "only the three application roles may call this API" true rather than assumed.
+
+Layer 5 is reinforced in code so that enforcement does not depend on platform access-control evaluation alone. Every one of the 31 operation scripts calls a shared guard immediately after the rate limiter: `RestResponseBuilder.rejectUnauthorisedRead()` on the 13 read operations, which refuses a caller holding none of the three roles with `HTTP 403` and body `{"error": "Caller holds no Boston Startup Tracker role"}`; and `RestResponseBuilder.rejectUnauthorisedWrite()` on the 18 mutations, which refuses a caller without `x_bst_startuptrk.admin` with `HTTP 403` and body `{"error": "Caller holds no Boston Startup Tracker administrator role"}`. The declarative control and the coded guard express the same rule, so the two cannot disagree.
+
+`GATE-SEC-03` in [`./validation-gates.md`](./validation-gates.md) confirms that both controls committed.
 
 ### The evaluation chain
 
@@ -129,14 +188,15 @@ A non-premium column has no field-level ACL, so its read is decided by layer 1 a
 | 1 | Table-level read, 7 entity tables | 7 | 21 |
 | 2 | Table-level write, create and delete, 7 entity tables | 21 | 21 |
 | 3 | Field-level read, 7 premium fields | 7 | 14 |
-| 4 | Supporting tables | 8 | 10 |
-| | **Total** | **43** | **66** |
+| 4 | Supporting tables, all four operations on each of the 3 | 12 | 14 |
+| 5 | REST endpoint execution | 2 | 4 |
+| | **Total** | **49** | **74** |
 
-ACL arithmetic: 7 + 21 + 7 + 8 = 43.
+ACL arithmetic: 7 + 21 + 7 + 12 + 2 = 49, of which 47 are type `record` and 2 are type `REST_Endpoint`.
 
-Role-join arithmetic: 21 + 21 + 14 + 10 = 66.
+Role-join arithmetic: 21 + 21 + 14 + 14 + 4 = 74.
 
-Every one of the 43 ACLs carries at least one role join, and every join resolves to one of the three `sys_user_role` records. The counts above are the counts in [`../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`](../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml).
+Every one of the 49 access controls carries at least one role join, and every join resolves to one of the three `sys_user_role` records. The counts above are the counts in [`../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`](../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml).
 
 ## The premium field matrix
 
@@ -154,7 +214,7 @@ Seven premium-gated fields across three roles. Twenty-one cells, all populated.
 
 `x_bst_startuptrk.admin` reads all seven. `x_bst_startuptrk.premium_user` reads all seven. `x_bst_startuptrk.user` is denied all seven. 7 fields × 3 roles = 21 outcomes.
 
-This matrix is the specification for the 21 Automated Test Framework field-ACL tests: one test per cell, asserting that cell's outcome. The suite and its run-time user creation are in [`./manual-build/05-atf-test-suites.md`](./manual-build/05-atf-test-suites.md), and the pass condition is criterion 2 in [`./validation-checklist.md`](./validation-checklist.md).
+This matrix is the specification for the 21 Automated Test Framework field-ACL tests: one test per cell, asserting that cell's outcome. The suite and its run-time user creation are to be built per [`./manual-build/05-atf-test-suites.md` (planned)](./manual-build/05-atf-test-suites.md), and the pass condition is prompt section 10.0 criterion 2, whose evidence is to be collected by [`./validation-checklist.md` (planned)](./validation-checklist.md).
 
 ### The role difference is at field level only
 
@@ -162,7 +222,9 @@ The other 46 columns across the seven entity tables carry no field-level ACL and
 
 No record-level restriction exists on any of the seven entity tables. Every role that can read a table can read every row of it, and the role difference is confined to field level.
 
-**Invariant.** Record-level visibility is identical for `x_bst_startuptrk.admin`, `x_bst_startuptrk.premium_user` and `x_bst_startuptrk.user`, which is what makes an aggregate `total_count` correct for every caller; if a record-level restriction is ever added, the aggregate count would over-report for restricted callers and would have to be replaced by a secured count. The pagination envelope that depends on this is documented in [`./api-reference.md`](./api-reference.md).
+**Invariant.** Record-level visibility is identical for `x_bst_startuptrk.admin`, `x_bst_startuptrk.premium_user` and `x_bst_startuptrk.user`, so every role that can read a table sees the same rows.
+
+`total_count` does **not** rely on that invariant. It is computed on the access-controlled read path — `RestResponseBuilder.countState()` opens a `GlideRecordSecure`, returns zero immediately when `canRead()` is false, applies the same conditions the result set applies, and counts by secured iteration under a ceiling of 10,000 rows. Adding a record-level restriction later would therefore change the count correctly rather than silently over-reporting it. The ceiling exists so that a count can never become an unbounded scan; when it is reached the response carries `total_count_capped` set to true alongside the capped `total_count`, so a consumer is never told a bounded number is exact. The pagination envelope is documented in [`./api-reference.md`](./api-reference.md).
 
 ## Enforcement rules
 
@@ -172,7 +234,19 @@ These rules are normative. They bind the Scripted REST operations, the Script In
 
 Every caller-facing read must use the secured record-access path, `GlideRecordSecure`, and never the unsecured `GlideRecord`. Ordinary record access does not guarantee access-control enforcement on server-side reads; the secured variant does. All 31 REST operations use `GlideRecordSecure`, as does `StartupSearchService`, the single Script Include that builds the startup query for both the `/startups` list operation and the portal search widget. Every widget server script must do the same.
 
-Four server-side maintenance paths read through the unsecured `GlideRecord`, and this is the complete and closed list: `RateLimitService` against the administrator-only `x_bst_startuptrk_rate_limit_counter` table, `InvestorPortfolioService` computing the `portfolio_count` derivation, `IngestionMapper` writing ingested records, and the business rule that recalculates a portfolio count after a funding-round change. None of the four returns record data to a caller, and none reads a premium field on a caller's behalf. Any new unsecured read outside this list is a defect.
+Five server-side maintenance paths read through the unsecured `GlideRecord`, and this is the complete and closed list:
+
+| # | Path | Reads | Returns record data to a caller |
+| --- | --- | --- | --- |
+| 1 | `RateLimitService` | `x_bst_startuptrk_rate_limit_counter`, administrator-only | No — only a boolean decision and a retry interval |
+| 2 | `InvestorPortfolioService` | `x_bst_startuptrk_fundinground` and the m2m table, to derive `portfolio_count` | No — only the derived integer, which is then stored |
+| 3 | `IngestionMapper` | the staging table and the entity tables it writes | No — it runs inside a flow, not a request |
+| 4 | the business rules that recalculate a portfolio count | as `InvestorPortfolioService` | No |
+| 5 | `PrivacyRetentionService` | the staging table, the counter table, `x_bst_startuptrk_founder`, `x_bst_startuptrk_executive` and `sys_user` | No — it returns counts of rows minimised, deleted or erased |
+
+None of the five returns record data to a caller, and none reads a premium field on a caller's behalf. Any new unsecured read outside this list is a defect.
+
+**Counting is not an exception to this rule.** `total_count` is produced by secured iteration in `RestResponseBuilder.countState()`, not by an aggregate query. Aggregate queries do not apply access controls, so an aggregate count is not a secured caller-facing read and is not used for one anywhere in this application; the string `GlideAggregate` does not appear in the delivered Update Set.
 
 ### Omitted, not nulled
 
@@ -180,25 +254,25 @@ The secured read path returns an **empty string** for a denied field, not an err
 
 To omit, the serialiser tests each field with an element-level read check and **skips the key entirely** when the check fails. `RestResponseBuilder.serialize()` obtains the element with `getElement()`, evaluates `canRead()` on it, and continues past the field without assigning a key when the evaluation is false. A denied premium field is consequently **absent from** the response object; the key does not appear with a null, an empty string or a placeholder.
 
-This gate lives exactly once, in the `RestResponseBuilder` Script Include, and is used by all 31 REST operations and by every widget server script. A response object built by any other means is not permitted. The absence of the key, in place of a present-and-null key, is the one point at which this document records something other than a literal reading of a field being "hidden"; it is entered in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
+This gate lives exactly once, in the `RestResponseBuilder` Script Include, and is used by all 31 REST operations. Every widget server script must use it too. A response object built by any other means is not permitted. The absence of the key, in place of a present-and-null key, is the one point at which this document records something other than a literal reading of a field being "hidden"; that reading is to be entered in [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md).
 
 ### No bypass
 
-No Script Include in this application is client-callable, and none runs with elevated privilege: all eight carry `client_callable` false and `package_private` access. No Script Include may read a premium field through the unsecured path and return it to a caller.
+No Script Include in this application is client-callable, and none runs with elevated privilege: all nine — `AppProperties`, `RestQueryHelper`, `RestResponseBuilder`, `RateLimitService`, `StartupSearchService`, `InvestorPortfolioService`, `IngestionLogger`, `IngestionMapper` and `PrivacyRetentionService` — carry `client_callable` false, `mobile_callable` false, `sandbox_callable` false and `package_private` access. No Script Include may read a premium field through the unsecured path and return it to a caller.
 
-The forbidden anti-pattern, stated so that an implementer recognises it: **a Script Include that reads a premium-gated column with `new GlideRecord()` and hands the value back to a REST operation, a widget or a client script bypasses the field-level ACL entirely, and the ACL will report no denial because it was never consulted.**
+The forbidden anti-pattern: **a Script Include that reads a premium-gated column with `new GlideRecord()` and hands the value back to a REST operation, a widget or a client script bypasses the field-level ACL entirely, and the ACL will report no denial because it was never consulted.**
 
 ### Operation flags
 
-Every Scripted REST operation must require **both** authentication and access-control authorisation. All 31 operations carry `requires_authentication` true and `requires_acl_authorization` true. An operation that requires authentication but skips authorisation defeats the whole scheme regardless of how carefully its script is written, because the platform then performs no ACL evaluation for that operation's reads.
+Every Scripted REST operation must require **both** authentication and access-control authorisation, and must name the access control that authorisation consults. All 31 operations carry `requires_authentication` true, `requires_acl_authorization` true, `requires_snc_internal_role` false, and an `enforce_acl` binding to the layer-5 control appropriate to their method. An operation that requires authentication but skips authorisation defeats the whole scheme regardless of how carefully its script is written, because the platform then performs no access-control evaluation for that operation's reads. An operation that requires authorisation but names no control is almost as weak, because evaluation falls back to the platform's default REST control, which any authenticated internal user satisfies.
 
 ### Premium denial in the portal
 
-Where a read ACL denies a gated field or a gated tab region, the portal renders the reusable `bst-premium-upsell` widget in that position. It does not render a blank, an empty cell or a zero. The widget is embedded by the company profile, the investor profile and the account summary; its markup and option schema are in [`./manual-build/04-service-portal-pages-and-widgets.md`](./manual-build/04-service-portal-pages-and-widgets.md) and are not specified here.
+Where a read ACL denies a gated field or a gated tab region, the portal must render the reusable `bst-premium-upsell` widget in that position, and must not render a blank, an empty cell or a zero. The widget must be embedded by the company profile, the investor profile and the account summary; its markup and option schema are to be specified in [`./manual-build/04-service-portal-pages-and-widgets.md` (planned)](./manual-build/04-service-portal-pages-and-widgets.md) and are not specified here.
 
 ## Verification procedure
 
-Record ACLs carry `admin_overrides` true by default, and all 43 ACLs in this application carry it. The platform administrator role therefore overrides every one of them, and every operator of a personal developer instance holds that role.
+Access controls carry `admin_overrides` true by default, and all 49 in this application carry it. The platform administrator role therefore overrides every one of them, and every operator of a personal developer instance holds that role.
 
 Do not verify this scheme as the instance administrator. A manual walkthrough performed under an account holding the platform administrator role displays all seven premium fields and **appears to prove enforcement that has not been tested at all**. Verification performed that way is worthless and must not be recorded as evidence.
 
@@ -210,42 +284,53 @@ Verify as follows.
 4. Spot-check omission against nulling. For a caller holding only `x_bst_startuptrk.user`, confirm the denied field's key is **absent from** the response object — not present with an empty string, and not present with a null.
 5. Confirm both layers are load-bearing by reading a non-premium column under `x_bst_startuptrk.user` in the same call. It must return a value, which establishes that the layer-1 grant passed and that the denial came from layer 3.
 
-The three users are created by test setup steps at run time; how they are created and torn down is in [`./manual-build/05-atf-test-suites.md`](./manual-build/05-atf-test-suites.md). The pass condition for this procedure is criterion 2 in [`./validation-checklist.md`](./validation-checklist.md). Neither is restated here.
+The three users are to be created by test setup steps at run time; how they are created and torn down is to be specified in [`./manual-build/05-atf-test-suites.md` (planned)](./manual-build/05-atf-test-suites.md). The pass condition for this procedure is prompt section 10.0 criterion 2, whose evidence record is to be kept in [`./validation-checklist.md` (planned)](./validation-checklist.md).
 
 ## Legacy provenance
 
-The legacy Flask tree under `src/backend/` is read-only reference. It supplied the role-name spine and nothing else: no ACL, no field gate and no entitlement rule was carried forward, because none existed to carry.
+The three roles, the five ACL layers and the seven premium fields are defined by **prompt section 2.0** and by nothing else. The legacy Flask tree under `src/backend/` is read-only historical reference and is **not** a design authority for this scheme: no role definition, ACL, field gate or entitlement rule was taken from it, because none existed to take. This section exists to make the migration traceable in reverse — from each legacy construct to the target artifact that replaced it — and nothing in it may be read as a source of target requirements.
 
-`src/backend/utils/auth.py` performed **authentication only**. The `auth_required` decorator at `src/backend/utils/auth.py:L6-L16` applies `@jwt_required()` and wraps the decorated function in a `try`/`except` that returns `{"error": "Authentication required"}` with status 401 on exception. It performs **no** authorization: it does not read a role, does not compare one and does not deny on one. Every route in the legacy application is decorated with it, including all five startup routes at `src/backend/routes/startup.py`, so an authenticated caller of any role reached every field of every record.
+`src/backend/utils/auth.py` performed **authentication only**. The `auth_required` decorator at `src/backend/utils/auth.py:L6-L16` applies `@jwt_required()` and wraps the decorated function in a `try`/`except` that returns `{"error": "Authentication required"}` with status 401 on exception. It performs **no** authorization: it does not read a role, does not compare one and does not deny on one.
+
+Twenty-four of the legacy application's twenty-nine routes are decorated with it: all five routes of each of `src/backend/routes/startup.py`, `investor.py`, `job.py` and `news.py`, and four of the five routes of `user.py`. Five are not: the four routes of `src/backend/routes/auth.py` — `/login` carries no decorator and `/refresh`, `/logout` and `/change-password` carry `@jwt_required` directly — and the user-create route at `src/backend/routes/user.py:L49-L50`, which carries none.
+
+The conclusion holds on every decorated route, which is every data-bearing CRUD route in the application: an authenticated caller of any role reached every field of every record, because the decorator that guarded those routes never consulted a role.
 
 The file records the gap as unfinished work in its own text. `src/backend/utils/auth.py:L36` reads `# TODO: Implement role-based access control`, and `src/backend/utils/auth.py:L42` reads `# TODO: Add additional claims to the token (e.g., user role)`. The access token consequently carried no role claim, so a role check was not merely unwritten — it was not possible.
 
-The role names descend from `src/shared/types.ts:L72-L76`, which declares `enum UserRole { ADMIN = 'ADMIN', USER = 'USER', PREMIUM_USER = 'PREMIUM_USER' }`. Its three members correspond one-to-one with `x_bst_startuptrk.admin`, `x_bst_startuptrk.user` and `x_bst_startuptrk.premium_user`. The legacy `User` model, its route and its service are dropped; platform `sys_user` plus the three roles replace them.
+The three scoped role names are the ones **prompt section 2.0 specifies**: `x_bst_startuptrk.admin`, `x_bst_startuptrk.user` and `x_bst_startuptrk.premium_user`. They are transcribed from that requirement, not derived from the legacy tree.
+
+For reverse traceability only: `src/shared/types.ts:L72-L76` declares `enum UserRole { ADMIN = 'ADMIN', USER = 'USER', PREMIUM_USER = 'PREMIUM_USER' }`, whose three members happen to correspond one-to-one with the three prompt-defined roles. The correspondence is a coincidence of naming and confers no authority: the prompt's names govern. The legacy `User` model, its route and its service are dropped; platform `sys_user` plus the three roles replace them.
 
 | Legacy construct | Target artifact |
 | --- | --- |
-| `auth_required` decorator, `src/backend/utils/auth.py:L6-L16` | The 43 `sys_security_acl` records and 66 `sys_security_acl_role` joins enumerated in [The four layers](#the-four-layers) |
-| `# TODO: Implement role-based access control`, `src/backend/utils/auth.py:L36` | Layers 1 through 4, and the [Enforcement rules](#enforcement-rules) |
+| `auth_required` decorator, `src/backend/utils/auth.py:L6-L16` | The 49 `sys_security_acl` records and 74 `sys_security_acl_role` joins enumerated in [The five layers](#the-five-layers) |
+| `# TODO: Implement role-based access control`, `src/backend/utils/auth.py:L36` | Layers 1 through 5, the [table access posture](#the-table-access-posture), and the [Enforcement rules](#enforcement-rules) |
 | `# TODO: Add additional claims to the token (e.g., user role)`, `src/backend/utils/auth.py:L42` | Platform role membership on `sys_user`, read by the ACL engine; no application-issued token claim |
-| `UserRole` enum, `src/shared/types.ts:L72-L76` | The 3 `sys_user_role` records `x_bst_startuptrk.admin`, `x_bst_startuptrk.premium_user` and `x_bst_startuptrk.user` |
+| `UserRole` enum, `src/shared/types.ts:L72-L76` | The 3 prompt-defined `sys_user_role` records `x_bst_startuptrk.admin`, `x_bst_startuptrk.premium_user` and `x_bst_startuptrk.user` — a reverse-traceability correspondence, not a naming source |
 | `src/backend/models/user.py` | **No target artifact** — replaced by platform `sys_user` |
 | `src/backend/routes/user.py` | **No target artifact** — replaced by platform identity |
 | `src/backend/routes/auth.py` | **No target artifact** — replaced by platform authentication |
 | `src/backend/services/user_service.py` | **No target artifact** — replaced by platform identity |
 | Role tier list, `documentation/Software Requirements Specifications (SRS).md:L77` | The 3 roles; the SRS's "free users" is the `x_bst_startuptrk.user` role, its "premium subscribers" is `x_bst_startuptrk.premium_user`, and its "administrators" is `x_bst_startuptrk.admin` |
 
-This table is the access-control section of the bidirectional matrix at [`../../docs/decisions/TRACEABILITY_MATRIX.md`](../../docs/decisions/TRACEABILITY_MATRIX.md).
+This table is the access-control section of the bidirectional matrix to be authored at [`../../docs/decisions/TRACEABILITY_MATRIX.md` (planned)](../../docs/decisions/TRACEABILITY_MATRIX.md).
 
 ## Related documents
+
+Delivered with this package:
 
 - [`../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`](../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml) — the authoritative role, ACL and ACL-role records this document transcribes
 - [`./data-model.md`](./data-model.md) — the ten tables field by field, and the seven **P** markers this matrix gates
 - [`./api-reference.md`](./api-reference.md) — the six REST resources, the pagination envelope carrying `total_count`, and the error bodies
-- [`./validation-gates.md`](./validation-gates.md) — the machine-checkable post-commit gates, including one record for each of the three roles
-- [`./validation-checklist.md`](./validation-checklist.md) — the five success criteria; criterion 2 is the pass condition for the matrix above
-- [`./manual-build/04-service-portal-pages-and-widgets.md`](./manual-build/04-service-portal-pages-and-widgets.md) — the portal build, including the `bst-premium-upsell` widget
-- [`./manual-build/05-atf-test-suites.md`](./manual-build/05-atf-test-suites.md) — the 21 field-ACL tests and the run-time creation of the three impersonated users
-- [`./gaps-and-flags.md`](./gaps-and-flags.md) — requirements with no clean platform equivalent, including the administrator-override flag
-- [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md) — the single source of truth for every decision, alternative and risk behind this scheme
-- [`../../docs/decisions/TRACEABILITY_MATRIX.md`](../../docs/decisions/TRACEABILITY_MATRIX.md) — the bidirectional source-to-target matrix this section feeds
-- [`../../docs/review/CRITICAL_DECISIONS.md`](../../docs/review/CRITICAL_DECISIONS.md) — the five highest-risk decisions, including the Security reviewer entry for this document
+- [`./validation-gates.md`](./validation-gates.md) — the machine-checkable post-commit gates, including one record for each of the three roles, the table access posture as `GATE-SEC-01` and `GATE-SEC-02`, and the two layer-5 controls as `GATE-SEC-03`
+
+Planned artifacts of this package:
+
+- [`./validation-checklist.md` (planned)](./validation-checklist.md) — the five success criteria; criterion 2 is the pass condition for the matrix above
+- [`./manual-build/04-service-portal-pages-and-widgets.md` (planned)](./manual-build/04-service-portal-pages-and-widgets.md) — the portal build, including the `bst-premium-upsell` widget
+- [`./manual-build/05-atf-test-suites.md` (planned)](./manual-build/05-atf-test-suites.md) — the 21 field-ACL tests and the run-time creation of the three impersonated users
+- [`./gaps-and-flags.md` (planned)](./gaps-and-flags.md) — requirements with no clean platform equivalent, including the administrator-override flag
+- [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md) — the single source of truth for every decision, alternative and risk behind this scheme
+- [`../../docs/decisions/TRACEABILITY_MATRIX.md` (planned)](../../docs/decisions/TRACEABILITY_MATRIX.md) — the bidirectional source-to-target matrix this section feeds
+- [`../../docs/review/CRITICAL_DECISIONS.md` (planned)](../../docs/review/CRITICAL_DECISIONS.md) — the five highest-risk decisions, including the Security reviewer entry for this document

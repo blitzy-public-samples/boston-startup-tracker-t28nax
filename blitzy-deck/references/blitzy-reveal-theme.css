@@ -6,8 +6,7 @@
    types, the ten component classes, the Mermaid diagram container, and the
    supporting surfaces (tables, inline mono, Lucide icons, lists, links).
 
-   Authored against a 1920 x 1080 reveal.js stage. All type, spacing and
-   diagram dimensions are expressed in that coordinate space.
+   The theme is calibrated for a 1920 x 1080 reveal.js stage.
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
@@ -108,21 +107,32 @@
   background-color: var(--blitzy-surface-0);
 }
 
-/* Navigation arrows */
 .reveal .controls {
   color: var(--blitzy-primary);
 }
 
-/* Progress bar track and fill */
+/* Keyboard focus indicator on the navigation arrows */
+.reveal .controls button:focus-visible {
+  outline: 3px solid currentColor;
+  outline-offset: 4px;
+  border-radius: var(--radius-sm);
+}
+
+/* A focused back arrow drops the faded treatment reveal.js gives it */
+.reveal:not(.rtl) .controls[data-controls-back-arrows="faded"] .navigate-left.enabled:focus-visible,
+.reveal .controls[data-controls-back-arrows="faded"] .navigate-up.enabled:focus-visible {
+  opacity: 1;
+}
+
 .reveal .progress {
   color: var(--blitzy-primary);
   background-color: var(--blitzy-border);
 }
 
-/* Navigation arrows switch to the teal accent while a dark slide type shows */
-.reveal:has(.slides > section.present.slide-title) .controls,
-.reveal:has(.slides > section.present.slide-divider) .controls,
-.reveal:has(.slides > section.present.slide-closing) .controls {
+/* Navigation arrows switch to the teal accent while a dark slide type shows,
+   as a top-level slide or as the shown child of the shown stack */
+.reveal:has(.slides > section.present:is(.slide-title, .slide-divider, .slide-closing)) .controls,
+.reveal:has(.slides > section.present > section.present:is(.slide-title, .slide-divider, .slide-closing)) .controls {
   color: var(--blitzy-accent-teal);
 }
 
@@ -163,7 +173,6 @@
   font-size: var(--fs-small);
   font-weight: 500;
   letter-spacing: 0.04em;
-  text-transform: uppercase;
 }
 
 .reveal p {
@@ -188,12 +197,11 @@
 /* --------------------------------------------------------------------------
    Slide stage geometry
    Gives every slide the full 1920 x 1080 stage, making a slide-type
-   background full bleed from its class alone. Forces the flex layout over
-   the inline display value that reveal.js assigns to each slide.
+   background full bleed from its class alone. Declares geometry only, so the
+   hidden and shown display states stay with reveal.js.
    -------------------------------------------------------------------------- */
 .reveal .slides > section:not(.stack),
 .reveal .slides > section > section {
-  display: flex !important;
   flex-direction: column;
   box-sizing: border-box;
   width: 100%;
@@ -202,16 +210,23 @@
   overflow: visible;
 }
 
+/* The slide reveal.js is showing lays its content out as a flex column,
+   over the inline display value reveal.js assigns to a shown slide. */
+.reveal .slides > section.present:not(.stack),
+.reveal .slides > section.present > section.present {
+  display: flex !important;
+}
+
 /* --------------------------------------------------------------------------
    Slide type: Content (the unclassed default)
    -------------------------------------------------------------------------- */
-.reveal .slides > section:not(.slide-title):not(.slide-divider):not(.slide-closing),
+.reveal .slides > section:not(.stack):not(.slide-title):not(.slide-divider):not(.slide-closing),
 .reveal .slides > section > section:not(.slide-title):not(.slide-divider):not(.slide-closing) {
   color: var(--blitzy-text);
   text-align: left;
 }
 
-.reveal .slides > section:not(.slide-title):not(.slide-divider):not(.slide-closing) > h2 {
+.reveal .slides > section:not(.stack):not(.slide-title):not(.slide-divider):not(.slide-closing) > h2 {
   margin-bottom: var(--space-4);
 }
 
@@ -406,8 +421,7 @@
 /* --------------------------------------------------------------------------
    Component: kpi-value
    -------------------------------------------------------------------------- */
-.reveal .kpi-value,
-.reveal .kpi-card .kpi-value {
+.reveal .slides .kpi-value {
   display: block;
   margin: 0;
   font-family: var(--ff-display);
@@ -421,8 +435,7 @@
 /* --------------------------------------------------------------------------
    Component: kpi-label
    -------------------------------------------------------------------------- */
-.reveal .kpi-label,
-.reveal .kpi-card .kpi-label {
+.reveal .slides .kpi-label {
   display: block;
   margin: 0;
   font-family: var(--ff-body);
@@ -431,25 +444,19 @@
   line-height: 1.3;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--blitzy-text-muted);
+  color: var(--blitzy-text);
 }
 
 /* --------------------------------------------------------------------------
    Component: kpi-icon
+   Sizes the icon slot and the Lucide glyph it carries.
    -------------------------------------------------------------------------- */
-.reveal .kpi-icon,
-.reveal .kpi-card .kpi-icon,
-.reveal svg.kpi-icon {
+.reveal .slides .kpi-icon,
+.reveal .slides .kpi-icon [data-lucide] {
   flex: none;
   width: 44px;
   height: 44px;
   color: var(--blitzy-primary);
-}
-
-.reveal .kpi-icon svg,
-.reveal .kpi-icon [data-lucide] {
-  width: 44px;
-  height: 44px;
 }
 
 /* --------------------------------------------------------------------------
@@ -506,17 +513,19 @@
   font-weight: 600;
   line-height: 1.1;
   letter-spacing: -0.01em;
-  color: var(--blitzy-text-invert);
+  color: var(--blitzy-text);
   text-align: left;
 }
 
-/* The lockup reads in body colour when placed on a Content slide */
-.reveal .slides > section:not(.slide-title):not(.slide-divider):not(.slide-closing) .brand-lockup {
-  color: var(--blitzy-text);
+/* The lockup reads inverted on the three dark slide types */
+.reveal .slide-title .brand-lockup,
+.reveal .slide-divider .brand-lockup,
+.reveal .slide-closing .brand-lockup {
+  color: var(--blitzy-text-invert);
 }
 
-.reveal .brand-lockup [data-lucide],
-.reveal .brand-lockup svg {
+/* The Lucide glyph the lockup carries */
+.reveal .brand-lockup [data-lucide] {
   flex: none;
   width: 40px;
   height: 40px;
@@ -524,23 +533,20 @@
 
 /* --------------------------------------------------------------------------
    Component: hero-icon
-   Large thematic icon for the title and divider slide types.
+   Large thematic icon for the title and divider slide types. Sizes the icon
+   slot and the Lucide glyph it carries.
    -------------------------------------------------------------------------- */
-.reveal .hero-icon,
-.reveal svg.hero-icon {
+.reveal .slides .hero-icon,
+.reveal .slides .hero-icon [data-lucide] {
   flex: none;
   width: 112px;
   height: 112px;
-  margin: 0 0 var(--space-4) 0;
   color: inherit;
   stroke-width: 1.5;
 }
 
-.reveal .hero-icon svg,
-.reveal .hero-icon [data-lucide] {
-  width: 112px;
-  height: 112px;
-  stroke-width: 1.5;
+.reveal .slides .hero-icon {
+  margin: 0 0 var(--space-4) 0;
 }
 
 /* --------------------------------------------------------------------------
@@ -562,8 +568,8 @@
   color: var(--blitzy-primary);
 }
 
-.reveal .icon-row [data-lucide],
-.reveal .icon-row svg {
+/* The Lucide glyphs the strip carries */
+.reveal .icon-row [data-lucide] {
   flex: none;
   width: 56px;
   height: 56px;
@@ -620,7 +626,7 @@
   font-family: var(--ff-body);
 }
 
-/* Diagram labels render in full rather than being clipped to their own box */
+/* Permits Mermaid foreignObject label overflow */
 .reveal .mermaid svg foreignObject,
 .reveal pre.mermaid svg foreignObject,
 .reveal .slides pre.mermaid svg foreignObject {
@@ -681,16 +687,6 @@
   text-align: right;
 }
 
-/* Tables stay a light surface island on every slide type */
-.reveal .slides table th,
-.reveal .slides table td,
-.reveal .slides table strong,
-.reveal .slides table b,
-.reveal .slides table em,
-.reveal .slides table code {
-  color: var(--blitzy-text);
-}
-
 /* --------------------------------------------------------------------------
    Supporting surface: inline mono
    -------------------------------------------------------------------------- */
@@ -715,9 +711,50 @@
 }
 
 /* --------------------------------------------------------------------------
+   Supporting surface: light surface islands
+   Tables and KPI cards carry a light background on every slide type, so their
+   contents keep the light slide treatment rather than the inverted one.
+   -------------------------------------------------------------------------- */
+.reveal .slides table :is(th, td, h1, h2, h3, h4, h5, h6, p, li, strong, b, em, small),
+.reveal .slides .kpi-card :is(h1, h2, h3, h4, h5, h6, p, li, strong, b, em, small):not(.kpi-value):not(.kpi-label) {
+  color: var(--blitzy-text);
+}
+
+/* A brand-lockup nested in an island keeps the light treatment too */
+.reveal .slides table .brand-lockup,
+.reveal .slides .kpi-card .brand-lockup {
+  color: var(--blitzy-text);
+}
+
+.reveal .slides table code,
+.reveal .slides .kpi-card code {
+  background-color: var(--blitzy-surface-2);
+  color: var(--blitzy-primary-deep);
+}
+
+.reveal .slides table li::marker,
+.reveal .slides .kpi-card li::marker {
+  color: var(--blitzy-primary);
+}
+
+.reveal .slides table a,
+.reveal .slides .kpi-card a {
+  color: var(--blitzy-primary);
+  border-bottom-color: var(--blitzy-border-soft);
+}
+
+.reveal .slides table a:hover,
+.reveal .slides .kpi-card a:hover {
+  color: var(--blitzy-primary-light);
+  border-bottom-color: var(--blitzy-primary);
+}
+
+/* --------------------------------------------------------------------------
    Supporting surface: Lucide SVG icons
-   Sizes the data-lucide placeholder and the SVG that replaces it, and lets
-   every glyph take its stroke from the surrounding text colour.
+   Default size for an unclassed data-lucide placeholder and the SVG that
+   replaces it, and lets every glyph take its stroke from the surrounding text
+   colour. The hero-icon, kpi-icon, icon-row and brand-lockup components carry
+   their own sizes.
    -------------------------------------------------------------------------- */
 .reveal [data-lucide],
 .reveal svg.lucide {
@@ -729,40 +766,6 @@
   stroke: currentColor;
   stroke-width: 2;
   fill: none;
-}
-
-.reveal svg.hero-icon {
-  width: 112px;
-  height: 112px;
-}
-
-.reveal svg.kpi-icon {
-  width: 44px;
-  height: 44px;
-}
-
-.reveal .icon-row svg.lucide,
-.reveal .icon-row [data-lucide] {
-  width: 56px;
-  height: 56px;
-}
-
-.reveal .brand-lockup svg.lucide,
-.reveal .brand-lockup [data-lucide] {
-  width: 40px;
-  height: 40px;
-}
-
-.reveal .kpi-icon svg.lucide,
-.reveal .kpi-card .kpi-icon [data-lucide] {
-  width: 44px;
-  height: 44px;
-}
-
-.reveal .hero-icon svg.lucide {
-  width: 112px;
-  height: 112px;
-  stroke-width: 1.5;
 }
 
 /* --------------------------------------------------------------------------
@@ -819,7 +822,7 @@
 
 .reveal a:hover {
   text-decoration: none;
-  border-bottom-color: var(--blitzy-primary);
+  border-bottom: 2px solid var(--blitzy-primary);
 }
 
 .reveal .slide-title a,
