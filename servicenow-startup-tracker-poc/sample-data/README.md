@@ -546,7 +546,7 @@ This section is a complete, self-contained load procedure: the prerequisites, th
 
 ### Prerequisites
 
-- The Update Set has been committed to the target instance, so `x_bst_startuptrk_ingest_staging` exists. The commit sequence is to be specified in [`../docs/deployment-runbook.md` (planned)](../docs/deployment-runbook.md); the post-commit gates that confirm the tables exist are in [`../docs/validation-gates.md`](../docs/validation-gates.md), which is present today.
+- The Update Set has been committed to the target instance, so `x_bst_startuptrk_ingest_staging` exists. The commit sequence is specified in [`../docs/deployment-runbook.md`](../docs/deployment-runbook.md); the post-commit gates that confirm the tables exist are in [`../docs/validation-gates.md`](../docs/validation-gates.md), which is present today.
 - The operator holds the `x_bst_startuptrk.admin` role. The staging table grants **read, write, create and delete to that role alone**, so this procedure cannot be performed by a caller holding only `x_bst_startuptrk.user` or `x_bst_startuptrk.premium_user`. Creating the import set table and the transform map additionally requires the platform `admin` role.
 
 - The application picker is set to **Boston Startup Tracker**, so the import set table and transform map are created inside the `x_bst_startuptrk` scope.
@@ -621,7 +621,7 @@ Every row shipped in this folder carries `run_provenance` of `fallback`. A flow 
 
 Prompt section 10.0 criterion 4 accepts the sample-dataset substitute for live ingestion, so three consecutive clean fallback runs of each flow satisfy it **provided the mode is recorded** for each run. The recording is itself part of the acceptance evidence: an Automated Test Framework result that exercised this dataset must be labelled **"fallback validated"**, and only a result from a successful live call may be labelled **"live validated"**, so the two can never be confused after the fact. **A result may carry the "live validated" label only when both credential aliases are provisioned and the run completed a live call**; otherwise the label is "fallback validated". The labelling convention is to be applied by [`../docs/manual-build/05-atf-test-suites.md` (planned)](../docs/manual-build/05-atf-test-suites.md) and the evidence collected by [`../docs/validation-checklist.md` (planned)](../docs/validation-checklist.md).
 
-For criterion 4 purposes a **scheduled run** means a flow execution that passed the flow's cadence guard and went on to do work. An execution that started, found the configured cadence had not yet elapsed and exited without ingesting is a no-op and does not count towards the three consecutive runs. That definition is stated here; how to distinguish the two in the execution log is to be specified in [`../docs/deployment-runbook.md` (planned)](../docs/deployment-runbook.md).
+For criterion 4 purposes a **scheduled run** means a flow execution that passed the flow's cadence guard and went on to do work. An execution that started, found the configured cadence had not yet elapsed and exited without ingesting is a no-op and does not count towards the three consecutive runs. That definition is stated here; how to distinguish the two in the execution log is specified under [What counts as a scheduled run](../docs/deployment-runbook.md#what-counts-as-a-scheduled-run) in [`../docs/deployment-runbook.md`](../docs/deployment-runbook.md).
 
 ## The three-way contract
 
@@ -662,6 +662,6 @@ Planned artifacts of this package:
 - [`../docs/manual-build/05-atf-test-suites.md` (planned)](../docs/manual-build/05-atf-test-suites.md) — the test suites, including the provenance labelling
 - [`../docs/validation-checklist.md` (planned)](../docs/validation-checklist.md) — the success criteria and their evidence
 - [`../docs/gaps-and-flags.md` (planned)](../docs/gaps-and-flags.md) — requirements with no clean platform equivalent
-- [`../docs/deployment-runbook.md` (planned)](../docs/deployment-runbook.md) — import sequence, gates and rollback
+- [`../docs/deployment-runbook.md`](../docs/deployment-runbook.md) — import sequence, gates and rollback
 - [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md) — the single source of truth for every decision, alternative and risk behind this contract
 

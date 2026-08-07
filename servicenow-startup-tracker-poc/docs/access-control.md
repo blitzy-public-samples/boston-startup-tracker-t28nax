@@ -268,7 +268,7 @@ Every Scripted REST operation must require **both** authentication and access-co
 
 ### Premium denial in the portal
 
-Where a read ACL denies a gated field or a gated tab region, the portal must render the reusable `bst-premium-upsell` widget in that position, and must not render a blank, an empty cell or a zero. The widget must be embedded by the company profile, the investor profile and the account summary; its markup and option schema are to be specified in [`./manual-build/04-service-portal-pages-and-widgets.md` (planned)](./manual-build/04-service-portal-pages-and-widgets.md) and are not specified here.
+Where a read ACL denies a gated field or a gated tab region, the portal must render the reusable `bst-premium-upsell` widget in that position, and must not render a blank, an empty cell or a zero. The widget must be embedded by the company profile, the investor profile and the account summary; its markup and option schema are specified in [`./manual-build/04-service-portal-pages-and-widgets.md`](./manual-build/04-service-portal-pages-and-widgets.md) and are not restated here.
 
 ## Verification procedure
 
@@ -328,7 +328,7 @@ Delivered with this package:
 Planned artifacts of this package:
 
 - [`./validation-checklist.md` (planned)](./validation-checklist.md) — the five success criteria; criterion 2 is the pass condition for the matrix above
-- [`./manual-build/04-service-portal-pages-and-widgets.md` (planned)](./manual-build/04-service-portal-pages-and-widgets.md) — the portal build, including the `bst-premium-upsell` widget
+- [`./manual-build/04-service-portal-pages-and-widgets.md`](./manual-build/04-service-portal-pages-and-widgets.md) — the portal build, including the `bst-premium-upsell` widget
 - [`./manual-build/05-atf-test-suites.md` (planned)](./manual-build/05-atf-test-suites.md) — the 21 field-ACL tests and the run-time creation of the three impersonated users
 - [`./gaps-and-flags.md` (planned)](./gaps-and-flags.md) — requirements with no clean platform equivalent, including the administrator-override flag
 - [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md) — the single source of truth for every decision, alternative and risk behind this scheme

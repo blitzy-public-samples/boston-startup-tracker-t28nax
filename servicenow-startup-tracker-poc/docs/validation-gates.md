@@ -1,6 +1,6 @@
 # Post-commit validation gates — `x_bst_startuptrk`
 
-These sixteen gates run **after** the Update Set at [`../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`](../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml) has committed successfully on the target instance. They are the sixth and final step of the import sequence — upload the XML, poll for load, trigger preview, require the error-type preview-problem set to be empty, commit, then run these gates — and they are the last check performed before a deployment is accepted. That sequence is to be specified in full, with its polling intervals and timeouts, in [`./deployment-runbook.md` (planned)](./deployment-runbook.md). **Any** gate failure triggers the rollback, and the specific gate that failed is reported.
+These sixteen gates run **after** the Update Set at [`../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`](../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml) has committed successfully on the target instance. They are the sixth and final step of the import sequence — upload the XML, poll for load, trigger preview, require the error-type preview-problem set to be empty, commit, then run these gates — and they are the last check performed before a deployment is accepted. That sequence is specified in full, with its polling intervals and timeouts, in [`./deployment-runbook.md`](./deployment-runbook.md). **Any** gate failure triggers the rollback, and the specific gate that failed is reported.
 
 Two checks stated in this document run earlier, between the preview-problem step and the commit: [Pre-commit import completeness](#pre-commit-import-completeness) establishes that the commit has something to apply, without which all sixteen gates below fail against an instance where nothing was installed.
 
@@ -16,7 +16,7 @@ This document carries assertions and their pass and fail conditions only. Every 
 
 Some documents named below are **planned artifacts of this package**. Every link to one carries the marker **(planned)** in its link text. A statement about a planned document describes what that document is required to contain; it is not a claim that the content can be read from it. The delivered files referenced from here are `../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`, `./data-model.md` and `./access-control.md`.
 
-The wider deployment procedure — the pre-flight checks, the polling mechanics of the five steps preceding these gates, the rollback steps and the failure matrix — is to be specified in [`./deployment-runbook.md` (planned)](./deployment-runbook.md). The rollback action is named under [Failure handling](#failure-handling), and the six-step sequence is named above. The eight values and routes that procedure is required to use, and the forms it must not use in their place, are stated under [Requirements carried to the deployment runbook](#requirements-carried-to-the-deployment-runbook).
+The wider deployment procedure — the pre-flight checks, the polling mechanics of the five steps preceding these gates, the rollback steps and the failure matrix — is specified in [`./deployment-runbook.md`](./deployment-runbook.md). The rollback action is named under [Failure handling](#failure-handling), and the six-step sequence is named above. The eight values and routes that procedure is required to use, and the forms it must not use in their place, are stated under [Requirements carried to the deployment runbook](#requirements-carried-to-the-deployment-runbook).
 
 ## How to read a gate
 
@@ -24,7 +24,7 @@ Every gate below is stated with the same seven fields.
 
 | Field | Meaning |
 | --- | --- |
-| **Gate ID** | The stable identifier for the gate. A failure report names it, and [`./deployment-runbook.md` (planned)](./deployment-runbook.md) and [`./validation-checklist.md` (planned)](./validation-checklist.md) are to cite gates by this identifier. |
+| **Gate ID** | The stable identifier for the gate. A failure report names it, and [`./deployment-runbook.md`](./deployment-runbook.md) cites gates by this identifier, as [`./validation-checklist.md` (planned)](./validation-checklist.md) is to. |
 | **Assertion** | The single condition the gate establishes, stated as a fact that must hold after the commit. |
 | **Target** | The table the request is issued against. |
 | **Query** | The query string appended to the target, in the form defined under [Common request shape](#common-request-shape). |
@@ -66,7 +66,7 @@ Four response forms are referenced by the pass conditions below.
 
 ### Transient-error retry rule
 
-This rule applies to every one of the sixteen gates, and to the two checks under [Pre-commit import completeness](#pre-commit-import-completeness), and is stated here in full. The failure matrix to be specified in [`./deployment-runbook.md` (planned)](./deployment-runbook.md) is required to carry the same rule.
+This rule applies to every one of the sixteen gates, and to the two checks under [Pre-commit import completeness](#pre-commit-import-completeness), and is stated here in full. The failure matrix in [`./deployment-runbook.md`](./deployment-runbook.md) carries the same rule.
 
 - A gate that returns `HTTP 500` is **retried exactly once**, after waiting **30 seconds**. The retry reissues the identical request.
 - The gate is then evaluated on the retry's response. A retry returning `HTTP 200` that satisfies the pass condition is a **pass**. A retry returning `HTTP 500` again, or any other status that does not satisfy the pass condition, is a **fail**.
@@ -78,7 +78,7 @@ Apart from this rule, each gate is evaluated on one response.
 
 ## Pre-commit import completeness
 
-Two checks run **before** the commit, immediately after the preview has completed and the error-type preview-problem set has been confirmed empty. They are **not** among the sixteen gates and are not counted in the [Gate roll-up](#gate-roll-up); they are preconditions of it. [`./deployment-runbook.md` (planned)](./deployment-runbook.md) is required to carry both, in its import sequence, between the preview-problem step and the commit step.
+Two checks run **before** the commit, immediately after the preview has completed and the error-type preview-problem set has been confirmed empty. They are **not** among the sixteen gates and are not counted in the [Gate roll-up](#gate-roll-up); they are preconditions of it. [`./deployment-runbook.md`](./deployment-runbook.md) carries both, in its import sequence, between the preview-problem step and the commit step.
 
 Every one of the sixteen gates below tests state that the commit creates. An Update Set whose customer updates did not attach to its header commits without applying any record: the platform reports success, the scope is never created, and all sixteen gates then return an empty `result` array and initiate a rollback of an application that was never installed. The retrieved update set's `state` does not distinguish that outcome from a complete import — it reaches `previewed` and then `committed` either way — and neither does the preview-problem step, which returns an empty error-type and warning-type set for an import that will apply nothing. There is no error field to consult either: `sys_remote_update_set` carries 28 columns and none of them is `error_detail`. The two checks below are what distinguish the two outcomes, and they are read before anything is committed.
 
@@ -97,7 +97,7 @@ Neither check initiates the rollback. The rollback deletes the `sys_scope` recor
 
 ## Requirements carried to the deployment runbook
 
-The forms below were established against the target instance and are stated here so that [`./deployment-runbook.md` (planned)](./deployment-runbook.md) can be specified against them. This document does not restate that runbook's steps; each row names one value or route the runbook is required to use, and the form that must not be used in its place. The two checks under [Pre-commit import completeness](#pre-commit-import-completeness) are the first such requirement and are stated there in full.
+The forms below were established against the target instance and are stated here so that [`./deployment-runbook.md`](./deployment-runbook.md) is specified against them. This document does not restate that runbook's steps; each row names one value or route the runbook is required to use, and the form that must not be used in its place. The two checks under [Pre-commit import completeness](#pre-commit-import-completeness) are the first such requirement and are stated there in full.
 
 | # | Requirement on the runbook | Required form | Form that must not be used |
 | --- | --- | --- | --- |
@@ -162,7 +162,7 @@ One gate, targeting `sys_scope` and matching the application scope by exact name
 | --- | --- | --- | --- | --- | --- | --- |
 | `GATE-SCOPE-01` | Exactly one `sys_scope` record whose `scope` is `x_bst_startuptrk` exists. | `sys_scope` | `sysparm_query=scope=x_bst_startuptrk` | `HTTP 200` with a `result` array holding exactly 1 record whose `scope` is `x_bst_startuptrk`. | Status is exactly `200` and `result` holds exactly 1 record. | 0 records: the scoped application did not commit. More than 1 record: duplicate scope records. Either outcome, or any status other than `200`. Report `GATE-SCOPE-01`; initiate rollback. |
 
-The rollback acts on this same `sys_scope` record: it retrieves the record by this query and deletes it, which on a clean instance cascades the application's tables, roles and flows. `GATE-SCOPE-01` therefore confirms the record that rollback acts on. The full procedure, with its assertions, is to be specified in [`./deployment-runbook.md` (planned)](./deployment-runbook.md).
+The rollback acts on this same `sys_scope` record: it retrieves the record by this query and deletes it, which on a clean instance cascades the application's tables, roles and flows. `GATE-SCOPE-01` therefore confirms the record that rollback acts on. The full procedure, with its assertions, is specified in [`./deployment-runbook.md`](./deployment-runbook.md).
 
 ## Gates 13 to 16 — the security posture
 
@@ -218,7 +218,7 @@ The failing gate is reported before the rollback is initiated. A gate that passe
 
 `PRE-COMMIT-01` and `PRE-COMMIT-02` are handled differently, and their own rows state it: they are read before the commit, so a failure means the commit does not happen and there is no scope to roll back. The remedy is to remove the retrieved update set, correct the Update Set XML and restart the import sequence. The [Transient-error retry rule](#transient-error-retry-rule) applies to both of them as it does to the gates.
 
-The rollback action: retrieve the `sys_scope` record whose `scope` is `x_bst_startuptrk` — the same record `GATE-SCOPE-01` tests — and delete it, then confirm the seven entity tables no longer resolve. **This is an irreversible operation.** Its full step-by-step form, its assertions and the wider failure matrix are to be specified in [`./deployment-runbook.md` (planned)](./deployment-runbook.md).
+The rollback action: retrieve the `sys_scope` record whose `scope` is `x_bst_startuptrk` — the same record `GATE-SCOPE-01` tests — and delete it, then confirm the seven entity tables no longer resolve. **This is an irreversible operation.** Its full step-by-step form, its assertions and the wider failure matrix are specified in [`./deployment-runbook.md`](./deployment-runbook.md).
 
 ## Evidence record
 
@@ -269,6 +269,6 @@ Delivered with this package:
 
 Planned artifacts of this package:
 
-- [`./deployment-runbook.md` (planned)](./deployment-runbook.md) — to specify the pre-flight checks, the six-step import sequence whose final step reads this file, the rollback and the failure matrix, carrying the two checks under [Pre-commit import completeness](#pre-commit-import-completeness) and the eight values and routes under [Requirements carried to the deployment runbook](#requirements-carried-to-the-deployment-runbook)
+- [`./deployment-runbook.md`](./deployment-runbook.md) — the pre-flight checks, the six-step import sequence whose final step reads this file, the rollback and the failure matrix, carrying the two checks under [Pre-commit import completeness](#pre-commit-import-completeness) and the eight values and routes under [Requirements carried to the deployment runbook](#requirements-carried-to-the-deployment-runbook)
 - [`./validation-checklist.md` (planned)](./validation-checklist.md) — to specify the five success criteria, to cite the evidence record above, and to cover the field-by-field half of criterion 1
 - [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md) — to be the single source of truth for every decision behind this gate set
