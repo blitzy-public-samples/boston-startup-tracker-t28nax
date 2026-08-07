@@ -288,24 +288,25 @@ Which fixture sits in which file, so a count can be reconciled file by file.
 | `crunchbase_investors_sample.csv` | At least one row | Not applicable | None; see the `investor_type` note above | One row |
 | `crunchbase_funding_rounds_sample.csv` | Two rows | Not applicable | `round_type` | Two rows: one blank `startup_name`, one blank `round_date` |
 | `linkedin_founders_sample.csv` | Two rows | Not applicable | None; one unmatched `person_title`, outside rule 3, see below | Two rows: one blank `person_name`, one blank `startup_name` |
-| `linkedin_executives_sample.csv` | At least one row | Not applicable | None | Two rows: one blank `person_name`, one blank `startup_name` |
+| `linkedin_executives_sample.csv` | Two rows | Not applicable | None; one unmatched `person_title`, outside rule 3, see below | Two rows: one blank `person_name`, one blank `startup_name` |
 | `linkedin_job_postings_sample.csv` | Two rows | Not applicable | None; one unmatched `department`, one unmatched `remote_type` and one unmatched `seniority`, all outside rule 3, see below | Two rows: one blank `startup_name`, one blank `job_title` |
 
 Three facts explain the shape of that map. Rule 2 deduplicates Startup records, so only the startups file can carry it. Rule 3 normalises `industry`, `funding_stage` and `round_type`, so only the startups and funding rounds files carry a rule 3 fixture; the other choice columns that carry an unmatched value are outside rule 3's scope and are handled as set out immediately below. Rule 4 has one fixture per mandatory column of the record type, so `crunchbase_investors_sample.csv` carries one row and each of the other five files carries two, and eleven rows out of the sixty-four loaded are rejected.
 
 ### Unmatched values in choice columns outside rule 3
 
-Cleaning rule 3 covers `industry`, `funding_stage` and `round_type` and no other column. Five further rows carry a value that matches no member of its target choice list in a column rule 3 does not cover. They are fixtures too, and the outcome depends on whether the target list has an `Other` member.
+Cleaning rule 3 covers `industry`, `funding_stage` and `round_type` and no other column. Six further rows carry a value that matches no member of its target choice list in a column rule 3 does not cover. They are fixtures too, and the outcome depends on whether the target list has an `Other` member.
 
 | File | Column | Target choice list | Has `Other` | Outcome |
 | --- | --- | --- | --- | --- |
 | `crunchbase_startups_sample.csv` | `employee_count_range` | `Startup.employee_count_range` | No | Logged by `IngestionLogger`; the field is left empty on the entity record. |
 | `linkedin_founders_sample.csv` | `person_title` | `Founder.title` | Yes | Stored as `Other` and logged by `IngestionLogger`. |
+| `linkedin_executives_sample.csv` | `person_title` | `Executive.title` | Yes | Stored as `Other` and logged by `IngestionLogger`. |
 | `linkedin_job_postings_sample.csv` | `department` | `JobPosting.department` | Yes | Stored as `Other` and logged by `IngestionLogger`. |
 | `linkedin_job_postings_sample.csv` | `remote_type` | `JobPosting.remote_type` | No | Logged by `IngestionLogger`; the field is left empty on the entity record. |
 | `linkedin_job_postings_sample.csv` | `seniority` | `JobPosting.seniority` | No | Logged by `IngestionLogger`; the field is left empty on the entity record. |
 
-A list with no `Other` member offers no value to normalise to, so, as with `investor_type`, the unmatched value is logged and the field left empty rather than coerced. **Do not add an `Other` choice to any of these lists**: prompt section 1.0 declares the field and choice definitions binding and complete. Each of the five rows is otherwise valid and transforms normally.
+A list with no `Other` member offers no value to normalise to, so, as with `investor_type`, the unmatched value is logged and the field left empty rather than coerced. **Do not add an `Other` choice to any of these lists**: prompt section 1.0 declares the field and choice definitions binding and complete. Each of the six rows is otherwise valid and transforms normally.
 
 ### Non-resolving references
 
