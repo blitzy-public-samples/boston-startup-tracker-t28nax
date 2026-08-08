@@ -23,6 +23,11 @@ Repository-level governance lives under [`docs/`](docs/):
 - [`docs/decisions/DECISION_LOG.md`](docs/decisions/DECISION_LOG.md) — the single source of truth for why every choice was made.
 - [`docs/decisions/TRACEABILITY_MATRIX.md`](docs/decisions/TRACEABILITY_MATRIX.md) — the bidirectional map from legacy construct to delivered artifact.
 
+The executive presentation lives under [`blitzy-deck/`](blitzy-deck/):
+
+- [`blitzy-deck/boston-startup-tracker-servicenow-executive-summary.html`](blitzy-deck/boston-startup-tracker-servicenow-executive-summary.html) — the sixteen-slide executive summary of the replatform, written for non-technical leadership. **Open the file directly in a browser**; it is self-contained and needs no build step, no local server and no other file in this repository.
+- [`blitzy-deck/references/blitzy-reveal-theme.css`](blitzy-deck/references/blitzy-reveal-theme.css) — the canonical presentation theme, delivered at this path. Its CSS is mirrored byte-identically inside the deck rather than linked from it, which is what keeps the deck self-contained.
+
 ## Features
 
 - Comprehensive startup profiles with enriched data

@@ -14,7 +14,7 @@ This document is self-contained. Every table, column, type, length, flag, defaul
 
 **Every document named below is delivered and readable.** Each link resolves to a file in this package, among them the Update Set XML, `./access-control.md`, `./api-reference.md`, `./validation-gates.md` and `../sample-data/README.md` with its six CSVs, so a reader can follow any link and read the content the statement around it describes; no link is a forward reference to something still to be written.
 
-**Reviewer.** This document is to be the artifact validated by the **Data/SME** reviewer entry in [`../../docs/review/CRITICAL_DECISIONS.md`](../../docs/review/CRITICAL_DECISIONS.md), covering the join-table authority, the cascade rules and the stored portfolio count.
+**Reviewer.** This document is to be the artifact validated by **entry 4 of [`../../docs/review/CRITICAL_DECISIONS.md`](../../docs/review/CRITICAL_DECISIONS.md), reviewer persona Data/SME, risk level High**, covering the **write idempotence** of the six natural keys, the join-table authority, the cascade rules and the stored portfolio count. That entry was raised from Medium to High when idempotence was added to it: its first four checks are the ones that cannot be satisfied by running an ingestion batch once, and the first of them is simply to run the same batch twice and confirm every row count is unchanged.
 
 ## Table inventory
 
@@ -31,20 +31,20 @@ Ten physical tables. Seven are the entity tables declared by prompt section 1.0;
 | 7 | `x_bst_startuptrk_newsarticle` | News article | Entity | 6 |
 | 8 | `x_bst_startuptrk_m2m_round_investor` | Round investor | Supporting — join table | 2 |
 | 9 | `x_bst_startuptrk_ingest_staging` | Ingestion staging | Supporting — staging table | 40 |
-| 10 | `x_bst_startuptrk_rate_limit_counter` | Rate limit counter | Supporting — counter table | 5 |
+| 10 | `x_bst_startuptrk_rate_limit_counter` | Rate limit counter | Supporting — counter table | 4 |
 
-Prompt section 1.0 states exactly seven custom tables; the application declares ten physical tables. Prompt section 10.0 criterion 1's table count is evaluated against the seven entity tables only, and the join table, the staging table and the rate-limit counter table are supporting artifacts counted separately. The resolution of that count is recorded in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
+Prompt section 1.0 states exactly seven custom tables; the application declares ten physical tables. Prompt section 10.0 criterion 1's table count is evaluated against the seven entity tables only, and the join table, the staging table and the rate-limit counter table are supporting artifacts counted separately. The resolution of that count is recorded at `D-008` in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
 None of the ten tables extends another table and none is extendable. Every table name carries the full `x_bst_startuptrk_` scope prefix. Three entity table names are single words with no separating underscore between the parts: `_fundinground`, `_jobposting` and `_newsarticle`. The three supporting table names are `_m2m_round_investor`, `_ingest_staging` and `_rate_limit_counter`.
 
 ## Table access posture
 
-**All ten tables are sealed to the application scope, and none is served by the platform Table API.** Every one of the ten `sys_db_object` records carries the identical posture:
+**Write access is closed on all ten tables. Read access differs between the seven entity tables and the three supporting tables**, and the split is deliberate. The write, schema and configuration posture is identical across all ten:
 
-| `sys_db_object` field | Value on all ten tables | Effect |
+**The seven entity tables** — `_startup`, `_founder`, `_executive`, `_investor`, `_fundinground`, `_jobposting`, `_newsarticle`:
+
+| `sys_db_object` field | Value on all seven | Effect |
 | --- | --- | --- |
-| `access` | `package_private` | The table is reachable only from inside `x_bst_startuptrk`. No script, business rule, flow or widget in another application scope can address it at all. |
-| `read_access` | false | No out-of-scope caller may read, even where `access` would otherwise permit it. |
 | `create_access` | false | No out-of-scope caller may insert. |
 | `update_access` | false | No out-of-scope caller may update. |
 | `delete_access` | false | No out-of-scope caller may delete. |
@@ -52,18 +52,36 @@ None of the ten tables extends another table and none is extendable. Every table
 | `configuration_access` | false | No out-of-scope application may change the table's configuration. |
 | `client_scripts_access` | false | No out-of-scope client script may run against it. |
 | `actions_access` | false | No out-of-scope action may target it. |
-| `ws_access` | false | **The table is not served at `/api/now/table/<table>`.** |
+| `create_access_controls` | false | No out-of-scope application may create access controls on it. |
 | `is_extendable` | false | No table may extend it, so no child table can inherit its data with a different access posture. |
 
-Two of these carry the whole security argument and are worth stating plainly.
+The read posture is where the two groups part:
 
-**`access` `package_private` is what makes the field-level ACLs meaningful.** A field-level read ACL is evaluated on the access-controlled read path. Unsecured record access from another scope does **not** evaluate access controls, so had the tables remained `public` with their capability flags granted, any script in any other scope — including a Global-scope background script an operator pastes in — could read `total_funding_usd`, `aum_usd` or `contact_email` directly out of the row and hand it anywhere. Sealing the tables to the scope removes that path, leaving the application's own nine Script Includes as the only code that can address the data.
+| `sys_db_object` field | Seven entity tables | Three supporting tables |
+| --- | --- | --- |
+| `access` | `public` | `package_private` |
+| `read_access` | true | false |
+| `ws_access` | true — the table **is** served at `/api/now/table/<table>` | false — the table is served by no external route at all |
 
-**`ws_access` false closes the alternate API surface.** The platform Table API is a fully generic REST interface: with `ws_access` true, `GET /api/now/table/x_bst_startuptrk_startup` serves the same rows under the platform's own access controls, bypassing every control this application declares at its own endpoint — the two `REST_Endpoint` access controls, the in-script role guard, the per-field omission gate, the pagination bounds and the rate limiter. Narrowing to `ws_access` false makes the 31 operations of [`./api-reference.md`](./api-reference.md) the only programmatic route to the data.
+**What `access` `public` opens on the seven entity tables is a read route and nothing more, and the field-level ACLs still govern it.** A field-level read ACL is evaluated on the access-controlled read path, and the Table API is such a path, so a caller holding only `x_bst_startuptrk.user` cannot see `total_funding_usd`, `institutional_funding_last_5yrs`, `contact_email`, `aum_usd`, `amount_usd` or `valuation_usd` over it. What is deliberately **not** opened is any write, configuration or schema capability: `create_access`, `update_access`, `delete_access`, `alter_access`, `configuration_access`, `actions_access`, `client_scripts_access` and `create_access_controls` are `false` on all ten tables. Unsecured record access from another scope does not evaluate access controls at all, which is why the three supporting tables — the only tables holding verbatim upstream payloads, join rows and per-caller counters — stay sealed to the scope, leaving the application's own eight Script Includes as the only code that can address them.
 
-**One verification consequence follows, and it is deliberate.** Because the tables are no longer served by the Table API, a post-commit gate cannot prove a table exists by reading a record from it — such a read now answers with a failure whether the table is missing or merely sealed. The gates read table **metadata** from `sys_db_object` and column metadata from `sys_dictionary` instead, which is both a stronger check, since it asserts the posture above rather than only existence, and one an administrator can run. The rewritten gates, and the departure from the plan's original table-read gates, are in [`./validation-gates.md`](./validation-gates.md).
+The three supporting tables are `x_bst_startuptrk_m2m_round_investor`, `x_bst_startuptrk_ingest_staging` and `x_bst_startuptrk_rate_limit_counter`. Sealing them matters most for the staging table, which is the only table in the application holding verbatim upstream payloads and unvalidated personal data.
 
-The complete access-control scheme layered above this posture — the three roles, the five ACL layers, the 49 access controls and the 74 role joins — is in [`./access-control.md`](./access-control.md) and is not restated here.
+**Read access controls, not table posture, are what make the field-level design meaningful.** A field-level read access control is evaluated on every access-controlled read path, and the platform Table API is one of them: it authenticates the caller, evaluates the table-level read control, and evaluates each field-level read control before returning a value. A caller holding only `x_bst_startuptrk.user` therefore cannot read `total_funding_usd`, `aum_usd` or `contact_email` over `/api/now/table/x_bst_startuptrk_startup` any more than over the application's own API — the field is omitted on both. What the seven entity tables expose is a **read** route governed by the same seven table-level and seven field-level read controls documented in [`./access-control.md`](./access-control.md). Sealing the seven entity tables instead would have hidden that fact rather than proved it: a denial a caller cannot observe is indistinguishable from a table the caller cannot reach.
+
+**No write route is exposed anywhere.** Every cross-scope write, schema and configuration capability is `false` on all ten tables, so the Table API is read-only on the seven and absent on the three. The 31 operations of [`./api-reference.md`](./api-reference.md) remain the only programmatic route that can change application data.
+
+**Two differences from the application's own API remain on the Table API read route, and both are recorded rather than hidden**: it is outside the application's fixed-window rate limiter, and outside the two `REST_Endpoint` execution controls. Their compensating controls — the table-level read controls that admit only the three scoped roles, and an operator-owned platform inbound rate-limit rule — are stated in [`./gaps-and-flags.md`](./gaps-and-flags.md).
+
+**One verification consequence follows, and it is what the posture exists to serve.** Because the seven entity tables are served by the Table API, the eleven required post-commit gates are exactly the reads AAP section 0.11.2 specifies: one authenticated `sysparm_limit=1` request per entity table. The three supporting tables are not gated that way and are not reachable that way. The gate set is in [`./validation-gates.md`](./validation-gates.md).
+
+**No write reaches any of the ten tables from outside the scope.** `create_access`, `update_access` and `delete_access` are false on all ten dictionary records, so the administrator-only grants of layer 2 cannot be circumvented by the Table API or by another scoped application. The open posture concedes a read route, and only a read route.
+
+**The three supporting tables are sealed because nothing outside the scope has any business addressing them.** The join table is read on a caller's behalf through `InvestorPortfolioService`, and the staging and rate-limit tables are internal machinery holding upstream payloads and per-caller counters. None of the three carries a premium field, so there is no field control on them to exercise, and no gate reads them.
+
+**One consequence for the API surface is worth recording.** With `ws_access` true, the Table API is a second read route to the entity rows, and it is not subject to the application's own **rate limiter** — which is application-level accounting in the Scripted REST operations, not an access control. Every access control this application declares applies on both routes; the request budget applies on one. That is stated in [`./api-reference.md`](./api-reference.md) so no consumer reads the budget as a security boundary.
+
+The complete access-control scheme layered above this posture — the three roles, the five ACL layers, the 49 access controls and the 74 role joins — is in [`./access-control.md`](./access-control.md) and is not restated here. The application's own **eight** Script Includes, matching Agent Action Plan section 0.4.5, are the only code inside the scope that addresses these tables; the call graph is in [`./api-reference.md`](./api-reference.md).
 
 ## Notation
 
@@ -193,7 +211,9 @@ Label **Funding round**. Eight columns. The table declares no display column; a 
 
 `lead_investor` is a first-class reference and carries the lead-versus-participating distinction.
 
-`participating_investors` is a **list of references** to `x_bst_startuptrk_investor` — the platform's List type, which is what prompt section 1.5 declares — and it is **stored, read-only and derived**. It is a one-way projection of the join table `x_bst_startuptrk_m2m_round_investor`, which stays authoritative and remains the only write target for participation; `InvestorPortfolioService.refreshRoundParticipants()` rewrites the column whenever a link row is inserted, updated or deleted. Nothing writes both. This interpretation of prompt section 1.5's List declaration is recorded in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
+`participating_investors` is a **list of references** to `x_bst_startuptrk_investor` — the platform's List type, which is what prompt section 1.5 declares — and it is **stored, read-only and derived**. It is a one-way projection of the join table `x_bst_startuptrk_m2m_round_investor`, which stays authoritative and remains the only write target for participation; `InvestorPortfolioService.refreshRoundParticipants()` rewrites the column whenever a link row is inserted, updated or deleted. Nothing writes both. The mechanism — the join table authoritative, this column a stored read-only projection of it — is recorded at `D-010` in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md), and the array the API projects from the join table at `D-011`.
+
+**Prompt section 1.5 names both mechanisms in one clause** — a List field *and* a physical join table — and on this platform they are two different things: a list-reference column stores delimited identifiers inside the funding-round row and creates no table, while a many-to-many relationship generates a join table. Implementing both as independent write targets would be a dual write that drifts. The resolution delivered here is that **the join table is authoritative** because section 1.5 names it explicitly, the column is a read-only projection of it that delivers the List reading, and the REST layer assembles its `participating_investors` array from the join table rather than from the column. Both halves of the clause are satisfied and nothing is written twice. The decision, the rejected alternatives and the drift risk are recorded in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md); the reviewer entry that owns it is in [`../../docs/review/CRITICAL_DECISIONS.md`](../../docs/review/CRITICAL_DECISIONS.md).
 
 **The projection is bounded, and the bound is enforced rather than assumed.** A `glide_list` stores its members as comma-separated 32-character identifiers, so each member costs 33 characters and the declared `max_length` of 4000 holds **121** investors. The join table itself is unbounded, so a round could in principle link more. `refreshRoundParticipants()` therefore measures the derived value against the declared length before writing it: within the bound it stores the complete list, and beyond the bound it **empties the projection and records the overflow** through `gs.error` tagged `[x_bst_startuptrk.InvestorPortfolioService]`, naming the round, the number of investors linked and the capacity. It never stores a partial identifier list, because a partial list is indistinguishable from a complete one when read and would misrepresent participation. The two numbers are declared once, as `PROJECTION_LENGTH` with `PROJECTION_CAPACITY` derived from it, so raising the column length raises the capacity with it.
 
@@ -204,7 +224,8 @@ The one-way property is enumerable, and the enumeration is the check to repeat a
 | Path | Direction | Mechanism |
 | --- | --- | --- |
 | `InvestorPortfolioService.refreshRoundParticipants()` | Write | The **only** write to the column in the application. It reads the join table through `InvestorPortfolioService.participantsForRounds()`, compares the derived value with the stored one, and writes with business rules suppressed so the projection cannot recurse. |
-| `InvestorPortfolioService.linkInvestorToRound()` | Write | Writes the **join table**, never the column. It is the programmatic way to add a participant. |
+| `IngestionMapper.linkParticipants()` | Write | Writes the **join table**, never the column. It is the ingestion path's only participation writer and it reconciles the round's rows to the incoming set exactly. |
+| `InvestorPortfolioService.linkInvestorToRound()` | Write | Writes the **join table**, never the column. A single idempotent pair, for an administrative one-off link. |
 | `IngestionMapper` | Write | Decodes `participating_investor_names` into investor names and hands them to the join-table writer. It never writes the column. |
 | The four funding-round REST operations | Read | Assemble the `participating_investors` response array from the join table, never from the column. |
 | The funding-round form's related list | Read and write | Reads and writes the **join table**. |
@@ -268,7 +289,7 @@ This roll-up is the field-count evidence that prompt section 10.0 criterion 1 de
 
 ## Supporting tables
 
-The three tables in this section are **not** entity tables and are not counted towards prompt section 10.0 criterion 1. Each exists to support the entity model: one join table materialises a many-to-many relationship, one staging table holds the fallback ingestion dataset, and one counter table holds per-caller rate-limit accounting. Forty-seven columns in total: 2, 40 and 5.
+The three tables in this section are **not** entity tables and are not counted towards prompt section 10.0 criterion 1. Each exists to support the entity model: one join table materialises a many-to-many relationship, one staging table holds the fallback ingestion dataset, and one counter table holds per-caller rate-limit accounting. **Forty-six** columns in total: 2 on the join table, 40 on the staging table and 4 on the counter table. 2 + 40 + 4 = 46. The counter table's four columns are `caller`, `window_start`, `request_count` and `api_resource`, enumerated under [10. `x_bst_startuptrk_rate_limit_counter`](#10-x_bst_startuptrk_rate_limit_counter), and the inventory table at the head of this document records the same count of 4.
 
 All three carry the sealed posture of [Table access posture](#table-access-posture), and all three are additionally restricted by access control on **all four operations**. The join table is readable by every application role, because a caller reading a funding round must be able to see its participating investors; the staging table and the counter table are administrator-only in every direction, because they hold ingestion working data and per-caller accounting that no ordinary caller has any reason to reach:
 
@@ -295,19 +316,26 @@ This table is **authoritative** for the participating investors of a funding rou
 - `x_bst_startuptrk_fundinground.participating_investors` is a stored, read-only list of references **projected** from it, refreshed by the round-investor-link business rule. It is a derived copy, never an independent record of participation.
 - The REST layer emits `participating_investors` as a **JSON array** of investor references assembled from this table directly — one batched query per page of funding rounds, not one query per round. The response shape is in [`./api-reference.md`](./api-reference.md).
 
-**The `(funding_round, investor)` pair is unique.** A unique composite database index on the two columns is declared in the Update Set, so the same investor cannot be linked to the same round twice, whatever the write path. `InvestorPortfolioService.linkInvestorToRound()` is the programmatic write path and is idempotent: given a pair that already exists it returns the existing row rather than attempting a second insert. The indexes this application declares are listed under [Declared indexes](#declared-indexes).
+**The `(funding_round, investor)` pair is unique.** A unique composite database index on the two columns is declared in the Update Set, so the same investor cannot be linked to the same round twice, whatever the write path. The indexes this application declares are listed under [Declared indexes](#declared-indexes).
 
-The lead-versus-participating distinction is carried by `x_bst_startuptrk_fundinground.lead_investor`, a first-class reference column on the funding round and not a row in this table. The same investor may be both the lead investor of a round and a participating investor in it. The decision behind this table's authority is recorded in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
+**Two programmatic writers exist, and they do different things.**
+
+| Writer | Semantics | Used by |
+| --- | --- | --- |
+| `IngestionMapper.linkParticipants(runId, roundId, investorIds, participation)` | **Exact-set reconciliation.** It reads the round's existing rows, keeps those the incoming set names, inserts those it names and the round lacks, and **deletes those the incoming set no longer names** — the delete only when the incoming set is *complete*, meaning the incoming record supplied a value and every member of it resolved to exactly one investor. Where a member did not resolve, the write is additive only and the obsolete rows are kept, because deleting against an incomplete set would discard participation the source still asserts. An absent incoming value writes nothing at all. Every failed insert and every failed delete is counted, and a non-zero count stamps the funding round's staging row `error` rather than `processed`. | Both ingestion flows, through `IngestionMapper.upsert()`. It is the **only** join-table writer on the ingestion path. |
+| `InvestorPortfolioService.linkInvestorToRound(roundId, investorId)` | **A single idempotent pair.** Given a pair that already exists it returns the existing row rather than attempting a second insert; otherwise it inserts one. It deletes nothing and reconciles nothing. | An administrative one-off link from a background script. Nothing on the ingestion path calls it. |
+
+The lead-versus-participating distinction is carried by `x_bst_startuptrk_fundinground.lead_investor`, a first-class reference column on the funding round and not a row in this table. The same investor may be both the lead investor of a round and a participating investor in it. The decision behind this table's authority, and behind the read-only projection it feeds, is recorded at `D-010` in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
 Rows in this table drive the second maintenance trigger for `x_bst_startuptrk_investor.portfolio_count`; see [Investor.portfolio_count](#investorportfolio_count).
 
 ### 9. `x_bst_startuptrk_ingest_staging`
 
-Label **Ingestion staging**. Forty columns. The display column is `import_run`. This is the single staging table required by prompt section 4.0, and it is the home of the fallback dataset both ingestion flows read when a live call fails, times out, returns a malformed response, or when the property `x_bst_startuptrk.ingestion.source_mode` is set to `fallback`.
+Label **Ingestion staging**. Forty-one columns. The display column is `import_run`. This is the single staging table required by prompt section 4.0, and it is the home of the fallback dataset both ingestion flows read when a live call fails, times out, returns a malformed response, or when the property `x_bst_startuptrk.ingestion.source_mode` is set to `fallback`.
 
 One flat table serves all six ingested record types. `record_type` is the discriminator that tells the transform which entity table a row becomes and which flattened columns it reads. No staging column is mandatory, so a row with a blank value loads successfully; the mandatory requirement is enforced per record type at transform time by cleaning rule 4, which rejects the row and creates no entity record.
 
-Forty columns is seven control columns plus thirty-three flattened scalar columns: 7 + 33 = 40.
+Forty-one columns is seven control columns plus thirty-four flattened scalar columns: 7 + 34 = 41.
 
 #### Control columns
 
@@ -318,16 +346,34 @@ Seven columns, present on every row whatever its record type.
 | `source_system` | `string`, choice list | 40 | — | — | `crunchbase`, `linkedin` | Which ingestion flow's dataset the row belongs to |
 | `record_type` | `string`, choice list | 40 | — | — | `startup`, `founder`, `executive`, `investor`, `funding_round`, `job_posting` | Discriminator for the transform |
 | `raw_payload` | `string` | 8000 | — | — | — | The source response payload in the shape the source API returns, per prompt section 4.0 |
-| `import_state` | `string`, choice list | 40 | — | `pending` | `pending`, `processed`, `rejected`, `error` | Processing state of the staged row, written by `IngestionMapper.writeStagingState()` at the end of each row |
+| `import_state` | `string`, choice list | 40 | — | `pending` | `pending`, `in_progress`, `processed`, `rejected`, `error` | Processing state of the staged row. `in_progress` is written by a flow's claim step; the four settled and unsettled remainder are written by `IngestionMapper.writeStagingState()` at the end of each row |
 | `error_message` | `string` | 1000 | — | — | — | Rejection or error detail. `IngestionMapper.clean()` returns the reason and `IngestionMapper.writeStagingState()` writes it here alongside the matching `import_state` |
 | `run_provenance` | `string`, choice list | 40 | — | — | `live`, `fallback` | Whether the row was consumed by a live or a fallback run |
 | `import_run` | `string` | 64 | — | — | — | Run identifier shared by every row of one load |
 
+#### The five `import_state` members
+
+The choice list carries five members, and the distinction between the two pre-settlement states is what makes a run safe to re-execute.
+
+| Member | Written by | Meaning | Read by `ingestStaging()` |
+| --- | --- | --- | --- |
+| `pending` | The dictionary default, on import | The row has been staged and no run has taken it | **Yes.** This is the only state the transform selects on |
+| `in_progress` | A flow's claim step, together with `import_run` set to that run's identifier | A run has claimed the row and has not yet settled it | No |
+| `processed` | `IngestionMapper.writeStagingState()` | An entity record was created or updated from the row | No |
+| `rejected` | `IngestionMapper.writeStagingState()` | A cleaning rule refused the row. Expected behaviour, not an error | No |
+| `error` | `IngestionMapper.writeStagingState()` | A write failed for a reason other than a cleaning rule, or a funding round's participant links could not be reconciled | No |
+
+**`in_progress` exists so that a row is read exactly once per run and an abandoned run leaves a trace.** The claim moves the row out of the `pending` query before any work is done, so a re-read within the run cannot pick it up, and a run that dies hard leaves its rows carrying the identifier of the run that abandoned them. **Nothing returns a row to `pending` automatically** — a row that killed one run would kill the next — so the return is an administrative edit. The procedure is in [`./manual-build/06-staging-table-csv-import.md`](./manual-build/06-staging-table-csv-import.md).
+
 #### Flattened scalar columns, by record type
 
-Thirty-three columns. They carry the prompt section 1.0 column names of the entity table each record type becomes, with references expressed as the natural keys `startup_name`, `lead_investor_name` and `participating_investor_names`. A CSV cannot carry a `sys_id` for a record that does not exist yet, so every reference travels as the target record's natural key and the transform resolves it at load time. `participating_investor_names` carries a comma separated list of names; `IngestionMapper.resolveParticipants()` splits it on the comma, trims each member, drops an empty member, resolves each remaining member to exactly one Investor record, keeps a repeated member once, and warns and skips a member it cannot resolve to exactly one record.
+Thirty-three columns. They carry the prompt section 1.0 column names of the entity table each record type becomes, with references expressed as the natural keys `startup_name`, `lead_investor_name` and `participating_investor_names`. A CSV cannot carry a `sys_id` for a record that does not exist yet, so every reference travels as the target record's natural key and the transform resolves it at load time.
 
-Because the column names are the entity column names, a name shared by more than one entity is **one** staging column read by more than one record type rather than one column per entity. Five columns are shared:
+`participating_investor_names` carries **a list, in one of three accepted carriers, and never a comma-separated one**. `IngestionMapper.resolveParticipants()` accepts a real JSON array, a JSON array serialised as text — which is what the shipped CSV uses — or a `|`-delimited string, and a value carrying none of those is read as **one single name**. Each member is trimmed, an empty member is dropped, each remaining member is resolved to exactly one Investor record, a repeated member is kept once, and a member that resolves to none or to more than one is logged and left unlinked while the count of unresolved members is carried back to the caller. A value that yields no name in any carrier is logged against `participating_investor_names` with the reason naming all three accepted carriers.
+
+**The comma is not a delimiter here, and treating it as one was a defect.** Investor names legitimately contain commas — `Beacon Hill Ventures, LP` is one investor, not two — so splitting on the comma silently fabricated names that resolved to nothing and dropped a real participant from the round. The `|` delimiter and the JSON array were chosen because neither occurs inside an organisation name.
+
+Because the column names are the entity column names, a name shared by more than one entity is **one** staging column read by more than one record type rather than one column per entity. Six columns are shared:
 
 | Column | Read by record types | Carries |
 | --- | --- | --- |
@@ -335,13 +381,30 @@ Because the column names are the entity column names, a name shared by more than
 | `website` | `startup`, `investor` | The record's own website |
 | `active` | `startup`, `job_posting` | The record's own active flag |
 | `title` | `founder`, `executive`, `job_posting` | The person's title, or the posting's role title |
-| `startup_name` | `founder`, `executive`, `funding_round`, `job_posting` | The natural key naming the parent Startup |
+| `startup_name` | `founder`, `executive`, `funding_round`, `job_posting` | The **first half** of the natural key naming the parent Startup |
+| `startup_headquarters_location` | `founder`, `executive`, `funding_round`, `job_posting` | The **second half** of that key. Not read by the `startup` record type, which carries its own `headquarters_location` |
 
-A shared column is declared once and takes the widest type its readers need: `title` is `string` 150 because `x_bst_startuptrk_jobposting.title` is 150 while the two people titles are choice values. The tables below list every column each record type reads, so a shared column appears in more than one table; the physical column count is 33, not the sum of the table lengths.
+A shared column is declared once and takes the widest type its readers need: `title` is `string` 150 because `x_bst_startuptrk_jobposting.title` is 150 while the two people titles are choice values. The tables below list every column each record type reads, so a shared column appears in more than one table; the physical column count is 34, not the sum of the table lengths.
 
-None of these thirty-three columns carries a choice list. Choice normalisation happens at transform time under cleaning rule 3, so an unmatched incoming value loads into staging unchanged. The four money columns are `decimal` here and `currency` on the entity tables. `active` carries no staging default, so a blank incoming value stays blank and cleaning rule 4 can see it; the `active` defaults on `x_bst_startuptrk_startup` and `x_bst_startuptrk_jobposting` are unaffected.
+None of these thirty-four columns carries a choice list. Choice normalisation happens at transform time under cleaning rule 3, so an unmatched incoming value loads into staging unchanged. The four money columns are `decimal` here and `currency` on the entity tables. `active` carries no staging default, so a blank incoming value stays blank and cleaning rule 4 can see it; the `active` defaults on `x_bst_startuptrk_startup` and `x_bst_startuptrk_jobposting` are unaffected.
 
-`headquarters_location` is read by the `startup` record type only. Cleaning rule 2 de-duplicates Startup records on `name` **plus** `headquarters_location`, so that pair — not the name alone — is a Startup's identity within one load, and the record that survives de-duplication is the one a child row resolves to. `IngestionMapper.resolveStartup()` matches `startup_name` against `x_bst_startuptrk_startup.name` after trimming and lowering both sides, resolves only when exactly one startup carries the name, and otherwise logs the row as skipped — reporting the parent as **ambiguous** when more than one startup carries it. The per-branch outcomes are tabulated in [`../sample-data/README.md`](../sample-data/README.md).
+`headquarters_location` is read by the `startup` record type only, and it is the second half of a Startup's identity. Cleaning rule 2 de-duplicates Startup records on `name` **plus** `headquarters_location`, so that pair — not the name alone — is a Startup's identity within one load, and the record that survives de-duplication is the one a child row resolves to.
+
+**A child row therefore names its parent with the same pair, through two columns.** `startup_name` carries the name and `startup_headquarters_location` carries the headquarters, and `IngestionMapper.resolveStartupKey()` resolves the pair through the same bounded matcher the natural-key upsert uses: the name is matched case- and whitespace-insensitively against `x_bst_startuptrk_startup.name`, each candidate is confirmed on the normalised headquarters, and the read stops at two confirmed matches because two establishes ambiguity.
+
+Resolving on the name alone would be a different key from the one the de-duplication enforces, and the failure is not hypothetical: two startups may legitimately share a name across `Boston, MA` and `Cambridge, MA`, and a name-only resolver would attach the child to whichever one it happened to read first, or refuse both as ambiguous. **There is therefore no name-only path**: both halves are required, and a child row that carries only a name does not identify a parent at all. The outcomes are explicit:
+
+| The child row supplies | Outcome |
+| --- | --- |
+| Both halves, matching exactly one startup | **Resolved** onto that startup |
+| Both halves, matching none | **Rejected**, reason `no startup carries the name and headquarters location` |
+| Both halves, matching more than one startup | **Rejected as ambiguous**, reason `the name and headquarters location already match (<n> startup records)`. Nothing is guessed and no candidate is picked |
+| A name with no headquarters | **Rejected before any read**, reason `the row carries no parent headquarters location, and the startup key is the name together with the headquarters location`. The rejection names the remedy rather than resolving on a narrower key |
+| No name | **Rejected**, reason `the value is blank` |
+
+The middle row is the one that would previously have resolved. A blank second half used to fall back to a name-only match, which meant the resolver silently used a **different** key from the one rule 2 de-duplicates on; a child row could then attach to a company that was never the one the source named. The fallback is removed rather than narrowed, because there is no threshold at which guessing a parent is preferable to reporting that the row did not identify one.
+
+`x_bst_startuptrk_ingest_staging.startup_headquarters_location` is `string` 100, matching the entity column it confirms against. It is a **transport** column: it is never written to any entity table, it exists only to carry the second half of the key, and the per-branch outcomes are tabulated in [`../sample-data/README.md`](../sample-data/README.md).
 
 Record type `startup` — twelve columns.
 
@@ -360,12 +423,13 @@ Record type `startup` — twelve columns.
 | `institutional_funding_last_5yrs` | `boolean` | — | `false` | `x_bst_startuptrk_startup.institutional_funding_last_5yrs` |
 | `employee_count_range` | `string` | 20 | — | `x_bst_startuptrk_startup.employee_count_range` |
 
-Record types `founder` and `executive` — six columns, shared by both. The target table is `x_bst_startuptrk_founder` on a `founder` row and `x_bst_startuptrk_executive` on an `executive` row.
+Record types `founder` and `executive` — seven columns, shared by both. The target table is `x_bst_startuptrk_founder` on a `founder` row and `x_bst_startuptrk_executive` on an `executive` row.
 
 | Column | Platform type | Max length | Default | Target field |
 | --- | --- | --- | --- | --- |
 | `name` | `string` | 100 | — | `name` on Founder or Executive |
-| `startup_name` | `string` | 100 | — | The `startup` reference on Founder or Executive, resolved from the Startup `name` |
+| `startup_name` | `string` | 100 | — | The `startup` reference on Founder or Executive, resolved from the Startup `name` **plus** `startup_headquarters_location` |
+| `startup_headquarters_location` | `string` | 100 | — | Not written. Confirms the parent Startup during reference resolution |
 | `title` | `string` | 150 | — | `title` on Founder or Executive |
 | `bio` | `string` | 2000 | — | `bio` on Founder or Executive |
 | `linkedin_url` | `string` | 255 | — | `linkedin_url` on Founder or Executive |
@@ -383,11 +447,12 @@ Record type `investor` — five columns.
 
 `x_bst_startuptrk_investor.portfolio_count` has no staging column. It is calculated, not staged.
 
-Record type `funding_round` — eight columns.
+Record type `funding_round` — nine columns.
 
 | Column | Platform type | Max length | Default | Target field |
 | --- | --- | --- | --- | --- |
-| `startup_name` | `string` | 100 | — | `x_bst_startuptrk_fundinground.startup`, resolved from the Startup `name` |
+| `startup_name` | `string` | 100 | — | `x_bst_startuptrk_fundinground.startup`, resolved from the Startup `name` **plus** `startup_headquarters_location` |
+| `startup_headquarters_location` | `string` | 100 | — | Not written. Confirms the parent Startup during reference resolution |
 | `round_type` | `string` | 40 | — | `x_bst_startuptrk_fundinground.round_type` |
 | `amount_usd` | `decimal` | — | — | `x_bst_startuptrk_fundinground.amount_usd` |
 | `round_date` | `glide_date` | — | — | `x_bst_startuptrk_fundinground.round_date` |
@@ -396,11 +461,12 @@ Record type `funding_round` — eight columns.
 | `valuation_usd` | `decimal` | — | — | `x_bst_startuptrk_fundinground.valuation_usd` |
 | `source_url` | `string` | 255 | — | `x_bst_startuptrk_fundinground.source_url` |
 
-Record type `job_posting` — nine columns.
+Record type `job_posting` — ten columns.
 
 | Column | Platform type | Max length | Default | Target field |
 | --- | --- | --- | --- | --- |
-| `startup_name` | `string` | 100 | — | `x_bst_startuptrk_jobposting.startup`, resolved from the Startup `name` |
+| `startup_name` | `string` | 100 | — | `x_bst_startuptrk_jobposting.startup`, resolved from the Startup `name` **plus** `startup_headquarters_location` |
+| `startup_headquarters_location` | `string` | 100 | — | Not written. Confirms the parent Startup during reference resolution |
 | `title` | `string` | 150 | — | `x_bst_startuptrk_jobposting.title` |
 | `department` | `string` | 40 | — | `x_bst_startuptrk_jobposting.department` |
 | `location` | `string` | 100 | — | `x_bst_startuptrk_jobposting.location` |
@@ -410,7 +476,7 @@ Record type `job_posting` — nine columns.
 | `url` | `string` | 255 | — | `x_bst_startuptrk_jobposting.url` |
 | `active` | `string` | 10 | — | `x_bst_startuptrk_jobposting.active` |
 
-The five shared columns are counted once: the `startup` type contributes 12, `investor` adds `type`, `focus_areas` and `aum_usd`, `founder` and `executive` add `startup_name`, `title`, `bio`, `linkedin_url` and `contact_email`, `funding_round` adds `round_type`, `amount_usd`, `round_date`, `lead_investor_name`, `participating_investor_names`, `valuation_usd` and `source_url`, and `job_posting` adds `department`, `location`, `remote_type`, `seniority`, `posted_date` and `url`. 12 + 3 + 5 + 7 + 6 = 33 flattened columns, and 7 + 33 = 40.
+Nine columns are read by more than one record type, and six of those are skipped as already counted when the types are walked in the order below — `name`, `website`, `startup_name`, `startup_headquarters_location`, `title` and `active`; the other three, `bio`, `linkedin_url` and `contact_email`, are shared only between `founder` and `executive`, which this walk counts as one contributor. Each shared column is counted once: the `startup` type contributes 12, `investor` adds `type`, `focus_areas` and `aum_usd`, `founder` and `executive` add `startup_name`, `startup_headquarters_location`, `title`, `bio`, `linkedin_url` and `contact_email`, `funding_round` adds `round_type`, `amount_usd`, `round_date`, `lead_investor_name`, `participating_investor_names`, `valuation_usd` and `source_url`, and `job_posting` adds `department`, `location`, `remote_type`, `seniority`, `posted_date` and `url`. 12 + 3 + 6 + 7 + 6 = 34 flattened columns, and 7 + 34 = 41.
 
 #### The three-way staging contract
 
@@ -428,11 +494,11 @@ A change to any one leg alone breaks the fallback path **silently**: the Data Im
 
 #### Retention
 
-**Rows in this table are not permanent.** It is the only table in the application holding verbatim upstream payloads and unvalidated person data, so its contents are minimised once a row has settled and deleted once a row has aged out, under two administrator-controlled properties and a daily scheduled job. The full policy, the eleven columns that are cleared, the three that are deliberately kept and the data-subject erasure procedure are in [The staging and counter privacy lifecycle](#the-staging-and-counter-privacy-lifecycle).
+**Rows in this table are not meant to be permanent, and no shipped artifact removes them.** It is the only table in the application holding verbatim upstream payloads and unvalidated person data, and bounding how long it keeps them is an **operator-owned obligation** rather than a delivered mechanism — no Script Include, property or scheduled job in this delivery clears or deletes a staging row. The obligation is stated in full, with the columns worth clearing, the three worth keeping and the data-subject erasure surfaces, under [Staging and counter data retention — an operator-owned procedure](#staging-and-counter-data-retention--an-operator-owned-procedure). The routine form of it is the clear-down step of [`./manual-build/06-staging-table-csv-import.md`](./manual-build/06-staging-table-csv-import.md). The absence of any delivered retention, minimisation or erasure mechanism is flagged in [`./gaps-and-flags.md`](./gaps-and-flags.md).
 
 ### 10. `x_bst_startuptrk_rate_limit_counter`
 
-Label **Rate limit counter**. Five columns. The display column is `api_resource`.
+Label **Rate limit counter**. Four columns. The display column is `api_resource`.
 
 | Column | Platform type | Max length | Mandatory | Default | Choice values | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -440,69 +506,67 @@ Label **Rate limit counter**. Five columns. The display column is `api_resource`
 | `window_start` | `glide_date_time` | — | — | — | — | Start of the fixed window |
 | `request_count` | `integer` | — | — | `0` | — | Requests counted in the window |
 | `api_resource` | `string` | 100 | — | — | — | The logical REST resource the window applies to |
-| `window_key` | `string` | 200 | M | — | — | **Declared `unique`.** The composite `<caller sys_id>\|<api_resource>\|<window start as whole seconds since the epoch>`, truncated at 200 characters. The one column the accounting queries on |
 
 This table backs the fixed-window, per-caller request accounting behind the rate-limit response documented in [`./api-reference.md`](./api-reference.md). Two shipped system properties govern the accounting: `x_bst_startuptrk.rest.rate_limit_requests` is `100` and `x_bst_startuptrk.rest.rate_limit_window_seconds` is `60`. The response body and status the service returns when the budget is exhausted are specified in [`./api-reference.md`](./api-reference.md) and are not restated here.
 
-**`window_key` is the table's uniqueness constraint, and it is what makes "one row per caller, per resource, per window" a fact rather than an intention.** Windows are aligned buckets, so every request inside one window derives the identical key and the database refuses a second row for it. The other four columns are the decomposed form of the same tuple, kept because they are what an administrator reads on the list view and what the pruning sweep filters on; the accounting itself queries `window_key` alone. `RateLimitService` reads every row carrying a key, sums their counts, and applies the increment as a **checked update** guarded on the count it observed, retrying a bounded number of times when a concurrent request wins. `window_key` is mandatory, so no counted row can be created without one.
+**One row is intended per caller, per resource, per window, and the counter is a plain read-increment-write.** Windows are aligned buckets: `window_start` is the current time truncated to a whole multiple of `x_bst_startuptrk.rest.rate_limit_window_seconds`, so every request inside one window derives the identical value. `RateLimitService` queries the three columns `caller`, `api_resource` and `window_start` together, increments `request_count` on the row it finds, and inserts a row with `1` when the window has none. A non-unique composite index on those three columns serves that query and is listed under [Declared indexes](#declared-indexes).
 
-The scheduled job **Prune rate limit counters** runs hourly. It deletes every row whose `window_start` is further in the past than `x_bst_startuptrk.rest.rate_limit_window_seconds`, which is every row whose window has closed, and separately deletes any row carrying no `window_key` — such a row can never be matched by the accounting query, so it would otherwise persist unusably. Retention is therefore the window length itself: at the shipped `60`, a closed row is removed by the next hourly pass rather than retained beyond it, and the table does not grow without bound.
+**No uniqueness is enforced on the tuple, and the increment is not concurrency-safe.** Two requests arriving together can each find no row and each insert one, or each read the same count and each write the same increment, so under genuine concurrency the effective limit can overshoot slightly. That is an accepted prototype-scope outcome, not an oversight; the decision and the mitigation paths deliberately left unbuilt are recorded at `D-040` in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
-`caller` references `sys_user`, which sits outside the `x_bst_startuptrk` scope. The reference is read-only in effect: the application creates counter rows and never creates, updates or deletes a `sys_user` record. Because `caller` is the only column on any of the ten tables that identifies a natural person by reference, counter rows are erased for a named subject by `PrivacyRetentionService.eraseSubject()`; see [The staging and counter privacy lifecycle](#the-staging-and-counter-privacy-lifecycle).
+The scheduled job **Prune rate limit counters** runs hourly and deletes every row whose `window_start` is further in the past than `x_bst_startuptrk.rest.rate_limit_window_seconds` — every row whose window has closed. Retention is therefore the window length itself: at the shipped `60`, a closed row is removed by the next hourly pass, and the table does not grow without bound.
+
+`caller` references `sys_user`, which sits outside the `x_bst_startuptrk` scope. The reference is read-only in effect: the application creates counter rows and never creates, updates or deletes a `sys_user` record. Because `caller` is the only column on any of the ten tables that identifies a natural person by reference, counter rows are one of the three surfaces an operator clears when servicing an erasure request; see [Staging and counter data retention — an operator-owned procedure](#staging-and-counter-data-retention--an-operator-owned-procedure).
 
 This table is readable, writable, creatable and deletable by the `x_bst_startuptrk.admin` role only, and by no other role on any operation; the full matrix is under [Supporting tables](#supporting-tables) and in [`./access-control.md`](./access-control.md).
 
-## The staging and counter privacy lifecycle
+## Staging and counter data retention — an operator-owned procedure
 
-`x_bst_startuptrk_ingest_staging` is the only table in the application that holds **unvalidated third-party personal data**: `raw_payload`, up to 8,000 characters of the upstream response verbatim, alongside `name`, `title`, `bio`, `linkedin_url` and `contact_email`. Nothing about the ingestion pipeline requires that data to survive the run that consumed it, so it does not. Two properties and one scheduled job bound its lifetime.
+`x_bst_startuptrk_ingest_staging` is the only table in the application that holds **unvalidated third-party personal data**: `raw_payload`, up to 8,000 characters of the upstream response verbatim, alongside `name`, `title`, `bio`, `linkedin_url` and `contact_email`. Nothing about the ingestion pipeline requires that data to survive the run that consumed it. `x_bst_startuptrk_rate_limit_counter` is the only table that identifies a natural person by reference, through `caller`.
 
-| Property | Type | Shipped value | Clamp | Meaning |
-| --- | --- | --- | --- | --- |
-| `x_bst_startuptrk.privacy.staging_minimise_hours` | Integer, admin-only read and write | `24` | 1 to 8760 | Age after which a **settled** staging row has its raw payload and person columns cleared |
-| `x_bst_startuptrk.privacy.staging_retention_days` | Integer, admin-only read and write | `30` | 1 to 365 | Age after which a staging row is **deleted** outright |
+**No artifact in this delivery bounds its lifetime, and that is a deliberate scope decision rather than an oversight.** Neither the frozen prompt nor the Agent Action Plan asks for a retention lifecycle, and the plan's inventories are binding: eight Script Includes at section 0.4.5, eleven system properties at section 0.4.7, one scheduled job at section 0.4.2. An earlier revision shipped a ninth Script Include, two further properties and a second scheduled job to implement one; all four records were removed to hold the delivered inventory to the plan, and the removal is recorded in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
-Both are read through `AppProperties`, which clamps them to the ranges above, so a mistyped or malicious value cannot disable the policy or extend retention indefinitely.
+What follows is therefore addressed to the **instance operator**, who owns it. It is stated in full so the obligation is legible and actionable, not so that it can be assumed to be handled.
 
-### Minimisation, then deletion
+### What the operator owns
 
-`PrivacyRetentionService` implements two sweeps, and the scheduled job **Prune ingestion staging rows** runs both once a day through `runRetention()`.
-
-1. **Minimisation.** A row is minimised when its `import_state` is **settled** — `processed`, `rejected` or `error` — and its `sys_updated_on` is older than `staging_minimise_hours`. Eleven columns are cleared:
-
-   | Category | Columns cleared |
-   | --- | --- |
-   | Verbatim upstream payload | `raw_payload` |
-   | Person data | `name`, `title`, `bio`, `linkedin_url`, `contact_email` |
-   | Free text and locators that can carry upstream prose | `description`, `website`, `logo_url`, `url`, `source_url` |
-
-   A row is written back only when at least one of the eleven actually held a value, so an already-minimised row is not rewritten on every sweep. A row still `pending` is **never** minimised, because the transform has not read it yet — minimising it would destroy the input before it was consumed.
-
-   Three columns are **deliberately preserved**: `import_state`, `import_run` and `error_message`. The first two keep the row as evidence that a record was seen, which run saw it and how it settled. `error_message` is preserved because it is not upstream text: it is a diagnostic string the application constructs from opaque tokens — a record-type token, a fingerprinted record reference, a physical table name, or the names of the mandatory fields a row was missing — so it identifies the failure without identifying the person. The scalar columns carrying no personal or free-text data — `source_system`, `record_type`, `run_provenance`, `startup_name`, `headquarters_location`, `location`, `lead_investor_name`, `participating_investor_names`, and the choice, amount and date columns — are likewise kept, so a minimised row remains useful for reconciling a run.
-2. **Deletion.** A row is deleted when its `sys_created_on` is older than `staging_retention_days`, whatever its state and whether or not it was minimised first.
-
-Minimisation before deletion is what makes the retention window safe to set generously: the personal payload is gone within a day of a row settling, and only the diagnostic skeleton waits out the retention period. The two sweeps are independent — a row that never settles is still deleted at the retention age — so no combination of states can keep a row indefinitely.
-
-Both sweeps count only the writes that actually succeeded, log any row they could not change or remove, and write a summary line tagged `[x_bst_startuptrk.PrivacyRetentionService]` naming the age applied and the number of failures.
-
-### Data-subject erasure
-
-An erasure request is serviced by an administrator calling `PrivacyRetentionService.eraseSubject(personName, contactEmail)` from a background script inside the scope. It takes a person name, a contact address, or both, and **at least one is required**: a call supplying neither logs an error and does nothing, rather than matching every row. Rows are matched on whichever identifiers were supplied, combined as an OR, so either one alone is sufficient to find a subject.
-
-It acts on **three surfaces** in one call, because person data is reachable on all three and clearing one alone would leave the subject present:
-
-| Surface | Matched on | What happens |
+| # | Obligation | Why it falls to the operator |
 | --- | --- | --- |
-| `x_bst_startuptrk_founder` and `x_bst_startuptrk_executive` | `name` equals the supplied name, or `contact_email` equals the supplied address | `contact_email` is **cleared** on every matching row. The row itself survives, because a Founder or Executive record is published reference data that the entity model requires; the contact address is the premium-gated personal datum on it |
-| `x_bst_startuptrk_ingest_staging` | `name` equals the supplied name, or `contact_email` equals the supplied address | Every matching row is **deleted outright**, whatever its state, whatever its age and whether or not it was minimised. Staging rows are working data with no downstream value once a subject objects |
-| `x_bst_startuptrk_rate_limit_counter` | The supplied address resolves to one or more `sys_user` records, whose `sys_id` is then matched against `caller` | Every matching counter row is **deleted**. This surface requires an address; a name-only request clears nothing here, because a counter row identifies its caller by reference and not by name |
+| 1 | **Bound how long a settled staging row keeps its personal payload.** A row whose `import_state` is `processed`, `rejected` or `error` has been read; its `raw_payload`, `name`, `title`, `bio`, `linkedin_url`, `contact_email`, `description`, `website`, `logo_url`, `url` and `source_url` serve no further purpose and can be cleared. A row still `pending` must **never** be touched: the transform has not consumed it, and clearing it destroys the input. | The application ships no sweep. A scheduled cleanup, or a periodic manual clear from the list view, is instance housekeeping. |
+| 2 | **Bound how long a staging row survives at all.** Deleting rows beyond a chosen age, whatever their state, keeps the table from growing without bound. Guide 06 already tells the operator to clear the staged rows once a load has been reconciled — see [`./manual-build/06-staging-table-csv-import.md`](./manual-build/06-staging-table-csv-import.md) — and that step is the routine form of this obligation. | Same. |
+| 3 | **Service a data-subject erasure request.** Person data is reachable on three surfaces and clearing one alone leaves the subject present: `contact_email` on matching `x_bst_startuptrk_founder` and `x_bst_startuptrk_executive` rows; every matching `x_bst_startuptrk_ingest_staging` row, which is working data and is deleted outright; and every `x_bst_startuptrk_rate_limit_counter` row whose `caller` resolves to the subject's `sys_user` record — that surface needs an address, because a counter row identifies its caller by reference and not by name. | An erasure request is a legal and operational act with a decision in it — whether a published Founder or Executive record is removed as well as cleared — and it is not automated by this delivery. |
+| 4 | **Bound the flow execution context, which is a separate retention surface.** Flow Designer persists each execution's step inputs and outputs in the platform's own flow execution tables, and two step outputs of each ingestion flow carry upstream content into them: the verbatim response body of step 3 and the mapped row set of step 5. Those tables sit **outside** the `x_bst_startuptrk` scope, so nothing in this delivery's access control or retention posture reaches them, and clearing the staging table does **not** clear them. The full procedure is recorded under **Flow execution context retention** in [`./gaps-and-flags.md`](./gaps-and-flags.md). | The flow execution tables are platform tables. Prompt section 6.0 forbids this application from modifying anything outside its scope, so the retention window, the cleanup schedule and the read access on those tables are all the platform owner's to set. |
+| 5 | **Keep `sys_user` untouched while doing any of it.** Prompt section 6.0 forbids this application from modifying anything outside the `x_bst_startuptrk` scope. The user table is **read** to resolve an address to a caller identifier; no `sys_user` record is created, updated or deleted. | The prohibition binds the application; the operator is asked to honour it in the procedure too. |
 
-The call returns a per-surface count and a `matched` flag, so an operator records what the erasure actually reached rather than assuming it reached anything. Every write that fails is logged individually.
+### Three columns worth preserving when clearing a settled row
 
-**No `sys_user` record is created, updated or deleted by any part of this**, per prompt section 6.0's prohibition on modifying anything outside the scope. The user table is only read, to resolve an address to the caller identifier the counter rows reference.
+Where the operator does implement obligation 1, three columns are worth keeping rather than clearing, because they carry no personal data and are what makes a past run reconstructable: `import_state` and `import_run`, which record that a record was seen, by which run, and how it settled; and `error_message`, which is not upstream text at all — the application constructs it from opaque tokens, being a record-type token, an opaque record reference, a physical table name, or the names of the mandatory fields a row was missing. It identifies the failure without identifying the person. The scalar columns carrying no personal or free-text data — `source_system`, `record_type`, `run_provenance`, `startup_name`, `headquarters_location`, `location`, `lead_investor_name`, `participating_investor_names`, and the choice, amount and date columns — are likewise worth keeping.
 
-**Removing a published Founder or Executive record entirely is a separate, deliberate act**, not part of `eraseSubject()`. An administrator does it through the platform form or through `DELETE /founders/{id}` in [`./api-reference.md`](./api-reference.md), because deleting a published record changes the dataset rather than redacting a personal datum within it, and the two decisions should not be made by one call.
+### Clearing staging rows
 
-**Log data needs no erasure sweep, because no personal data reaches the logs.** `IngestionLogger` writes no external name, email address, biography, URL or upstream message into the flow execution log or the system log in the first place: every identifier it emits is an opaque reference or a run-salted fingerprint, and every free-text detail is fingerprinted rather than reproduced. That is why erasure covers three surfaces rather than four. The redaction policy is specified in [`../sample-data/README.md`](../sample-data/README.md).
+Clearing the table is an administrative act with two supported routes, and both are ordinary platform operations rather than application code.
+
+1. **The list view.** Open the **Ingestion staging** module of the Boston Startup Tracker application menu as a caller holding `x_bst_startuptrk.admin`, filter on `import_run`, on `import_state`, or on `sys_created_on`, and delete the selected rows. Deleting a staging row removes no entity record: the entity records are separate rows and the staging table holds no reference to them.
+2. **A background script inside the scope.** A `GlideRecord` on `x_bst_startuptrk_ingest_staging` with the same filter and `deleteMultiple()`. It must be run with the scope selector set to **Boston Startup Tracker**, because the table is `package_private`.
+
+Two rules bind either route.
+
+- **A row still `pending` or `in_progress` must not be deleted while a run may read it.** A `pending` row is the transform's input and an `in_progress` row is claimed by a run; deleting either mid-run removes the input before it is consumed. Settle the run first, or return the claimed rows to the queue as guide 06 specifies.
+- **`sample-data/` is the reproducible source.** The six CSVs are version-controlled and nothing on the instance modifies them, so a cleared table is restored by re-running the import.
+
+### What needs no retention procedure
+
+**The counter table bounds itself.** The scheduled job **Prune rate limit counters** — the one scheduled job this delivery ships — runs hourly and deletes every row whose window has closed, so `x_bst_startuptrk_rate_limit_counter` does not grow without bound and needs no separate policy. Only obligation 3 touches it, and only for a named subject.
+
+**No personal data reaches the logs, so no log erasure procedure is needed.** `IngestionLogger` writes no external name, email address, biography, URL or upstream message into the flow execution log or the system log in the first place. Two rules produce that property, and both are unconditional:
+
+| Rule | Mechanism | Outcome |
+| --- | --- | --- |
+| An identifier is opaque or it is dropped | `_identifier()` passes a value through only when it is a 32-character platform record identifier or a `<kind>:<token>` opaque reference; anything else becomes the literal `(redacted)` | A log line names a **record**, never a person |
+| A value is a short enumeration label or it is dropped | `_choiceValue()` passes a value through only when its field is not one of the sensitive names **and** the value matches a short-label shape — first character alphanumeric, at most 40 characters, drawn from letters, digits, spaces and `+ . _ / -`; anything else becomes `(redacted)`, and an empty value becomes `(blank)` | A mis-spelled choice value is actionable; a pasted biography or address is not recorded at all |
+
+**Nothing derived from a dropped value is recorded.** There is no hash, digest or fingerprint of any supplied value anywhere in the pipeline, so there is nothing an offline guess could be tested against. Correlation across the log lines of one row comes from two mechanisms that are computed from nothing the record contains: `IngestionLogger.reference(kind, token)`, which names the **platform record**, and `IngestionLogger.ordinal(kind)`, a per-run arrival ordinal used where no platform identifier exists yet. Both are per-run, so neither correlates a row across runs. The policy is specified in [`../sample-data/README.md`](../sample-data/README.md).
+
+**The flow execution context is not the log, and it does need a procedure.** The sentence above is about what the application *writes*; it says nothing about what the platform *records around* it. Flow Designer persists step inputs and outputs, and two of each ingestion flow's step outputs carry upstream content by necessity — the verbatim response body step 3 returns, and the mapped row set step 5 produces. That is obligation 4 above and it is a genuinely separate surface: it is outside this application's scope, it is untouched by clearing the staging table, and no artifact of this delivery bounds it.
 
 ## Derivations
 
@@ -515,7 +579,7 @@ The call returns a per-surface count and a `matched` flag, so an operator record
 
 Each path yields a set of `x_bst_startuptrk_startup` identifiers, taken from the `startup` reference of the funding rounds it reaches. The two sets are **unioned before counting**, and the count is the size of the union. An investor that led one round of a company and participated in another round of the **same** company therefore counts that company **once**. An investor with no rounds on either path has a `portfolio_count` of `0`, which is also the dictionary default.
 
-The `InvestorPortfolioService` Script Include owns the derivation. Its methods are `countPortfolio(investorId)`, which returns the derived count for one investor; `recalculate(investorId)`, which derives the count and writes it to the record only when the derived value differs from the stored one; `recalculateMany(investorIds)`, which recalculates a de-duplicated set of investors; and `recalculateAll()`, which recalculates every investor and is the method to invoke after a bulk load. The same class owns the participation reads that share its two-table traversal — `participantsForRounds(roundIds)`, `refreshRoundParticipants(roundId)` and `linkInvestorToRound(roundId, investorId)` — so the join table is read and written in one place.
+The `InvestorPortfolioService` Script Include owns the derivation. Its methods are `countPortfolio(investorId)`, which returns the derived count for one investor; `recalculate(investorId)`, which derives the count and writes it to the record only when the derived value differs from the stored one; `recalculateMany(investorIds)`, which recalculates a de-duplicated set of investors; and `recalculateAll()`, which recalculates every investor and is the method to invoke after a bulk load. The same class owns the participation reads that share its two-table traversal — `participantsForRounds(roundIds)` and `refreshRoundParticipants(roundId)` — plus the single-pair helper `linkInvestorToRound(roundId, investorId)`, so the join table's derived surfaces are read in one place. The ingestion path's participation write is `IngestionMapper.linkParticipants()`; see [8. `x_bst_startuptrk_m2m_round_investor`](#8-x_bst_startuptrk_m2m_round_investor).
 
 #### The column is read-only, and what that means precisely
 
@@ -525,13 +589,15 @@ The REST layer is closed independently of the dictionary flag: the investor `cre
 
 #### How the derivation is queried
 
-Both paths are read with bounded queries.
+Both paths are read with bounded queries, and **one constraint governs every one of them**: a grouped aggregate groups only by a field of the table it aggregates, never by a dot-walked field. `GlideAggregate.groupBy()` is documented against a field of the aggregated table, and grouping a join-table aggregate by `funding_round.startup` is outside that contract — a row the traversal must see can be dropped, which silently removes a participation-only company from the count. The participation path is therefore expressed as a **two-stage traversal**, and the second stage is an ordinary bounded read rather than a grouping.
 
-- The **lead** path is a grouped aggregate over `x_bst_startuptrk_fundinground` filtered on `lead_investor`, grouped by `startup`. It returns one row per distinct startup: an investor that led forty rounds of one company reads one row.
-- The **participation** path reads the join rows for the investor, then resolves their rounds to startups in grouped aggregates over batches of at most **200** round identifiers. The batch size is the `BATCH_SIZE` constant on the Script Include. No query is handed the investor's complete round list.
+- The **lead** path is a grouped aggregate over `x_bst_startuptrk_fundinground` filtered on `lead_investor`, grouped by `startup` — a column of the table being aggregated. It returns one row per distinct startup: an investor that led forty rounds of one company reads one row.
+- The **participation** path is two stages. **Stage one** is a grouped aggregate over `x_bst_startuptrk_m2m_round_investor` filtered on `investor` and grouped by `funding_round` — again a column of the table being aggregated — which returns one row per distinct round the investor participated in. **Stage two** reads those rounds from `x_bst_startuptrk_fundinground` with `sys_id IN` over batches of at most **200** identifiers and takes each round's `startup`. The batch size is the `BATCH_SIZE` constant on the Script Include. No query is handed the investor's complete round list, and no participation row depends on a dot-walked grouping.
 - The two result sets are keyed into one set, so the union is formed before the size is taken and a company reached by both path **a.** and path **b.** counts once.
 
-`recalculateAll()` reads the graph in **two passes** — one over the funding rounds, building the round-to-startup map and the lead contribution, and one over the join table, adding the participation contribution — and then makes a single streamed pass over the investors, writing only those whose stored value differs from the derived value, so a recalculation over an already-correct table performs **zero** writes. The method returns the number of investors it wrote, which is the figure to record after a bulk load.
+`recalculateAll()` derives every investor's count with the same two-stage shape, from three bounded passes. One grouped aggregate over `x_bst_startuptrk_fundinground`, grouped by `lead_investor` and `startup`, yields the lead contribution. One windowed pass over the same table, in windows of `BATCH_SIZE` rows, builds the **round-to-startup map**. One grouped aggregate over the join table, grouped by `investor` and `funding_round`, yields every investor-and-round pair, and each pair is resolved to a startup through that map. The method then makes a single windowed pass over the investors, writing only those whose stored value differs from the derived value, so a recalculation over an already-correct table performs **zero** writes. The method returns the number of investors it wrote, which is the figure to record after a bulk load.
+
+**What to verify.** The case that distinguishes a correct traversal from the unsupported grouping is an investor that **only** participates: it leads no round at all, and reaches its companies exclusively through join rows. Create one, link it to a round of a company it has never led, and confirm both `countPortfolio()` and `recalculateAll()` report that company. Under the dot-walked grouping that investor can read `0`.
 
 Two business rules maintain the stored value. Both delegate to `InvestorPortfolioService`, and each recalculates only the investors its trigger affects.
 
@@ -581,19 +647,29 @@ The decision behind the cascade setting is recorded in [`../../docs/decisions/DE
 
 The Update Set declares database indexes as `sys_index` records alongside the table definitions, so they are created by the same commit that creates the tables rather than added by hand afterwards. Each record names its table, the ordered columns of the index, and whether the index is unique.
 
-Five indexes are declared. Column order is significant and is reflected in each record's name.
+**Thirteen** indexes are declared. Column order is significant and is reflected in each record's name.
 
-| Table | Columns, in order | Unique | What it serves |
-| --- | --- | --- | --- |
-| `x_bst_startuptrk_m2m_round_investor` | `funding_round`, `investor` | **Yes** | Pair uniqueness, and the round-to-investors read behind the REST participant array and the `participating_investors` projection |
-| `x_bst_startuptrk_m2m_round_investor` | `investor`, `funding_round` | No | The reverse traversal: the participation path of the `portfolio_count` derivation, which reads every join row for one investor |
-| `x_bst_startuptrk_fundinground` | `lead_investor`, `startup` | No | The lead path of the `portfolio_count` derivation. Because `startup` is the second column, the grouped aggregate is answered from the index without reading the rounds themselves |
-| `x_bst_startuptrk_rate_limit_counter` | `caller`, `api_resource`, `window_start` | No | The rate-limit lookup `RateLimitService.consume()` runs on **every** REST request, matching all three columns for equality |
-| `x_bst_startuptrk_rate_limit_counter` | `window_start` | No | The pruning range scan. The three-column index above leads with `caller` and does not serve a scan on `window_start` alone |
+**Every index here exists for a predicate the application actually issues, and each row names that predicate.** An index declared for a query nobody runs is not free: it is written on every insert and update of its table and read by nothing, so it is pure cost. One such index was declared and has been removed — a three-column index on the counter table's `caller`, `api_resource` and `window_start`, which never served a query because `RateLimitService` looks a counter row up by its composite `window_key` and not by those three columns.
 
-The unique index is a **constraint**, not an optimisation: it enforces "one row links one funding round to one participating investor" on every write path, including a direct form or import write. `InvestorPortfolioService.linkInvestorToRound()` checks for the pair before inserting.
+| # | Table | Columns, in order | Unique | The predicate it serves |
+| --: | --- | --- | --- | --- |
+| 1 | `x_bst_startuptrk_m2m_round_investor` | `funding_round`, `investor` | **Yes** | Pair uniqueness, and the round-to-investors read behind the REST participant array and the `participating_investors` projection |
+| 2 | `x_bst_startuptrk_m2m_round_investor` | `investor`, `funding_round` | No | The reverse traversal: the participation path of the `portfolio_count` derivation |
+| 3 | `x_bst_startuptrk_fundinground` | `lead_investor`, `startup` | No | The lead path of the `portfolio_count` derivation. Because `startup` is the second column, the grouped aggregate is answered from the index without reading the rounds |
+| 4 | `x_bst_startuptrk_rate_limit_counter` | `window_start` | No | The pruning range scan in `RateLimitService.prune()`, and the aggregate count that precedes it |
+| 5 | `x_bst_startuptrk_startup` | `name` | No | The `startup` natural key, and the `name` filter of `/startups` and the portal search. Read on **every** ingested row of every type, because a child's parent resolves through it |
+| 6 | `x_bst_startuptrk_investor` | `name` | No | The `investor` natural key, the `name` filter of `/investors`, and lead and participant resolution |
+| 7 | `x_bst_startuptrk_founder` | `startup`, `name` | No | The `founder` natural key, and the founders pane of the company profile |
+| 8 | `x_bst_startuptrk_executive` | `startup`, `name` | No | The `executive` natural key, and the nested `GET /founders/{startup_id}/executives` |
+| 9 | `x_bst_startuptrk_jobposting` | `startup`, `title` | No | The `job_posting` natural key, and the jobs pane and `/jobs` filtered by startup |
+| 10 | `x_bst_startuptrk_fundinground` | `startup`, `round_date` | No | The **fallback** `funding_round` natural key, and the funding pane and `/funding-rounds` filtered by startup and ordered by date |
+| 11 | `x_bst_startuptrk_fundinground` | `source_url` | No | The **primary** `funding_round` natural key. Every ingested round is looked up on its provider locator first, and only a round that carries none falls back to index 10 |
+| 12 | `x_bst_startuptrk_newsarticle` | `startup`, `published_date` | No | The news pane and `/news` filtered by startup and ordered by date |
+| 13 | `x_bst_startuptrk_ingest_staging` | `source_system`, `import_state`, `import_run` | No | The bounded staging read in `IngestionMapper.ingestStaging()`, which matches all three for equality, and the settled-state filters of the operator-owned clear-down |
 
-The other four are optimisations: two serve the derivation described in [Investor.portfolio_count](#investorportfolio_count), and two serve the counter table described in [10. `x_bst_startuptrk_rate_limit_counter`](#10-x_bst_startuptrk_rate_limit_counter).
+Index 1 is a **constraint**, not an optimisation: it enforces "one row links one funding round to one participating investor" on every write path, including a direct form or import write. `InvestorPortfolioService.linkInvestorToRound()` checks for the pair before inserting.
+
+The other twelve are optimisations, and they fall into four groups. Indexes 2, 3 and 6 serve the derivation described in [Investor.portfolio_count](#investorportfolio_count). Indexes 5 to 11 are the **natural keys** every ingestion write looks up before deciding to insert or update, which is what makes a recurring run update rather than duplicate; their leading columns are the equality components of each key, with the text component matched case- and whitespace-insensitively against a candidate set the index bounds. Two of them cover one record type between them, because the `funding_round` key is an ordered pair of alternatives: index 11 serves the primary lookup on `source_url` and index 10 the fallback on `startup` and `round_date`. Indexes 7 to 10 and index 12 also serve the child-collection reads of the Service Portal profile panes and the corresponding REST list filters, each of which is a query on the parent reference ordered by the pane's sort column, while indexes 5 and 6 serve the `name` filters of `/startups` and `/investors` and the portal search. Indexes 4 and 13 serve the maintenance sweeps: the counter pruning described in [10. `x_bst_startuptrk_rate_limit_counter`](#10-x_bst_startuptrk_rate_limit_counter) and the staging read described in [Staging and counter data retention — an operator-owned procedure](#staging-and-counter-data-retention--an-operator-owned-procedure).
 
 ### Dot-walking, not joins
 
@@ -623,7 +699,13 @@ The predicate is built and applied in two steps, and the split is what lets one 
   name: '', industry: '', location: '' }
 ```
 
-`StartupSearchService.applyPlan(query, plan)` then applies that plan to a `GlideRecordSecure` through the condition API: `addQuery('active', true)`, then `addQuery('headquarters_location', 'CONTAINS', tokens[0])` whose returned condition carries an `addOrCondition('headquarters_location', 'CONTAINS', …)` for every remaining token, then one `addQuery` per supplied caller filter. `search(plan, limit, offset)` applies the plan, orders by `name` then `sys_id` and positions the window; the access-controlled count applies **the same plan object** to its own query, which is what makes `total_count` agree with the page contents by construction rather than by coincidence.
+`StartupSearchService.applyPlan(query, plan)` then applies that plan to a `GlideRecordSecure` through the condition API: `addQuery('active', true)`, then `addQuery('headquarters_location', 'CONTAINS', tokens[0])` whose returned condition carries an `addOrCondition('headquarters_location', 'CONTAINS', …)` for every remaining token, then one `addQuery` per supplied caller filter. `search(plan, limit, offset)` applies the plan, orders by `name` then `sys_id` and positions the window; the count applies **the same plan object** to its own query, which is what makes `total_count` agree with the page contents by construction rather than by coincidence.
+
+**The count is authorized by a role test, not by a probe read.** `total_count` is produced by a `GlideAggregate` `COUNT`, and an aggregate does not evaluate access controls — so the count needs a gate of its own. `RestResponseBuilder.countState(table, applyConditions)` calls **`hasAnyAppRole()`** before it constructs the aggregate, which tests `gs.hasRole()` against `x_bst_startuptrk.admin`, then `x_bst_startuptrk.premium_user`, then `x_bst_startuptrk.user`. A caller holding none of the three gets `{ total: 0, denied: true }` and the aggregate is never built; the operation then answers `403` through `rejectDeniedCount()`. A role test is the correct gate here because record-level read on all seven entity tables is granted to exactly those three roles and to nothing else, so holding one of them *is* permission to read the rows being counted — the invariant is stated in [`./access-control.md`](./access-control.md).
+
+The rejected alternative was to open a `GlideRecordSecure` on the table and call `canRead()` before the aggregate. That cannot serve as a table-right check: it answers a question about one record the query may not have returned at all, so on an empty table, a newly loaded table, or a table whose first row is filtered out by the plan, it is **inconclusive** rather than permitting or denying. Reading an inconclusive answer as a denial would suppress a legitimate zero; reading it as a grant would gate nothing. The role test answers the question that was actually being asked.
+
+**The windowed query counts nothing.** `search()` positions the page with `chooseWindow(offset, offset + limit)` and then calls **`setNoCount()`**. The exact total has already come from the aggregate, so the windowed query is told not to count its own result set — without `setNoCount()` every list read would count the same conditions twice, once in the aggregate and once in the record query. The two calls are paired at all seven list sites. The caller-facing pagination contract is in [`./api-reference.md`](./api-reference.md).
 
 The or-group carries the and-of-or grouping the criteria require: `active` true, and either location token matching. `CONTAINS` is a case-insensitive substring comparison.
 
@@ -634,6 +716,33 @@ One operational requirement applies to every caller of the filter: **the criteri
 ## How the ingestion transform respects this dictionary
 
 Everything above is a declaration. This section is the contract the one writer that builds records dynamically — `IngestionMapper`, serving both flows and the staging transform — holds itself to, so a declaration here and a write there cannot disagree. The REST layer's equivalent contract, which validates a caller-supplied body rather than a source payload, is in [`./api-reference.md`](./api-reference.md).
+
+### How an existing record is found before a write
+
+Every write is an upsert, and each record type has a natural key the mapper resolves before it decides between an insert and an update. There are two lookup families and one matching rule, and the matching rule is what keeps the result independent of the database's collation.
+
+| Record type | Natural key | Method |
+| --- | --- | --- |
+| `startup` | `name` **plus** `headquarters_location`, the cleaning-rule-2 key | `findExistingStartup(name, headquarters)` |
+| `investor` | `name` alone | `findExistingInvestor(name)` |
+| `founder`, `executive` | `startup` plus `name` | `findExistingByKey()` |
+| `funding_round` | `startup` plus `round_date` plus `round_type`; falling back to `startup` plus `round_date` | `findExistingByKey()` |
+| `job_posting` | `startup` plus `url`; falling back to `startup` plus `title` plus `posted_date` | `findExistingByKey()` |
+
+Three properties are common to all of them.
+
+1. **A candidate key is used only when the incoming record carries every one of its fields**, and the candidates are tried in the order listed, so the first complete key decides. A record carrying no complete key reports no match and is inserted. Values are compared **after** reference resolution, so `startup` in a key holds a resolved 32-character identifier rather than a name.
+2. **Exactly one match updates; no match inserts; more than one match is refused.** An ambiguous key returns not-ok with a reason naming the count, the row is stamped `error` and **nothing is written** — no caller picks one of several matches arbitrarily.
+3. **The comparison is case-insensitive and does not depend on the database collation.** This is the property worth stating precisely, because the obvious implementation gets it wrong.
+
+**Why the query is a `STARTSWITH` pair and not an equality.** A case-insensitive match cannot be delegated to an `addQuery(field, value)` equality, because whether that comparison folds case is a property of the column's collation rather than of the application — on a case-sensitive collation a row differing only in case never comes back, and the deduplication silently inserts a second record. The mapper therefore narrows in the database and decides in script:
+
+| Stage | What it does |
+| --- | --- |
+| Narrow | `_narrowText()` adds `STARTSWITH <first character, lower-cased>` and, when the character has a distinct upper case, an or-condition `STARTSWITH <first character, upper-cased>`. `STARTSWITH` is a substring comparison, so the narrowing is collation-independent in both arms. |
+| Decide | Every candidate row the narrowing returns is compared in script by `_sameText()`, which lower-cases both sides and tests equality. **This comparison, not the query, is the key.** |
+
+The consequence is that a case-differing row is always a candidate and is always matched, on any collation. The cost is that the narrowing is a first-character prefix rather than a full-value equality, so a name beginning with a very common letter returns more candidate rows than it matches; the candidates are ordered by `sys_id` and compared in one pass, and no stored normalised-key column is added because prompt section 1.0 declares the field list binding and complete.
 
 ### Only the columns of this document are writable, and only the writable ones
 
@@ -793,4 +902,4 @@ Which columns take which outcome:
 - [`./manual-build/06-staging-table-csv-import.md`](./manual-build/06-staging-table-csv-import.md) — the staging-table load and its transform map
 - [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md) — the single source of truth for every decision, alternative and risk behind this model
 - [`../../docs/decisions/TRACEABILITY_MATRIX.md`](../../docs/decisions/TRACEABILITY_MATRIX.md) — the bidirectional source-to-target matrix this section feeds
-- [`../../docs/review/CRITICAL_DECISIONS.md`](../../docs/review/CRITICAL_DECISIONS.md) — the five highest-risk decisions, including the Data/SME reviewer entry for this document
+- [`../../docs/review/CRITICAL_DECISIONS.md`](../../docs/review/CRITICAL_DECISIONS.md) — the five highest-risk decisions, including entry 4, the Data/SME reviewer entry for this document

@@ -2,19 +2,58 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<link rel="icon" href="data:,">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Supply chain: every executable and static stylesheet asset below is version-pinned AND
+     integrity-pinned with a SHA-384 subresource hash, so a substituted CDN payload fails to
+     execute rather than running silently. The policy that follows admits exactly the five
+     origins those assets come from and nothing else.
+
+     Two deliberate exceptions, both stated rather than left implicit:
+       1. fonts.googleapis.com serves a User-Agent-dependent stylesheet, so its bytes differ
+          between browsers and a fixed hash cannot match. It carries no integrity attribute.
+          Its blast radius is CSS only: style-src cannot introduce script.
+       2. style-src and script-src permit 'unsafe-inline' because this file is required to be a
+          single self-contained document with no build step: the theme is an inline <style> block
+          and the render driver an inline <script>, and Mermaid additionally writes inline style
+          attributes onto the SVG it generates. A nonce cannot be issued without a server.
+
+     Two directives name cdn.jsdelivr.net for a reason worth recording, because a tighter-looking
+     value produces enforced violations on every load rather than better security:
+       - font-src includes it because reveal.js's own theme stylesheet imports a second stylesheet
+         whose @font-face rules point at eight font binaries on that same origin. The deck never
+         displays them, since the inline theme overrides reveal's font stack, but the stylesheet
+         still requests them.
+       - connect-src names it, and unpkg.com, because both library bundles carry a sourceMappingURL
+         that a browser resolves whenever developer tools are attached.
+     Neither widens the trust boundary: both origins are already trusted for script-src. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none';
+ script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com;
+ style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com;
+ font-src https://fonts.gstatic.com https://cdn.jsdelivr.net data:;
+ img-src 'self' data:;
+ connect-src https://cdn.jsdelivr.net https://unpkg.com;
+ frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="description" content="Executive summary of the Boston Startup Tracker replatform onto the ServiceNow Now Platform as the single scoped application x_bst_startuptrk.">
 <title>Boston Startup Tracker on ServiceNow &mdash; Executive Summary</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;family=Fira+Code:wght@400;500&amp;display=swap">
+<!-- Subresource Integrity. Every remote asset whose bytes are fixed by its pinned
+     version carries a sha384 digest of those bytes. The Google Fonts stylesheet
+     below carries crossorigin and no integrity digest: its response body is
+     negotiated per user agent. -->
+<link rel="stylesheet" crossorigin="anonymous" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;family=Fira+Code:wght@400;500&amp;display=swap">
 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/white.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css"
+      integrity="sha384-YgvgKeZJykuztG+iQPoZHNZENTFZvOcOJ/uRzmJTje6GHYN9zAw+y5rx/L8MQKA/"
+      crossorigin="anonymous" referrerpolicy="no-referrer">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/white.css"
+      integrity="sha384-/TZMdZeq0ZGi4iePTHhOMXOkyv2f72ZcwmhAtOmSZlPkx+5qCOfyc/U1kjd5Su6S"
+      crossorigin="anonymous" referrerpolicy="no-referrer">
 
-<style id="blitzy-theme">
-/* ==========================================================================
+<style id="blitzy-theme">/* ==========================================================================
    blitzy-reveal-theme.css
 
    Canonical Blitzy reveal.js presentation theme. Defines the Blitzy design
@@ -213,8 +252,8 @@
 /* --------------------------------------------------------------------------
    Slide stage geometry
    Gives every slide the full 1920 x 1080 stage, making a slide-type
-   background full bleed from its class alone. Declares geometry only, so the
-   hidden and shown display states stay with reveal.js.
+   background full bleed from its class alone. Declares geometry only; the
+   hidden and shown display states are reveal.js's own.
    -------------------------------------------------------------------------- */
 .reveal .slides > section:not(.stack),
 .reveal .slides > section > section {
@@ -728,8 +767,8 @@
 
 /* --------------------------------------------------------------------------
    Supporting surface: light surface islands
-   Tables and KPI cards carry a light background on every slide type, so their
-   contents keep the light slide treatment rather than the inverted one.
+   Tables and KPI cards carry a light background on every slide type. Their
+   contents take the light text token on every slide type.
    -------------------------------------------------------------------------- */
 .reveal .slides table :is(th, td, h1, h2, h3, h4, h5, h6, p, li, strong, b, em, small),
 .reveal .slides .kpi-card :is(h1, h2, h3, h4, h5, h6, p, li, strong, b, em, small):not(.kpi-value):not(.kpi-label) {
@@ -858,17 +897,20 @@
 /* ==========================================================================
    Deck layout helpers
 
-   Layout, density and state classes used by the slides of this deck only.
-   Every colour, font, gradient and radius resolves through a design token
-   declared in the theme above; no hex literal appears in this block.
+   Layout, density, state and contrast classes used by the slides of this deck
+   only. Every colour, font, gradient and radius resolves through a design
+   token declared in the theme above; no hex literal appears in this block.
+
+   Rationale for every choice in this block, including the contrast overrides,
+   is in docs/decisions/DECISION_LOG.md (D-134). This block carries none.
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
    The kpi-grid component when marked up as a list
 
    Restates the full kpi-grid geometry for a <ul> host, at a specificity above
-   the theme's `.reveal .slides ul` prose rule, so the component keeps its row
-   layout on every property the two rules share.
+   the theme's `.reveal .slides ul` prose rule, on every property the two rules
+   share.
    -------------------------------------------------------------------------- */
 .reveal .slides ul.kpi-grid {
   display: flex;
@@ -937,7 +979,7 @@
   font-size: var(--fs-small);
   font-weight: 400;
   line-height: 1.35;
-  color: var(--blitzy-text-muted);
+  color: var(--blitzy-text);
 }
 
 /* Mono strapline used on the title slide */
@@ -946,6 +988,16 @@
   font-size: var(--fs-eyebrow);
   font-weight: 400;
   letter-spacing: 0.04em;
+}
+
+/* Title-slide small type on a navy chip. D-134. */
+.reveal .slide-title .eyebrow,
+.reveal .slide-title .deck-meta {
+  align-self: flex-start;
+  max-width: 100%;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-pill);
+  background-color: var(--blitzy-primary-navy);
 }
 
 /* --------------------------------------------------------------------------
@@ -991,8 +1043,7 @@
   font-size: var(--fs-small);
 }
 
-/* Row headers take the data cells' top alignment, so a level, a reviewer and a
-   multi-line description all start on the same line. */
+/* Row headers take the data cells' top alignment. */
 .reveal .slides table.table-compact th[scope="row"] {
   vertical-align: top;
 }
@@ -1002,7 +1053,8 @@
 }
 
 /* --------------------------------------------------------------------------
-   Entitlement markers. The word carries the meaning; colour only supports it.
+   Entitlement markers. The accessible name carries the meaning; the glyph and
+   the colour present it.
    -------------------------------------------------------------------------- */
 .reveal .slides .grant,
 .reveal .slides .deny,
@@ -1035,8 +1087,23 @@
 }
 
 /* --------------------------------------------------------------------------
-   Diagram scale caps, so every rendered diagram stays inside the stage
+   Diagram scale caps, one per diagram size class
    -------------------------------------------------------------------------- */
+/* Sizes a sandbox-level render frame from the height Mermaid declares on it, above
+   the reveal.js theme's 95% cap on every iframe. This deck renders at the strict
+   level, so the rule is inert here and the svg caps below are the ones in force. */
+.reveal .mermaid > iframe,
+.reveal pre.mermaid > iframe,
+.reveal .slides pre.mermaid > iframe {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  max-height: none;
+  margin: 0 auto;
+  border: 0;
+  overflow: visible;
+}
+
 .reveal .slides pre.mermaid.diagram-tall > svg {
   max-height: 540px;
 }
@@ -1054,9 +1121,34 @@
   max-height: 600px;
 }
 
+/* The timeline is the one diagram whose intrinsic aspect is close to square, so it
+   reaches its height cap rather than its width. This slide also carries four
+   bullets beneath the diagram, and the 1920 by 1080 stage does not scroll, so the
+   container is given a shorter cap and a tighter vertical box than the other
+   diagrams. Without it the fourth bullet renders below the fold and is unreadable. */
+.reveal .slides pre.mermaid.diagram-timeline {
+  margin-top: var(--space-2);
+  margin-bottom: var(--space-2);
+  padding-top: var(--space-2);
+  padding-bottom: var(--space-2);
+}
+.reveal .slides pre.mermaid.diagram-timeline > svg {
+  max-height: 500px;
+}
+
+/* Mermaid's own timeline stylesheet applies filter: brightness(120%) to every event
+   card, which paints the declared cScale values 1.2 times brighter than the brand
+   tokens they are set from - measured as rgb(109,68,255), rgb(54,34,143) and
+   rgb(178,255,255), the last of which clamps two channels and loses the mint hue.
+   The !important is required rather than stylistic: Mermaid scopes its rule to the
+   svg's generated id, so it carries an id in its specificity and is regenerated on
+   every render, leaving no stable author selector able to outrank it. */
+.reveal .slides pre.mermaid .eventWrapper {
+  filter: none !important;
+}
+
 /* Paints Mermaid subgraph titles with the deck text token. Mermaid nests every
-   glyph of a cluster title inside tspan elements, so the tspans are the
-   elements that carry the fill. */
+   glyph of a cluster title inside tspan elements, which carry the fill. */
 .reveal .slides pre.mermaid .cluster-label tspan {
   fill: var(--blitzy-text);
 }
@@ -1076,7 +1168,7 @@
   <span class="eyebrow">Executive Summary</span>
   <i class="hero-icon" data-lucide="rocket" aria-hidden="true"></i>
   <h1>Boston Startup Tracker, rebuilt on ServiceNow</h1>
-  <p>A venture-data product that could not be built or started is now one governed application, ready to install.</p>
+  <p>A venture-data product that could not be built or started is now one specified application: a validated package, plus the guides that build the rest.</p>
   <div class="accent-bar" aria-hidden="true"></div>
   <p class="deck-meta">For non-technical leadership &middot; Scoped application x_bst_startuptrk &middot; Version 1.0.0</p>
 </section>
@@ -1103,10 +1195,10 @@
     <li class="kpi-card">
       <i class="kpi-icon" data-lucide="clipboard-check" aria-hidden="true"></i>
       <span class="kpi-value">36</span>
-      <span class="kpi-label">Automated tests, ten suites</span>
+      <span class="kpi-label">Tests designed, in ten suites</span>
     </li>
   </ul>
-  <p class="footnote">One importable package of 309 configuration records, plus six sequenced guides for the parts the platform builds itself.</p>
+  <p class="footnote">One importable package of 314 configuration records, plus six sequenced guides for the parts the platform builds itself.</p>
 </section>
 
 <!-- 3 of 16 - Content: before and after architecture -->
@@ -1117,26 +1209,30 @@
       <h3 class="col-head"><i data-lucide="circle-slash" aria-hidden="true"></i> Before</h3>
       <pre class="mermaid diagram-tall">
 flowchart TB
-  U["Browser"] --> S["Single-page app&lt;br/&gt;17 interface components"]
-  S --> F["Web routes&lt;br/&gt;authenticated, never authorised"]
+  accTitle: The previous system, before the rebuild
+  accDescr: A browser reaches a single-page application of seventeen interface components, which calls web routes that authenticate a caller but never authorise one. The routes reach data classes on a separate database server. A task queue on five fixed intervals drives partner clients whose keys are written into the source, and those clients write to the same data classes. A cache, a search cluster, a proxy and container tooling sit alongside, unconnected to the rest.
+  U["Browser"] --> S["Single-page app, 17 components"]
+  S --> F["Web routes, never authorised"]
   F --> M["Data classes"]
   M --> P["Separate database server"]
-  J["Task queue&lt;br/&gt;five fixed intervals"] --> I["Partner clients&lt;br/&gt;keys written into source"]
+  J["Task queue, five fixed intervals"] --> I["Partner keys in source files"]
   I --> M
-  X["Cache, search, proxy&lt;br/&gt;and container tooling"]
+  X["Cache, search, proxy, containers"]
 </pre>
     </div>
     <div class="col">
       <h3 class="col-head"><i data-lucide="check" aria-hidden="true"></i> After</h3>
       <pre class="mermaid diagram-tall">
 flowchart TB
-  U2["People and systems"] --> SP["Service Portal&lt;br/&gt;5 pages, 8 widgets"]
-  U2 --> API["Interface layer&lt;br/&gt;31 operations"]
-  SP --> AC["Access control engine&lt;br/&gt;49 rules, 7 field gates"]
+  accTitle: The rebuilt system, one governed application
+  accDescr: People and systems reach two entry points: a Service Portal of five pages and eight widgets, and an interface layer of thirty-one operations. Both pass through one access-control engine of forty-nine rules, seven of them field gates, which fronts a shared service layer of eight classes over ten tables holding fifty-three core columns. Two scheduled flows reach two named connections that ship no secrets, and use the same service layer. Ten test suites of thirty-six tests verify the tables.
+  U2["People and systems"] --> SP["Service Portal, 5 pages, 8 widgets"]
+  U2 --> API["Interface layer, 31 operations"]
+  SP --> AC["Access control, 49 rules, 7 field gates"]
   API --> AC
-  AC --> SL["Shared service layer&lt;br/&gt;9 classes"]
-  SL --> T["10 tables&lt;br/&gt;53 core columns"]
-  FL["2 scheduled flows"] --> CA["2 named connections&lt;br/&gt;no secrets shipped"]
+  AC --> SL["Shared service layer, 8 classes"]
+  SL --> T["10 tables, 53 core columns"]
+  FL["2 scheduled flows"] --> CA["2 named connections, no secrets shipped"]
   FL --> SL
   ATF["10 suites, 36 tests"] -.-> T
 </pre>
@@ -1160,7 +1256,7 @@ flowchart TB
     <li class="kpi-card">
       <i class="kpi-icon" data-lucide="lock" aria-hidden="true"></i>
       <span class="kpi-value">7</span>
-      <span class="kpi-label">Paid-tier fields the platform now enforces</span>
+      <span class="kpi-label">Paid-tier fields the platform gates</span>
     </li>
     <li class="kpi-card">
       <i class="kpi-icon" data-lucide="key" aria-hidden="true"></i>
@@ -1170,7 +1266,7 @@ flowchart TB
     <li class="kpi-card">
       <i class="kpi-icon" data-lucide="list-checks" aria-hidden="true"></i>
       <span class="kpi-value">36</span>
-      <span class="kpi-label">Tests standing behind sign-off</span>
+      <span class="kpi-label">Tests designed for sign-off</span>
     </li>
   </ul>
   <div class="icon-row">
@@ -1195,22 +1291,28 @@ flowchart TB
 <!-- 7 of 16 - Content: mapping summary -->
 <section>
   <h2>What replaced what</h2>
+  <div class="icon-row">
+    <i data-lucide="shield" aria-hidden="true"></i>
+    <i data-lucide="key" aria-hidden="true"></i>
+    <i data-lucide="clipboard-check" aria-hidden="true"></i>
+    <i data-lucide="server-off" aria-hidden="true"></i>
+  </div>
   <table class="table-compact">
     <thead>
       <tr><th scope="col">Then</th><th scope="col">Now</th></tr>
     </thead>
     <tbody>
-      <tr><td>Eight data classes over a separate database</td><td>10 platform tables, 53 columns across the seven core tables</td></tr>
-      <tr><td>Sign-in only, with the role check left unwritten</td><td>49 access rules in five layers, seven of them field-level</td></tr>
-      <tr><td>Routes that were never actually served</td><td>One interface definition, 31 operations, six resources</td></tr>
-      <tr><td>Five fixed collection intervals</td><td>Two scheduled flows on one adjustable cadence</td></tr>
-      <tr><td>Partner keys written into source files</td><td>Two named connections, referenced by name only</td></tr>
-      <tr><td>Single-page app, 17 interface components</td><td>One portal, five pages, eight widgets</td></tr>
-      <tr><td>Twenty-seven test files, none discoverable</td><td>Ten suites, 36 tests</td></tr>
-      <tr><td>Cache, search cluster, proxy, process manager, containers</td><td>Retired, not migrated</td></tr>
+      <tr><td>8 classes</td><td>10 tables</td></tr>
+      <tr><td>Sign-in only</td><td>49 rules</td></tr>
+      <tr><td>Unserved routes</td><td>31 operations</td></tr>
+      <tr><td>5 intervals</td><td>1 cadence</td></tr>
+      <tr><td>Hardcoded keys</td><td>2 connections</td></tr>
+      <tr><td>17 components</td><td>5 pages, 8 widgets</td></tr>
+      <tr><td>27 dead tests</td><td>36 designed</td></tr>
+      <tr><td>Cache, search, proxy</td><td>Retired</td></tr>
     </tbody>
   </table>
-  <p class="footnote">The complete mapping runs 123 legacy files to 145 traced rows in the traceability matrix.</p>
+  <p class="footnote">145 traced rows.</p>
 </section>
 
 <!-- 8 of 16 - Content: the data foundation -->
@@ -1220,17 +1322,22 @@ flowchart TB
     <li class="kpi-card">
       <i class="kpi-icon" data-lucide="database" aria-hidden="true"></i>
       <span class="kpi-value">10</span>
-      <span class="kpi-label">Tables in the application</span>
+      <span class="kpi-label">Tables</span>
     </li>
     <li class="kpi-card">
       <i class="kpi-icon" data-lucide="table" aria-hidden="true"></i>
       <span class="kpi-value">53</span>
-      <span class="kpi-label">Columns across the seven core tables</span>
+      <span class="kpi-label">Core columns</span>
     </li>
     <li class="kpi-card">
       <i class="kpi-icon" data-lucide="lock" aria-hidden="true"></i>
       <span class="kpi-value">7</span>
-      <span class="kpi-label">Columns reserved for the paid tier</span>
+      <span class="kpi-label">Paid-tier</span>
+    </li>
+    <li class="kpi-card">
+      <i class="kpi-icon" data-lucide="git-branch" aria-hidden="true"></i>
+      <span class="kpi-value">3</span>
+      <span class="kpi-label">Supporting</span>
     </li>
   </ul>
   <table class="table-compact">
@@ -1247,7 +1354,7 @@ flowchart TB
       <tr><td>Investor</td><td>6</td><td><strong>Total</strong></td><td><strong>53</strong></td></tr>
     </tbody>
   </table>
-  <p class="footnote">Three further tables carry investor participation, the fallback dataset and request accounting. The field list is closed.</p>
+  <p class="footnote">The column list is closed.</p>
 </section>
 
 <!-- 9 of 16 - Content: the entitlement matrix -->
@@ -1258,56 +1365,56 @@ flowchart TB
       <tr>
         <th scope="col">Paid-tier field</th>
         <th scope="col">Administrator</th>
-        <th scope="col">Premium subscriber</th>
-        <th scope="col">Free user</th>
+        <th scope="col">Premium</th>
+        <th scope="col">Free</th>
       </tr>
     </thead>
     <tbody>
       <tr>
         <th scope="row">Total funding raised</th>
-        <td><span class="grant"><i data-lucide="check" aria-hidden="true"></i> Read</span></td>
-        <td><span class="grant"><i data-lucide="check" aria-hidden="true"></i> Read</span></td>
-        <td><span class="deny"><i data-lucide="x" aria-hidden="true"></i> Denied</span></td>
+        <td><span class="grant" role="img" aria-label="Administrator reads Total funding raised"><i data-lucide="check" aria-hidden="true"></i></span></td>
+        <td><span class="grant" role="img" aria-label="Premium subscriber reads Total funding raised"><i data-lucide="check" aria-hidden="true"></i></span></td>
+        <td><span class="deny" role="img" aria-label="Free user denied Total funding raised"><i data-lucide="x" aria-hidden="true"></i></span></td>
       </tr>
       <tr>
         <th scope="row">Institutional funding marker</th>
-        <td><span class="grant"><i data-lucide="check" aria-hidden="true"></i> Read</span></td>
-        <td><span class="grant"><i data-lucide="check" aria-hidden="true"></i> Read</span></td>
-        <td><span class="deny"><i data-lucide="x" aria-hidden="true"></i> Denied</span></td>
+        <td><span class="grant" role="img" aria-label="Administrator reads Institutional funding marker"><i data-lucide="check" aria-hidden="true"></i></span></td>
+        <td><span class="grant" role="img" aria-label="Premium subscriber reads Institutional funding marker"><i data-lucide="check" aria-hidden="true"></i></span></td>
+        <td><span class="deny" role="img" aria-label="Free user denied Institutional funding marker"><i data-lucide="x" aria-hidden="true"></i></span></td>
       </tr>
       <tr>
         <th scope="row">Founder contact address</th>
-        <td><span class="grant"><i data-lucide="check" aria-hidden="true"></i> Read</span></td>
-        <td><span class="grant"><i data-lucide="check" aria-hidden="true"></i> Read</span></td>
-        <td><span class="deny"><i data-lucide="x" aria-hidden="true"></i> Denied</span></td>
+        <td><span class="grant" role="img" aria-label="Administrator reads Founder contact address"><i data-lucide="check" aria-hidden="true"></i></span></td>
+        <td><span class="grant" role="img" aria-label="Premium subscriber reads Founder contact address"><i data-lucide="check" aria-hidden="true"></i></span></td>
+        <td><span class="deny" role="img" aria-label="Free user denied Founder contact address"><i data-lucide="x" aria-hidden="true"></i></span></td>
       </tr>
       <tr>
         <th scope="row">Executive contact address</th>
-        <td><span class="grant"><i data-lucide="check" aria-hidden="true"></i> Read</span></td>
-        <td><span class="grant"><i data-lucide="check" aria-hidden="true"></i> Read</span></td>
-        <td><span class="deny"><i data-lucide="x" aria-hidden="true"></i> Denied</span></td>
+        <td><span class="grant" role="img" aria-label="Administrator reads Executive contact address"><i data-lucide="check" aria-hidden="true"></i></span></td>
+        <td><span class="grant" role="img" aria-label="Premium subscriber reads Executive contact address"><i data-lucide="check" aria-hidden="true"></i></span></td>
+        <td><span class="deny" role="img" aria-label="Free user denied Executive contact address"><i data-lucide="x" aria-hidden="true"></i></span></td>
       </tr>
       <tr>
         <th scope="row">Investor assets under management</th>
-        <td><span class="grant"><i data-lucide="check" aria-hidden="true"></i> Read</span></td>
-        <td><span class="grant"><i data-lucide="check" aria-hidden="true"></i> Read</span></td>
-        <td><span class="deny"><i data-lucide="x" aria-hidden="true"></i> Denied</span></td>
+        <td><span class="grant" role="img" aria-label="Administrator reads Investor assets under management"><i data-lucide="check" aria-hidden="true"></i></span></td>
+        <td><span class="grant" role="img" aria-label="Premium subscriber reads Investor assets under management"><i data-lucide="check" aria-hidden="true"></i></span></td>
+        <td><span class="deny" role="img" aria-label="Free user denied Investor assets under management"><i data-lucide="x" aria-hidden="true"></i></span></td>
       </tr>
       <tr>
         <th scope="row">Round amount</th>
-        <td><span class="grant"><i data-lucide="check" aria-hidden="true"></i> Read</span></td>
-        <td><span class="grant"><i data-lucide="check" aria-hidden="true"></i> Read</span></td>
-        <td><span class="deny"><i data-lucide="x" aria-hidden="true"></i> Denied</span></td>
+        <td><span class="grant" role="img" aria-label="Administrator reads Round amount"><i data-lucide="check" aria-hidden="true"></i></span></td>
+        <td><span class="grant" role="img" aria-label="Premium subscriber reads Round amount"><i data-lucide="check" aria-hidden="true"></i></span></td>
+        <td><span class="deny" role="img" aria-label="Free user denied Round amount"><i data-lucide="x" aria-hidden="true"></i></span></td>
       </tr>
       <tr>
         <th scope="row">Round valuation</th>
-        <td><span class="grant"><i data-lucide="check" aria-hidden="true"></i> Read</span></td>
-        <td><span class="grant"><i data-lucide="check" aria-hidden="true"></i> Read</span></td>
-        <td><span class="deny"><i data-lucide="x" aria-hidden="true"></i> Denied</span></td>
+        <td><span class="grant" role="img" aria-label="Administrator reads Round valuation"><i data-lucide="check" aria-hidden="true"></i></span></td>
+        <td><span class="grant" role="img" aria-label="Premium subscriber reads Round valuation"><i data-lucide="check" aria-hidden="true"></i></span></td>
+        <td><span class="deny" role="img" aria-label="Free user denied Round valuation"><i data-lucide="x" aria-hidden="true"></i></span></td>
       </tr>
     </tbody>
   </table>
-  <p class="footnote">A denied field is absent from the answer, not blank. Twenty-one checks confirm every field against every role.</p>
+  <p class="footnote"><span class="grant" role="img" aria-label="Read"><i data-lucide="check" aria-hidden="true"></i></span> read <span class="deny" role="img" aria-label="Denied"><i data-lucide="x" aria-hidden="true"></i></span> denied. A denied field is absent, not blank. Twenty-one checks confirm it.</p>
 </section>
 
 <!-- 10 of 16 - Content: integration surface -->
@@ -1315,17 +1422,19 @@ flowchart TB
   <h2>How data arrives and leaves</h2>
   <pre class="mermaid diagram-md">
 flowchart LR
-  CB["Crunchbase"] --> AL["2 named connections&lt;br/&gt;bound by name"]
+  accTitle: How data reaches the tables and how it leaves them
+  accDescr: Crunchbase and LinkedIn both reach two named connections bound by name, which feed two scheduled flows running on a cadence between six and forty-eight hours. A fallback dataset of six files and sixty-five rows can feed the same flows instead. The flows apply four cleaning rules that trim, de-duplicate, normalise and reject, and write to ten tables. Everything read back out passes through forty-nine access-control rules, which serve both the interface layer of thirty-one operations and the five-page Service Portal.
+  CB["Crunchbase"] --> AL["2 named connections, bound by name"]
   LI["LinkedIn"] --> AL
-  AL --> FL["2 scheduled flows&lt;br/&gt;cadence 6 to 48 hours"]
-  FB["Fallback dataset&lt;br/&gt;6 files, 65 rows"] -.-> FL
-  FL --> CL["4 cleaning rules&lt;br/&gt;trim, de-duplicate,&lt;br/&gt;normalise, reject"]
+  AL --> FL["2 scheduled flows, cadence 6 to 48 hours"]
+  FB["Fallback dataset, 6 files, 65 rows"] -.-> FL
+  FL --> CL["4 rules: trim, de-duplicate, normalise, reject"]
   CL --> DB["10 tables"]
-  DB --> AC["Access control&lt;br/&gt;49 rules"]
-  AC --> API["Interface layer&lt;br/&gt;31 operations"]
-  AC --> SP["Service Portal&lt;br/&gt;5 pages"]
+  DB --> AC["Access control, 49 rules"]
+  AC --> API["Interface layer, 31 operations"]
+  AC --> SP["Service Portal, 5 pages"]
 </pre>
-  <p class="footnote">Every run is labelled live-validated or fallback-validated, so a passing result can never be mistaken for the other.</p>
+  <p class="footnote">Every run is labelled &ldquo;live validated&rdquo; or &ldquo;fallback validated&rdquo;, so neither can be mistaken for the other.</p>
 </section>
 
 <!-- 11 of 16 - Content: the user experience -->
@@ -1335,32 +1444,31 @@ flowchart LR
     <li class="kpi-card">
       <i class="kpi-icon" data-lucide="monitor" aria-hidden="true"></i>
       <span class="kpi-value">5</span>
-      <span class="kpi-label">Screens in the portal</span>
+      <span class="kpi-label">Screens</span>
     </li>
     <li class="kpi-card">
       <i class="kpi-icon" data-lucide="layers" aria-hidden="true"></i>
       <span class="kpi-value">8</span>
-      <span class="kpi-label">Reusable interface components</span>
+      <span class="kpi-label">Widgets</span>
     </li>
     <li class="kpi-card">
       <i class="kpi-icon" data-lucide="ruler" aria-hidden="true"></i>
       <span class="kpi-value">1024</span>
-      <span class="kpi-label">Pixels, the supported width floor</span>
+      <span class="kpi-label">Minimum width</span>
     </li>
   </ul>
   <table class="table-compact">
     <thead>
-      <tr><th scope="col">Screen</th><th scope="col">What it does</th><th scope="col">Components</th></tr>
+      <tr><th scope="col">Screen</th><th scope="col">What it shows</th></tr>
     </thead>
     <tbody>
-      <tr><th scope="row">Home and search</th><td>Finds eligible Boston and Cambridge companies</td><td>2</td></tr>
-      <tr><th scope="row">Company profile</th><td>Overview, Funding, People, Jobs, News</td><td>1</td></tr>
-      <tr><th scope="row">Investor profile</th><td>Portfolio, rounds led and rounds joined</td><td>1</td></tr>
-      <tr><th scope="row">Dashboard and trends</th><td>Headline measures and charts</td><td>2</td></tr>
-      <tr><th scope="row">Account</th><td>Entitlements and the upgrade prompt</td><td>2</td></tr>
+      <tr><th scope="row">Home</th><td>Eligible Boston companies</td></tr>
+      <tr><th scope="row">Company</th><td>Overview, Funding, People, Jobs, News</td></tr>
+      <tr><th scope="row">Investor</th><td>Portfolio, rounds led and joined</td></tr>
+      <tr><th scope="row">Dashboard</th><td>Measures and charts</td></tr>
+      <tr><th scope="row">Account</th><td>Entitlements, upgrade prompt</td></tr>
     </tbody>
   </table>
-  <p class="footnote">Where a paid-tier value is withheld, the upgrade prompt takes its place, never an empty cell or a zero.</p>
 </section>
 
 <!-- 12 of 16 - Section divider -->
@@ -1373,123 +1481,126 @@ flowchart LR
 
 <!-- 13 of 16 - Content: proof -->
 <section>
-  <h2>How we know it works</h2>
+  <h2>How it will be proven</h2>
   <ul class="kpi-grid kpi-strip">
+    <li class="kpi-card">
+      <i class="kpi-icon" data-lucide="file-text" aria-hidden="true"></i>
+      <span class="kpi-value">9</span>
+      <span class="kpi-label">Pre-ship checks</span>
+    </li>
     <li class="kpi-card">
       <i class="kpi-icon" data-lucide="clipboard-check" aria-hidden="true"></i>
       <span class="kpi-value">36</span>
-      <span class="kpi-label">Tests in ten suites</span>
+      <span class="kpi-label">Tests designed, in ten suites</span>
     </li>
     <li class="kpi-card">
       <i class="kpi-icon" data-lucide="check" aria-hidden="true"></i>
       <span class="kpi-value">100%</span>
-      <span class="kpi-label">Of tables and resources covered</span>
+      <span class="kpi-label">Tables and resources covered</span>
     </li>
     <li class="kpi-card">
       <i class="kpi-icon" data-lucide="shield" aria-hidden="true"></i>
-      <span class="kpi-value">16</span>
-      <span class="kpi-label">Gates checked after installing</span>
-    </li>
-    <li class="kpi-card">
-      <i class="kpi-icon" data-lucide="file-text" aria-hidden="true"></i>
-      <span class="kpi-value">9</span>
-      <span class="kpi-label">Checks run before anything ships</span>
+      <span class="kpi-value">11</span>
+      <span class="kpi-label">Required gates, checked after install</span>
     </li>
   </ul>
   <pre class="mermaid diagram-sm">
 flowchart LR
-  V["Validate&lt;br/&gt;9 checks"] --> IM["Import"]
-  IM --> PV["Preview&lt;br/&gt;600 second budget"]
+  accTitle: The nine checks between a package and an accepted installation
+  accDescr: Nine validation checks run first, then the package is imported and previewed within a six-hundred-second budget. If the preview reports any problem the package is fixed and re-issued; if it reports none the package is committed. Eleven required gates then run: if all pass the installation is accepted, and if any fails it is rolled back.
+  V["Validate, 9 checks"] --> IM["Import"]
+  IM --> PV["Preview, 600 second budget"]
   PV --> Q{"Problems?"}
   Q -->|"none"| CM["Commit"]
   Q -->|"any"| FX["Fix and re-issue"]
-  CM --> GT["16 gates"]
+  CM --> GT["11 required gates"]
   GT -->|"all pass"| OK["Accepted"]
   GT -->|"any fails"| RB["Roll back"]
 </pre>
+  <p class="footnote">The nine checks pass now. Tests and gates need a live instance.</p>
 </section>
 
 <!-- 14 of 16 - Content: risks and mitigations -->
 <section>
-  <h2>Risks and how they are held</h2>
+  <h2>Risks and who holds them</h2>
   <table class="table-compact">
     <thead>
       <tr>
-        <th scope="col">Level</th>
+        <th scope="col" aria-label="Risk level"></th>
         <th scope="col">Reviewer</th>
-        <th scope="col">What could go wrong</th>
-        <th scope="col">How it is held</th>
+        <th scope="col">Risk</th>
+        <th scope="col">Control</th>
       </tr>
     </thead>
     <tbody>
       <tr>
-        <td><span class="sev sev-high"><i data-lucide="triangle-alert" aria-hidden="true"></i> High</span></td>
+        <td><span class="sev sev-high" role="img" aria-label="High risk, Security"><i data-lucide="triangle-alert" aria-hidden="true"></i></span></td>
         <th scope="row">Security</th>
-        <td>Paid-tier enforcement fails silently, and an administrator checking it sees everything and proves nothing</td>
-        <td>Twenty-one checks, each run as a user holding one role and no elevated access</td>
+        <td title="A field-access check performed as the instance administrator passes without testing enforcement at all">Silent enforcement failure</td>
+        <td>21 role checks</td>
       </tr>
       <tr>
-        <td><span class="sev sev-high"><i data-lucide="triangle-alert" aria-hidden="true"></i> High</span></td>
+        <td><span class="sev sev-high" role="img" aria-label="High risk, DevOps"><i data-lucide="triangle-alert" aria-hidden="true"></i></span></td>
         <th scope="row">DevOps</th>
-        <td>Recovery deletes the application and all its data &mdash; the one irreversible step in the delivery</td>
-        <td>Fires only on a failed install or a failed gate; the install preview must be clean first</td>
+        <td title="Rollback by scope deletion is irreversible and must never run against an existing installation">Irreversible recovery</td>
+        <td>Clean preview first</td>
       </tr>
       <tr>
-        <td><span class="sev sev-high"><i data-lucide="triangle-alert" aria-hidden="true"></i> High</span></td>
+        <td><span class="sev sev-high" role="img" aria-label="High risk, API/Integration"><i data-lucide="triangle-alert" aria-hidden="true"></i></span></td>
         <th scope="row">API/Integration</th>
-        <td>A leaked partner key cannot be contained by changing anything inside this application</td>
-        <td>No credential ships anywhere; both connections named, and tested before either flow is saved</td>
+        <td title="A third-party credential exposed outside this instance cannot be contained by fixing the application">Leaked partner key</td>
+        <td>Nothing ships</td>
       </tr>
       <tr>
-        <td><span class="sev sev-med"><i data-lucide="info" aria-hidden="true"></i> Medium</span></td>
+        <td><span class="sev sev-med" role="img" aria-label="Medium risk, Data/SME"><i data-lucide="info" aria-hidden="true"></i></span></td>
         <th scope="row">Data/SME</th>
-        <td>A stored portfolio count drifts when records arrive by a route that skips the rules</td>
-        <td>Recalculation after every bulk load, and company deletion exercised end to end</td>
+        <td title="A stored aggregate drifts when data arrives by a path that skips the business rules">Count drift, short feeds</td>
+        <td>Recalculated, counted</td>
       </tr>
       <tr>
-        <td><span class="sev sev-med"><i data-lucide="info" aria-hidden="true"></i> Medium</span></td>
+        <td><span class="sev sev-med" role="img" aria-label="Medium risk, UX"><i data-lucide="info" aria-hidden="true"></i></span></td>
         <th scope="row">UX</th>
-        <td>Five tabs replace six, and links now carry parameters rather than paths</td>
-        <td>A five-screen walkthrough performed as a free user, not as an administrator</td>
+        <td title="The company profile carries the five specified tabs in place of the legacy six">Fewer profile tabs</td>
+        <td>Free-user walkthrough</td>
       </tr>
     </tbody>
   </table>
-  <p class="footnote">Paid subscription billing has no platform equivalent. It is formally flagged, not half-built. Eleven further items are recorded alongside it.</p>
+  <p class="footnote">Feeds unvalidated, billing unbuilt.</p>
 </section>
 
-<!-- 15 of 16 - Content: sequence and continuity -->
+<!-- 15 of 16 - Content: migration timeline, ownership and continuation -->
 <section>
-  <h2>Delivery timeline</h2>
-  <pre class="mermaid diagram-wide">
-flowchart TB
-  subgraph P1["Install"]
-    direction LR
-    A1["1 Validate the package"] --&gt; A2["2 Import, preview, commit"] --&gt; A3["3 Run the sixteen gates"]
-  end
-  subgraph P2["Build"]
-    direction LR
-    B1["4 Connect the two sources"] --&gt; B2["5 Build the two flows"] --&gt; B3["6 Build the portal"] --&gt; B4["7 Load the fallback data"]
-  end
-  subgraph P3["Prove"]
-    direction LR
-    C1["8 Run the thirty-six tests"] --&gt; C2["9 Walk the acceptance record"]
-  end
-  P1 --&gt; P2 --&gt; P3
-  style P1 stroke:#5B39F3,stroke-width:2px
-  style P2 stroke:#5B39F3,stroke-width:2px
-  style P3 stroke:#5B39F3,stroke-width:2px
+  <h2>The migration timeline, and how it changes after</h2>
+  <pre class="mermaid diagram-wide diagram-timeline">
+timeline
+  accTitle: The migration timeline, in three phases
+  accDescr: Three phases in relative order. Install: validate the package, then import, preview and commit it, then clear the twelve acceptance-blocking checks. Build: bind the two named connections, build both ingestion flows, then the portal with its pages and widgets, and load the six sample files. Prove: run the ten test suites and walk the acceptance record. The order is relative and no calendar dates are stated.
+  section Install
+    Steps 1 to 2 : Validate the package : Import, preview and commit
+    Step 3 : Clear the twelve checks
+  section Build
+    Steps 4 to 6 : Bind the two aliases : Build both ingestion flows
+    Steps 7 to 8 : Portal, pages and widgets : Load the six sample files
+  section Prove
+    Steps 9 to 10 : Run the ten test suites : Walk the acceptance list
 </pre>
-  <p class="footnote">Ordering only, never calendar dates: these nine steps are a dependency order, not a schedule. Six sequenced guides own the manual work.</p>
+  <ul>
+    <li>Ten steps, in dependency order: install, build, prove.</li>
+    <li>Maintainers work as the application administrator, inside the scope.</li>
+    <li>Declarative change re-exports; hand-built change follows its guide.</li>
+    <li>Every change re-runs the gates, then the tests, then the log.</li>
+  </ul>
 </section>
 
 <!-- 16 of 16 - Closing -->
 <section class="slide-closing">
   <span class="eyebrow">In Closing</span>
-  <h2>Enforced, tested, ready to install</h2>
+  <h2>Specified end to end, pending instance validation</h2>
   <ul>
-    <li>One package installs the application; six guides build the rest, in a fixed order.</li>
-    <li>The decision log holds every reason; the traceability matrix holds the coverage.</li>
-    <li>The critical-decisions review names five reviewers and exactly what each should check.</li>
+    <li>One package installs the application; six guides build the rest, in order.</li>
+    <li>Acceptance is recorded against five criteria after the instance run.</li>
+    <li>Every reason is logged and every shortfall named.</li>
+    <li>Five named reviewers, each with what to check.</li>
   </ul>
   <div class="accent-bar" aria-hidden="true"></div>
   <div class="brand-lockup"><i data-lucide="zap" aria-hidden="true"></i> Blitzy</div>
@@ -1498,9 +1609,15 @@ flowchart TB
 </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.0/dist/mermaid.min.js"></script>
-<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"
+        integrity="sha384-M/JtqCVlLcK9lwVnBnMXP0V577CBULkjodKsR/PITOe4MSKNbbwqCemEyluOw0+5"
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.0/dist/mermaid.min.js"
+        integrity="sha384-Wm9qzEgq4j1jEnuFK2FxKTlwuhbV2QqtGhcchvjDoKxeJ7WWAW7fysBq+1s6myfX"
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.js"
+        integrity="sha384-5CfF4CEHqpO1XQ4mm8VVI47GvbX+x3uWlFHIsfFD1rrxLx6xergBU2tq/TVzKHGv"
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script>
 (function () {
   'use strict';
@@ -1510,23 +1627,30 @@ flowchart TB
   var sources = [];
   var attempts = [];
 
-  /* The single render queue. Every pass is appended to it, so passes run one
-     after another and never interleave. */
+  /* The single render queue. Every pass is appended to it and starts after the
+     pass before it has settled. */
   var queue = fontsReady();
 
   function containers() {
     return Array.prototype.slice.call(document.querySelectorAll('pre.mermaid'));
   }
 
-  /* Stashes each container's original diagram source before any render, so a
-     container can be reset and rendered again. */
+  /* Stashes each container's original diagram source before any render, so reset()
+     can restore a container from the stash before a re-render. D-126. */
   containers().forEach(function (node) {
     sources.push(node.textContent);
     attempts.push(0);
   });
 
-  /* Settles once the webfonts have loaded, so Mermaid measures label text
-     against the actual font face. */
+  /* Configures Mermaid in the same task as this script, ahead of any
+     DOMContentLoaded handler, so automatic start is off before Mermaid's own
+     window-load handler can run, and returns any container already carrying a
+     render to its source so the configured render is never skipped. Rule 2
+     requires automatic start disabled and rendering driven from the reveal.js
+     hooks below. D-179. */
+  reclaim();
+
+  /* Settles once the webfonts have loaded. D-127. */
   function fontsReady() {
     if (document.fonts && document.fonts.ready) {
       return document.fonts.ready;
@@ -1534,8 +1658,7 @@ flowchart TB
     return Promise.resolve();
   }
 
-  /* Resolves after two animation frames, by which point reveal.js has laid the
-     incoming slide out and the clock has advanced past the previous render. */
+  /* Resolves after two animation frames. D-128. */
   function nextFrame() {
     return new Promise(function (resolve) {
       window.requestAnimationFrame(function () {
@@ -1553,10 +1676,14 @@ flowchart TB
   }
 
   /* Configures Mermaid once, with the theme variables this deck's brand rule
-     specifies. Rendering is driven from the reveal.js events below, so
-     startOnLoad is false. htmlLabels is declared false at both the top level and
-     under flowchart, which is what keeps every label a native SVG text node.
-     subGraphTitleMargin reserves clearance beneath a phase title. */
+     specifies. This is a hoisted function declaration, so the call above its
+     definition is valid. Rendering is driven from the reveal.js events below, so
+     startOnLoad is false. securityLevel is strict, which sanitises the source and
+     renders inline: the sandbox level draws into an iframe whose src is a data URL,
+     which this document's own frame-src 'none' policy forbids. htmlLabels is false at the
+     top level and under flowchart, which makes every label a native SVG text
+     node. subGraphTitleMargin reserves the clearance beneath a phase title.
+     Recorded at D-125 in docs/decisions/DECISION_LOG.md. */
   function configureMermaid() {
     if (mermaidConfigured) {
       return true;
@@ -1566,13 +1693,23 @@ flowchart TB
     }
     window.mermaid.initialize({
       startOnLoad: false,
+      securityLevel: 'strict',
       theme: 'base',
       themeVariables: {
         primaryColor: '#F2F0FE',
         primaryTextColor: '#333333',
         primaryBorderColor: '#5B39F3',
         lineColor: '#999999',
-        secondaryColor: '#F4EFF6'
+        secondaryColor: '#F4EFF6',
+        cScale0: '#5B39F3',
+        cScaleLabel0: '#FFFFFF',
+        cScale1: '#2D1C77',
+        cScaleLabel1: '#FFFFFF',
+        cScale2: '#94FAD5',
+        cScaleLabel2: '#333333',
+        cScaleInv0: '#94FAD5',
+        cScaleInv1: '#7A6DEC',
+        cScaleInv2: '#5B39F3'
       },
       fontFamily: "'Inter', system-ui, sans-serif",
       htmlLabels: false,
@@ -1587,16 +1724,26 @@ flowchart TB
     return true;
   }
 
-  /* True only for a container that currently has a real layout box. Containers
-     on a slide beyond reveal.js's view distance have none, and wait for the
-     slidechanged pass that first reveals them. */
+  /* True only for a container that has a real layout box AND sits on the slide
+     reveal.js currently shows. D-131, D-147. */
   function renderable(node) {
+    var slide = node.closest ? node.closest('section') : null;
+    if (slide && !slide.classList.contains('present')) {
+      return false;
+    }
     return node.offsetWidth > 0 && node.getClientRects().length > 0;
   }
 
-  /* Inspects a completed render: a healthy drawing has a sized viewBox, carries
-     label text, and is not Mermaid's own error graphic. */
+  /* Inspects a completed render. Under securityLevel strict the drawing is an
+     inline svg, which is the form this deck delivers and the branch that runs: it
+     tests the viewBox, the label count and Mermaid's own error graphic. The iframe
+     branch is retained for a sandbox-level render, whose opaque origin allows only
+     the declared height to be tested. */
   function healthy(node) {
+    var frame = node.querySelector('iframe');
+    if (frame) {
+      return parseFloat(frame.style.height || '0') > 60;
+    }
     var svg = node.querySelector('svg');
     if (!svg) {
       return false;
@@ -1616,13 +1763,42 @@ flowchart TB
     node.textContent = sources[index];
   }
 
+  /* Applies the Mermaid configuration and returns every container that already
+     carries a render to its source. */
+  function reclaim() {
+    if (!configureMermaid()) {
+      return false;
+    }
+    containers().forEach(function (node, index) {
+      if (node.getAttribute('data-processed') === 'true'
+          || node.querySelector('svg, iframe')) {
+        reset(node, index);
+      }
+    });
+    return true;
+  }
+
   /* Renders exactly one container per Mermaid call and waits for it to finish
-     before the next begins, so no two renders are ever in flight together. */
+     before the next begins, so no two renders are ever in flight together. A
+     container already marked processed is re-inspected against healthy() and
+     re-rendered when the drawing behind the marker is degenerate; each repair
+     costs one attempt from the same budget. Recorded at D-125 in
+     docs/decisions/DECISION_LOG.md. */
   function renderDiagram(node, index) {
-    if (node.getAttribute('data-processed') === 'true' || !renderable(node)) {
+    if (!renderable(node)) {
       return Promise.resolve();
     }
+    if (node.getAttribute('data-processed') === 'true') {
+      if (healthy(node)) {
+        return Promise.resolve();
+      }
+      if (attempts[index] >= MAX_ATTEMPTS) {
+        return Promise.resolve();
+      }
+      reset(node, index);
+    }
     if (attempts[index] >= MAX_ATTEMPTS) {
+      report('Diagram ' + (index + 1) + ' has no attempts left', node.className);
       return Promise.resolve();
     }
     attempts[index] += 1;
@@ -1634,8 +1810,8 @@ flowchart TB
         if (healthy(node)) {
           return undefined;
         }
-        reset(node, index);
         if (attempts[index] < MAX_ATTEMPTS) {
+          reset(node, index);
           return renderDiagram(node, index);
         }
         report('Diagram ' + (index + 1) + ' left unrendered after '
@@ -1643,8 +1819,8 @@ flowchart TB
         return undefined;
       })
       .catch(function (error) {
-        reset(node, index);
         if (attempts[index] < MAX_ATTEMPTS) {
+          reset(node, index);
           return renderDiagram(node, index);
         }
         report('Diagram ' + (index + 1) + ' skipped', error);
@@ -1663,8 +1839,8 @@ flowchart TB
     }, Promise.resolve());
   }
 
-  /* Replaces every data-lucide placeholder with its SVG. Idempotent: the replaced
-     glyph is no longer an <i> placeholder, so a later pass cannot double-render. */
+  /* Replaces every data-lucide placeholder with its SVG. A replaced glyph is no
+     longer an <i> placeholder and is not matched by a later pass. */
   function renderIcons() {
     if (typeof window.lucide === 'undefined') {
       return;
@@ -1691,12 +1867,17 @@ flowchart TB
     return;
   }
 
-  /* Registers both handlers before initialize, which is when reveal.js
-     dispatches ready. The ready pass draws the diagrams reveal.js has already
-     laid out; the slidechanged pass draws each remaining one as its slide is
-     first shown. */
+  /* Both handlers are registered before initialize, which is when reveal.js
+     dispatches ready. D-131. */
   window.Reveal.on('ready', paint);
   window.Reveal.on('slidechanged', paint);
+
+  /* A third pass, after the slide transition has finished. The slidechanged pass
+     starts while the incoming slide is still animating, so a container can be
+     measured at a transient width; this pass runs once the layout has settled and
+     repairs anything the earlier pass drew badly. It is a no-op for a container
+     that is already healthy. */
+  window.Reveal.on('slidetransitionend', paint);
 
   window.Reveal.initialize({
     hash: true,

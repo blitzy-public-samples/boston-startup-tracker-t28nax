@@ -14,7 +14,7 @@ This document is self-contained. The three roles, the five ACL layers, every ACL
 
 **Every document named below is delivered and readable.** Each link resolves to a file in this package, among them the Update Set XML, `./data-model.md`, `./api-reference.md`, `./validation-gates.md` and `../sample-data/README.md`, so a reader can follow any link and read the content the statement around it describes; no link is a forward reference to something still to be written.
 
-**Reviewer.** This document is to be the artifact validated by the **Security** reviewer entry in [`../../docs/review/CRITICAL_DECISIONS.md`](../../docs/review/CRITICAL_DECISIONS.md). That reviewer must check one thing above all others: that all twenty-one field-by-role assertions run under impersonated users each holding exactly one scoped role and none of the elevated platform roles. That requirement is stated in full under [Verification procedure](#verification-procedure).
+**Reviewer.** This document is the artifact validated by the **Security** reviewer entry in [`../../docs/review/CRITICAL_DECISIONS.md`](../../docs/review/CRITICAL_DECISIONS.md). That reviewer must check one thing above all others: that all twenty-one field-by-role assertions run under impersonated users each holding exactly one scoped role and none of the elevated platform roles. That requirement is stated in full under [Verification procedure](#verification-procedure).
 
 ## The three roles
 
@@ -34,18 +34,34 @@ The three roles are granted on platform `sys_user` records. **This application d
 
 ## The table access posture
 
-Before any access control is evaluated, the platform decides whether a caller's **scope** may touch the table at all. All ten application tables are delivered with:
+Before any access control is evaluated, the platform decides whether a caller's **scope** may touch the table at all. **The ten application tables do not share one posture.** The seven entity tables are reachable and the three supporting tables are sealed, and the difference is deliberate.
+
+**The seven entity tables** — `x_bst_startuptrk_startup`, `_founder`, `_executive`, `_investor`, `_fundinground`, `_jobposting` and `_newsarticle`:
 
 | `sys_db_object` field | Delivered value | Effect |
 | --- | --- | --- |
-| `access` | `package_private` | The table is reachable from the `x_bst_startuptrk` scope only. A script in the Global scope or in any other scoped application cannot read, write or alter it, whatever roles its caller holds. |
-| `read_access`, `create_access`, `update_access`, `delete_access` | `false` | Cross-scope record operations are additionally denied field by field, so the posture is explicit and survives a later change of `access`. |
+| `access` | `public` | The table is addressable from another application scope, and from the platform Table API, subject to the access controls below. |
+| `read_access` | `true` | A cross-scope **read** is permitted to reach the access-control evaluation. It is the record access controls of layers 1 and 3, not the scope switch, that decide the outcome. |
+| `ws_access` | `true` | The table **is** served by the platform Table API at `/api/now/table/<table>`, again subject to the same access controls. |
+| `create_access`, `update_access`, `delete_access` | `false` | No cross-scope write of any kind. The application's own write path is layer 2, which grants the administrator role only. |
 | `alter_access`, `configuration_access`, `client_scripts_access`, `actions_access` | `false` | Cross-scope schema changes, configuration, client scripts and actions are denied. |
-| `ws_access` | `false` | The table is **not** served by the platform Table API at `/api/now/table/<table>`. |
 
-This matters because unsecured server-side record access does not consult access controls. Leaving a table `public` with cross-scope read enabled would let a script in another scope read every premium field directly, and the 47 record access controls below would never be consulted — they would report no denial because they were never reached. Leaving `ws_access` true would expose a second route to the same rows that skips the rate limiter, the per-field read gate and the endpoint access controls of layer 5.
+**The three supporting tables** — `x_bst_startuptrk_m2m_round_investor`, `x_bst_startuptrk_ingest_staging` and `x_bst_startuptrk_rate_limit_counter`:
 
-The consequence for deployment is that the post-commit gates cannot read application tables over the Table API. [`./validation-gates.md`](./validation-gates.md) therefore verifies the tables through `sys_db_object` and `sys_dictionary` metadata instead, and gates the posture itself as `GATE-SEC-01` and `GATE-SEC-02`. That substitution is a deliberate departure from the AAP, recorded in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
+| `sys_db_object` field | Delivered value | Effect |
+| --- | --- | --- |
+| `access` | `package_private` | Reachable from the `x_bst_startuptrk` scope only. A script in the Global scope or in any other scoped application cannot read, write or alter it, whatever roles its caller holds. |
+| `read_access`, `create_access`, `update_access`, `delete_access` | `false` | Every cross-scope record operation is denied, so the posture is explicit and survives a later change of `access`. |
+| `alter_access`, `configuration_access`, `client_scripts_access`, `actions_access` | `false` | Denied. |
+| `ws_access` | `false` | **Not** served by the platform Table API. |
+
+**Why the entity tables are open and the supporting tables are not.** Enforcement for the entity tables lives in the access controls, not in the scope switch: exposure over the Table API is governed by the very same layer-1 table read control and layer-3 field read controls that govern the Scripted REST API, so a base-role caller reading `x_bst_startuptrk_startup` over `/api/now/table/` is denied `total_funding_usd` exactly as it is denied it over `/api/x_bst_startuptrk/v1/startups`. That is what makes a post-commit gate that reads the application's own tables a **test of the access-control design** rather than a test of a blocking switch. The three supporting tables carry no premium field and serve no caller: the join table is read through `InvestorPortfolioService`, and the staging and counter tables are internal machinery, so nothing outside the scope has any business addressing them and they are sealed.
+
+**What the open posture does *not* concede.** Cross-scope and Table API **writes** are refused on every one of the ten tables, so no route bypasses layer 2's administrator-only grant. And the entity tables' exposure is not a second route that skips the per-field gate: the field-level read controls of layer 3 are evaluated on the Table API path too, which is precisely the property the seven table gates in [`./validation-gates.md`](./validation-gates.md) exercise. What the Table API path does skip is the application's own rate limiter, which is application-level accounting on the Scripted REST API rather than an access control — recorded as such in [`./api-reference.md`](./api-reference.md).
+
+**Two controls in this document govern the application's own endpoint and not the Table API route**, and that is stated here so no reader over-reads the matrix: the two `REST_Endpoint` execution controls of layer 5 and the in-script role guard apply to the Scripted REST API. On the Table API route their work is done by the **table-level read controls**, which admit only the three scoped roles — so "only the three application roles may read this data" holds on both routes. The application's fixed-window rate limiter likewise governs its own endpoint only; the compensating operator-owned control for the Table API route is stated in [`./gaps-and-flags.md`](./gaps-and-flags.md).
+**Why the three supporting tables stay sealed.** Unsecured server-side record access does not consult access controls, so a table left `public` can be read row by row by a script in another scope with no control evaluated at all. That is tolerable on the entity tables, whose contents the three scoped roles are entitled to read under the matrix below, and it is not tolerable on `x_bst_startuptrk_ingest_staging`, which holds verbatim upstream payloads and unvalidated personal data, nor on the m2m and rate-limit tables, which are internal machinery. Those three are `package_private` with every capability flag `false`.
+The consequence for deployment is that the eleven required post-commit gates are exactly the reads AAP section 0.11.2 specifies — one authenticated `sysparm_limit=1` request per entity table. [`./validation-gates.md`](./validation-gates.md) carries them, and records the posture itself as the non-normative diagnostics `GATE-SEC-01` and `GATE-SEC-02`. The posture decision and its residual risks are recorded in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
 ## The five layers
 
@@ -161,7 +177,7 @@ Without layer 5 a newly created Scripted REST API falls back to the platform's o
 
 Layer 5 is reinforced in code so that enforcement does not depend on platform access-control evaluation alone. Every one of the 31 operation scripts calls a shared guard immediately after the rate limiter: `RestResponseBuilder.rejectUnauthorisedRead()` on the 13 read operations, which refuses a caller holding none of the three roles with `HTTP 403` and body `{"error": "Caller holds no Boston Startup Tracker role"}`; and `RestResponseBuilder.rejectUnauthorisedWrite()` on the 18 mutations, which refuses a caller without `x_bst_startuptrk.admin` with `HTTP 403` and body `{"error": "Caller holds no Boston Startup Tracker administrator role"}`. The declarative control and the coded guard express the same rule, so the two cannot disagree.
 
-`GATE-SEC-03` in [`./validation-gates.md`](./validation-gates.md) confirms that both controls committed.
+Both controls are confirmed by inspecting the two `sys_security_acl` records of type `REST_Endpoint` in the delivered Update Set; no post-commit gate reads them.
 
 ### The evaluation chain
 
@@ -213,7 +229,7 @@ Seven premium-gated fields across three roles. Twenty-one cells, all populated.
 
 `x_bst_startuptrk.admin` reads all seven. `x_bst_startuptrk.premium_user` reads all seven. `x_bst_startuptrk.user` is denied all seven. 7 fields × 3 roles = 21 outcomes.
 
-This matrix is the specification for the 21 Automated Test Framework field-ACL tests: one test per cell, asserting that cell's outcome. The suite and its run-time user creation are to be built per [`./manual-build/05-atf-test-suites.md`](./manual-build/05-atf-test-suites.md), and the pass condition is prompt section 10.0 criterion 2, whose evidence is to be collected by [`./validation-checklist.md`](./validation-checklist.md).
+This matrix is the specification for the 21 Automated Test Framework field-ACL tests: one test per cell, asserting that cell's outcome. The suite and its run-time user creation are built per [`./manual-build/05-atf-test-suites.md`](./manual-build/05-atf-test-suites.md), and the pass condition is prompt section 10.0 criterion 2, whose evidence is collected by section 2b of [`./validation-checklist.md`](./validation-checklist.md). The **metadata** half of the same fact — that all seven controls committed **with their role joins** — is confirmed by inspecting `sys_security_acl_role` for the seven field controls: exactly 14 join records, naming only `x_bst_startuptrk.admin` and `x_bst_startuptrk.premium_user`. That inspection is part of the criterion-2 evidence in [`./validation-checklist.md`](./validation-checklist.md) rather than a post-commit gate. A missing join is not a partial denial: the platform falls back to the table-level read grant and the field becomes readable by the base role.
 
 ### The role difference is at field level only
 
@@ -223,7 +239,13 @@ No record-level restriction exists on any of the seven entity tables. Every role
 
 **Invariant.** Record-level visibility is identical for `x_bst_startuptrk.admin`, `x_bst_startuptrk.premium_user` and `x_bst_startuptrk.user`, so every role that can read a table sees the same rows.
 
-`total_count` does **not** rely on that invariant. It is computed on the access-controlled read path — `RestResponseBuilder.countState()` opens a `GlideRecordSecure`, returns zero immediately when `canRead()` is false, applies the same conditions the result set applies, and counts by secured iteration under a ceiling of 10,000 rows. Adding a record-level restriction later would therefore change the count correctly rather than silently over-reporting it. The ceiling exists so that a count can never become an unbounded scan; when it is reached the response carries `total_count_capped` set to true alongside the capped `total_count`, so a consumer is never told a bounded number is exact. The pagination envelope is documented in [`./api-reference.md`](./api-reference.md).
+**`total_count` depends on that invariant, and the dependency is load-bearing.** `RestResponseBuilder.countState()` first calls `hasAnyAppRole()`, which is three `gs.hasRole()` tests against `x_bst_startuptrk.admin`, `x_bst_startuptrk.premium_user` and `x_bst_startuptrk.user`; a caller holding none of the three is answered `403` through `rejectDeniedCount()` rather than `200` with a total of zero. Having established that the caller holds a role the layer-1 read control grants, it then takes a single `GlideAggregate` `COUNT` over the same conditions the result set applies. That yields an **exact** total at any magnitude, in one database operation, with no ceiling and therefore no truncation — which is what the pagination contract in [`./api-reference.md`](./api-reference.md) requires.
+
+**Why the gate is a role test and not a secured-read probe.** An earlier form of this check opened a `GlideRecordSecure` on the table and called `canRead()` before counting. That is not a supported way to ask whether a caller may read a table: `canRead()` on a secured record answers for the **record the object is currently positioned on**, so on an un-queried, unpositioned object its answer is not a table-level right and is not guaranteed to be meaningful. A gate whose answer is inconclusive is worse than no gate, because it reads as one. The role test is exact, needs no query, and is correct **because** of the closed-role invariant stated immediately above: layer 1 grants table read to all three roles and to no other role, so "holds one of the three roles" and "may read this table" are the same statement. If a future change removes a role from a layer-1 grant, or adds a record-level restriction, this gate must be revisited together with the aggregate count — both are recorded as consequences of the same invariant.
+
+An aggregate does not evaluate row-level access, and it does not need to **while this invariant holds**: every role that can read the table can read every row, so the aggregate count and a per-caller count are the same number. **The moment a record-level restriction is added to any of the seven entity tables, that stops being true** — the aggregate would over-report for a restricted caller — and `countState()` would have to be replaced by a secured count, accepting either an iteration cost proportional to the row count or a ceiling that makes the total a floor. Nothing else in the API changes; the contract does. This is recorded here, in [`./api-reference.md`](./api-reference.md) and in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md) so that a future access-control change cannot break the pagination contract silently.
+
+The inclusion criteria are a **query filter and not an access control**, so they do not bear on this invariant — but they must be applied identically to the result set and to the count, or `total_count` disagrees with the page contents. One query plan is handed to both, which is what makes that true by construction.
 
 ## Enforcement rules
 
@@ -231,21 +253,42 @@ These rules are normative. They bind the Scripted REST operations, the Script In
 
 ### Secured read path
 
-Every caller-facing read must use the secured record-access path, `GlideRecordSecure`, and never the unsecured `GlideRecord`. Ordinary record access does not guarantee access-control enforcement on server-side reads; the secured variant does. All 31 REST operations use `GlideRecordSecure`, as does `StartupSearchService`, the single Script Include that builds the startup query for both the `/startups` list operation and the portal search widget. Every widget server script must do the same.
+Every caller-facing read must use the secured record-access path, `GlideRecordSecure`, and never the unsecured `GlideRecord`. Ordinary record access does not guarantee access-control enforcement on server-side reads; the secured variant does. **All 31 REST operations read through it, and no REST operation opens an unsecured `GlideRecord` at all.** Every widget server script must do the same.
 
-Five server-side maintenance paths read through the unsecured `GlideRecord`, and this is the complete and closed list:
+**Thirty of the 31 open the secured record themselves; one reaches it through a delegate, and an audit needs to know which.** `Startup list` constructs no record of its own: it builds a query plan and hands it to `StartupSearchService`, which opens the `GlideRecordSecure` over `x_bst_startuptrk_startup` and returns the rows. The read is secured either way — that Script Include is the single builder of the startup query for both the `/startups` list operation and the portal search widget, which is what keeps the inclusion criteria identical on the two surfaces — but a reviewer who audits this rule by searching each operation script for the class name will find 30 matches and one operation with none. That one is `Startup list`, and it is compliant. Audit it by following the delegate:
+
+| What to search | Expected result |
+| --- | --- |
+| `GlideRecordSecure` in each of the 31 operation scripts | 30 operations match; `Startup list` does not |
+| `new GlideRecord(` in each of the 31 operation scripts | **No operation matches.** A single match is a defect |
+| `GlideRecordSecure` in `StartupSearchService` | Matches, in `search()` — the read `Startup list` delegates to |
+
+
+Four server-side maintenance paths read through the unsecured `GlideRecord`, and this is the complete and closed list:
+Five server-side paths read through the unsecured `GlideRecord` or through `GlideAggregate`, and this is the complete and closed list:
 
 | # | Path | Reads | Returns record data to a caller |
 | --- | --- | --- | --- |
 | 1 | `RateLimitService` | `x_bst_startuptrk_rate_limit_counter`, administrator-only | No — only a boolean decision and a retry interval |
-| 2 | `InvestorPortfolioService` | `x_bst_startuptrk_fundinground` and the m2m table, to derive `portfolio_count` | No — only the derived integer, which is then stored |
+| 2 | `InvestorPortfolioService` | `x_bst_startuptrk_fundinground` and the m2m table, to derive `portfolio_count` and to answer `participantsForRounds()` | No — the derived integer, which is then stored, and investor references the caller then reads through the secured path |
 | 3 | `IngestionMapper` | the staging table and the entity tables it writes | No — it runs inside a flow, not a request |
 | 4 | the business rules that recalculate a portfolio count | as `InvestorPortfolioService` | No |
-| 5 | `PrivacyRetentionService` | the staging table, the counter table, `x_bst_startuptrk_founder`, `x_bst_startuptrk_executive` and `sys_user` | No — it returns counts of rows minimised, deleted or erased |
+| 5 | `RestResponseBuilder.countState()` and `countWith()` | a `GlideAggregate` `COUNT` over the table under test, **only after** the `hasAnyAppRole()` gate has passed | No — a row count and nothing else. **No field value, no `sys_id` and no record is returned from the aggregate.** |
 
-None of the five returns record data to a caller, and none reads a premium field on a caller's behalf. Any new unsecured read outside this list is a defect.
+None of the five returns a field value to a caller, and none reads a premium field on a caller's behalf. Any new unsecured read outside this list is a defect.
 
-**Counting is not an exception to this rule.** `total_count` is produced by secured iteration in `RestResponseBuilder.countState()`, not by an aggregate query. Aggregate queries do not apply access controls, so an aggregate count is not a secured caller-facing read and is not used for one anywhere in this application; **no aggregate query in this application produces a caller-facing value.** Aggregate queries appear in exactly three places in the delivered Update Set, all of them inside maintenance paths 1 and 2 of the table above: `RateLimitService._countClosed()`, which counts closed windows on the administrator-only counter table, and `InvestorPortfolioService._startupsForInvestor()`, which counts distinct startups to derive `portfolio_count`. Neither returns record data to a caller and neither reads a premium field.
+**Counting is bounded by a narrower rule, not by a blanket prohibition.** The rule is:
+
+> **An aggregate query may produce a caller-facing value only when that value depends on no field the caller can be denied, and the table it reads carries no record-level access control.**
+
+A blanket "no aggregate may produce a caller-facing value" would be the wrong rule here, and stating it would be worse than useless: it is not what the requirements impose, it cannot be satisfied without turning every count into a per-row scan, and a reader who believed it would have no way to tell a legitimate count from a leak. The two conditions above are what actually make an aggregate safe, and they are checkable.
+
+Both hold for every count this application returns. A count depends on no field value — only on which rows match — and the field-level ACLs of this application deny **fields**, never rows. And no record-level access control exists on any of the eight tables a caller-facing count reads, so the row set an aggregate sees is exactly the row set the caller may read.
+
+`RestResponseBuilder.countState()`, `countWith()` and `countByGroup()` are therefore the three aggregate paths that legitimately produce caller-facing values: the `total_count` of every list response, and the grouped counts behind the dashboard charts. Each opens the table through `GlideRecordSecure` and answers zero before aggregating if the caller fails the table-level read check, so a caller who may not read the table learns nothing about its size.
+
+The remaining aggregate queries are maintenance and derivation counts inside paths 1, 2 and 5 of the table above — the rate-limit window counts in `RateLimitService` and the distinct-startup counts behind `portfolio_count` in `InvestorPortfolioService`. Neither returns record data to a caller and neither reads a premium field.
+**Counting is the fifth path, and its access gate is what makes it permissible.** `total_count` is one `GlideAggregate` `COUNT`, taken **behind** a `hasAnyAppRole()` check: a caller holding none of the three scoped roles is answered `403`, not a number. An aggregate does not evaluate row-level access, and it does not need to, because record-level visibility is identical for all three roles — the invariant recorded under [The role difference is at field level only](#the-role-difference-is-at-field-level-only). What an aggregate returns is a count of rows and nothing else, so it cannot leak a field value; what it could leak is the **size** of a set the caller may not read, and the role gate is what closes that. Aggregate queries appear in four places in the delivered Update Set: `RestResponseBuilder.countState()` and `countWith()`, `RateLimitService._countClosed()` and `_observed()` on the administrator-only counter table, and `InvestorPortfolioService._startupsForInvestor()` deriving `portfolio_count`. **None of them reads a premium field, and none returns record data.**
 
 ### Omitted, not nulled
 
@@ -253,11 +296,11 @@ The secured read path returns an **empty string** for a denied field, not an err
 
 To omit, the serialiser tests each field with an element-level read check and **skips the key entirely** when the check fails. `RestResponseBuilder.serialize()` obtains the element with `getElement()`, evaluates `canRead()` on it, and continues past the field without assigning a key when the evaluation is false. A denied premium field is consequently **absent from** the response object; the key does not appear with a null, an empty string or a placeholder.
 
-This gate lives exactly once, in the `RestResponseBuilder` Script Include, and is used by all 31 REST operations. Every widget server script must use it too. A response object built by any other means is not permitted. The absence of the key, in place of a present-and-null key, is the one point at which this document records something other than a literal reading of a field being "hidden"; that reading is to be entered in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
+This gate lives exactly once, in the `RestResponseBuilder` Script Include, and is used by all 31 REST operations. Every widget server script must use it too. A response object built by any other means is not permitted. The absence of the key, in place of a present-and-null key, is the one point at which this document records something other than a literal reading of a field being "hidden"; that reading is recorded at `D-025` in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
 ### No bypass
 
-No Script Include in this application is client-callable, and none runs with elevated privilege: all nine — `AppProperties`, `RestQueryHelper`, `RestResponseBuilder`, `RateLimitService`, `StartupSearchService`, `InvestorPortfolioService`, `IngestionLogger`, `IngestionMapper` and `PrivacyRetentionService` — carry `client_callable` false, `mobile_callable` false, `sandbox_callable` false and `package_private` access. No Script Include may read a premium field through the unsecured path and return it to a caller.
+No Script Include in this application is client-callable, and none runs with elevated privilege: all eight — `AppProperties`, `RestQueryHelper`, `RestResponseBuilder`, `RateLimitService`, `StartupSearchService`, `InvestorPortfolioService`, `IngestionLogger` and `IngestionMapper` — carry `client_callable` false, `mobile_callable` false, `sandbox_callable` false and `package_private` access. Eight is the whole inventory, matching Agent Action Plan section 0.4.5. No Script Include may read a premium field through the unsecured path and return it to a caller.
 
 The forbidden anti-pattern: **a Script Include that reads a premium-gated column with `new GlideRecord()` and hands the value back to a REST operation, a widget or a client script bypasses the field-level ACL entirely, and the ACL will report no denial because it was never consulted.**
 
@@ -282,8 +325,10 @@ Verify as follows.
 3. Assert all twenty-one outcomes, the full cross-product of the seven premium fields by the three roles as tabulated in [The premium field matrix](#the-premium-field-matrix): under `x_bst_startuptrk.admin` every field reads, under `x_bst_startuptrk.premium_user` every field reads, and under `x_bst_startuptrk.user` every field is denied.
 4. Spot-check omission against nulling. For a caller holding only `x_bst_startuptrk.user`, confirm the denied field's key is **absent from** the response object — not present with an empty string, and not present with a null.
 5. Confirm both layers are load-bearing by reading a non-premium column under `x_bst_startuptrk.user` in the same call. It must return a value, which establishes that the layer-1 grant passed and that the denial came from layer 3.
+6. **Assert the denial on the Table API route as well as on the Scripted REST route.** The seven entity tables are delivered `public` with `ws_access` true, so `GET /api/now/table/x_bst_startuptrk_startup` is a second live path to the same rows. Under `x_bst_startuptrk.user`, `total_funding_usd` must be **absent from** every returned record on that path too. It is the same layer-3 control on both routes, so a denial on one and a value on the other would mean the field control did not commit. This assertion is what makes the open posture safe rather than merely intended.
+7. **Assert that no write reaches either table over the Table API.** Under `x_bst_startuptrk.premium_user`, a `POST` or `PATCH` to `/api/now/table/x_bst_startuptrk_startup` must be refused: layer 2 grants write, create and delete to `x_bst_startuptrk.admin` alone, and `create_access`, `update_access` and `delete_access` are `false` on the dictionary record.
 
-The three users are to be created by test setup steps at run time; how they are created and torn down is specified in [`./manual-build/05-atf-test-suites.md`](./manual-build/05-atf-test-suites.md). The pass condition for this procedure is prompt section 10.0 criterion 2, whose evidence record is to be kept in [`./validation-checklist.md`](./validation-checklist.md).
+The three users are created by test setup steps at run time; how they are created and torn down is specified in [`./manual-build/05-atf-test-suites.md`](./manual-build/05-atf-test-suites.md). The pass condition for this procedure is prompt section 10.0 criterion 2, whose evidence record is to be kept in [`./validation-checklist.md`](./validation-checklist.md).
 
 ## Legacy provenance
 
@@ -320,7 +365,7 @@ This table is the access-control section of the bidirectional matrix at [`../../
 - [`../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`](../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml) — the authoritative role, ACL and ACL-role records this document transcribes
 - [`./data-model.md`](./data-model.md) — the ten tables field by field, and the seven **P** markers this matrix gates
 - [`./api-reference.md`](./api-reference.md) — the six REST resources, the pagination envelope carrying `total_count`, and the error bodies
-- [`./validation-gates.md`](./validation-gates.md) — the machine-checkable post-commit gates, including one record for each of the three roles, the table access posture as `GATE-SEC-01` and `GATE-SEC-02`, and the two layer-5 controls as `GATE-SEC-03`
+- [`./validation-gates.md`](./validation-gates.md) — the eleven machine-checkable post-commit gates: a Table API read on each of the seven entity tables, one record for each of the three roles, and the scope record
 - [`./validation-checklist.md`](./validation-checklist.md) — the five success criteria; criterion 2 is the pass condition for the matrix above
 - [`./manual-build/04-service-portal-pages-and-widgets.md`](./manual-build/04-service-portal-pages-and-widgets.md) — the portal build, including the `bst-premium-upsell` widget
 - [`./manual-build/05-atf-test-suites.md`](./manual-build/05-atf-test-suites.md) — the 21 field-ACL tests and the run-time creation of the three impersonated users

@@ -197,8 +197,8 @@
 /* --------------------------------------------------------------------------
    Slide stage geometry
    Gives every slide the full 1920 x 1080 stage, making a slide-type
-   background full bleed from its class alone. Declares geometry only, so the
-   hidden and shown display states stay with reveal.js.
+   background full bleed from its class alone. Declares geometry only; the
+   hidden and shown display states are reveal.js's own.
    -------------------------------------------------------------------------- */
 .reveal .slides > section:not(.stack),
 .reveal .slides > section > section {
@@ -712,8 +712,8 @@
 
 /* --------------------------------------------------------------------------
    Supporting surface: light surface islands
-   Tables and KPI cards carry a light background on every slide type, so their
-   contents keep the light slide treatment rather than the inverted one.
+   Tables and KPI cards carry a light background on every slide type. Their
+   contents take the light text token on every slide type.
    -------------------------------------------------------------------------- */
 .reveal .slides table :is(th, td, h1, h2, h3, h4, h5, h6, p, li, strong, b, em, small),
 .reveal .slides .kpi-card :is(h1, h2, h3, h4, h5, h6, p, li, strong, b, em, small):not(.kpi-value):not(.kpi-label) {

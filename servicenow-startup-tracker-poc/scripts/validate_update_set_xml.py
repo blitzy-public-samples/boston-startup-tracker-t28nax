@@ -30,25 +30,19 @@ G-9 governance completeness -- are outside this validator's scope. It checks
 well-formedness, outer document shape and header linkage only; a file that
 passes G-1 and G-2 is not thereby certified against G-3 through G-9.
 
-Parser safety. The validator reads untrusted XML with the standard library's Expat
-binding, so three structural defences bound the work it will do at both levels, in
-place of trusting the parser to survive hostile input:
+Parser safety. Three structural defences are applied at both XML levels:
 
     declaration hygiene   a document declaring a document type or an entity, or
                           referencing any entity other than the five predefined
                           names and numeric character references, is refused
-                          before it reaches the parser. Without a document type
-                          declaration an internal entity cannot be declared, which
-                          removes the entity expansion and external entity vectors
-                          outright rather than relying on a patched Expat.
-    size ceilings         the source file is read through a byte cap, and every
-                          nested payload is measured against a payload cap, so no
-                          single document can exhaust memory.
-    count ceiling         the number of update records is capped, so a file cannot
-                          force an unbounded number of nested parses.
+                          before it reaches the parser.
+    size ceilings         the source file is read through a byte cap and every
+                          nested payload is measured against a payload cap.
+    count ceiling         the number of update records is capped.
 
 Every ceiling is adjustable from the command line. The runtime Expat version is
-reported alongside the first progress line so the posture is visible in the log.
+reported alongside the first progress line. The reasoning behind each defence is
+recorded in docs/decisions/DECISION_LOG.md, per the Explainability rule.
 
 Usage:
     validate_update_set_xml.py [-q | -v] [--max-errors N] [--max-bytes N]
@@ -109,6 +103,19 @@ UNSET_FIELD = "<unset>"
 LINKAGE_SAMPLE_LIMIT = 5
 
 XML_DECLARATION_PREFIX = b"<?xml"
+# gate G-1: "<?xml" is a declaration only when whitespace follows it. Without this
+# byte, "<?xml-stylesheet ...?>" and "<?xmlfoo?>" are processing instructions whose
+# targets merely begin with those five characters.
+DECLARATION_DELIMITERS = frozenset({b" ", b"\t", b"\r", b"\n"})
+DECLARATION_DELIMITER_BYTES = b" \t\r\n"
+DECLARATION_CLOSE = b"?>"
+DECLARATION_VERSION = b"version"
+QUESTION_MARK = 0x3F
+# gate G-1: how far into the file the declaration's closing "?>" is looked for
+DECLARATION_SCAN_BYTES = 256
+# gate G-1: how many bytes of a processing-instruction target a diagnostic names
+TARGET_SAMPLE_BYTES = 32
+PROCESSING_INSTRUCTION_OPEN = b"<?"
 
 # gate G-1: byte-order marks rejected on the raw bytes (AAP section 0.8.1)
 BYTE_ORDER_MARKS = (
@@ -120,8 +127,10 @@ BYTE_ORDER_MARKS = (
 DEFAULT_UPDATE_SET_DIR = "update-set"
 DEFAULT_UPDATE_SET_NAME = "x_bst_startuptrk_boston_startup_tracker_update_set.xml"
 
-# Parser safety ceilings. The delivered Update Set is roughly 1.3 MB across about
-# 300 records, so each default leaves ample headroom while bounding hostile input.
+# Parser safety ceilings: the largest input document, the largest number of payloads
+# and the largest single payload this validator will read. The delivered Update Set is
+# roughly 1.5 MB across 314 records, so each default leaves ample headroom while
+# bounding hostile input.
 DEFAULT_MAX_BYTES = 64 * 1024 * 1024
 DEFAULT_MAX_PAYLOADS = 5000
 DEFAULT_MAX_PAYLOAD_BYTES = 4 * 1024 * 1024
@@ -312,10 +321,9 @@ def read_source_bytes(path: Path, max_bytes: int) -> tuple[bytes, bool]:
 def check_declaration_hygiene(text: str, gate: str, subject: str) -> list[Failure]:
     """Refuse a document type declaration, an entity declaration or an unknown entity.
 
-    Applied to both XML levels before either is parsed. Without a document type
-    declaration no internal entity can be declared, so rejecting these three forms
-    removes the entity expansion and external entity vectors at the source instead
-    of relying on the parser to survive them.
+    Applied to both XML levels before either is parsed. The three refused forms are
+    the DOCTYPE token, the ENTITY token, and any entity reference that is neither
+    one of the five predefined names nor a numeric character reference.
     """
     upper = text.upper()
     for token in (DOCTYPE_TOKEN, ENTITY_TOKEN):
@@ -354,12 +362,37 @@ def first_mismatch_offset(data: bytes, expected: bytes) -> int:
     return limit
 
 
-def check_byte_prologue(data: bytes) -> list[Failure]:
-    """Gate G-1 byte checks: no byte-order mark, and the XML declaration first.
+def instruction_target(data: bytes) -> str:
+    """Return the target of the processing instruction at offset 0, or an empty string.
 
-    Diagnostics name the violated condition, the byte count and the offset of the
-    first differing byte only; input content is never written to any stream, per
-    the gate G-5 secret-hygiene requirement.
+    The target is the run of bytes after "<?" up to the first whitespace byte or
+    question mark, capped at TARGET_SAMPLE_BYTES so a diagnostic naming it stays
+    bounded.
+    """
+    if not data.startswith(PROCESSING_INSTRUCTION_OPEN):
+        return ""
+    target = bytearray()
+    for byte in data[len(PROCESSING_INSTRUCTION_OPEN):]:
+        if byte == QUESTION_MARK or byte in DECLARATION_DELIMITER_BYTES:
+            break
+        target.append(byte)
+        if len(target) == TARGET_SAMPLE_BYTES:
+            break
+    return bytes(target).decode("ascii", "replace")
+
+
+def check_byte_prologue(data: bytes) -> list[Failure]:
+    """Gate G-1 byte checks: no byte-order mark, and a real XML declaration first.
+
+    Four conditions, in order: no leading byte-order mark; nothing at all before
+    the declaration, whitespace included; the first five bytes are "<?xml"
+    followed by a whitespace byte, which is what distinguishes a declaration from
+    a processing instruction whose target begins with those characters; and a
+    "version" pseudo-attribute before the declaration's closing "?>".
+
+    Diagnostics name the violated condition, byte counts, offsets and a bounded
+    processing-instruction target only; no other input content is written to any
+    stream, per the gate G-5 secret-hygiene requirement.
     """
     for label, mark in BYTE_ORDER_MARKS:
         if data.startswith(mark):
@@ -371,15 +404,64 @@ def check_byte_prologue(data: bytes) -> list[Failure]:
                     "declaration",
                 )
             ]
+    if data[:1] in DECLARATION_DELIMITERS:
+        leading = len(data) - len(data.lstrip(DECLARATION_DELIMITER_BYTES))
+        return [
+            Failure(
+                GATE_OUTER,
+                f"whitespace before the XML declaration: {leading} leading "
+                "whitespace byte(s); nothing may precede the declaration",
+            )
+        ]
     if not data.startswith(XML_DECLARATION_PREFIX):
         prefix = XML_DECLARATION_PREFIX.decode("ascii")
         offset = first_mismatch_offset(data, XML_DECLARATION_PREFIX)
+        target = instruction_target(data)
+        found = (
+            f"; a processing instruction with target {target!r} is first"
+            if target
+            else ""
+        )
         return [
             Failure(
                 GATE_OUTER,
                 "XML declaration is not first: the file must begin with "
                 f"{prefix!r}; {len(data)} byte(s) read, first byte differing "
-                f"from the declaration at offset {offset}",
+                f"from the declaration at offset {offset}{found}",
+            )
+        ]
+    prefix_length = len(XML_DECLARATION_PREFIX)
+    delimiter = data[prefix_length:prefix_length + 1]
+    if delimiter not in DECLARATION_DELIMITERS:
+        prefix = XML_DECLARATION_PREFIX.decode("ascii")
+        target = instruction_target(data)
+        return [
+            Failure(
+                GATE_OUTER,
+                f"not an XML declaration: {prefix!r} must be followed by a "
+                "whitespace byte; the file opens a processing instruction with "
+                f"target {target!r}",
+            )
+        ]
+    window = data[:DECLARATION_SCAN_BYTES]
+    close = window.find(DECLARATION_CLOSE)
+    if close == -1:
+        return [
+            Failure(
+                GATE_OUTER,
+                "XML declaration is unterminated: no "
+                f"{DECLARATION_CLOSE.decode('ascii')!r} within the first "
+                f"{DECLARATION_SCAN_BYTES} byte(s)",
+            )
+        ]
+    body = window[prefix_length:close]
+    if DECLARATION_VERSION not in body:
+        return [
+            Failure(
+                GATE_OUTER,
+                "XML declaration carries no "
+                f"{DECLARATION_VERSION.decode('ascii')!r} pseudo-attribute; the "
+                f"declaration ends at offset {close + len(DECLARATION_CLOSE)}",
             )
         ]
     return []
@@ -556,10 +638,9 @@ def payload_label(prefix: str, index: int, siblings: int) -> str:
 def accepted_update_names(primary: ET.Element, table: str) -> list[str]:
     """Return the update name(s) the platform accepts for one payload's record.
 
-    A customer update is named after the record it carries: <table>_<sys_id> of
-    the payload's primary record, or that record's own <sys_update_name> where the
-    payload declares one. An update named anything else cannot be resolved by the
-    platform when another record in the same update set references it.
+    Two forms are accepted: <table>_<sys_id> of the payload's primary record, and
+    that record's own <sys_update_name> where the payload declares one. Implements
+    the gate G-2 update-name contract.
     """
     accepted: list[str] = []
     sys_id = (primary.findtext(PAYLOAD_ID_TAG) or "").strip()
@@ -837,6 +918,86 @@ def default_update_set_path() -> Path:
     return package_root / DEFAULT_UPDATE_SET_DIR / DEFAULT_UPDATE_SET_NAME
 
 
+# gate G-1 byte-prologue fixtures exercised by --self-test. Each pair is a label and
+# a byte string; a label beginning "accept" must produce no failure and every other
+# label must produce exactly one.
+BYTE_PROLOGUE_FIXTURES: tuple[tuple[str, bytes], ...] = (
+    ("accept: minimal declaration", b'<?xml version="1.0"?><unload/>'),
+    (
+        "accept: declaration with encoding",
+        b'<?xml version="1.0" encoding="UTF-8"?><unload/>',
+    ),
+    ("accept: tab after the target", b'<?xml\tversion="1.0"?><unload/>'),
+    ("accept: newline after the target", b'<?xml\nversion="1.0"?><unload/>'),
+    ("reject: no declaration at all", b"<unload/>"),
+    (
+        "reject: stylesheet-only prologue",
+        b'<?xml-stylesheet href="s.xsl" type="text/xsl"?><unload/>',
+    ),
+    (
+        "reject: stylesheet before the declaration",
+        b'<?xml-stylesheet href="s.xsl"?><?xml version="1.0"?><unload/>',
+    ),
+    ("reject: target continues past xml", b"<?xmlfoo?><unload/>"),
+    ("reject: no whitespace after the target", b'<?xmlversion="1.0"?><unload/>'),
+    (
+        "reject: UTF-8 byte-order mark then a valid declaration",
+        codecs.BOM_UTF8 + b'<?xml version="1.0"?><unload/>',
+    ),
+    (
+        "reject: UTF-16-LE byte-order mark",
+        codecs.BOM_UTF16_LE + b'<?xml version="1.0"?><unload/>',
+    ),
+    (
+        "reject: leading newline",
+        b'\n<?xml version="1.0"?><unload/>',
+    ),
+    (
+        "reject: leading spaces",
+        b'   <?xml version="1.0"?><unload/>',
+    ),
+    ("reject: declaration with no version", b'<?xml encoding="UTF-8"?><unload/>'),
+    ("reject: unterminated declaration", b'<?xml version="1.0" ' + b"x" * 400),
+    ("reject: empty file", b""),
+    ("reject: truncated target", b"<?xm"),
+)
+
+
+def run_self_test(reporter: Reporter) -> int:
+    """Exercise the gate G-1 byte-prologue fixtures and return an exit code.
+
+    Every fixture whose label begins "accept" must yield no failure, and every
+    other fixture must yield exactly one. Nothing on disk is read.
+    """
+    passed = 0
+    failed = 0
+    for label, data in BYTE_PROLOGUE_FIXTURES:
+        failures = check_byte_prologue(data)
+        wants_pass = label.startswith("accept")
+        got_pass = not failures
+        if wants_pass == got_pass and (wants_pass or len(failures) == 1):
+            passed += 1
+            reporter.payload_line(f"  self-test PASS {label}")
+            continue
+        failed += 1
+        outcome = "no failure" if got_pass else f"{len(failures)} failure(s)"
+        reporter.failure(
+            f"self-test FAIL {label}: expected "
+            f"{'no failure' if wants_pass else 'exactly 1 failure'}, got {outcome}"
+        )
+        for failure in failures:
+            reporter.failure(f"  gate {failure.gate}: {failure.detail}")
+    reporter.progress(
+        f"self-test: {len(BYTE_PROLOGUE_FIXTURES)} byte-prologue fixture(s), "
+        f"{passed} passed, {failed} failed"
+    )
+    if failed:
+        reporter.verdict("FAIL: byte-prologue self-test")
+        return EXIT_VALIDATION_FAILED
+    reporter.verdict("PASS: byte-prologue self-test")
+    return EXIT_OK
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Construct the command-line parser for the documented contract."""
     parser = argparse.ArgumentParser(
@@ -918,6 +1079,14 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--self-test",
+        action="store_true",
+        help=(
+            f"exercise the gate {GATE_OUTER} byte-prologue fixtures in memory and "
+            "exit; reads no file and validates no Update Set"
+        ),
+    )
+    parser.add_argument(
         "--max-payload-bytes",
         type=int,
         default=DEFAULT_MAX_PAYLOAD_BYTES,
@@ -934,6 +1103,10 @@ def main(argv: list[str] | None = None) -> int:
     """Validate every requested path and return the documented exit code."""
     parser = build_parser()
     args = parser.parse_args(argv)
+    if args.self_test:
+        if args.paths:
+            parser.error("--self-test takes no PATH")
+        return run_self_test(Reporter(quiet=args.quiet, verbose=args.verbose))
     if args.max_errors < 0:
         parser.error("--max-errors must be 0 or greater")
     for name, value in (
