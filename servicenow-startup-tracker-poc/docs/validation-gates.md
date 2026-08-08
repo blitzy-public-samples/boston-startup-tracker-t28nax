@@ -8,13 +8,13 @@ The post-commit step reads its gates from this exact relative path, `<deliverabl
 
 **Authority.** The frozen prompt and the Agent Action Plan are authoritative for all application content. The table names, role names and scope name asserted below are taken from the Update Set XML once those records have been verified against that specification; the same identifiers are documented in [`./data-model.md`](./data-model.md) and [`./access-control.md`](./access-control.md), and the names used here match those two documents character for character. Where this document and the Update Set records disagree, the records are checked against the prompt and the plan first. Where the records match the specification, this document is corrected to them. Where the records depart from it, the records are corrected.
 
-This document carries assertions and their pass and fail conditions only. Every decision behind this gate set is to be recorded in [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md), which is to be the single source of truth for "why".
+This document carries assertions and their pass and fail conditions only. Every decision behind this gate set is recorded in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md), which is to be the single source of truth for "why".
 
 ## Referenced documents
 
 **This document is executable on its own.** All sixteen gates and the two pre-commit checks, the request shape, every target, query, expected result and pass condition, the transient-error retry rule, the failure handling and the evidence record are stated here in full. An operator needs no other file to run them and record the outcome.
 
-Some documents named below are **planned artifacts of this package**. Every link to one carries the marker **(planned)** in its link text. A statement about a planned document describes what that document is required to contain; it is not a claim that the content can be read from it. The delivered files referenced from here are `../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`, `./data-model.md` and `./access-control.md`.
+**Every document named below is delivered and readable.** Each link resolves to a file in this package, among them `../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`, `./data-model.md` and `./access-control.md`, so a reader can follow any link and read the content the statement around it describes; no link is a forward reference to something still to be written.
 
 The wider deployment procedure — the pre-flight checks, the polling mechanics of the five steps preceding these gates, the rollback steps and the failure matrix — is specified in [`./deployment-runbook.md`](./deployment-runbook.md). The rollback action is named under [Failure handling](#failure-handling), and the six-step sequence is named above. The eight values and routes that procedure is required to use, and the forms it must not use in their place, are stated under [Requirements carried to the deployment runbook](#requirements-carried-to-the-deployment-runbook).
 
@@ -24,7 +24,7 @@ Every gate below is stated with the same seven fields.
 
 | Field | Meaning |
 | --- | --- |
-| **Gate ID** | The stable identifier for the gate. A failure report names it, and [`./deployment-runbook.md`](./deployment-runbook.md) cites gates by this identifier, as [`./validation-checklist.md` (planned)](./validation-checklist.md) is to. |
+| **Gate ID** | The stable identifier for the gate. A failure report names it, and [`./deployment-runbook.md`](./deployment-runbook.md) cites gates by this identifier, as [`./validation-checklist.md`](./validation-checklist.md) is to. |
 | **Assertion** | The single condition the gate establishes, stated as a fact that must hold after the commit. |
 | **Target** | The table the request is issued against. |
 | **Query** | The query string appended to the target, in the form defined under [Common request shape](#common-request-shape). |
@@ -44,7 +44,7 @@ Accept: application/json
 
 `{SERVICENOW_INSTANCE_URL}`, `{SERVICENOW_USERNAME}` and `{SERVICENOW_PASSWORD}` are the three environment values the deployment sequence is to use, and are read from the environment rather than written anywhere. No credential value appears in this document, in any gate, or in any evidence record.
 
-Every **Target** in this gate set is a platform metadata table — `sys_db_object`, `sys_dictionary`, `sys_user_role` or `sys_scope`. **No gate targets an application table.** This is a deliberate departure from AAP section 0.11.2, which specified a `sysparm_limit=1` read against each of the seven entity tables. The application's ten tables are delivered with `access` set to `package_private`, every cross-scope capability flag set to `false`, and `ws_access` set to `false`, so they are deliberately **not** reachable over `/api/now/table/*` at all. Restoring those reads would mean re-enabling the native Table API on every application table — an alternate, unrate-limited, unfield-gated route to the data that exists alongside the Scripted REST API. The gates below establish the same facts through metadata the deployment administrator can already read. The decision, its alternatives and its consequences are recorded in [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md).
+Every **Target** in this gate set is a platform metadata table — `sys_db_object`, `sys_dictionary`, `sys_user_role` or `sys_scope`. **No gate targets an application table.** This is a deliberate departure from AAP section 0.11.2, which specified a `sysparm_limit=1` read against each of the seven entity tables. The application's ten tables are delivered with `access` set to `package_private`, every cross-scope capability flag set to `false`, and `ws_access` set to `false`, so they are deliberately **not** reachable over `/api/now/table/*` at all. Restoring those reads would mean re-enabling the native Table API on every application table — an alternate, unrate-limited, unfield-gated route to the data that exists alongside the Scripted REST API. The gates below establish the same facts through metadata the deployment administrator can already read. The decision, its alternatives and its consequences are recorded in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
 Worked example. `GATE-TBL-01` has target `sys_db_object` and query `sysparm_query=name=x_bst_startuptrk_startup&sysparm_fields=name,access,ws_access`, so its full request is:
 
@@ -126,7 +126,7 @@ An **empty** `result` array is a **failure**: it means the table did not commit.
 | `GATE-TBL-06` | A `sys_db_object` record named `x_bst_startuptrk_jobposting` exists. | `sys_db_object` | `sysparm_query=name=x_bst_startuptrk_jobposting&sysparm_fields=name,access,ws_access` | `HTTP 200` with a `result` array holding exactly 1 record whose `name` is `x_bst_startuptrk_jobposting`. | Status is exactly `200` and `result` holds exactly 1 record. | 0 records: the table did not commit. More than 1 record: duplicate table definitions. Either outcome, or any status other than `200`. Report `GATE-TBL-06`; initiate rollback. |
 | `GATE-TBL-07` | A `sys_db_object` record named `x_bst_startuptrk_newsarticle` exists. | `sys_db_object` | `sysparm_query=name=x_bst_startuptrk_newsarticle&sysparm_fields=name,access,ws_access` | `HTTP 200` with a `result` array holding exactly 1 record whose `name` is `x_bst_startuptrk_newsarticle`. | Status is exactly `200` and `result` holds exactly 1 record. | 0 records: the table did not commit. More than 1 record: duplicate table definitions. Either outcome, or any status other than `200`. Report `GATE-TBL-07`; initiate rollback. |
 
-These seven gates are the machine-checkable half of prompt section 10.0 criterion 1 — they establish that each of the seven entity tables exists and is readable. `GATE-COL-01` below strengthens the existence check into a column count. The field-by-field half, which walks all 53 columns against the instance dictionary, is to be covered by [`./validation-checklist.md` (planned)](./validation-checklist.md) and is not performed here.
+These seven gates are the machine-checkable half of prompt section 10.0 criterion 1 — they establish that each of the seven entity tables exists and is readable. `GATE-COL-01` below strengthens the existence check into a column count. The field-by-field half, which walks all 53 columns against the instance dictionary, is to be covered by [`./validation-checklist.md`](./validation-checklist.md) and is not performed here.
 
 ## Gate 8 — entity column count
 
@@ -222,7 +222,7 @@ The rollback action: retrieve the `sys_scope` record whose `scope` is `x_bst_sta
 
 ## Evidence record
 
-The operator records one row per check and one row per gate per deployment. These two tables are the evidence record for the machine-checkable gates, and [`./validation-checklist.md` (planned)](./validation-checklist.md) is to cite them as such.
+The operator records one row per check and one row per gate per deployment. These two tables are the evidence record for the machine-checkable gates, and [`./validation-checklist.md`](./validation-checklist.md) is to cite them as such.
 
 The pre-commit checks are recorded first, because they are read before the commit that the gates below test:
 
@@ -259,16 +259,11 @@ Where a gate was retried under the [Transient-error retry rule](#transient-error
 
 ## Related documents
 
-Delivered with this package:
-
 - [`../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`](../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml) — the authoritative table, column, role, scope and access-control records these gates verify
 - [`./data-model.md`](./data-model.md) — the ten tables field by field, and the source of the seven entity table names gated here
 - [`./access-control.md`](./access-control.md) — the three roles, the access-control matrix including the two REST endpoint controls gated by `GATE-SEC-03`, and the table access posture gated by `GATE-SEC-01` and `GATE-SEC-02`
 - [`./api-reference.md`](./api-reference.md) — the JSON-only request contract the application enforces independently of `GATE-SEC-04`
 - [`../scripts/validate_update_set_xml.py`](../scripts/validate_update_set_xml.py) — the pre-delivery well-formedness validator run on the Update Set before it is uploaded
-
-Planned artifacts of this package:
-
 - [`./deployment-runbook.md`](./deployment-runbook.md) — the pre-flight checks, the six-step import sequence whose final step reads this file, the rollback and the failure matrix, carrying the two checks under [Pre-commit import completeness](#pre-commit-import-completeness) and the eight values and routes under [Requirements carried to the deployment runbook](#requirements-carried-to-the-deployment-runbook)
-- [`./validation-checklist.md` (planned)](./validation-checklist.md) — to specify the five success criteria, to cite the evidence record above, and to cover the field-by-field half of criterion 1
-- [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md) — to be the single source of truth for every decision behind this gate set
+- [`./validation-checklist.md`](./validation-checklist.md) — the five success criteria, to cite the evidence record above, and to cover the field-by-field half of criterion 1
+- [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md) — the single source of truth for every decision behind this gate set

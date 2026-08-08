@@ -157,13 +157,13 @@ Premium subscription billing and payment processing have **no ServiceNow equival
 
 This package states **what** each artifact is and **which requirement it implements**. Every *why*, every alternative considered and every risk carried is recorded in the **repository-level governance tree** at `../docs/` — one directory level above this package, and distinct from this package's own [`docs/`](./docs) directory, which holds the fourteen deliverable documents above.
 
-The three documents below are **planned artifacts**, and each link carries the marker **(planned)** in its link text, following the convention used throughout this package. A statement about a planned document describes what that document is required to contain; it is not a claim that the content can be read from it.
+**All three documents below are delivered and readable**, in keeping with the convention used throughout this package: every link resolves to a file in this repository, so a reader can follow any of them and read the content the statement beside it describes.
 
-| Governance document | What it is required to hold |
+| Governance document | What it holds |
 | --- | --- |
-| [`../docs/decisions/DECISION_LOG.md` (planned)](../docs/decisions/DECISION_LOG.md) | Every non-trivial decision as a table row: what was decided, what alternatives existed, why that choice was made and what risks it carries. **The single source of truth for "why".** |
-| [`../docs/decisions/TRACEABILITY_MATRIX.md` (planned)](../docs/decisions/TRACEABILITY_MATRIX.md) | The bidirectional mapping from legacy construct and stated requirement to delivered artifact, and back, at one hundred per cent coverage with no gaps. |
-| [`../docs/review/CRITICAL_DECISIONS.md` (planned)](../docs/review/CRITICAL_DECISIONS.md) | The five highest-risk decisions, ordered by risk, each with its reviewer persona and exactly what that reviewer checks. |
+| [`../docs/decisions/DECISION_LOG.md`](../docs/decisions/DECISION_LOG.md) | Every non-trivial decision as a table row: what was decided, what alternatives existed, why that choice was made and what risks it carries. **The single source of truth for "why".** |
+| [`../docs/decisions/TRACEABILITY_MATRIX.md`](../docs/decisions/TRACEABILITY_MATRIX.md) | The bidirectional mapping from legacy construct and stated requirement to delivered artifact, and back, at one hundred per cent coverage with no gaps. |
+| [`../docs/review/CRITICAL_DECISIONS.md`](../docs/review/CRITICAL_DECISIONS.md) | The five highest-risk decisions, ordered by risk, each with its reviewer persona and exactly what that reviewer checks. |
 
 ## License
 

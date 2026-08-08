@@ -2,15 +2,15 @@
 
 This runbook takes the delivered Update Set XML at [`../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`](../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml) from this repository onto the ServiceNow Personal Developer Instance at `https://dev351809.service-now.com`, installing the scoped application `x_bst_startuptrk` version 1.0.0. It covers the pre-delivery validation run against the file on disk, three pre-flight checks against the instance, a six-step import sequence, the post-commit gates, the handoff to the manual build work, the rollback, and a complete failure-handling matrix.
 
-An operator holding the deployment credentials runs this document end to end. Running the deployment requires no file other than these two: [`./validation-gates.md`](./validation-gates.md) supplies the post-commit assertions of step 6, and [`./manual-build-instructions.md` (planned)](./manual-build-instructions.md) supplies the work that follows a successful commit. Every request shape, poll interval, timeout, abort condition and retry count is stated here.
+An operator holding the deployment credentials runs this document end to end. Running the deployment requires no file other than these two: [`./validation-gates.md`](./validation-gates.md) supplies the post-commit assertions of step 6, and [`./manual-build-instructions.md`](./manual-build-instructions.md) supplies the work that follows a successful commit. Every request shape, poll interval, timeout, abort condition and retry count is stated here.
 
 ## Referenced documents
 
-Some documents named below are **planned artifacts of this package**. Every link to one carries the marker **(planned)** in its link text. A statement about a planned document describes what that document is required to contain; it is not a claim that the content can be read from it today. The delivered files this runbook depends on are `../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`, `../scripts/validate_update_set_xml.py` and `./validation-gates.md`.
+**Every document named below is delivered and readable.** Each link resolves to a file in this package, including the three files this runbook depends on directly — `../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`, `../scripts/validate_update_set_xml.py` and `./validation-gates.md` — so a reader can follow any link and read the content the statement around it describes; no link is a forward reference to something still to be written.
 
-This document carries procedure only — steps, request shapes, poll intervals, timeouts, assertions, abort conditions and retry counts. Every decision behind that procedure is recorded in [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md), which is the single source of truth for "why".
+This document carries procedure only — steps, request shapes, poll intervals, timeouts, assertions, abort conditions and retry counts. Every decision behind that procedure is recorded in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md), which is the single source of truth for "why".
 
-**Review.** This runbook is the artifact validated by entry 2 of [`../../docs/review/CRITICAL_DECISIONS.md` (planned)](../../docs/review/CRITICAL_DECISIONS.md), reviewer persona **DevOps**, risk level **High**. That reviewer checks two things: that the rollback is triggered only by the failure conditions documented under [Rollback](#rollback), and that the polling intervals and timeouts stated here match the deployment environment's definition.
+**Review.** This runbook is the artifact validated by entry 2 of [`../../docs/review/CRITICAL_DECISIONS.md`](../../docs/review/CRITICAL_DECISIONS.md), reviewer persona **DevOps**, risk level **High**. That reviewer checks two things: that the rollback is triggered only by the failure conditions documented under [Rollback](#rollback), and that the polling intervals and timeouts stated here match the deployment environment's definition.
 
 ## Authority and credential handling
 
@@ -48,8 +48,8 @@ Every item is a hard prerequisite. Tick all four before running the pre-flight c
 
 - [ ] **The operating account holds the `admin` role.** Remote-update-set access requires it, as do the `sys_db_object`, `sys_dictionary`, `sys_user_role`, `sys_scope`, `sys_security_acl` and `sys_properties` reads that the post-commit gates issue.
 - [ ] **The instance release is at or above the Yokohama floor**, so Flow Designer, ATF, Service Portal and Connection & Credential Aliases are all generally available. Confirm the release at deploy time with [Pre-flight 4](#pre-flight-4--release-at-or-above-the-yokohama-floor), which reads the `glide.war` property. If the release predates that floor, **request a new Personal Developer Instance rather than downgrading feature usage.**
-- [ ] **ATF execution is enabled and a test-designer role is held.** Enable the ATF runner property on the instance and hold the test-designer role. Without this, every suite in guide 05 — [`./manual-build/05-atf-test-suites.md` (planned)](./manual-build/05-atf-test-suites.md), indexed by [`./manual-build-instructions.md` (planned)](./manual-build-instructions.md) — is unrunnable, and the coverage gate cannot be evaluated at all.
-- [ ] **The two Connection & Credential Aliases already hold live Crunchbase and LinkedIn credentials** — `x_bst_startuptrk.crunchbase_api` and `x_bst_startuptrk.linkedin_oauth`. This deployment **verifies and binds** them, per [`./manual-build/01-connection-credential-aliases.md` (planned)](./manual-build/01-connection-credential-aliases.md). It never creates a secret, and no secret value is written into the Update Set XML, into a flow input, into a script step or into this runbook.
+- [ ] **ATF execution is enabled and a test-designer role is held.** Enable the ATF runner property on the instance and hold the test-designer role. Without this, every suite in guide 05 — [`./manual-build/05-atf-test-suites.md`](./manual-build/05-atf-test-suites.md), indexed by [`./manual-build-instructions.md`](./manual-build-instructions.md) — is unrunnable, and the coverage gate cannot be evaluated at all.
+- [ ] **The two Connection & Credential Aliases already hold live Crunchbase and LinkedIn credentials** — `x_bst_startuptrk.crunchbase_api` and `x_bst_startuptrk.linkedin_oauth`. This deployment **verifies and binds** them, per [`./manual-build/01-connection-credential-aliases.md`](./manual-build/01-connection-credential-aliases.md). It never creates a secret, and no secret value is written into the Update Set XML, into a flow input, into a script step or into this runbook.
 
 ## Pre-delivery validation — gates G-1 and G-2
 
@@ -410,7 +410,7 @@ The sixteen are:
 | Scope record gate | 1 | `GATE-SCOPE-01` |
 | Security posture gates | 4 | `GATE-SEC-01` through `GATE-SEC-04` |
 
-The eleven-gate core of the deployment environment's definition — the **seven entity-table gates**, the **three role-record gates** and the **one scope-record gate** — is the subset `GATE-TBL-01` through `GATE-TBL-07`, `GATE-ROLE-01` through `GATE-ROLE-03`, and `GATE-SCOPE-01`. `GATE-COL-01` and `GATE-SEC-01` through `GATE-SEC-04` are the five additional gates the delivered gate set defines. All sixteen are required. That gate set, and the form the seven entity-table gates take, are recorded in [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md).
+The eleven-gate core of the deployment environment's definition — the **seven entity-table gates**, the **three role-record gates** and the **one scope-record gate** — is the subset `GATE-TBL-01` through `GATE-TBL-07`, `GATE-ROLE-01` through `GATE-ROLE-03`, and `GATE-SCOPE-01`. `GATE-COL-01` and `GATE-SEC-01` through `GATE-SEC-04` are the five additional gates the delivered gate set defines. All sixteen are required. That gate set, and the form the seven entity-table gates take, are recorded in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
 **Success assertion.** All sixteen gates pass. There is no partial pass, no gate is advisory, and no gate may be skipped, deferred or waived.
 
@@ -426,14 +426,14 @@ Record one row per gate in the evidence record of [`./validation-gates.md`](./va
 
 With all sixteen gates passing, the declarative deliverable is installed: the ten tables, their columns and choices, the three roles, the access controls, the service layer, the REST definition and its operations, the properties, the business rules, the scheduled job, the views and the application menu are all committed on the instance. The manual build work begins now.
 
-Hand off to [`./manual-build-instructions.md` (planned)](./manual-build-instructions.md) and follow its guides in this order:
+Hand off to [`./manual-build-instructions.md`](./manual-build-instructions.md) and follow its guides in this order:
 
 1. Guide **01** — Connection & Credential Aliases.
 2. Guides **02** and **03** — the Crunchbase and LinkedIn ingestion flows.
 3. Guide **04** — the Service Portal pages and widgets.
 4. Guide **06** — the staging-table CSV import.
 5. Guide **05** — the ATF test suites.
-6. [`./validation-checklist.md` (planned)](./validation-checklist.md) — the five success criteria.
+6. [`./validation-checklist.md`](./validation-checklist.md) — the five success criteria.
 
 That index is authoritative for each guide's contents and for the dependencies between them. The guides are not restated here.
 
@@ -536,7 +536,7 @@ Every abort, retry and rollback path in this runbook appears below as its own ro
 
 ## Deployment log
 
-Record one row per step per run. This log is the evidence a deployment took the documented path, and [`./validation-checklist.md` (planned)](./validation-checklist.md) cites it as such.
+Record one row per step per run. This log is the evidence a deployment took the documented path, and [`./validation-checklist.md`](./validation-checklist.md) cites it as such.
 
 | Timestamp (UTC) | Step | Outcome | Record identifier | Operator |
 | --- | --- | --- | --- | --- |
@@ -559,7 +559,7 @@ Record the time of the request in **Timestamp (UTC)** in `YYYY-MM-DD HH:MM:SS` f
 
 ## Legacy provenance
 
-This runbook replaces the repository's retired deployment path. The facts below are recorded for the traceability matrix in [`../../docs/decisions/TRACEABILITY_MATRIX.md` (planned)](../../docs/decisions/TRACEABILITY_MATRIX.md).
+This runbook replaces the repository's retired deployment path. The facts below are recorded for the traceability matrix in [`../../docs/decisions/TRACEABILITY_MATRIX.md`](../../docs/decisions/TRACEABILITY_MATRIX.md).
 
 `scripts/deploy_production.sh` supplied the procedural shape that survives:
 
@@ -583,20 +583,15 @@ Not carried forward:
 
 ## Related documents
 
-Delivered with this package:
-
 - [`../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`](../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml) — the artifact this runbook deploys
 - [`../scripts/validate_update_set_xml.py`](../scripts/validate_update_set_xml.py) — the pre-delivery validator run before step 1
 - [`./validation-gates.md`](./validation-gates.md) — the sixteen post-commit gates run at step 6, and their evidence record
 - [`./data-model.md`](./data-model.md) — the ten tables the commit installs
 - [`./access-control.md`](./access-control.md) — the three roles and the access posture the security gates verify
 - [`./api-reference.md`](./api-reference.md) — the REST definition and operations the commit installs
-
-Planned artifacts of this package:
-
-- [`./manual-build-instructions.md` (planned)](./manual-build-instructions.md) — the index for the manual build work that follows a successful commit
-- [`./validation-checklist.md` (planned)](./validation-checklist.md) — the five success criteria, citing this runbook's deployment log as evidence
-- [`./gaps-and-flags.md` (planned)](./gaps-and-flags.md) — every requirement with no clean platform equivalent
-- [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md) — the single source of truth for every decision behind this procedure
-- [`../../docs/decisions/TRACEABILITY_MATRIX.md` (planned)](../../docs/decisions/TRACEABILITY_MATRIX.md) — the bidirectional mapping this runbook's provenance section feeds
-- [`../../docs/review/CRITICAL_DECISIONS.md` (planned)](../../docs/review/CRITICAL_DECISIONS.md) — the review artifact whose entry 2 validates this runbook
+- [`./manual-build-instructions.md`](./manual-build-instructions.md) — the index for the manual build work that follows a successful commit
+- [`./validation-checklist.md`](./validation-checklist.md) — the five success criteria, citing this runbook's deployment log as evidence
+- [`./gaps-and-flags.md`](./gaps-and-flags.md) — every requirement with no clean platform equivalent
+- [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md) — the single source of truth for every decision behind this procedure
+- [`../../docs/decisions/TRACEABILITY_MATRIX.md`](../../docs/decisions/TRACEABILITY_MATRIX.md) — the bidirectional mapping this runbook's provenance section feeds
+- [`../../docs/review/CRITICAL_DECISIONS.md`](../../docs/review/CRITICAL_DECISIONS.md) — the review artifact whose entry 2 validates this runbook

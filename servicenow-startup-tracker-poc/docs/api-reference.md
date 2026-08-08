@@ -6,15 +6,15 @@ This document is the REST contract reference for the ServiceNow scoped applicati
 
 The table names, column names and premium markers used below are the ones established in [`./data-model.md`](./data-model.md). The field-level read gate applied to every response is the one specified in [`./access-control.md`](./access-control.md); this document states where that gate applies and does not restate the access-control scheme.
 
-This document carries no rationale. Every decision behind this contract, every alternative considered and every risk it carries is to be recorded in [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md), which is to be the single source of truth for "why".
+This document carries no rationale. Every decision behind this contract, every alternative considered and every risk it carries is recorded in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md), which is to be the single source of truth for "why".
 
 ## Referenced documents
 
 This document is self-contained. The definition, all 31 operations, the pagination contract, every request filter, every response representation, all three error contracts, the call graph and the thirteen properties are stated here in full; no statement of the contract requires reading another file.
 
-Some documents named below are **planned artifacts of this package**. Every link to one carries the marker **(planned)** in its link text. A statement about a planned document describes what that document is required to contain; it is not a claim that the content can be read from it. The delivered package documents are the Update Set XML, `./data-model.md`, `./access-control.md`, `./validation-gates.md` and `../sample-data/README.md`.
+**Every document named below is delivered and readable.** Each link resolves to a file in this package, among them the Update Set XML, `./data-model.md`, `./access-control.md`, `./validation-gates.md` and `../sample-data/README.md`, so a reader can follow any link and read the content the statement around it describes; no link is a forward reference to something still to be written.
 
-**Reviewer.** This document is to be the artifact validated by the **API/Integration** reviewer entry in [`../../docs/review/CRITICAL_DECISIONS.md` (planned)](../../docs/review/CRITICAL_DECISIONS.md), covering the credential handling of the ingestion integration and the contract stated here.
+**Reviewer.** This document is to be the artifact validated by the **API/Integration** reviewer entry in [`../../docs/review/CRITICAL_DECISIONS.md`](../../docs/review/CRITICAL_DECISIONS.md), covering the credential handling of the ingestion integration and the contract stated here.
 
 ## The API definition
 
@@ -36,7 +36,7 @@ One `sys_ws_definition` record declares the whole surface. Thirty-one `sys_ws_op
 
 A scoped Scripted REST API always carries its namespace segment in its base path. The logical base path `/api/v1/` therefore resolves **physically** to `/api/x_bst_startuptrk/v1/`.
 
-**Call the physical path.** Every request goes to `https://<instance>.service-now.com/api/x_bst_startuptrk/v1/<resource>`. The logical form is not served and does not resolve. No consumer may be written against it. The namespace segment is to be flagged again in [`./gaps-and-flags.md` (planned)](./gaps-and-flags.md).
+**Call the physical path.** Every request goes to `https://<instance>.service-now.com/api/x_bst_startuptrk/v1/<resource>`. The logical form is not served and does not resolve. No consumer may be written against it. The namespace segment is to be flagged again in [`./gaps-and-flags.md`](./gaps-and-flags.md).
 
 The full request line for the first resource:
 
@@ -115,7 +115,7 @@ The contract stated in this document differs from the legacy Flask contract in t
 2. The **pagination parameter names** differ. They are `sysparm_limit` and `sysparm_offset`, not `page` and `per_page`.
 3. The **response envelope key** differs. The count member is `total_count`, not `total`.
 
-**No compatibility shim, alias or legacy-contract layer exists.** No operation accepts `page` or `per_page`, no response carries `total`, and no route serves the logical `/api/v1/` form. Every element of this contract — each path, each parameter name, each response member and each status code — is specified by the prompt and the Agent Action Plan. The legacy forms are recorded under [Legacy provenance](#legacy-provenance) as historical antecedents only. Each change is to be recorded as a row in [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md).
+**No compatibility shim, alias or legacy-contract layer exists.** No operation accepts `page` or `per_page`, no response carries `total`, and no route serves the logical `/api/v1/` form. Every element of this contract — each path, each parameter name, each response member and each status code — is specified by the prompt and the Agent Action Plan. The legacy forms are recorded under [Legacy provenance](#legacy-provenance) as historical antecedents only. Each change is recorded as a row in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
 ## The pagination contract
 
@@ -579,7 +579,7 @@ The NewsArticle resource over `x_bst_startuptrk_newsarticle`. Five operations.
 | `PUT` | `/news/{id}` | Updates the named news article with the supplied fields. Returns the updated news-article object. | `200` |
 | `DELETE` | `/news/{id}` | Deletes the named news article. Returns no body. | `204` |
 
-Writes to this resource are **manual entry or CSV import only**. There is no automated NewsArticle ingestion: neither ingestion flow writes `x_bst_startuptrk_newsarticle`, and the fallback dataset carries no NewsArticle file. Records reach the table through the platform form, through this resource's `POST` and `PUT` operations, or through an ad hoc import. The exclusion is stated here and is to be recorded again in [`./gaps-and-flags.md` (planned)](./gaps-and-flags.md).
+Writes to this resource are **manual entry or CSV import only**. There is no automated NewsArticle ingestion: neither ingestion flow writes `x_bst_startuptrk_newsarticle`, and the fallback dataset carries no NewsArticle file. Records reach the table through the platform form, through this resource's `POST` and `PUT` operations, or through an ad hoc import. The exclusion is stated here and is recorded again in [`./gaps-and-flags.md`](./gaps-and-flags.md).
 
 `GET /news` accepts two query filters in addition to the pagination parameters. Results are ordered by `published_date` descending, then by `sys_id`.
 
@@ -618,7 +618,7 @@ Six logical resources, 31 operations, one `sys_ws_definition`. `/founders` carri
 
 By method: 13 `GET` operations — seven list operations and six read-one operations — 6 `POST`, 6 `PUT` and 6 `DELETE`. 13 + 6 + 6 + 6 = 31.
 
-This roll-up is the operation-count evidence that criterion 3 in [`./validation-checklist.md` (planned)](./validation-checklist.md) and the API section of [`../../docs/decisions/TRACEABILITY_MATRIX.md` (planned)](../../docs/decisions/TRACEABILITY_MATRIX.md) are each to resolve against.
+This roll-up is the operation-count evidence that criterion 3 in [`./validation-checklist.md`](./validation-checklist.md) and the API section of [`../../docs/decisions/TRACEABILITY_MATRIX.md`](../../docs/decisions/TRACEABILITY_MATRIX.md) are each to resolve against.
 
 ## Field validation
 
@@ -728,7 +728,7 @@ The accounting write is applied as follows, and each step exists to close a spec
 | Increment, when a row exists | A **checked update**: the row is re-queried on `sys_id` **and** on `request_count` still equal to the value this request observed. A missed match means another request incremented in between, and the attempt is retried. | A read-modify-write that would otherwise overwrite a concurrent increment and lose a count. |
 | Retry bound | At most **three** attempts. A retry is taken only when the outcome says a retry can resolve it. | An unbounded retry loop under sustained contention. |
 
-**The policy on an unaccountable request is fail-closed.** If, after three attempts, the counted write did not persist, the failure is written to the application log at `error`, tagged `[x_bst_startuptrk.RateLimitService]`, naming the window key and the attempt count — and **the request is refused with the `429` body above**. It is not admitted. A request whose accounting cannot be persisted is exactly the request an attacker would try to manufacture in volume, so admitting it would make the limit optional; refusing it makes a counter-table outage a denial of service against the API rather than a bypass of its limit. The trade-off is deliberate and is recorded in [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md).
+**The policy on an unaccountable request is fail-closed.** If, after three attempts, the counted write did not persist, the failure is written to the application log at `error`, tagged `[x_bst_startuptrk.RateLimitService]`, naming the window key and the attempt count — and **the request is refused with the `429` body above**. It is not admitted. A request whose accounting cannot be persisted is exactly the request an attacker would try to manufacture in volume, so admitting it would make the limit optional; refusing it makes a counter-table outage a denial of service against the API rather than a bypass of its limit. The trade-off is deliberate and is recorded in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
 **Platform backstop.** Because this accounting is application-level, an operator may additionally configure a platform inbound rate-limit rule in `sys_rate_limit_rules` against this API as a hard ceiling beneath the application limit. That table is Global scope, so it **cannot be shipped in this scoped Update Set** and is not part of the deliverable; it is an instance-side hardening step. It is optional and does not alter the contract: the platform's own `429` carries a platform-controlled body, which is why the application limit — and not the platform rule — is what the `429` shape above and the criterion 3 test assert against.
 
@@ -827,7 +827,7 @@ Every other body is likewise produced by exactly one method, so no status shape 
 | `500` | `RestResponseBuilder.serverError()` |
 | The list envelope | `RestResponseBuilder.page()` |
 
-How the 429 is made deterministic under test — by pre-seeding a counter row already at the configured budget, so the next single call trips the limit — is to be specified step by step in [`./manual-build/05-atf-test-suites.md` (planned)](./manual-build/05-atf-test-suites.md), and the pass condition for the six per-resource REST tests is to be criterion 3 of [`./validation-checklist.md` (planned)](./validation-checklist.md). Neither document restates the contract above.
+How the 429 is made deterministic under test — by pre-seeding a counter row already at the configured budget, so the next single call trips the limit — is specified step by step in [`./manual-build/05-atf-test-suites.md`](./manual-build/05-atf-test-suites.md), and the pass condition for the six per-resource REST tests is to be criterion 3 of [`./validation-checklist.md`](./validation-checklist.md). Neither document restates the contract above.
 
 ## The Script Include call graph
 
@@ -859,7 +859,7 @@ Four of the nine do read through the unsecured `GlideRecord`, because their work
 
 ### Rename impact
 
-Renaming any class in the table above requires updating every call site listed in its **Called by** column. Because the Automated Test Framework suites encode class names and resource paths, the rename must also propagate into the suite steps that [`./manual-build/05-atf-test-suites.md` (planned)](./manual-build/05-atf-test-suites.md) is to specify.
+Renaming any class in the table above requires updating every call site listed in its **Called by** column. Because the Automated Test Framework suites encode class names and resource paths, the rename must also propagate into the suite steps that [`./manual-build/05-atf-test-suites.md`](./manual-build/05-atf-test-suites.md) is to specify.
 
 ## System properties
 
@@ -883,7 +883,7 @@ Thirteen `sys_properties` records externalise the application's configuration. A
 
 The two `privacy.*` properties are the only two of the thirteen whose read and write are restricted to a role: both carry `read_roles` and `write_roles` of `x_bst_startuptrk.admin`, because a retention window is an administrative control and a caller who could read it learns how long person data survives on the instance. The retention lifecycle they drive is specified in [`./data-model.md`](./data-model.md).
 
-**No property holds a secret.** No API key, client identifier, client secret, refresh token or password value is stored in any of the thirteen, and the two base-URL properties are non-secret endpoint configuration. Credentials live only in the two Connection & Credential Aliases, `x_bst_startuptrk.crunchbase_api` and `x_bst_startuptrk.linkedin_oauth`, which are referenced by name and are built on the instance rather than shipped; see [`./manual-build/01-connection-credential-aliases.md` (planned)](./manual-build/01-connection-credential-aliases.md).
+**No property holds a secret.** No API key, client identifier, client secret, refresh token or password value is stored in any of the thirteen, and the two base-URL properties are non-secret endpoint configuration. Credentials live only in the two Connection & Credential Aliases, `x_bst_startuptrk.crunchbase_api` and `x_bst_startuptrk.linkedin_oauth`, which are referenced by name and are built on the instance rather than shipped; see [`./manual-build/01-connection-credential-aliases.md`](./manual-build/01-connection-credential-aliases.md).
 
 ### Inventory beyond the planned counts
 
@@ -895,7 +895,7 @@ Three inventories in this application are larger than the Agent Action Plan's st
 | Scoped system properties | 11, AAP section 0.4.7 | 13 | `x_bst_startuptrk.privacy.staging_retention_days` and `x_bst_startuptrk.privacy.staging_minimise_hours`, the two bounds that service reads |
 | Scheduled jobs | 1, AAP section 0.4.2 | 2 | **Prune ingestion staging rows**, which runs that service's two sweeps; the counter-pruning job is unchanged |
 
-All three additions serve the staging-table privacy lifecycle, which exists because `x_bst_startuptrk_ingest_staging` is the only table in the application that holds verbatim upstream payloads and unvalidated personal data. Each is to be recorded in [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md).
+All three additions serve the staging-table privacy lifecycle, which exists because `x_bst_startuptrk_ingest_staging` is the only table in the application that holds verbatim upstream payloads and unvalidated personal data. Each is recorded in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
 ## Legacy provenance
 
@@ -926,12 +926,12 @@ One row per change. Each states the legacy form with its source citation, the ta
 
 | # | Legacy form | Target form | Decision log |
 | --- | --- | --- | --- |
-| 1 | Request parameters `page` and `per_page`, `src/backend/routes/startup.py:L12-L13` | Request parameters `sysparm_limit` and `sysparm_offset` | [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md) |
-| 2 | Response envelope `{'startups', 'total', 'pages', 'page', 'per_page'}`, `src/backend/routes/startup.py:L31-L37` | Response envelope `result` array plus `total_count` plus the `limit` and `offset` echoes | [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md) |
-| 3 | Logical base path `API_BASE_URL = '/api/v1'`, `src/shared/constants.ts:L2` | Physical base path `/api/x_bst_startuptrk/v1/` | [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md) |
-| 4 | Maximum page size `MAX_RESULTS_PER_PAGE = 50`, `src/shared/constants.ts:L5` | Property `x_bst_startuptrk.rest.max_limit`, shipped value `50` — value carried forward | [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md) |
-| 5 | Default page size `DEFAULT_RESULTS_PER_PAGE = 20`, `src/shared/constants.ts:L8` | Property `x_bst_startuptrk.rest.default_limit`, shipped value `20` — value carried forward | [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md) |
-| 6 | Per-record success bodies returning the record dictionary directly, and a `{'message': ...}` body on delete, `src/backend/routes/startup.py:L121` | The serialised record object on read, create and update; **no body** on delete, with `HTTP 204` | [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md) |
+| 1 | Request parameters `page` and `per_page`, `src/backend/routes/startup.py:L12-L13` | Request parameters `sysparm_limit` and `sysparm_offset` | [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md) |
+| 2 | Response envelope `{'startups', 'total', 'pages', 'page', 'per_page'}`, `src/backend/routes/startup.py:L31-L37` | Response envelope `result` array plus `total_count` plus the `limit` and `offset` echoes | [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md) |
+| 3 | Logical base path `API_BASE_URL = '/api/v1'`, `src/shared/constants.ts:L2` | Physical base path `/api/x_bst_startuptrk/v1/` | [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md) |
+| 4 | Maximum page size `MAX_RESULTS_PER_PAGE = 50`, `src/shared/constants.ts:L5` | Property `x_bst_startuptrk.rest.max_limit`, shipped value `50` — value carried forward | [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md) |
+| 5 | Default page size `DEFAULT_RESULTS_PER_PAGE = 20`, `src/shared/constants.ts:L8` | Property `x_bst_startuptrk.rest.default_limit`, shipped value `20` — value carried forward | [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md) |
+| 6 | Per-record success bodies returning the record dictionary directly, and a `{'message': ...}` body on delete, `src/backend/routes/startup.py:L121` | The serialised record object on read, create and update; **no body** on delete, with `HTTP 204` | [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md) |
 
 Rows 4 and 5 are the only rows whose target **value** matches its legacy counterpart, and each arrives as a system property rather than as a source constant. Every other row replaces the legacy form outright. Neither row makes the legacy constant authoritative: both shipped values are specified by the Agent Action Plan, and the match is recorded here because it is a fact worth tracing, not because it is a reason.
 
@@ -958,26 +958,20 @@ The legacy per-resource query parameters map across as follows. The legacy `star
 | `startup_id` | `src/backend/routes/news.py:L14` | `startup` on `GET /news` |
 | — | — | `location` on `GET /startups`, `type` on `GET /investors`, `department` on `GET /jobs`, `source` on `GET /news`, `startup` and `round_type` on `GET /funding-rounds`, `startup` and `name` on `GET /founders` — no legacy counterpart |
 
-This section is the API portion of the bidirectional matrix that [`../../docs/decisions/TRACEABILITY_MATRIX.md` (planned)](../../docs/decisions/TRACEABILITY_MATRIX.md) is to carry.
+This section is the API portion of the bidirectional matrix that [`../../docs/decisions/TRACEABILITY_MATRIX.md`](../../docs/decisions/TRACEABILITY_MATRIX.md) is to carry.
 
 ## Related documents
-
-Delivered with this package:
 
 - [`../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`](../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml) — the authoritative REST definition, operation, Script Include and property records this document transcribes
 - [`./data-model.md`](./data-model.md) — the ten tables field by field, the choice values, the inclusion-criteria predicate and the `portfolio_count` derivation
 - [`./access-control.md`](./access-control.md) — the five ACL layers including the two `REST_Endpoint` controls bound here, the three roles, the seven premium fields, the omitted-not-nulled rule, the table access posture and the secured read and count paths this contract depends on
-- [`./gaps-and-flags.md` (planned)](./gaps-and-flags.md) — requirements with no clean platform equivalent, including the namespace segment in the base path and the exclusion of automated NewsArticle ingestion
+- [`./gaps-and-flags.md`](./gaps-and-flags.md) — requirements with no clean platform equivalent, including the namespace segment in the base path and the exclusion of automated NewsArticle ingestion
 - [`./validation-gates.md`](./validation-gates.md) — the machine-checkable post-commit gates run after the Update Set commits
 - [`../sample-data/README.md`](../sample-data/README.md) — the fallback dataset and the ingestion-path cleaning guarantees that the create and update operations do **not** apply
 - [`../scripts/validate_update_set_xml.py`](../scripts/validate_update_set_xml.py) — the two-level well-formedness validator for the Update Set this document transcribes
-
-Planned artifacts of this package:
-
-- [`./gaps-and-flags.md` (planned)](./gaps-and-flags.md) — to record requirements with no clean platform equivalent, including the namespace segment in the base path and the exclusion of automated NewsArticle ingestion
-- [`./validation-checklist.md` (planned)](./validation-checklist.md) — to specify the five success criteria, criterion 3 being the pass condition for the six per-resource REST tests
-- [`./manual-build/01-connection-credential-aliases.md` (planned)](./manual-build/01-connection-credential-aliases.md) — to specify how the two Connection & Credential Aliases are built and bound; they are the only home for credential material
-- [`./manual-build/05-atf-test-suites.md` (planned)](./manual-build/05-atf-test-suites.md) — to specify the REST resource tests and how the 429 response is made deterministic
-- [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md) — to be the single source of truth for every decision, alternative and risk behind this contract
-- [`../../docs/decisions/TRACEABILITY_MATRIX.md` (planned)](../../docs/decisions/TRACEABILITY_MATRIX.md) — to carry the bidirectional source-to-target matrix this section feeds
-- [`../../docs/review/CRITICAL_DECISIONS.md` (planned)](../../docs/review/CRITICAL_DECISIONS.md) — to carry the five highest-risk decisions, including the API/Integration reviewer entry
+- [`./validation-checklist.md`](./validation-checklist.md) — the five success criteria, criterion 3 being the pass condition for the six per-resource REST tests
+- [`./manual-build/01-connection-credential-aliases.md`](./manual-build/01-connection-credential-aliases.md) — how the two Connection & Credential Aliases are built and bound; they are the only home for credential material
+- [`./manual-build/05-atf-test-suites.md`](./manual-build/05-atf-test-suites.md) — the REST resource tests and how the 429 response is made deterministic
+- [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md) — the single source of truth for every decision, alternative and risk behind this contract
+- [`../../docs/decisions/TRACEABILITY_MATRIX.md`](../../docs/decisions/TRACEABILITY_MATRIX.md) — the bidirectional source-to-target matrix this section feeds
+- [`../../docs/review/CRITICAL_DECISIONS.md`](../../docs/review/CRITICAL_DECISIONS.md) — the five highest-risk decisions, including the API/Integration reviewer entry

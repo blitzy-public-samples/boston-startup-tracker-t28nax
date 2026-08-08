@@ -1,0 +1,1720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Executive summary of the Boston Startup Tracker replatform onto the ServiceNow Now Platform as the single scoped application x_bst_startuptrk.">
+<title>Boston Startup Tracker on ServiceNow &mdash; Executive Summary</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;family=Fira+Code:wght@400;500&amp;display=swap">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/white.css">
+
+<style id="blitzy-theme">
+/* ==========================================================================
+   blitzy-reveal-theme.css
+
+   Canonical Blitzy reveal.js presentation theme. Defines the Blitzy design
+   tokens, the reveal.js integration layer, base typography, the four slide
+   types, the ten component classes, the Mermaid diagram container, and the
+   supporting surfaces (tables, inline mono, Lucide icons, lists, links).
+
+   The theme is calibrated for a 1920 x 1080 reveal.js stage.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Design tokens: required Blitzy custom properties
+   -------------------------------------------------------------------------- */
+:root {
+  --blitzy-primary: #5B39F3;
+  --blitzy-primary-dark: #2D1C77;
+  --blitzy-primary-navy: #1A105F;
+  --blitzy-primary-light: #7A6DEC;
+  --blitzy-primary-deep: #4101DB;
+  --blitzy-accent-teal: #94FAD5;
+  --blitzy-surface-0: #FFFFFF;
+  --blitzy-surface-1: #F4EFF6;
+  --blitzy-surface-2: #F2F0FE;
+  --blitzy-surface-3: #F5F5F5;
+  --blitzy-border: #D9D9D9;
+  --blitzy-border-soft: rgba(91, 57, 243, 0.18);
+  --blitzy-text: #333333;
+  --blitzy-text-muted: #999999;
+  --blitzy-text-invert: #FFFFFF;
+  --ff-body: 'Inter', system-ui, sans-serif;
+  --ff-display: 'Space Grotesk', 'Inter', sans-serif;
+  --ff-mono: 'Fira Code', 'Courier New', monospace;
+  --gradient-hero: linear-gradient(68deg, #7A6DEC 15.56%, #5B39F3 62.74%, #4101DB 84.44%);
+  --gradient-divider: linear-gradient(135deg, #2D1C77 0%, #5B39F3 100%);
+  --gradient-accent-bar: linear-gradient(90deg, #5B39F3 0%, #94FAD5 100%);
+}
+
+/* --------------------------------------------------------------------------
+   Design tokens: supplementary radii, spacing and type scale
+   Derived radius, spacing and type-scale steps referenced throughout this file.
+   -------------------------------------------------------------------------- */
+:root {
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
+
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-5: 48px;
+  --space-6: 64px;
+  --slide-pad-x: 112px;
+  --slide-pad-y: 84px;
+
+  --fs-body: 32px;
+  --fs-lead: 38px;
+  --fs-h1: 104px;
+  --fs-h2: 68px;
+  --fs-h3: 46px;
+  --fs-h4: 34px;
+  --fs-small: 24px;
+  --fs-eyebrow: 22px;
+  --fs-kpi-value: 82px;
+  --fs-kpi-label: 21px;
+  --fs-table: 26px;
+  --fs-diagram: 26px;
+  --fs-code: 0.88em;
+}
+
+/* --------------------------------------------------------------------------
+   reveal.js integration layer
+   Remaps the reveal.js theme variables onto Blitzy tokens on the .reveal
+   element, from which every descendant inherits them.
+   -------------------------------------------------------------------------- */
+.reveal {
+  --r-background-color: var(--blitzy-surface-0);
+  --r-main-font: var(--ff-body);
+  --r-main-font-size: var(--fs-body);
+  --r-main-color: var(--blitzy-text);
+  --r-block-margin: var(--space-3);
+  --r-heading-margin: 0 0 var(--space-3) 0;
+  --r-heading-font: var(--ff-display);
+  --r-heading-color: var(--blitzy-text);
+  --r-heading-line-height: 1.12;
+  --r-heading-letter-spacing: -0.01em;
+  --r-heading-text-transform: none;
+  --r-heading-text-shadow: none;
+  --r-heading-font-weight: 600;
+  --r-heading1-text-shadow: none;
+  --r-heading1-size: var(--fs-h1);
+  --r-heading2-size: var(--fs-h2);
+  --r-heading3-size: var(--fs-h3);
+  --r-heading4-size: var(--fs-h4);
+  --r-code-font: var(--ff-mono);
+  --r-link-color: var(--blitzy-primary);
+  --r-link-color-dark: var(--blitzy-primary-deep);
+  --r-link-color-hover: var(--blitzy-primary-light);
+  --r-selection-background-color: var(--blitzy-accent-teal);
+  --r-selection-color: var(--blitzy-text);
+}
+
+/* Page canvas behind the slide stage */
+.reveal-viewport {
+  background-color: var(--blitzy-surface-0);
+}
+
+.reveal .controls {
+  color: var(--blitzy-primary);
+}
+
+/* Keyboard focus indicator on the navigation arrows */
+.reveal .controls button:focus-visible {
+  outline: 3px solid currentColor;
+  outline-offset: 4px;
+  border-radius: var(--radius-sm);
+}
+
+/* A focused back arrow drops the faded treatment reveal.js gives it */
+.reveal:not(.rtl) .controls[data-controls-back-arrows="faded"] .navigate-left.enabled:focus-visible,
+.reveal .controls[data-controls-back-arrows="faded"] .navigate-up.enabled:focus-visible {
+  opacity: 1;
+}
+
+.reveal .progress {
+  color: var(--blitzy-primary);
+  background-color: var(--blitzy-border);
+}
+
+/* Navigation arrows switch to the teal accent while a dark slide type shows,
+   as a top-level slide or as the shown child of the shown stack */
+.reveal:has(.slides > section.present:is(.slide-title, .slide-divider, .slide-closing)) .controls,
+.reveal:has(.slides > section.present > section.present:is(.slide-title, .slide-divider, .slide-closing)) .controls {
+  color: var(--blitzy-accent-teal);
+}
+
+/* --------------------------------------------------------------------------
+   Base typography
+   -------------------------------------------------------------------------- */
+.reveal h1,
+.reveal h2,
+.reveal h3,
+.reveal h4,
+.reveal h5,
+.reveal h6 {
+  font-family: var(--ff-display);
+  text-transform: none;
+  text-shadow: none;
+  word-wrap: break-word;
+}
+
+.reveal h1 {
+  font-weight: 700;
+}
+
+.reveal h2 {
+  font-weight: 600;
+}
+
+.reveal h3,
+.reveal h4 {
+  font-weight: 500;
+}
+
+.reveal h5 {
+  font-size: var(--fs-h4);
+  font-weight: 500;
+}
+
+.reveal h6 {
+  font-size: var(--fs-small);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
+.reveal p {
+  font-family: var(--ff-body);
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.reveal strong,
+.reveal b {
+  font-weight: 600;
+}
+
+.reveal em {
+  font-style: italic;
+}
+
+.reveal small {
+  font-size: var(--fs-small);
+}
+
+/* --------------------------------------------------------------------------
+   Slide stage geometry
+   Gives every slide the full 1920 x 1080 stage, making a slide-type
+   background full bleed from its class alone. Declares geometry only, so the
+   hidden and shown display states stay with reveal.js.
+   -------------------------------------------------------------------------- */
+.reveal .slides > section:not(.stack),
+.reveal .slides > section > section {
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  padding: var(--slide-pad-y) var(--slide-pad-x);
+  overflow: visible;
+}
+
+/* The slide reveal.js is showing lays its content out as a flex column,
+   over the inline display value reveal.js assigns to a shown slide. */
+.reveal .slides > section.present:not(.stack),
+.reveal .slides > section.present > section.present {
+  display: flex !important;
+}
+
+/* --------------------------------------------------------------------------
+   Slide type: Content (the unclassed default)
+   -------------------------------------------------------------------------- */
+.reveal .slides > section:not(.stack):not(.slide-title):not(.slide-divider):not(.slide-closing),
+.reveal .slides > section > section:not(.slide-title):not(.slide-divider):not(.slide-closing) {
+  color: var(--blitzy-text);
+  text-align: left;
+}
+
+.reveal .slides > section:not(.stack):not(.slide-title):not(.slide-divider):not(.slide-closing) > h2 {
+  margin-bottom: var(--space-4);
+}
+
+/* --------------------------------------------------------------------------
+   Slide type: Title
+   -------------------------------------------------------------------------- */
+.reveal .slide-title {
+  --r-heading-color: var(--blitzy-text-invert);
+  --r-link-color: var(--blitzy-accent-teal);
+  --r-link-color-hover: var(--blitzy-surface-0);
+  justify-content: center;
+  background-image: var(--gradient-hero);
+  background-color: var(--blitzy-primary);
+  color: var(--blitzy-text-invert);
+  text-align: left;
+}
+
+.reveal .slide-title h1,
+.reveal .slide-title h2,
+.reveal .slide-title h3,
+.reveal .slide-title h4,
+.reveal .slide-title h5,
+.reveal .slide-title h6,
+.reveal .slide-title p,
+.reveal .slide-title li,
+.reveal .slide-title strong,
+.reveal .slide-title b,
+.reveal .slide-title em,
+.reveal .slide-title small {
+  color: var(--blitzy-text-invert);
+}
+
+.reveal .slide-title h1 {
+  max-width: 1500px;
+  margin-bottom: var(--space-4);
+}
+
+.reveal .slide-title p {
+  max-width: 1300px;
+  font-size: var(--fs-lead);
+  line-height: 1.4;
+}
+
+.reveal .slide-title a {
+  color: var(--blitzy-accent-teal);
+}
+
+.reveal .slide-title a:hover {
+  color: var(--blitzy-surface-0);
+}
+
+/* --------------------------------------------------------------------------
+   Slide type: Section Divider
+   -------------------------------------------------------------------------- */
+.reveal .slide-divider {
+  --r-heading-color: var(--blitzy-text-invert);
+  --r-link-color: var(--blitzy-accent-teal);
+  --r-link-color-hover: var(--blitzy-surface-0);
+  justify-content: center;
+  align-items: center;
+  background-image: var(--gradient-divider);
+  background-color: var(--blitzy-primary-dark);
+  color: var(--blitzy-text-invert);
+  text-align: center;
+}
+
+.reveal .slide-divider h1,
+.reveal .slide-divider h2,
+.reveal .slide-divider h3,
+.reveal .slide-divider h4,
+.reveal .slide-divider h5,
+.reveal .slide-divider h6,
+.reveal .slide-divider p,
+.reveal .slide-divider li,
+.reveal .slide-divider strong,
+.reveal .slide-divider b,
+.reveal .slide-divider em,
+.reveal .slide-divider small {
+  color: var(--blitzy-text-invert);
+}
+
+.reveal .slide-divider h1,
+.reveal .slide-divider h2 {
+  max-width: 1500px;
+  margin-top: var(--space-5);
+  margin-bottom: var(--space-3);
+  text-align: center;
+}
+
+.reveal .slide-divider p {
+  max-width: 1240px;
+  font-size: var(--fs-lead);
+  text-align: center;
+}
+
+.reveal .slide-divider a {
+  color: var(--blitzy-accent-teal);
+}
+
+.reveal .slide-divider a:hover {
+  color: var(--blitzy-surface-0);
+}
+
+/* --------------------------------------------------------------------------
+   Slide type: Closing
+   -------------------------------------------------------------------------- */
+.reveal .slide-closing {
+  --r-heading-color: var(--blitzy-text-invert);
+  --r-link-color: var(--blitzy-accent-teal);
+  --r-link-color-hover: var(--blitzy-surface-0);
+  justify-content: center;
+  background-color: var(--blitzy-primary-navy);
+  color: var(--blitzy-text-invert);
+  text-align: left;
+}
+
+.reveal .slide-closing h1,
+.reveal .slide-closing h2,
+.reveal .slide-closing h3,
+.reveal .slide-closing h4,
+.reveal .slide-closing h5,
+.reveal .slide-closing h6,
+.reveal .slide-closing p,
+.reveal .slide-closing li,
+.reveal .slide-closing strong,
+.reveal .slide-closing b,
+.reveal .slide-closing em,
+.reveal .slide-closing small {
+  color: var(--blitzy-text-invert);
+}
+
+.reveal .slide-closing h2 {
+  max-width: 1400px;
+  margin-bottom: var(--space-4);
+}
+
+.reveal .slide-closing ul,
+.reveal .slide-closing ol {
+  max-width: 1300px;
+  margin-bottom: var(--space-5);
+}
+
+.reveal .slide-closing a {
+  color: var(--blitzy-accent-teal);
+}
+
+.reveal .slide-closing a:hover {
+  color: var(--blitzy-surface-0);
+}
+
+/* --------------------------------------------------------------------------
+   Component: kpi-grid
+   Even row of KPI cards that wraps at three to four cards on the stage.
+   -------------------------------------------------------------------------- */
+.reveal .kpi-grid {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: var(--space-4);
+  width: 100%;
+  margin: var(--space-4) 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+.reveal .kpi-grid > * {
+  flex: 1 1 380px;
+  min-width: 340px;
+}
+
+/* --------------------------------------------------------------------------
+   Component: kpi-card
+   -------------------------------------------------------------------------- */
+.reveal .kpi-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  box-sizing: border-box;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  background-color: var(--blitzy-surface-1);
+  border: 1px solid var(--blitzy-border-soft);
+  border-radius: var(--radius-md);
+  color: var(--blitzy-text);
+  text-align: left;
+}
+
+/* --------------------------------------------------------------------------
+   Component: kpi-value
+   -------------------------------------------------------------------------- */
+.reveal .slides .kpi-value {
+  display: block;
+  margin: 0;
+  font-family: var(--ff-display);
+  font-size: var(--fs-kpi-value);
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  color: var(--blitzy-primary);
+}
+
+/* --------------------------------------------------------------------------
+   Component: kpi-label
+   -------------------------------------------------------------------------- */
+.reveal .slides .kpi-label {
+  display: block;
+  margin: 0;
+  font-family: var(--ff-body);
+  font-size: var(--fs-kpi-label);
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--blitzy-text);
+}
+
+/* --------------------------------------------------------------------------
+   Component: kpi-icon
+   Sizes the icon slot and the Lucide glyph it carries.
+   -------------------------------------------------------------------------- */
+.reveal .slides .kpi-icon,
+.reveal .slides .kpi-icon [data-lucide] {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  color: var(--blitzy-primary);
+}
+
+/* --------------------------------------------------------------------------
+   Component: eyebrow
+   Small mono kicker above a heading.
+   -------------------------------------------------------------------------- */
+.reveal .eyebrow {
+  display: block;
+  flex: none;
+  margin: 0 0 var(--space-3) 0;
+  font-family: var(--ff-mono);
+  font-size: var(--fs-eyebrow);
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--blitzy-primary);
+}
+
+/* The eyebrow reads teal on the three dark slide types */
+.reveal .slide-title .eyebrow,
+.reveal .slide-divider .eyebrow,
+.reveal .slide-closing .eyebrow {
+  color: var(--blitzy-accent-teal);
+}
+
+/* --------------------------------------------------------------------------
+   Component: accent-bar
+   -------------------------------------------------------------------------- */
+.reveal .accent-bar {
+  display: block;
+  flex: none;
+  width: 100%;
+  max-width: 720px;
+  height: 10px;
+  margin: var(--space-4) 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background-image: var(--gradient-accent-bar);
+}
+
+/* --------------------------------------------------------------------------
+   Component: brand-lockup
+   -------------------------------------------------------------------------- */
+.reveal .brand-lockup {
+  display: flex;
+  flex: none;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 0 0;
+  font-family: var(--ff-display);
+  font-size: var(--fs-h4);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--blitzy-text);
+  text-align: left;
+}
+
+/* The lockup reads inverted on the three dark slide types */
+.reveal .slide-title .brand-lockup,
+.reveal .slide-divider .brand-lockup,
+.reveal .slide-closing .brand-lockup {
+  color: var(--blitzy-text-invert);
+}
+
+/* The Lucide glyph the lockup carries */
+.reveal .brand-lockup [data-lucide] {
+  flex: none;
+  width: 40px;
+  height: 40px;
+}
+
+/* --------------------------------------------------------------------------
+   Component: hero-icon
+   Large thematic icon for the title and divider slide types. Sizes the icon
+   slot and the Lucide glyph it carries.
+   -------------------------------------------------------------------------- */
+.reveal .slides .hero-icon,
+.reveal .slides .hero-icon [data-lucide] {
+  flex: none;
+  width: 112px;
+  height: 112px;
+  color: inherit;
+  stroke-width: 1.5;
+}
+
+.reveal .slides .hero-icon {
+  margin: 0 0 var(--space-4) 0;
+}
+
+/* --------------------------------------------------------------------------
+   Component: icon-row
+   Horizontal strip of Lucide glyphs used as a Content slide visual.
+   -------------------------------------------------------------------------- */
+.reveal .icon-row {
+  display: flex;
+  flex: none;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-6);
+  width: 100%;
+  margin: var(--space-4) 0;
+  padding: 0;
+  list-style: none;
+  color: var(--blitzy-primary);
+}
+
+/* The Lucide glyphs the strip carries */
+.reveal .icon-row [data-lucide] {
+  flex: none;
+  width: 56px;
+  height: 56px;
+}
+
+/* Icon-row glyphs inherit the slide colour on the three dark slide types */
+.reveal .slide-title .icon-row,
+.reveal .slide-divider .icon-row,
+.reveal .slide-closing .icon-row {
+  color: var(--blitzy-accent-teal);
+}
+
+/* --------------------------------------------------------------------------
+   Mermaid diagram container
+   Neutralises the reveal.js pre treatment (reduced font size, mono family,
+   drop shadow, 90% width, left alignment) and frames the rendered SVG.
+   Leaves the pre default white-space undeclared.
+   -------------------------------------------------------------------------- */
+.reveal .mermaid,
+.reveal pre.mermaid,
+.reveal .slides pre.mermaid {
+  display: block;
+  flex: none;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  margin: var(--space-3) auto;
+  padding: var(--space-4);
+  overflow: visible;
+  background-color: var(--blitzy-surface-0);
+  border: 1px solid var(--blitzy-border-soft);
+  border-radius: var(--radius-lg);
+  box-shadow: none;
+  font-family: var(--ff-body);
+  font-size: var(--fs-diagram);
+  line-height: 1.35;
+  letter-spacing: normal;
+  text-align: center;
+  color: var(--blitzy-text);
+  word-wrap: normal;
+}
+
+/* Caps the rendered diagram to the stage without clipping */
+.reveal .mermaid > svg,
+.reveal pre.mermaid > svg,
+.reveal .slides pre.mermaid > svg {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: 660px;
+  margin: 0 auto;
+  overflow: visible;
+  font-family: var(--ff-body);
+}
+
+/* Permits Mermaid foreignObject label overflow */
+.reveal .mermaid svg foreignObject,
+.reveal pre.mermaid svg foreignObject,
+.reveal .slides pre.mermaid svg foreignObject {
+  overflow: visible;
+}
+
+/* --------------------------------------------------------------------------
+   Supporting surface: styled tables
+   -------------------------------------------------------------------------- */
+.reveal .slides table {
+  flex: none;
+  width: 100%;
+  margin: var(--space-3) 0;
+  border-collapse: collapse;
+  border-spacing: 0;
+  background-color: var(--blitzy-surface-0);
+  border: 1px solid var(--blitzy-border);
+  font-family: var(--ff-body);
+  font-size: var(--fs-table);
+  line-height: 1.35;
+  text-align: left;
+}
+
+.reveal .slides table th {
+  padding: var(--space-2) var(--space-3);
+  background-color: var(--blitzy-surface-2);
+  border-bottom: 2px solid var(--blitzy-primary);
+  font-family: var(--ff-display);
+  font-size: var(--fs-table);
+  font-weight: 600;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.reveal .slides table td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--blitzy-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.reveal .slides table tbody tr:nth-child(even) {
+  background-color: var(--blitzy-surface-3);
+}
+
+.reveal .slides table tbody tr:last-child td,
+.reveal .slides table tbody tr:last-child th {
+  border-bottom: 0;
+}
+
+.reveal .slides table th[align="center"],
+.reveal .slides table td[align="center"] {
+  text-align: center;
+}
+
+.reveal .slides table th[align="right"],
+.reveal .slides table td[align="right"] {
+  text-align: right;
+}
+
+/* --------------------------------------------------------------------------
+   Supporting surface: inline mono
+   -------------------------------------------------------------------------- */
+.reveal code {
+  padding: 0.08em var(--space-1);
+  border-radius: var(--radius-sm);
+  background-color: var(--blitzy-surface-2);
+  font-family: var(--ff-mono);
+  font-size: var(--fs-code);
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--blitzy-primary-deep);
+}
+
+/* Inline mono on the three dark slide types */
+.reveal .slide-title code,
+.reveal .slide-divider code,
+.reveal .slide-closing code {
+  background-color: var(--blitzy-primary-dark);
+  color: var(--blitzy-accent-teal);
+}
+
+/* --------------------------------------------------------------------------
+   Supporting surface: light surface islands
+   Tables and KPI cards carry a light background on every slide type, so their
+   contents keep the light slide treatment rather than the inverted one.
+   -------------------------------------------------------------------------- */
+.reveal .slides table :is(th, td, h1, h2, h3, h4, h5, h6, p, li, strong, b, em, small),
+.reveal .slides .kpi-card :is(h1, h2, h3, h4, h5, h6, p, li, strong, b, em, small):not(.kpi-value):not(.kpi-label) {
+  color: var(--blitzy-text);
+}
+
+/* A brand-lockup nested in an island keeps the light treatment too */
+.reveal .slides table .brand-lockup,
+.reveal .slides .kpi-card .brand-lockup {
+  color: var(--blitzy-text);
+}
+
+.reveal .slides table code,
+.reveal .slides .kpi-card code {
+  background-color: var(--blitzy-surface-2);
+  color: var(--blitzy-primary-deep);
+}
+
+.reveal .slides table li::marker,
+.reveal .slides .kpi-card li::marker {
+  color: var(--blitzy-primary);
+}
+
+.reveal .slides table a,
+.reveal .slides .kpi-card a {
+  color: var(--blitzy-primary);
+  border-bottom-color: var(--blitzy-border-soft);
+}
+
+.reveal .slides table a:hover,
+.reveal .slides .kpi-card a:hover {
+  color: var(--blitzy-primary-light);
+  border-bottom-color: var(--blitzy-primary);
+}
+
+/* --------------------------------------------------------------------------
+   Supporting surface: Lucide SVG icons
+   Default size for an unclassed data-lucide placeholder and the SVG that
+   replaces it, and lets every glyph take its stroke from the surrounding text
+   colour. The hero-icon, kpi-icon, icon-row and brand-lockup components carry
+   their own sizes.
+   -------------------------------------------------------------------------- */
+.reveal [data-lucide],
+.reveal svg.lucide {
+  display: inline-block;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  vertical-align: middle;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+}
+
+/* --------------------------------------------------------------------------
+   Supporting surface: lists
+   -------------------------------------------------------------------------- */
+.reveal .slides ul,
+.reveal .slides ol {
+  display: block;
+  box-sizing: border-box;
+  width: auto;
+  margin: 0 0 var(--space-3) 0;
+  padding-left: var(--space-5);
+  text-align: left;
+}
+
+.reveal .slides ul ul,
+.reveal .slides ul ol,
+.reveal .slides ol ol,
+.reveal .slides ol ul {
+  margin-top: var(--space-2);
+  margin-bottom: 0;
+  margin-left: 0;
+}
+
+.reveal .slides li {
+  margin-bottom: var(--space-3);
+  line-height: 1.4;
+}
+
+.reveal .slides li:last-child {
+  margin-bottom: 0;
+}
+
+.reveal .slides li::marker {
+  color: var(--blitzy-primary);
+  font-weight: 700;
+}
+
+/* List markers read teal on the three dark slide types */
+.reveal .slide-title li::marker,
+.reveal .slide-divider li::marker,
+.reveal .slide-closing li::marker {
+  color: var(--blitzy-accent-teal);
+}
+
+/* --------------------------------------------------------------------------
+   Supporting surface: links
+   -------------------------------------------------------------------------- */
+.reveal a {
+  text-decoration: none;
+  border-bottom: 2px solid var(--blitzy-border-soft);
+  transition: color 0.2s ease, border-bottom-color 0.2s ease;
+}
+
+.reveal a:hover {
+  text-decoration: none;
+  border-bottom: 2px solid var(--blitzy-primary);
+}
+
+.reveal .slide-title a,
+.reveal .slide-divider a,
+.reveal .slide-closing a {
+  border-bottom-color: var(--blitzy-accent-teal);
+}
+
+.reveal .slide-title a:hover,
+.reveal .slide-divider a:hover,
+.reveal .slide-closing a:hover {
+  border-bottom-color: var(--blitzy-surface-0);
+}
+</style>
+
+<style id="deck-layout">
+/* ==========================================================================
+   Deck layout helpers
+
+   Layout, density and state classes used by the slides of this deck only.
+   Every colour, font, gradient and radius resolves through a design token
+   declared in the theme above; no hex literal appears in this block.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   The kpi-grid component when marked up as a list
+
+   Restates the full kpi-grid geometry for a <ul> host, at a specificity above
+   the theme's `.reveal .slides ul` prose rule, so the component keeps its row
+   layout on every property the two rules share.
+   -------------------------------------------------------------------------- */
+.reveal .slides ul.kpi-grid {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: var(--space-4);
+  box-sizing: border-box;
+  width: 100%;
+  margin: var(--space-4) 0;
+  padding-left: 0;
+  list-style: none;
+  text-align: left;
+}
+
+.reveal .slides ul.kpi-grid > li {
+  flex: 1 1 380px;
+  min-width: 340px;
+  margin-bottom: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Two equal columns, used for the before-and-after architecture pair
+   -------------------------------------------------------------------------- */
+.reveal .slides .two-col {
+  display: grid;
+  flex: none;
+  grid-template-columns: 1fr 1fr;
+  align-items: start;
+  gap: var(--space-4);
+  width: 100%;
+}
+
+.reveal .slides .two-col > .col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* Heading that labels a column above its diagram */
+.reveal .slides .col-head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0 0 var(--space-1) 0;
+  font-family: var(--ff-display);
+  font-size: var(--fs-h4);
+  font-weight: 500;
+  color: var(--blitzy-primary);
+}
+
+.reveal .slides .col-head > [data-lucide] {
+  width: 32px;
+  height: 32px;
+}
+
+/* --------------------------------------------------------------------------
+   Supporting line beneath a visual
+   -------------------------------------------------------------------------- */
+.reveal .slides .footnote {
+  flex: none;
+  margin: var(--space-2) 0 0 0;
+  font-family: var(--ff-body);
+  font-size: var(--fs-small);
+  font-weight: 400;
+  line-height: 1.35;
+  color: var(--blitzy-text-muted);
+}
+
+/* Mono strapline used on the title slide */
+.reveal .slides .deck-meta {
+  font-family: var(--ff-mono);
+  font-size: var(--fs-eyebrow);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+}
+
+/* --------------------------------------------------------------------------
+   Compact KPI strip: the card row shown alongside a table or a diagram
+   -------------------------------------------------------------------------- */
+.reveal .slides ul.kpi-grid.kpi-strip {
+  gap: var(--space-3);
+  margin: 0 0 var(--space-3) 0;
+}
+
+.reveal .slides ul.kpi-grid.kpi-strip > li {
+  flex: 1 1 300px;
+  min-width: 260px;
+}
+
+.reveal .slides .kpi-strip .kpi-card {
+  gap: var(--space-1);
+  padding: var(--space-3);
+}
+
+.reveal .slides .kpi-strip .kpi-value {
+  font-size: var(--fs-h3);
+}
+
+.reveal .slides .kpi-strip .kpi-icon {
+  width: 32px;
+  height: 32px;
+}
+
+/* --------------------------------------------------------------------------
+   Compact table: the density used where a slide carries a full matrix
+   -------------------------------------------------------------------------- */
+.reveal .slides table.table-compact {
+  font-size: var(--fs-small);
+}
+
+.reveal .slides table.table-compact th,
+.reveal .slides table.table-compact td {
+  padding: var(--space-1) var(--space-3);
+}
+
+.reveal .slides table.table-compact th {
+  font-size: var(--fs-small);
+}
+
+/* Row headers take the data cells' top alignment, so a level, a reviewer and a
+   multi-line description all start on the same line. */
+.reveal .slides table.table-compact th[scope="row"] {
+  vertical-align: top;
+}
+
+.reveal .slides table.table-compact code {
+  white-space: nowrap;
+}
+
+/* --------------------------------------------------------------------------
+   Entitlement markers. The word carries the meaning; colour only supports it.
+   -------------------------------------------------------------------------- */
+.reveal .slides .grant,
+.reveal .slides .deny,
+.reveal .slides .sev {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.reveal .slides .grant {
+  color: var(--blitzy-primary);
+}
+
+.reveal .slides .deny,
+.reveal .slides .sev-high {
+  color: var(--blitzy-primary-deep);
+}
+
+.reveal .slides .sev-med {
+  color: var(--blitzy-primary-light);
+}
+
+.reveal .slides .grant > [data-lucide],
+.reveal .slides .deny > [data-lucide],
+.reveal .slides .sev > [data-lucide] {
+  width: 24px;
+  height: 24px;
+}
+
+/* --------------------------------------------------------------------------
+   Diagram scale caps, so every rendered diagram stays inside the stage
+   -------------------------------------------------------------------------- */
+.reveal .slides pre.mermaid.diagram-tall > svg {
+  max-height: 540px;
+}
+
+.reveal .slides pre.mermaid.diagram-md > svg {
+  max-height: 470px;
+}
+
+.reveal .slides pre.mermaid.diagram-sm > svg {
+  max-height: 380px;
+}
+
+/* Height allowance for the widest diagram in the deck. */
+.reveal .slides pre.mermaid.diagram-wide > svg {
+  max-height: 600px;
+}
+
+/* Paints Mermaid subgraph titles with the deck text token. Mermaid nests every
+   glyph of a cluster title inside tspan elements, so the tspans are the
+   elements that carry the fill. */
+.reveal .slides pre.mermaid .cluster-label tspan {
+  fill: var(--blitzy-text);
+}
+
+.reveal .slides .two-col pre.mermaid {
+  margin: 0;
+  padding: var(--space-3);
+}
+</style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+<!-- 1 of 16 - Title -->
+<section class="slide-title">
+  <span class="eyebrow">Executive Summary</span>
+  <i class="hero-icon" data-lucide="rocket" aria-hidden="true"></i>
+  <h1>Boston Startup Tracker, rebuilt on ServiceNow</h1>
+  <p>A venture-data product that could not be built or started is now one governed application, ready to install.</p>
+  <div class="accent-bar" aria-hidden="true"></div>
+  <p class="deck-meta">For non-technical leadership &middot; Scoped application x_bst_startuptrk &middot; Version 1.0.0</p>
+</section>
+
+<!-- 2 of 16 - Content: headline outcome -->
+<section>
+  <h2>What was delivered</h2>
+  <ul class="kpi-grid">
+    <li class="kpi-card">
+      <i class="kpi-icon" data-lucide="database" aria-hidden="true"></i>
+      <span class="kpi-value">10</span>
+      <span class="kpi-label">Tables, seven core entities</span>
+    </li>
+    <li class="kpi-card">
+      <i class="kpi-icon" data-lucide="shield" aria-hidden="true"></i>
+      <span class="kpi-value">49</span>
+      <span class="kpi-label">Access rules, previously none</span>
+    </li>
+    <li class="kpi-card">
+      <i class="kpi-icon" data-lucide="plug" aria-hidden="true"></i>
+      <span class="kpi-value">31</span>
+      <span class="kpi-label">Interface operations, six resources</span>
+    </li>
+    <li class="kpi-card">
+      <i class="kpi-icon" data-lucide="clipboard-check" aria-hidden="true"></i>
+      <span class="kpi-value">36</span>
+      <span class="kpi-label">Automated tests, ten suites</span>
+    </li>
+  </ul>
+  <p class="footnote">One importable package of 309 configuration records, plus six sequenced guides for the parts the platform builds itself.</p>
+</section>
+
+<!-- 3 of 16 - Content: before and after architecture -->
+<section>
+  <h2>Before and after</h2>
+  <div class="two-col">
+    <div class="col">
+      <h3 class="col-head"><i data-lucide="circle-slash" aria-hidden="true"></i> Before</h3>
+      <pre class="mermaid diagram-tall">
+flowchart TB
+  U["Browser"] --> S["Single-page app&lt;br/&gt;17 interface components"]
+  S --> F["Web routes&lt;br/&gt;authenticated, never authorised"]
+  F --> M["Data classes"]
+  M --> P["Separate database server"]
+  J["Task queue&lt;br/&gt;five fixed intervals"] --> I["Partner clients&lt;br/&gt;keys written into source"]
+  I --> M
+  X["Cache, search, proxy&lt;br/&gt;and container tooling"]
+</pre>
+    </div>
+    <div class="col">
+      <h3 class="col-head"><i data-lucide="check" aria-hidden="true"></i> After</h3>
+      <pre class="mermaid diagram-tall">
+flowchart TB
+  U2["People and systems"] --> SP["Service Portal&lt;br/&gt;5 pages, 8 widgets"]
+  U2 --> API["Interface layer&lt;br/&gt;31 operations"]
+  SP --> AC["Access control engine&lt;br/&gt;49 rules, 7 field gates"]
+  API --> AC
+  AC --> SL["Shared service layer&lt;br/&gt;9 classes"]
+  SL --> T["10 tables&lt;br/&gt;53 core columns"]
+  FL["2 scheduled flows"] --> CA["2 named connections&lt;br/&gt;no secrets shipped"]
+  FL --> SL
+  ATF["10 suites, 36 tests"] -.-> T
+</pre>
+    </div>
+  </div>
+  <p class="footnote">Retired outright rather than moved: the cache, the search cluster, the proxy, the process manager and the container tooling.</p>
+</section>
+
+<!-- 4 of 16 - Section divider -->
+<section class="slide-divider">
+  <span class="eyebrow">Part One</span>
+  <i class="hero-icon" data-lucide="trending-up" aria-hidden="true"></i>
+  <h2>Why it matters</h2>
+  <p>The paid tier is the commercial product. The previous system could not enforce it.</p>
+</section>
+
+<!-- 5 of 16 - Content: business value unlocked -->
+<section>
+  <h2>Business value unlocked</h2>
+  <ul class="kpi-grid kpi-strip">
+    <li class="kpi-card">
+      <i class="kpi-icon" data-lucide="lock" aria-hidden="true"></i>
+      <span class="kpi-value">7</span>
+      <span class="kpi-label">Paid-tier fields the platform now enforces</span>
+    </li>
+    <li class="kpi-card">
+      <i class="kpi-icon" data-lucide="key" aria-hidden="true"></i>
+      <span class="kpi-value">0</span>
+      <span class="kpi-label">Partner credentials inside the delivered package</span>
+    </li>
+    <li class="kpi-card">
+      <i class="kpi-icon" data-lucide="list-checks" aria-hidden="true"></i>
+      <span class="kpi-value">36</span>
+      <span class="kpi-label">Tests standing behind sign-off</span>
+    </li>
+  </ul>
+  <div class="icon-row">
+    <i data-lucide="search" aria-hidden="true"></i>
+    <i data-lucide="users" aria-hidden="true"></i>
+    <i data-lucide="banknote" aria-hidden="true"></i>
+    <i data-lucide="briefcase" aria-hidden="true"></i>
+    <i data-lucide="newspaper" aria-hidden="true"></i>
+    <i data-lucide="gauge" aria-hidden="true"></i>
+  </div>
+  <p class="footnote">The prior codebase left role-based access control unwritten, so every signed-in caller reached every field of every record.</p>
+</section>
+
+<!-- 6 of 16 - Section divider -->
+<section class="slide-divider">
+  <span class="eyebrow">Part Two</span>
+  <i class="hero-icon" data-lucide="layers" aria-hidden="true"></i>
+  <h2>What changed</h2>
+  <p>Seven working parts replaced, five retired, nothing in the old tree deleted.</p>
+</section>
+
+<!-- 7 of 16 - Content: mapping summary -->
+<section>
+  <h2>What replaced what</h2>
+  <table class="table-compact">
+    <thead>
+      <tr><th scope="col">Then</th><th scope="col">Now</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Eight data classes over a separate database</td><td>10 platform tables, 53 columns across the seven core tables</td></tr>
+      <tr><td>Sign-in only, with the role check left unwritten</td><td>49 access rules in five layers, seven of them field-level</td></tr>
+      <tr><td>Routes that were never actually served</td><td>One interface definition, 31 operations, six resources</td></tr>
+      <tr><td>Five fixed collection intervals</td><td>Two scheduled flows on one adjustable cadence</td></tr>
+      <tr><td>Partner keys written into source files</td><td>Two named connections, referenced by name only</td></tr>
+      <tr><td>Single-page app, 17 interface components</td><td>One portal, five pages, eight widgets</td></tr>
+      <tr><td>Twenty-seven test files, none discoverable</td><td>Ten suites, 36 tests</td></tr>
+      <tr><td>Cache, search cluster, proxy, process manager, containers</td><td>Retired, not migrated</td></tr>
+    </tbody>
+  </table>
+  <p class="footnote">The complete mapping runs 123 legacy files to 145 traced rows in the traceability matrix.</p>
+</section>
+
+<!-- 8 of 16 - Content: the data foundation -->
+<section>
+  <h2>The data foundation</h2>
+  <ul class="kpi-grid kpi-strip">
+    <li class="kpi-card">
+      <i class="kpi-icon" data-lucide="database" aria-hidden="true"></i>
+      <span class="kpi-value">10</span>
+      <span class="kpi-label">Tables in the application</span>
+    </li>
+    <li class="kpi-card">
+      <i class="kpi-icon" data-lucide="table" aria-hidden="true"></i>
+      <span class="kpi-value">53</span>
+      <span class="kpi-label">Columns across the seven core tables</span>
+    </li>
+    <li class="kpi-card">
+      <i class="kpi-icon" data-lucide="lock" aria-hidden="true"></i>
+      <span class="kpi-value">7</span>
+      <span class="kpi-label">Columns reserved for the paid tier</span>
+    </li>
+  </ul>
+  <table class="table-compact">
+    <thead>
+      <tr>
+        <th scope="col">Record type</th><th scope="col">Columns</th>
+        <th scope="col">Record type</th><th scope="col">Columns</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Startup</td><td>12</td><td>Funding round</td><td>8</td></tr>
+      <tr><td>Founder</td><td>6</td><td>Job posting</td><td>9</td></tr>
+      <tr><td>Executive</td><td>6</td><td>News article</td><td>6</td></tr>
+      <tr><td>Investor</td><td>6</td><td><strong>Total</strong></td><td><strong>53</strong></td></tr>
+    </tbody>
+  </table>
+  <p class="footnote">Three further tables carry investor participation, the fallback dataset and request accounting. The field list is closed.</p>
+</section>
+
+<!-- 9 of 16 - Content: the entitlement matrix -->
+<section>
+  <h2>Who sees what</h2>
+  <table class="table-compact">
+    <thead>
+      <tr>
+        <th scope="col">Paid-tier field</th>
+        <th scope="col">Administrator</th>
+        <th scope="col">Premium subscriber</th>
+        <th scope="col">Free user</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <th scope="row">Total funding raised</th>
+        <td><span class="grant"><i data-lucide="check" aria-hidden="true"></i> Read</span></td>
+        <td><span class="grant"><i data-lucide="check" aria-hidden="true"></i> Read</span></td>
+        <td><span class="deny"><i data-lucide="x" aria-hidden="true"></i> Denied</span></td>
+      </tr>
+      <tr>
+        <th scope="row">Institutional funding marker</th>
+        <td><span class="grant"><i data-lucide="check" aria-hidden="true"></i> Read</span></td>
+        <td><span class="grant"><i data-lucide="check" aria-hidden="true"></i> Read</span></td>
+        <td><span class="deny"><i data-lucide="x" aria-hidden="true"></i> Denied</span></td>
+      </tr>
+      <tr>
+        <th scope="row">Founder contact address</th>
+        <td><span class="grant"><i data-lucide="check" aria-hidden="true"></i> Read</span></td>
+        <td><span class="grant"><i data-lucide="check" aria-hidden="true"></i> Read</span></td>
+        <td><span class="deny"><i data-lucide="x" aria-hidden="true"></i> Denied</span></td>
+      </tr>
+      <tr>
+        <th scope="row">Executive contact address</th>
+        <td><span class="grant"><i data-lucide="check" aria-hidden="true"></i> Read</span></td>
+        <td><span class="grant"><i data-lucide="check" aria-hidden="true"></i> Read</span></td>
+        <td><span class="deny"><i data-lucide="x" aria-hidden="true"></i> Denied</span></td>
+      </tr>
+      <tr>
+        <th scope="row">Investor assets under management</th>
+        <td><span class="grant"><i data-lucide="check" aria-hidden="true"></i> Read</span></td>
+        <td><span class="grant"><i data-lucide="check" aria-hidden="true"></i> Read</span></td>
+        <td><span class="deny"><i data-lucide="x" aria-hidden="true"></i> Denied</span></td>
+      </tr>
+      <tr>
+        <th scope="row">Round amount</th>
+        <td><span class="grant"><i data-lucide="check" aria-hidden="true"></i> Read</span></td>
+        <td><span class="grant"><i data-lucide="check" aria-hidden="true"></i> Read</span></td>
+        <td><span class="deny"><i data-lucide="x" aria-hidden="true"></i> Denied</span></td>
+      </tr>
+      <tr>
+        <th scope="row">Round valuation</th>
+        <td><span class="grant"><i data-lucide="check" aria-hidden="true"></i> Read</span></td>
+        <td><span class="grant"><i data-lucide="check" aria-hidden="true"></i> Read</span></td>
+        <td><span class="deny"><i data-lucide="x" aria-hidden="true"></i> Denied</span></td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="footnote">A denied field is absent from the answer, not blank. Twenty-one checks confirm every field against every role.</p>
+</section>
+
+<!-- 10 of 16 - Content: integration surface -->
+<section>
+  <h2>How data arrives and leaves</h2>
+  <pre class="mermaid diagram-md">
+flowchart LR
+  CB["Crunchbase"] --> AL["2 named connections&lt;br/&gt;bound by name"]
+  LI["LinkedIn"] --> AL
+  AL --> FL["2 scheduled flows&lt;br/&gt;cadence 6 to 48 hours"]
+  FB["Fallback dataset&lt;br/&gt;6 files, 65 rows"] -.-> FL
+  FL --> CL["4 cleaning rules&lt;br/&gt;trim, de-duplicate,&lt;br/&gt;normalise, reject"]
+  CL --> DB["10 tables"]
+  DB --> AC["Access control&lt;br/&gt;49 rules"]
+  AC --> API["Interface layer&lt;br/&gt;31 operations"]
+  AC --> SP["Service Portal&lt;br/&gt;5 pages"]
+</pre>
+  <p class="footnote">Every run is labelled live-validated or fallback-validated, so a passing result can never be mistaken for the other.</p>
+</section>
+
+<!-- 11 of 16 - Content: the user experience -->
+<section>
+  <h2>The experience people use</h2>
+  <ul class="kpi-grid kpi-strip">
+    <li class="kpi-card">
+      <i class="kpi-icon" data-lucide="monitor" aria-hidden="true"></i>
+      <span class="kpi-value">5</span>
+      <span class="kpi-label">Screens in the portal</span>
+    </li>
+    <li class="kpi-card">
+      <i class="kpi-icon" data-lucide="layers" aria-hidden="true"></i>
+      <span class="kpi-value">8</span>
+      <span class="kpi-label">Reusable interface components</span>
+    </li>
+    <li class="kpi-card">
+      <i class="kpi-icon" data-lucide="ruler" aria-hidden="true"></i>
+      <span class="kpi-value">1024</span>
+      <span class="kpi-label">Pixels, the supported width floor</span>
+    </li>
+  </ul>
+  <table class="table-compact">
+    <thead>
+      <tr><th scope="col">Screen</th><th scope="col">What it does</th><th scope="col">Components</th></tr>
+    </thead>
+    <tbody>
+      <tr><th scope="row">Home and search</th><td>Finds eligible Boston and Cambridge companies</td><td>2</td></tr>
+      <tr><th scope="row">Company profile</th><td>Overview, Funding, People, Jobs, News</td><td>1</td></tr>
+      <tr><th scope="row">Investor profile</th><td>Portfolio, rounds led and rounds joined</td><td>1</td></tr>
+      <tr><th scope="row">Dashboard and trends</th><td>Headline measures and charts</td><td>2</td></tr>
+      <tr><th scope="row">Account</th><td>Entitlements and the upgrade prompt</td><td>2</td></tr>
+    </tbody>
+  </table>
+  <p class="footnote">Where a paid-tier value is withheld, the upgrade prompt takes its place, never an empty cell or a zero.</p>
+</section>
+
+<!-- 12 of 16 - Section divider -->
+<section class="slide-divider">
+  <span class="eyebrow">Part Three</span>
+  <i class="hero-icon" data-lucide="clipboard-check" aria-hidden="true"></i>
+  <h2>Proof, risk and continuity</h2>
+  <p>What we can demonstrate, what we are watching, and how the team carries it on.</p>
+</section>
+
+<!-- 13 of 16 - Content: proof -->
+<section>
+  <h2>How we know it works</h2>
+  <ul class="kpi-grid kpi-strip">
+    <li class="kpi-card">
+      <i class="kpi-icon" data-lucide="clipboard-check" aria-hidden="true"></i>
+      <span class="kpi-value">36</span>
+      <span class="kpi-label">Tests in ten suites</span>
+    </li>
+    <li class="kpi-card">
+      <i class="kpi-icon" data-lucide="check" aria-hidden="true"></i>
+      <span class="kpi-value">100%</span>
+      <span class="kpi-label">Of tables and resources covered</span>
+    </li>
+    <li class="kpi-card">
+      <i class="kpi-icon" data-lucide="shield" aria-hidden="true"></i>
+      <span class="kpi-value">16</span>
+      <span class="kpi-label">Gates checked after installing</span>
+    </li>
+    <li class="kpi-card">
+      <i class="kpi-icon" data-lucide="file-text" aria-hidden="true"></i>
+      <span class="kpi-value">9</span>
+      <span class="kpi-label">Checks run before anything ships</span>
+    </li>
+  </ul>
+  <pre class="mermaid diagram-sm">
+flowchart LR
+  V["Validate&lt;br/&gt;9 checks"] --> IM["Import"]
+  IM --> PV["Preview&lt;br/&gt;600 second budget"]
+  PV --> Q{"Problems?"}
+  Q -->|"none"| CM["Commit"]
+  Q -->|"any"| FX["Fix and re-issue"]
+  CM --> GT["16 gates"]
+  GT -->|"all pass"| OK["Accepted"]
+  GT -->|"any fails"| RB["Roll back"]
+</pre>
+</section>
+
+<!-- 14 of 16 - Content: risks and mitigations -->
+<section>
+  <h2>Risks and how they are held</h2>
+  <table class="table-compact">
+    <thead>
+      <tr>
+        <th scope="col">Level</th>
+        <th scope="col">Reviewer</th>
+        <th scope="col">What could go wrong</th>
+        <th scope="col">How it is held</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="sev sev-high"><i data-lucide="triangle-alert" aria-hidden="true"></i> High</span></td>
+        <th scope="row">Security</th>
+        <td>Paid-tier enforcement fails silently, and an administrator checking it sees everything and proves nothing</td>
+        <td>Twenty-one checks, each run as a user holding one role and no elevated access</td>
+      </tr>
+      <tr>
+        <td><span class="sev sev-high"><i data-lucide="triangle-alert" aria-hidden="true"></i> High</span></td>
+        <th scope="row">DevOps</th>
+        <td>Recovery deletes the application and all its data &mdash; the one irreversible step in the delivery</td>
+        <td>Fires only on a failed install or a failed gate; the install preview must be clean first</td>
+      </tr>
+      <tr>
+        <td><span class="sev sev-high"><i data-lucide="triangle-alert" aria-hidden="true"></i> High</span></td>
+        <th scope="row">API/Integration</th>
+        <td>A leaked partner key cannot be contained by changing anything inside this application</td>
+        <td>No credential ships anywhere; both connections named, and tested before either flow is saved</td>
+      </tr>
+      <tr>
+        <td><span class="sev sev-med"><i data-lucide="info" aria-hidden="true"></i> Medium</span></td>
+        <th scope="row">Data/SME</th>
+        <td>A stored portfolio count drifts when records arrive by a route that skips the rules</td>
+        <td>Recalculation after every bulk load, and company deletion exercised end to end</td>
+      </tr>
+      <tr>
+        <td><span class="sev sev-med"><i data-lucide="info" aria-hidden="true"></i> Medium</span></td>
+        <th scope="row">UX</th>
+        <td>Five tabs replace six, and links now carry parameters rather than paths</td>
+        <td>A five-screen walkthrough performed as a free user, not as an administrator</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="footnote">Paid subscription billing has no platform equivalent. It is formally flagged, not half-built. Eleven further items are recorded alongside it.</p>
+</section>
+
+<!-- 15 of 16 - Content: sequence and continuity -->
+<section>
+  <h2>Delivery timeline</h2>
+  <pre class="mermaid diagram-wide">
+flowchart TB
+  subgraph P1["Install"]
+    direction LR
+    A1["1 Validate the package"] --&gt; A2["2 Import, preview, commit"] --&gt; A3["3 Run the sixteen gates"]
+  end
+  subgraph P2["Build"]
+    direction LR
+    B1["4 Connect the two sources"] --&gt; B2["5 Build the two flows"] --&gt; B3["6 Build the portal"] --&gt; B4["7 Load the fallback data"]
+  end
+  subgraph P3["Prove"]
+    direction LR
+    C1["8 Run the thirty-six tests"] --&gt; C2["9 Walk the acceptance record"]
+  end
+  P1 --&gt; P2 --&gt; P3
+  style P1 stroke:#5B39F3,stroke-width:2px
+  style P2 stroke:#5B39F3,stroke-width:2px
+  style P3 stroke:#5B39F3,stroke-width:2px
+</pre>
+  <p class="footnote">Ordering only, never calendar dates: these nine steps are a dependency order, not a schedule. Six sequenced guides own the manual work.</p>
+</section>
+
+<!-- 16 of 16 - Closing -->
+<section class="slide-closing">
+  <span class="eyebrow">In Closing</span>
+  <h2>Enforced, tested, ready to install</h2>
+  <ul>
+    <li>One package installs the application; six guides build the rest, in a fixed order.</li>
+    <li>The decision log holds every reason; the traceability matrix holds the coverage.</li>
+    <li>The critical-decisions review names five reviewers and exactly what each should check.</li>
+  </ul>
+  <div class="accent-bar" aria-hidden="true"></div>
+  <div class="brand-lockup"><i data-lucide="zap" aria-hidden="true"></i> Blitzy</div>
+</section>
+
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.0/dist/mermaid.min.js"></script>
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var MAX_ATTEMPTS = 3;
+  var mermaidConfigured = false;
+  var sources = [];
+  var attempts = [];
+
+  /* The single render queue. Every pass is appended to it, so passes run one
+     after another and never interleave. */
+  var queue = fontsReady();
+
+  function containers() {
+    return Array.prototype.slice.call(document.querySelectorAll('pre.mermaid'));
+  }
+
+  /* Stashes each container's original diagram source before any render, so a
+     container can be reset and rendered again. */
+  containers().forEach(function (node) {
+    sources.push(node.textContent);
+    attempts.push(0);
+  });
+
+  /* Settles once the webfonts have loaded, so Mermaid measures label text
+     against the actual font face. */
+  function fontsReady() {
+    if (document.fonts && document.fonts.ready) {
+      return document.fonts.ready;
+    }
+    return Promise.resolve();
+  }
+
+  /* Resolves after two animation frames, by which point reveal.js has laid the
+     incoming slide out and the clock has advanced past the previous render. */
+  function nextFrame() {
+    return new Promise(function (resolve) {
+      window.requestAnimationFrame(function () {
+        window.requestAnimationFrame(function () {
+          resolve();
+        });
+      });
+    });
+  }
+
+  function report(message, detail) {
+    if (window.console && typeof window.console.warn === 'function') {
+      window.console.warn(message, detail);
+    }
+  }
+
+  /* Configures Mermaid once, with the theme variables this deck's brand rule
+     specifies. Rendering is driven from the reveal.js events below, so
+     startOnLoad is false. htmlLabels is declared false at both the top level and
+     under flowchart, which is what keeps every label a native SVG text node.
+     subGraphTitleMargin reserves clearance beneath a phase title. */
+  function configureMermaid() {
+    if (mermaidConfigured) {
+      return true;
+    }
+    if (typeof window.mermaid === 'undefined') {
+      return false;
+    }
+    window.mermaid.initialize({
+      startOnLoad: false,
+      theme: 'base',
+      themeVariables: {
+        primaryColor: '#F2F0FE',
+        primaryTextColor: '#333333',
+        primaryBorderColor: '#5B39F3',
+        lineColor: '#999999',
+        secondaryColor: '#F4EFF6'
+      },
+      fontFamily: "'Inter', system-ui, sans-serif",
+      htmlLabels: false,
+      flowchart: {
+        htmlLabels: false,
+        useMaxWidth: true,
+        curve: 'basis',
+        subGraphTitleMargin: { top: 8, bottom: 14 }
+      }
+    });
+    mermaidConfigured = true;
+    return true;
+  }
+
+  /* True only for a container that currently has a real layout box. Containers
+     on a slide beyond reveal.js's view distance have none, and wait for the
+     slidechanged pass that first reveals them. */
+  function renderable(node) {
+    return node.offsetWidth > 0 && node.getClientRects().length > 0;
+  }
+
+  /* Inspects a completed render: a healthy drawing has a sized viewBox, carries
+     label text, and is not Mermaid's own error graphic. */
+  function healthy(node) {
+    var svg = node.querySelector('svg');
+    if (!svg) {
+      return false;
+    }
+    if (svg.querySelector('.error-icon, .error-text')) {
+      return false;
+    }
+    var box = (svg.getAttribute('viewBox') || '').split(/[\s,]+/).map(Number);
+    if (box.length < 4 || !(box[2] > 120) || !(box[3] > 60)) {
+      return false;
+    }
+    return svg.querySelectorAll('text').length >= 3;
+  }
+
+  function reset(node, index) {
+    node.removeAttribute('data-processed');
+    node.textContent = sources[index];
+  }
+
+  /* Renders exactly one container per Mermaid call and waits for it to finish
+     before the next begins, so no two renders are ever in flight together. */
+  function renderDiagram(node, index) {
+    if (node.getAttribute('data-processed') === 'true' || !renderable(node)) {
+      return Promise.resolve();
+    }
+    if (attempts[index] >= MAX_ATTEMPTS) {
+      return Promise.resolve();
+    }
+    attempts[index] += 1;
+    return nextFrame()
+      .then(function () {
+        return window.mermaid.run({ nodes: [node], suppressErrors: true });
+      })
+      .then(function () {
+        if (healthy(node)) {
+          return undefined;
+        }
+        reset(node, index);
+        if (attempts[index] < MAX_ATTEMPTS) {
+          return renderDiagram(node, index);
+        }
+        report('Diagram ' + (index + 1) + ' left unrendered after '
+          + MAX_ATTEMPTS + ' attempts', node.className);
+        return undefined;
+      })
+      .catch(function (error) {
+        reset(node, index);
+        if (attempts[index] < MAX_ATTEMPTS) {
+          return renderDiagram(node, index);
+        }
+        report('Diagram ' + (index + 1) + ' skipped', error);
+        return undefined;
+      });
+  }
+
+  function renderDiagrams() {
+    if (!configureMermaid()) {
+      return Promise.resolve();
+    }
+    return containers().reduce(function (chain, node, index) {
+      return chain.then(function () {
+        return renderDiagram(node, index);
+      });
+    }, Promise.resolve());
+  }
+
+  /* Replaces every data-lucide placeholder with its SVG. Idempotent: the replaced
+     glyph is no longer an <i> placeholder, so a later pass cannot double-render. */
+  function renderIcons() {
+    if (typeof window.lucide === 'undefined') {
+      return;
+    }
+    try {
+      window.lucide.createIcons();
+    } catch (iconError) {
+      report('Icon pass skipped', iconError);
+    }
+  }
+
+  function paint() {
+    queue = queue
+      .then(renderDiagrams)
+      .then(renderIcons)
+      .catch(function (error) {
+        report('Render pass skipped', error);
+      });
+    return queue;
+  }
+
+  if (typeof window.Reveal === 'undefined') {
+    paint();
+    return;
+  }
+
+  /* Registers both handlers before initialize, which is when reveal.js
+     dispatches ready. The ready pass draws the diagrams reveal.js has already
+     laid out; the slidechanged pass draws each remaining one as its slide is
+     first shown. */
+  window.Reveal.on('ready', paint);
+  window.Reveal.on('slidechanged', paint);
+
+  window.Reveal.initialize({
+    hash: true,
+    transition: 'slide',
+    controlsTutorial: false,
+    width: 1920,
+    height: 1080,
+    margin: 0.04,
+    minScale: 0.2,
+    maxScale: 1.5,
+    center: false,
+    controls: true,
+    progress: true,
+    keyboard: true,
+    overview: true,
+    plugins: []
+  });
+}());
+</script>
+</body>
+</html>

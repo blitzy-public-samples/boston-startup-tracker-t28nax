@@ -6,7 +6,7 @@ The dataset is **fallback only** by design. An ingestion run is required to atte
 
 ## Prerequisites for live ingestion
 
-The live path depends on two Connection and Credential Aliases, `x_bst_startuptrk.crunchbase_api` (Basic Auth) and `x_bst_startuptrk.linkedin_oauth` (OAuth2), which the ingestion flows reference by name. **Both aliases must exist on the target instance and carry credential material provisioned by the operator — the Crunchbase API key, and the LinkedIn OAuth2 client identifier, client secret and refresh token — before any live call can succeed.** Both are built by hand; the procedure is [`../docs/manual-build/01-connection-credential-aliases.md` (planned)](../docs/manual-build/01-connection-credential-aliases.md).
+The live path depends on two Connection and Credential Aliases, `x_bst_startuptrk.crunchbase_api` (Basic Auth) and `x_bst_startuptrk.linkedin_oauth` (OAuth2), which the ingestion flows reference by name. **Both aliases must exist on the target instance and carry credential material provisioned by the operator — the Crunchbase API key, and the LinkedIn OAuth2 client identifier, client secret and refresh token — before any live call can succeed.** Both are built by hand; the procedure is [`../docs/manual-build/01-connection-credential-aliases.md`](../docs/manual-build/01-connection-credential-aliases.md).
 
 While either alias is unprovisioned, **every ingestion run reads this dataset and every result must be labelled "fallback validated"**, never "live validated". Prompt section 10.0 criterion 4 accepts the sample-dataset substitute, so that condition does not block acceptance; it only constrains what the evidence may claim.
 
@@ -16,9 +16,9 @@ No credential material appears in this folder, in the Update Set, or in any flow
 
 This document is self-contained: the column contract, the value conventions, the designed-defect inventory and the load procedure are all stated here in full, and nothing in them requires reading another file.
 
-Some documents named in this specification are **planned artifacts of this package**. Every link to one carries the marker **(planned)** in its link text. A statement about a planned document describes what that document is required to contain; it is not a claim that the content can be read from it. Links without the marker point at delivered files: the six CSVs beside this one, the Update Set XML, and `../docs/data-model.md`, `../docs/access-control.md`, `../docs/api-reference.md` and `../docs/validation-gates.md`.
+**Every document named in this specification is delivered and readable.** Each link resolves to a file in this package — the six CSVs beside this one, the Update Set XML, and `../docs/data-model.md`, `../docs/access-control.md`, `../docs/api-reference.md`, `../docs/validation-gates.md` and the remaining package documents — so a reader can follow any link and read the content the statement around it describes; no link is a forward reference to something still to be written.
 
-This document carries no rationale. Every decision behind the contract, every alternative considered and every risk is to be recorded in [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md).
+This document carries no rationale. Every decision behind the contract, every alternative considered and every risk is recorded in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
 ## Contents
 
@@ -36,7 +36,7 @@ Seven files, this document included.
 
 The six CSVs cover exactly the six ingested record types. The Crunchbase flow supplies Startup, Investor and FundingRound; the LinkedIn flow supplies Founder, Executive and JobPosting.
 
-There is deliberately **no NewsArticle CSV**. Prompt sections 1.7 and 4.0 exclude NewsArticle from automated ingestion, so no flow serves it and it has no fallback dataset; NewsArticle records are created by manual entry or by a separate ad hoc import. The exclusion is to be recorded in [`../docs/gaps-and-flags.md` (planned)](../docs/gaps-and-flags.md) and [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md).
+There is deliberately **no NewsArticle CSV**. Prompt sections 1.7 and 4.0 exclude NewsArticle from automated ingestion, so no flow serves it and it has no fallback dataset; NewsArticle records are created by manual entry or by a separate ad hoc import. The exclusion is recorded in [`../docs/gaps-and-flags.md`](../docs/gaps-and-flags.md) and [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
 ## CSV dialect
 
@@ -108,7 +108,7 @@ The column names below are the dictionary element names exactly as the Update Se
 
 ### The `_name` natural-key convention
 
-A CSV cannot carry a `sys_id` for a record that does not exist yet, so every reference travels as the target record's natural key — its `name` value — and the transform resolves it at load time. No column carries a `sys_id`. Three columns are natural keys: `startup_name` resolves to a `x_bst_startuptrk_startup` record, and `lead_investor_name` and `participating_investor_names` resolve to `x_bst_startuptrk_investor` records. The transform's resolution steps are to be specified in [`../docs/manual-build/06-staging-table-csv-import.md` (planned)](../docs/manual-build/06-staging-table-csv-import.md); the resolution `IngestionMapper` performs is described under [Parent resolution is by `startup_name` alone](#parent-resolution-is-by-startup_name-alone).
+A CSV cannot carry a `sys_id` for a record that does not exist yet, so every reference travels as the target record's natural key — its `name` value — and the transform resolves it at load time. No column carries a `sys_id`. Three columns are natural keys: `startup_name` resolves to a `x_bst_startuptrk_startup` record, and `lead_investor_name` and `participating_investor_names` resolve to `x_bst_startuptrk_investor` records. The transform's resolution steps are specified in [`../docs/manual-build/06-staging-table-csv-import.md`](../docs/manual-build/06-staging-table-csv-import.md); the resolution `IngestionMapper` performs is described under [Parent resolution is by `startup_name` alone](#parent-resolution-is-by-startup_name-alone).
 
 `startup_name` appears only on the four child record types, where it names the parent Startup. A `startup` row carries its own name in `name`, and an `investor` row likewise carries its own name in `name`.
 
@@ -153,7 +153,7 @@ Twelve mandatory columns across the six record types:
 | `executive` | `name`, `startup_name` | 2 |
 | `job_posting` | `startup_name`, `title` | 2 |
 
-`active` is a String column of length 10 on staging, carrying the text `true` or `false`, and it declares no dictionary default. A blank field therefore reaches the transform as a blank and cleaning rule 4 observes the absent mandatory value; the **Trim and validate startup** business rule likewise aborts an insert or update whose `active` is empty. `x_bst_startuptrk_startup.active` keeps its own dictionary default of `true`, which applies to a Startup inserted without the field set. Per prompt section 4.0 a record missing a mandatory value is rejected, not filled. The column-type decision and the alternative considered are to be recorded in [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md).
+`active` is a String column of length 10 on staging, carrying the text `true` or `false`, and it declares no dictionary default. A blank field therefore reaches the transform as a blank and cleaning rule 4 observes the absent mandatory value; the **Trim and validate startup** business rule likewise aborts an insert or update whose `active` is empty. `x_bst_startuptrk_startup.active` keeps its own dictionary default of `true`, which applies to a Startup inserted without the field set. Per prompt section 4.0 a record missing a mandatory value is rejected, not filled. The column-type decision and the alternative considered are recorded in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
 ### `crunchbase_startups_sample.csv`
 
@@ -194,7 +194,7 @@ source_system,record_type,import_run,import_state,run_provenance,error_message,r
 | `website` | String, 255 | No | Absolute URL. Writes `Investor.website`. |
 | `aum_usd` | Decimal on staging; Currency on `Investor.aum_usd` | No | Plain USD amount. Premium-gated. |
 
-`portfolio_count` is deliberately **absent** from this file and from the staging dictionary. Prompt section 1.4 declares `Investor.portfolio_count` calculated, and it is derived by the `InvestorPortfolioService` Script Include and maintained by the two portfolio business rules on `x_bst_startuptrk_fundinground` and `x_bst_startuptrk_m2m_round_investor`. The column is read-only in the dictionary, so an import that mapped a staged value onto it would be refused; the value is established by running `InvestorPortfolioService.recalculateAll()` from a background script once the funding rounds and join rows have loaded, as [`../docs/manual-build/06-staging-table-csv-import.md` (planned)](../docs/manual-build/06-staging-table-csv-import.md) requires. Its derivation is described in [`../docs/data-model.md`](../docs/data-model.md) and the decision is recorded in [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md).
+`portfolio_count` is deliberately **absent** from this file and from the staging dictionary. Prompt section 1.4 declares `Investor.portfolio_count` calculated, and it is derived by the `InvestorPortfolioService` Script Include and maintained by the two portfolio business rules on `x_bst_startuptrk_fundinground` and `x_bst_startuptrk_m2m_round_investor`. The column is read-only in the dictionary, so an import that mapped a staged value onto it would be refused; the value is established by running `InvestorPortfolioService.recalculateAll()` from a background script once the funding rounds and join rows have loaded, as [`../docs/manual-build/06-staging-table-csv-import.md`](../docs/manual-build/06-staging-table-csv-import.md) requires. Its derivation is described in [`../docs/data-model.md`](../docs/data-model.md) and the decision is recorded in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
 ### `crunchbase_funding_rounds_sample.csv`
 
@@ -542,7 +542,7 @@ None of the 18 is a value **conflict**: there is no field where the two paths wr
 
 ## Data Import Wizard procedure
 
-This section is a complete, self-contained load procedure: the prerequisites, the load order, the wizard steps and the post-load verification below are sufficient to stage all six files without reading another document. The transform map and its field-by-field script are a separate, larger artifact and are to be specified in [`../docs/manual-build/06-staging-table-csv-import.md` (planned)](../docs/manual-build/06-staging-table-csv-import.md).
+This section is a complete, self-contained load procedure: the prerequisites, the load order, the wizard steps and the post-load verification below are sufficient to stage all six files without reading another document. The transform map and its field-by-field script are a separate, larger artifact and are specified in [`../docs/manual-build/06-staging-table-csv-import.md`](../docs/manual-build/06-staging-table-csv-import.md).
 
 ### Prerequisites
 
@@ -572,7 +572,7 @@ For each file in the order above:
 4. Verify the field mapping is one-to-one by header name against the `x_bst_startuptrk_ingest_staging` dictionary, and that **no** column is left unmapped. An unmapped column loads as an empty field without raising an error.
 5. Run the import.
 6. Confirm the imported row count equals the count stated for that file in this document.
-7. Run the transform. Its map and script are to be specified in [`../docs/manual-build/06-staging-table-csv-import.md` (planned)](../docs/manual-build/06-staging-table-csv-import.md); the behaviour it must implement is the four cleaning rules stated above, applied through `IngestionMapper`.
+7. Run the transform. Its map and script are specified in [`../docs/manual-build/06-staging-table-csv-import.md`](../docs/manual-build/06-staging-table-csv-import.md); the behaviour it must implement is the four cleaning rules stated above, applied through `IngestionMapper`.
 
 ### Verification after each load
 
@@ -589,7 +589,7 @@ After the transform, `import_state` is `processed` on the fifty-two accepted row
 
 ### Forcing the fallback path
 
-Set the property `x_bst_startuptrk.ingestion.source_mode` to `fallback` to make both ingestion flows read this dataset instead of attempting a live call, which is how a flow test is made deterministic without touching credentials. Set it back to `live` afterwards. A run left on `live` also reads this dataset whenever the live call fails; the difference is that forcing `fallback` skips the live attempt altogether. The flow-side steps are to be specified in [`../docs/manual-build/02-flow-crunchbase-ingestion.md` (planned)](../docs/manual-build/02-flow-crunchbase-ingestion.md) and [`../docs/manual-build/03-flow-linkedin-ingestion.md` (planned)](../docs/manual-build/03-flow-linkedin-ingestion.md).
+Set the property `x_bst_startuptrk.ingestion.source_mode` to `fallback` to make both ingestion flows read this dataset instead of attempting a live call, which is how a flow test is made deterministic without touching credentials. Set it back to `live` afterwards. A run left on `live` also reads this dataset whenever the live call fails; the difference is that forcing `fallback` skips the live attempt altogether. The flow-side steps are specified in [`../docs/manual-build/02-flow-crunchbase-ingestion.md`](../docs/manual-build/02-flow-crunchbase-ingestion.md) and [`../docs/manual-build/03-flow-linkedin-ingestion.md`](../docs/manual-build/03-flow-linkedin-ingestion.md).
 
 ## Retention of the loaded rows
 
@@ -619,7 +619,7 @@ Because the sample values are synthetic, nothing in this folder is subject to an
 
 Every row shipped in this folder carries `run_provenance` of `fallback`. A flow run that reads this dataset records the same provenance for the run as a whole: `IngestionLogger.writeRunSummary` sets the property `x_bst_startuptrk.ingestion.last_run_provenance` to `fallback` and writes a run summary to the application log — through `gs.info`, prefixed `[x_bst_startuptrk.ingestion]` — carrying the run identifier, the provenance, and the processed, rejected and skipped counts. A run that completed a live call records `live` by the same path.
 
-Prompt section 10.0 criterion 4 accepts the sample-dataset substitute for live ingestion, so three consecutive clean fallback runs of each flow satisfy it **provided the mode is recorded** for each run. The recording is itself part of the acceptance evidence: an Automated Test Framework result that exercised this dataset must be labelled **"fallback validated"**, and only a result from a successful live call may be labelled **"live validated"**, so the two can never be confused after the fact. **A result may carry the "live validated" label only when both credential aliases are provisioned and the run completed a live call**; otherwise the label is "fallback validated". The labelling convention is to be applied by [`../docs/manual-build/05-atf-test-suites.md` (planned)](../docs/manual-build/05-atf-test-suites.md) and the evidence collected by [`../docs/validation-checklist.md` (planned)](../docs/validation-checklist.md).
+Prompt section 10.0 criterion 4 accepts the sample-dataset substitute for live ingestion, so three consecutive clean fallback runs of each flow satisfy it **provided the mode is recorded** for each run. The recording is itself part of the acceptance evidence: an Automated Test Framework result that exercised this dataset must be labelled **"fallback validated"**, and only a result from a successful live call may be labelled **"live validated"**, so the two can never be confused after the fact. **A result may carry the "live validated" label only when both credential aliases are provisioned and the run completed a live call**; otherwise the label is "fallback validated". The labelling convention is applied by [`../docs/manual-build/05-atf-test-suites.md`](../docs/manual-build/05-atf-test-suites.md) and the evidence collected by [`../docs/validation-checklist.md`](../docs/validation-checklist.md).
 
 For criterion 4 purposes a **scheduled run** means a flow execution that passed the flow's cadence guard and went on to do work. An execution that started, found the configured cadence had not yet elapsed and exited without ingesting is a no-op and does not count towards the three consecutive runs. That definition is stated here; how to distinguish the two in the execution log is specified under [What counts as a scheduled run](../docs/deployment-runbook.md#what-counts-as-a-scheduled-run) in [`../docs/deployment-runbook.md`](../docs/deployment-runbook.md).
 
@@ -631,7 +631,7 @@ Three artifacts describe the same set of staging columns, and all three must be 
 | --- | --- | --- | --- |
 | a | The header rows of the six CSVs in this folder, documented above | The wire format | Yes |
 | b | The `x_bst_startuptrk_ingest_staging` dictionary records in [`../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`](../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml) | **Authoritative** | Yes |
-| c | The field mapping in [`../docs/manual-build/06-staging-table-csv-import.md` (planned)](../docs/manual-build/06-staging-table-csv-import.md) | The load instructions | No |
+| c | The field mapping in [`../docs/manual-build/06-staging-table-csv-import.md`](../docs/manual-build/06-staging-table-csv-import.md) | The load instructions | No |
 
 Leg b is authoritative over the other two legs, and the frozen prompt and the Agent Action Plan are authoritative over all three. Where this document and the dictionary disagree about a column name, type, length or choice value, the dictionary is checked against the prompt and the plan first. Where the dictionary matches the specification, this document is corrected to it. Where the dictionary departs from it, the dictionary is corrected.
 
@@ -644,24 +644,19 @@ Leg c must be authored against legs a and b as they stand, and must honour one p
 
 ## Related documents
 
-Delivered with this package:
-
 - [`../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`](../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml) — the authoritative staging dictionary and the `IngestionMapper` and `IngestionLogger` records this contract depends on
 - [`../docs/data-model.md`](../docs/data-model.md) — all ten tables field by field, the table access posture, and the staging retention, minimisation and data-subject erasure lifecycle
 - [`../docs/access-control.md`](../docs/access-control.md) — the three roles, the premium field ACL matrix, and the twelve supporting-table controls that make the staging table administrator-only on all four operations
 - [`../docs/api-reference.md`](../docs/api-reference.md) — the six REST resources and the thirteen system properties, including `ingestion.source_mode` and `ingestion.last_run_provenance`
 - [`../docs/validation-gates.md`](../docs/validation-gates.md) — the post-commit gates that confirm the staging table's parent tables exist
-
-Planned artifacts of this package:
-
-- [`../README.md` (planned)](../README.md) — package index for the ServiceNow deliverable
-- [`../docs/manual-build/06-staging-table-csv-import.md` (planned)](../docs/manual-build/06-staging-table-csv-import.md) — the detailed import and transform guide
-- [`../docs/manual-build/01-connection-credential-aliases.md` (planned)](../docs/manual-build/01-connection-credential-aliases.md) — the two credential aliases the live path uses
-- [`../docs/manual-build/02-flow-crunchbase-ingestion.md` (planned)](../docs/manual-build/02-flow-crunchbase-ingestion.md) — the Crunchbase ingestion flow
-- [`../docs/manual-build/03-flow-linkedin-ingestion.md` (planned)](../docs/manual-build/03-flow-linkedin-ingestion.md) — the LinkedIn ingestion flow
-- [`../docs/manual-build/05-atf-test-suites.md` (planned)](../docs/manual-build/05-atf-test-suites.md) — the test suites, including the provenance labelling
-- [`../docs/validation-checklist.md` (planned)](../docs/validation-checklist.md) — the success criteria and their evidence
-- [`../docs/gaps-and-flags.md` (planned)](../docs/gaps-and-flags.md) — requirements with no clean platform equivalent
+- [`../README.md`](../README.md) — package index for the ServiceNow deliverable
+- [`../docs/manual-build/06-staging-table-csv-import.md`](../docs/manual-build/06-staging-table-csv-import.md) — the detailed import and transform guide
+- [`../docs/manual-build/01-connection-credential-aliases.md`](../docs/manual-build/01-connection-credential-aliases.md) — the two credential aliases the live path uses
+- [`../docs/manual-build/02-flow-crunchbase-ingestion.md`](../docs/manual-build/02-flow-crunchbase-ingestion.md) — the Crunchbase ingestion flow
+- [`../docs/manual-build/03-flow-linkedin-ingestion.md`](../docs/manual-build/03-flow-linkedin-ingestion.md) — the LinkedIn ingestion flow
+- [`../docs/manual-build/05-atf-test-suites.md`](../docs/manual-build/05-atf-test-suites.md) — the test suites, including the provenance labelling
+- [`../docs/validation-checklist.md`](../docs/validation-checklist.md) — the success criteria and their evidence
+- [`../docs/gaps-and-flags.md`](../docs/gaps-and-flags.md) — requirements with no clean platform equivalent
 - [`../docs/deployment-runbook.md`](../docs/deployment-runbook.md) — import sequence, gates and rollback
-- [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md) — the single source of truth for every decision, alternative and risk behind this contract
+- [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md) — the single source of truth for every decision, alternative and risk behind this contract
 

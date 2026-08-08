@@ -4,7 +4,7 @@ This guide builds **10 Automated Test Framework test suites containing 36 tests*
 
 **Authority.** The frozen prompt and the Agent Action Plan are authoritative for all application content. The Update Set XML at [`../../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`](../../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml) is the authoritative source for every table name, column name, column type, mandatory flag, choice value, role name, ACL name, Script Include class name, method name, REST operation path and system-property key cited below; the identifiers used here match those records character for character. [`../access-control.md`](../access-control.md) is authoritative for the twenty-one role-by-field outcomes, and [`../api-reference.md`](../api-reference.md) for the six resource paths, the pagination contract and the exact error bodies. This guide agrees with all three and introduces no third spelling. No variant spelling of any identifier is valid.
 
-This document carries **no rationale**. It states what to build and how to build it, suite by suite, test by test, step by step. Every decision behind these suites, every alternative considered and every risk each carries is recorded in [`../../../docs/decisions/DECISION_LOG.md` (planned)](../../../docs/decisions/DECISION_LOG.md), which is the single source of truth for "why". Three points in this procedure depart from a literal reading of the requirements — the three impersonated users being **created at run time by test setup steps** rather than shipped in the Update Set, the rate-limit counter row being **pre-seeded at the configured budget** so a single request trips the limit, and the **two separate provenance surfaces** that keep an ATF result label distinct from a scheduled run-summary record. Each is stated below as a build mechanic and cross-referenced to that log. None is argued here.
+This document carries **no rationale**. It states what to build and how to build it, suite by suite, test by test, step by step. Every decision behind these suites, every alternative considered and every risk each carries is recorded in [`../../../docs/decisions/DECISION_LOG.md`](../../../docs/decisions/DECISION_LOG.md), which is the single source of truth for "why". Three points in this procedure depart from a literal reading of the requirements — the three impersonated users being **created at run time by test setup steps** rather than shipped in the Update Set, the rate-limit counter row being **pre-seeded at the configured budget** so a single request trips the limit, and the **two separate provenance surfaces** that keep an ATF result label distinct from a scheduled run-summary record. Each is stated below as a build mechanic and cross-referenced to that log. None is argued here.
 
 Operational warnings **are** in scope for this guide and are marked as such. The eight warnings under [Operational warnings](#operational-warnings) are load-bearing and must not be skipped. Two of them describe failures that are completely silent, in the sense that every test reports `success` while the property under test was never exercised at all.
 
@@ -12,7 +12,7 @@ Operational warnings **are** in scope for this guide and are marked as such. The
 
 This guide is executable on its own. Every suite, every test, every step, every input value, the assembly order, the run procedure and the verification are stated here in full. An operator needs no other file to build and run the suites.
 
-Documents marked **(planned)** are in-scope artifacts of this deliverable package that are authored elsewhere in the same delivery. A link to a planned document resolves once that document lands; nothing in this guide depends on reading one first.
+**Every document linked from this guide is delivered and readable**, so no link is a forward reference; each one is an in-scope artifact of this deliverable package. Nothing in this guide depends on reading another document first.
 
 | Document | What this guide takes from it |
 | --- | --- |
@@ -27,14 +27,14 @@ Documents marked **(planned)** are in-scope artifacts of this deliverable packag
 | [`04-service-portal-pages-and-widgets.md`](04-service-portal-pages-and-widgets.md) | The five portal pages and eight widgets, and the three impersonated users this guide creates that the portal walkthrough also requires. |
 | [`06-staging-table-csv-import.md`](06-staging-table-csv-import.md) | The staged fallback rows the two flow tests act on, their six `import_run` tokens and their expected reconciliation counts. |
 | [`01-connection-credential-aliases.md`](01-connection-credential-aliases.md) | The two Connection and Credential Aliases, and the alias state that determines whether a flow test is labelled `live validated` or `fallback validated`. |
-| [`../validation-checklist.md` (planned)](../validation-checklist.md) | Success criteria 2, 3 and 4, whose evidence these suites produce. |
-| [`../manual-build-instructions.md` (planned)](../manual-build-instructions.md) | The build order for the package as a whole, and the split rule between Update Set XML and manual build. |
-| [`../gaps-and-flags.md` (planned)](../gaps-and-flags.md) | The requirements with no clean platform equivalent, including the administrator ACL override recorded as a verification-procedure gap. |
-| [`../../../docs/decisions/DECISION_LOG.md` (planned)](../../../docs/decisions/DECISION_LOG.md) | The single destination for every "why". |
+| [`../validation-checklist.md`](../validation-checklist.md) | Success criteria 2, 3 and 4, whose evidence these suites produce. |
+| [`../manual-build-instructions.md`](../manual-build-instructions.md) | The build order for the package as a whole, and the split rule between Update Set XML and manual build. |
+| [`../gaps-and-flags.md`](../gaps-and-flags.md) | The requirements with no clean platform equivalent, including the administrator ACL override recorded as a verification-procedure gap. |
+| [`../../../docs/decisions/DECISION_LOG.md`](../../../docs/decisions/DECISION_LOG.md) | The single destination for every "why". |
 
 ## Position in the build order
 
-This is **guide 05 of six**, and it is **step 6** of the execution order below — the **last** step. The execution order is **not** the filename order: guide **06** runs before this one. Guides 01, 02, 03, 04 and 06 must all be complete before this guide begins. The order is stated in full in [`../manual-build-instructions.md` (planned)](../manual-build-instructions.md); it is repeated here so this guide can be run without it.
+This is **guide 05 of six**, and it is **step 6** of the execution order below — the **last** step. The execution order is **not** the filename order: guide **06** runs before this one. Guides 01, 02, 03, 04 and 06 must all be complete before this guide begins. The order is stated in full in [`../manual-build-instructions.md`](../manual-build-instructions.md); it is repeated here so this guide can be run without it.
 
 | Step | Guide | Why it sits here |
 | --- | --- | --- |
@@ -78,7 +78,7 @@ Do not begin this guide until every item below holds.
 
 ### Why this guide exists rather than more Update Set XML
 
-Only tables carrying the update-synch attribute are captured into `sys_update_xml` records, and adding that attribute to a table that lacks it out of the box is unsupported. Tests, test steps, test suites and their ordered membership are built through the platform's own interface and sit outside the captured set, which is why the delivered Update Set contains **zero** test records — no `sys_atf_test`, no `sys_atf_step`, no `sys_atf_test_suite` and no `sys_atf_test_suite_test`. [`../manual-build-instructions.md` (planned)](../manual-build-instructions.md) owns the split rule for the package as a whole.
+Only tables carrying the update-synch attribute are captured into `sys_update_xml` records, and adding that attribute to a table that lacks it out of the box is unsupported. Tests, test steps, test suites and their ordered membership are built through the platform's own interface and sit outside the captured set, which is why the delivered Update Set contains **zero** test records — no `sys_atf_test`, no `sys_atf_step`, no `sys_atf_test_suite` and no `sys_atf_test_suite_test`. [`../manual-build-instructions.md`](../manual-build-instructions.md) owns the split rule for the package as a whole.
 
 ## Instance prerequisite: ATF execution must be enabled
 
@@ -396,7 +396,7 @@ One test, `BST CRUD — newsarticle`. Table `x_bst_startuptrk_newsarticle`, 6 co
 | 90 mandatory | `title` omitted, `startup` supplied — **Record was not inserted** |
 | 100 replaced | **Run Server Side Script** asserting `published_date` accepts the specified date forms — `YYYY-MM-DD`, a full ISO 8601 timestamp whose date part is taken, and a ten-digit or thirteen-digit epoch — and that a value which is not a real calendar day is refused. |
 
-This table is **manual-entry and CSV-import only**. Neither ingestion flow writes it, there is no NewsArticle sample CSV, and no flow test in [suite 10](#suite-10--bst-flow-suite--ingestion) references it. The exclusion is recorded in [`../gaps-and-flags.md` (planned)](../gaps-and-flags.md).
+This table is **manual-entry and CSV-import only**. Neither ingestion flow writes it, there is no NewsArticle sample CSV, and no flow test in [suite 10](#suite-10--bst-flow-suite--ingestion) references it. The exclusion is recorded in [`../gaps-and-flags.md`](../gaps-and-flags.md).
 
 ## Suite 8 — `BST ACL suite — premium fields by role`
 
@@ -594,7 +594,7 @@ Build these two records **once, by hand, as a precondition** — they are instan
 
 The REST caller holds the **base** role deliberately. All thirteen read operations are granted to all three roles by the `Boston Startup Tracker API read` endpoint ACL and by the Layer 1 table-read ACLs, so every `GET` in this suite succeeds — and because the caller is the base role, the success-shape assertion in each test can additionally confirm end-to-end over HTTP that the premium keys are **absent** from the response body. The six tests assert response shape, pagination and the 429 contract, none of which is role-differentiated, so no administrator credential is needed anywhere in this suite. Mutations are not exercised here.
 
-This persistent, password-holding caller is distinct from the three run-time impersonation users of [Technique (a)](#technique-a--impersonation), which need no password because `Impersonate` needs none. The split is recorded in [`../../../docs/decisions/DECISION_LOG.md` (planned)](../../../docs/decisions/DECISION_LOG.md).
+This persistent, password-holding caller is distinct from the three run-time impersonation users of [Technique (a)](#technique-a--impersonation), which need no password because `Impersonate` needs none. The split is recorded in [`../../../docs/decisions/DECISION_LOG.md`](../../../docs/decisions/DECISION_LOG.md).
 
 ### The shared REST step sequence
 
@@ -793,7 +793,7 @@ The arithmetic is **7 + 21 + 6 + 2 = 36 tests across 10 suites**. Both totals mu
 
 ## Technique (a) — impersonation
 
-Every one of the 21 tests in suite 8 **impersonates a purpose-created user holding exactly one scoped role and none of the elevated platform roles**. The three users are **created by the test setup steps at run time**, not shipped in the Update Set, because `sys_user` sits outside the application scope and the requirements forbid modifying anything outside `x_bst_startuptrk`. The mechanic is stated here; the decision is recorded in [`../../../docs/decisions/DECISION_LOG.md` (planned)](../../../docs/decisions/DECISION_LOG.md).
+Every one of the 21 tests in suite 8 **impersonates a purpose-created user holding exactly one scoped role and none of the elevated platform roles**. The three users are **created by the test setup steps at run time**, not shipped in the Update Set, because `sys_user` sits outside the application scope and the requirements forbid modifying anything outside `x_bst_startuptrk`. The mechanic is stated here; the decision is recorded in [`../../../docs/decisions/DECISION_LOG.md`](../../../docs/decisions/DECISION_LOG.md).
 
 ### The three users
 
@@ -871,11 +871,11 @@ Three rules follow, and none of them is optional:
 2. **The scoped `x_bst_startuptrk.admin` role is not the platform administrator role.** They are two different records. `BST ATF admin` holds the scoped role only, which is why the `ACL-*.1` cells prove something; a user holding the platform role would pass those cells by override.
 3. **Verify the role set, do not assume it.** The step 2 script above exists for this reason. A `BST ATF base` user that silently acquired `admin` turns all seven denied cells into false passes.
 
-[`../access-control.md`](../access-control.md) states the same impersonation requirement and names the reviewer entry that owns it; read its verification procedure alongside this section. The trap is also recorded in [`../gaps-and-flags.md` (planned)](../gaps-and-flags.md) as a gap in any naive verification procedure rather than a gap in the platform.
+[`../access-control.md`](../access-control.md) states the same impersonation requirement and names the reviewer entry that owns it; read its verification procedure alongside this section. The trap is also recorded in [`../gaps-and-flags.md`](../gaps-and-flags.md) as a gap in any naive verification procedure rather than a gap in the platform.
 
 ## Technique (b) — deterministic 429
 
-The rate-limit assertion is made deterministic by **pre-seeding a counter row in `x_bst_startuptrk_rate_limit_counter` already at the configured budget**, so the very next call trips the limit in a **single request**. No loop of a hundred calls is needed and no test depends on timing out a real budget. The mechanic is stated here; the decision is recorded in [`../../../docs/decisions/DECISION_LOG.md` (planned)](../../../docs/decisions/DECISION_LOG.md).
+The rate-limit assertion is made deterministic by **pre-seeding a counter row in `x_bst_startuptrk_rate_limit_counter` already at the configured budget**, so the very next call trips the limit in a **single request**. No loop of a hundred calls is needed and no test depends on timing out a real budget. The mechanic is stated here; the decision is recorded in [`../../../docs/decisions/DECISION_LOG.md`](../../../docs/decisions/DECISION_LOG.md).
 
 ### Where the budget and window come from
 
@@ -994,7 +994,7 @@ A standard `Retry-After` response header carries the same value. It may be asser
 
 ## Technique (c) — provenance labelling
 
-Each flow test's **setup step writes the run-provenance marker**, and the test result is labelled either **`live validated`** or **`fallback validated`**. The mechanic is stated here; the decision is recorded in [`../../../docs/decisions/DECISION_LOG.md` (planned)](../../../docs/decisions/DECISION_LOG.md).
+Each flow test's **setup step writes the run-provenance marker**, and the test result is labelled either **`live validated`** or **`fallback validated`**. The mechanic is stated here; the decision is recorded in [`../../../docs/decisions/DECISION_LOG.md`](../../../docs/decisions/DECISION_LOG.md).
 
 ### Why the label is a separate evidence surface
 
@@ -1004,7 +1004,7 @@ The two surfaces are distinct and must not be conflated:
 
 | Surface | Written by | Survives the run? | Read by |
 | --- | --- | --- | --- |
-| **Scheduled-run provenance** | Step 8 of the flow, on a real scheduled execution — the run-summary record and `x_bst_startuptrk.ingestion.last_run_provenance` | **Yes.** It is written outside any test transaction. | [`../validation-checklist.md` (planned)](../validation-checklist.md), success criterion 4 |
+| **Scheduled-run provenance** | Step 8 of the flow, on a real scheduled execution — the run-summary record and `x_bst_startuptrk.ingestion.last_run_provenance` | **Yes.** It is written outside any test transaction. | [`../validation-checklist.md`](../validation-checklist.md), success criterion 4 |
 | **ATF result label** | The step 20 setup step in this guide, labelling the result `fallback validated` or `live validated` | **No.** ATF rolls back the data a test creates, so a provenance row or property written inside a test does not persist. | The test report, and this guide's evidence record |
 
 This table is stated identically in [`02-flow-crunchbase-ingestion.md`](02-flow-crunchbase-ingestion.md) and [`03-flow-linkedin-ingestion.md`](03-flow-linkedin-ingestion.md). The three documents must agree.
@@ -1102,7 +1102,7 @@ A test whose status is **Error** rather than **Failure** did not assert anything
 
 ### Evidence to record
 
-Record these artifacts against [`../validation-checklist.md` (planned)](../validation-checklist.md).
+Record these artifacts against [`../validation-checklist.md`](../validation-checklist.md).
 
 | Criterion | Evidence artifact | What it must show |
 | --- | --- | --- |
@@ -1258,13 +1258,11 @@ Work through every box before this guide is signed off.
 
 - [ ] `BST — full delivery suite` runs to completion with **36 of 36** tests passing and **0** in the **Error** state.
 - [ ] No residual `BST ATF` user remains in `sys_user`.
-- [ ] The suite results, test results and step results for criteria 2, 3 and 4 are recorded against [`../validation-checklist.md` (planned)](../validation-checklist.md).
+- [ ] The suite results, test results and step results for criteria 2, 3 and 4 are recorded against [`../validation-checklist.md`](../validation-checklist.md).
 - [ ] Criterion 4's three consecutive guard-passing scheduled runs per flow are recorded from the **run-summary records**, not from the ATF results.
 - [ ] The [Coverage gate](#coverage-gate) is met: 100 % of the 7 tables and 100 % of the 6 resources have a passing test.
 
 ## Related documents
-
-Delivered with this package:
 
 - [`../../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`](../../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml) — authoritative for every identifier cited in this guide
 - [`../access-control.md`](../access-control.md) — the 3 x 7 role-by-field matrix, the secured read path, the omit-not-nulled rule and the impersonation requirement
@@ -1279,12 +1277,9 @@ Delivered with this package:
 - [`06-staging-table-csv-import.md`](06-staging-table-csv-import.md) — the staged fallback rows the flow tests act on
 - [`../../sample-data/README.md`](../../sample-data/README.md) — the CSV column contract behind those rows
 - [`../../scripts/validate_update_set_xml.py`](../../scripts/validate_update_set_xml.py) — the two-level XML validator run before import
-
-Planned artifacts of this package:
-
-- [`../../README.md` (planned)](../../README.md) — the package index
-- [`../validation-checklist.md` (planned)](../validation-checklist.md) — success criteria 2, 3 and 4, whose evidence these suites produce
-- [`../manual-build-instructions.md` (planned)](../manual-build-instructions.md) — the build order and the Update Set versus manual-build split rule
-- [`../gaps-and-flags.md` (planned)](../gaps-and-flags.md) — the requirements with no clean platform equivalent, including the administrator ACL override
-- [`../../../docs/decisions/DECISION_LOG.md` (planned)](../../../docs/decisions/DECISION_LOG.md) — the single destination for every "why"
-- [`../../../docs/decisions/TRACEABILITY_MATRIX.md` (planned)](../../../docs/decisions/TRACEABILITY_MATRIX.md) — the bidirectional legacy-to-platform and requirement-to-artifact mapping
+- [`../../README.md`](../../README.md) — the package index
+- [`../validation-checklist.md`](../validation-checklist.md) — success criteria 2, 3 and 4, whose evidence these suites produce
+- [`../manual-build-instructions.md`](../manual-build-instructions.md) — the build order and the Update Set versus manual-build split rule
+- [`../gaps-and-flags.md`](../gaps-and-flags.md) — the requirements with no clean platform equivalent, including the administrator ACL override
+- [`../../../docs/decisions/DECISION_LOG.md`](../../../docs/decisions/DECISION_LOG.md) — the single destination for every "why"
+- [`../../../docs/decisions/TRACEABILITY_MATRIX.md`](../../../docs/decisions/TRACEABILITY_MATRIX.md) — the bidirectional legacy-to-platform and requirement-to-artifact mapping

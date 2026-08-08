@@ -6,13 +6,13 @@ The inventory is exhaustive by construction. A requirement that is neither imple
 
 **Authority.** The frozen prompt and the Agent Action Plan are authoritative for all application content. This document is authoritative for one thing only: **which requirements are unimplemented, worked around or excluded, and on what factual basis.** Where a requirement is implemented, the document that owns it is authoritative for how — [`./data-model.md`](./data-model.md) for the schema, [`./access-control.md`](./access-control.md) for authorization, [`./api-reference.md`](./api-reference.md) for the API surface, and the six guides indexed by [`./manual-build-instructions.md`](./manual-build-instructions.md) for everything built by hand. Every identifier used below — table name, column name, role name, property key, page name, widget name, gap identifier — matches those documents character for character. No variant spelling is valid.
 
-This document carries **no rationale**. It states what each requirement is, where it comes from, what the platform offers or does not offer, and what was done. Every decision behind those outcomes, every alternative considered and every risk each carries is recorded in [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md), which is the single source of truth for "why". Each entry below ends with a pointer to that log, and the pointer does the work.
+This document carries **no rationale**. It states what each requirement is, where it comes from, what the platform offers or does not offer, and what was done. Every decision behind those outcomes, every alternative considered and every risk each carries is recorded in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md), which is the single source of truth for "why". Each entry below ends with a pointer to that log, and the pointer does the work.
 
-**Reviewer.** Three of the call-out categories that [`../../docs/review/CRITICAL_DECISIONS.md` (planned)](../../docs/review/CRITICAL_DECISIONS.md) is required to raise intersect this inventory: the authorization decision, recorded here as [F10](#f10--the-administrator-access-control-override), and the ambiguity resolutions, recorded here as [F6](#f6--inclusion-criteria-field-ambiguity--resolved) and under [Ambiguity resolutions besides F6](#ambiguity-resolutions-besides-f6). That document's five entries are not reproduced here.
+**Reviewer.** Three of the call-out categories that [`../../docs/review/CRITICAL_DECISIONS.md`](../../docs/review/CRITICAL_DECISIONS.md) is required to raise intersect this inventory: the authorization decision, recorded here as [F10](#f10--the-administrator-access-control-override), and the ambiguity resolutions, recorded here as [F6](#f6--inclusion-criteria-field-ambiguity--resolved) and under [Ambiguity resolutions besides F6](#ambiguity-resolutions-besides-f6). That document's five entries are not reproduced here.
 
 ## Referenced documents
 
-Some documents named below are **planned artifacts of this package**. Every link to one carries the marker **(planned)** in its link text. A statement about a planned document describes what that document is required to contain; it is not a claim that the content can be read from it today.
+**Every document named below is delivered and readable.** Each link resolves to a file in this repository, so a reader can follow any of them and read the content the statement around it describes; no link is a forward reference to something still to be written.
 
 | Document | What it supplies to this inventory |
 | --- | --- |
@@ -26,11 +26,11 @@ Some documents named below are **planned artifacts of this package**. Every link
 | [`./manual-build/06-staging-table-csv-import.md`](./manual-build/06-staging-table-csv-import.md) | The six CSV files, and the absence of a seventh for news articles. |
 | [`./deployment-runbook.md`](./deployment-runbook.md) | The import route, the post-commit gates, and the definition of a scheduled run. |
 | [`./validation-gates.md`](./validation-gates.md) | The sixteen post-commit gates and the eleven-gate core. |
-| [`./validation-checklist.md` (planned)](./validation-checklist.md) | The evidence record for the five success criteria, including criterion 2 for the access-control checks and criterion 4 for the scheduled runs. |
+| [`./validation-checklist.md`](./validation-checklist.md) | The evidence record for the five success criteria, including criterion 2 for the access-control checks and criterion 4 for the scheduled runs. |
 | [`../sample-data/README.md`](../sample-data/README.md) | The fallback-only posture of the sample dataset. |
-| [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md) | The single source of truth for every "why" behind every entry in this document. |
-| [`../../docs/decisions/TRACEABILITY_MATRIX.md` (planned)](../../docs/decisions/TRACEABILITY_MATRIX.md) | The bidirectional matrix this inventory closes the unimplemented half of. |
-| [`../../docs/review/CRITICAL_DECISIONS.md` (planned)](../../docs/review/CRITICAL_DECISIONS.md) | The five risk-ordered review entries, three of whose call-out categories intersect this inventory. |
+| [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md) | The single source of truth for every "why" behind every entry in this document. |
+| [`../../docs/decisions/TRACEABILITY_MATRIX.md`](../../docs/decisions/TRACEABILITY_MATRIX.md) | The bidirectional matrix this inventory closes the unimplemented half of. |
+| [`../../docs/review/CRITICAL_DECISIONS.md`](../../docs/review/CRITICAL_DECISIONS.md) | The five risk-ordered review entries, three of whose call-out categories intersect this inventory. |
 
 ## Numbering convention
 
@@ -107,7 +107,7 @@ This flag is also design-system gap **G6** in the [Design-system gap inventory](
 
 The consequent entitlement path is recorded in [F2](#f2--automatic-entitlement-transition-on-payment).
 
-**Decision log.** [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md).
+**Decision log.** [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
 ### F2 — Automatic entitlement transition on payment
 
@@ -121,7 +121,7 @@ The consequent entitlement path is recorded in [F2](#f2--automatic-entitlement-t
 
 **The operational path.** Entitlement is granted **manually**: an administrator adds `x_bst_startuptrk.premium_user` to the person's `sys_user` record on the instance, and removes it to withdraw entitlement. That act takes effect immediately on both surfaces, because both consult the caller's effective roles on every read. The role, its capability and the seven columns it unlocks are specified in [`./access-control.md`](./access-control.md).
 
-**Decision log.** [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md).
+**Decision log.** [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
 ### F3 — Runtime-configurable flow schedule interval
 
@@ -135,9 +135,9 @@ The consequent entitlement path is recorded in [F2](#f2--automatic-entitlement-t
 
 **The operational consequence.** Because the trigger fires hourly and the guard admits one execution per cadence window, most executions do no work. The number of no-op executions between two consecutive scheduled runs is one fewer than the configured cadence in hours: **23 at the shipped cadence of 24 hours**, 5 at the minimum of 6, and 47 at the maximum of 48.
 
-**Consequently, a "scheduled run" means an execution that passed the cadence guard.** An execution that started, found the cadence had not elapsed and exited without ingesting is a no-op: it is not a scheduled run, it does not count towards the three consecutive runs the fourth success criterion requires, and it must not appear in that criterion's evidence. The same definition is stated in [`./deployment-runbook.md`](./deployment-runbook.md), in both flow guides, and in criterion 4 of [`./validation-checklist.md` (planned)](./validation-checklist.md).
+**Consequently, a "scheduled run" means an execution that passed the cadence guard.** An execution that started, found the cadence had not elapsed and exited without ingesting is a no-op: it is not a scheduled run, it does not count towards the three consecutive runs the fourth success criterion requires, and it must not appear in that criterion's evidence. The same definition is stated in [`./deployment-runbook.md`](./deployment-runbook.md), in both flow guides, and in criterion 4 of [`./validation-checklist.md`](./validation-checklist.md).
 
-**Decision log.** [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md).
+**Decision log.** [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
 ### F4 — Path-style portal routes
 
@@ -159,7 +159,7 @@ Prompt section 5.0 mandates **five routes**. It does not mandate their **URL syn
 
 **Disposition — resolved by documented workaround, and recorded as a deviation.** All five routes are delivered as five `sp_page` records — `bst_home`, `bst_company`, `bst_investor`, `bst_dashboard` and `bst_account` — addressed by query parameter. The route count and the navigable surface satisfy the requirement; the URL form deviates from the legacy path style. The mapping is not one-for-one in either direction: the legacy tree had two routes over search-related surfaces and no dashboard route, while the target has one Home / Search page and one Dashboard / Trends page, and the legacy `/user/:id` becomes `bst_account`. The addressing scheme, the page names and the link construction are specified in [`./manual-build/04-service-portal-pages-and-widgets.md`](./manual-build/04-service-portal-pages-and-widgets.md).
 
-**Decision log.** [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md).
+**Decision log.** [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
 ### F5 — A namespace-free API base path
 
@@ -177,7 +177,7 @@ https://<instance>.service-now.com/api/x_bst_startuptrk/v1/<resource>
 
 Every path template in [`./api-reference.md`](./api-reference.md) is relative to that physical base, so `GET /startups` means `GET /api/x_bst_startuptrk/v1/startups`. **No consumer may be written against the logical form.**
 
-**Decision log.** [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md).
+**Decision log.** [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
 ### F6 — Inclusion-criteria field ambiguity — resolved
 
@@ -206,7 +206,7 @@ Read together, the two memberships are in tension: a predicate cannot test a col
 
 **Disposition — resolved by documented workaround.** The predicate is delivered as stated, over `active` and `headquarters_location` only. Records failing the criteria remain in the table for administrative visibility and are excluded from all portal-facing and non-administrative list and search queries.
 
-**Decision log.** [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md).
+**Decision log.** [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
 ### F7 — Design-system component gaps
 
@@ -220,7 +220,7 @@ Read together, the two memberships are in tension: a predicate cannot test a col
 
 Two further gaps are recorded in the same inventory and are **not** covered by this flag: **G6**, premium billing and checkout, which has no resolution and is [F1](#f1--premium-subscription-billing-and-payment-processing); and **G7**, the icon-system split, which is not a missing component.
 
-**Decision log.** [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md).
+**Decision log.** [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
 ### F8 — An administrative console as a portal route
 
@@ -249,7 +249,7 @@ Those views are usable the moment the Update Set commits, which is what serves f
 
 **What is not delivered.** No custom administrative portal route, page or widget exists. Of feature `F008`'s five requirements, `F008-1` account and role management is a platform concern outside the application scope, `F008-2` manual data correction is served by the native form views above, and `F008-3` health monitoring, `F008-4` platform usage analytics and `F008-5` API-key management have no counterpart in the authoritative prompt and are **consciously excluded**; the rate-limit half of `F008-5` is configured through the two `x_bst_startuptrk.rest.rate_limit_*` properties rather than through an interface. The tables, columns and modules are specified in [`./data-model.md`](./data-model.md); the properties are in [`./api-reference.md`](./api-reference.md).
 
-**Decision log.** [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md).
+**Decision log.** [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
 ### F9 — SRS requirements with no prompt counterpart
 
@@ -280,7 +280,7 @@ No flow, Script Include, business rule or scheduled job in `x_bst_startuptrk` fe
 
 **Disposition — consciously excluded, all three.** They are recorded here so that their absence reads as a decision rather than an oversight. Their positions in the feature roll-up are shown in [SRS feature coverage roll-up](#srs-feature-coverage-roll-up).
 
-**Decision log.** [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md).
+**Decision log.** [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
 ### F10 — The administrator access-control override
 
@@ -302,11 +302,11 @@ The consequence is a false positive that looks exactly like a pass: a walkthroug
 4. Confirm a denied field's key is **absent from** the response object rather than present with a null or an empty string.
 5. Confirm both access-control layers are load-bearing by reading a non-premium column in the same call under the base role.
 
-The three users are created by Automated Test Framework setup steps at run time rather than shipped in the Update Set, because `sys_user` sits outside the application scope. The full procedure is in [`./access-control.md`](./access-control.md), the suite that executes it is built per [`./manual-build/05-atf-test-suites.md`](./manual-build/05-atf-test-suites.md), and the evidence is recorded against criterion 2 of [`./validation-checklist.md` (planned)](./validation-checklist.md).
+The three users are created by Automated Test Framework setup steps at run time rather than shipped in the Update Set, because `sys_user` sits outside the application scope. The full procedure is in [`./access-control.md`](./access-control.md), the suite that executes it is built per [`./manual-build/05-atf-test-suites.md`](./manual-build/05-atf-test-suites.md), and the evidence is recorded against criterion 2 of [`./validation-checklist.md`](./validation-checklist.md).
 
-**Any access-control result obtained without impersonation must not be recorded as evidence.** This is the point the **Security** reviewer entry in [`../../docs/review/CRITICAL_DECISIONS.md` (planned)](../../docs/review/CRITICAL_DECISIONS.md) is required to check above all others.
+**Any access-control result obtained without impersonation must not be recorded as evidence.** This is the point the **Security** reviewer entry in [`../../docs/review/CRITICAL_DECISIONS.md`](../../docs/review/CRITICAL_DECISIONS.md) is required to check above all others.
 
-**Decision log.** [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md).
+**Decision log.** [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
 ### F11 — Geographic distribution maps
 
@@ -330,7 +330,7 @@ The three users are created by Automated Test Framework setup steps at run time 
 
 Three of the five are covered; two are excluded. The widgets and their build mechanics are in [`./manual-build/04-service-portal-pages-and-widgets.md`](./manual-build/04-service-portal-pages-and-widgets.md), and the `portfolio_count` derivation is in [`./data-model.md`](./data-model.md).
 
-**Decision log.** [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md).
+**Decision log.** [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
 ### F12 — The Notification System feature
 
@@ -352,13 +352,13 @@ The two features are also linked at the requirement level: a follow or saved-sea
 
 **Disposition — consciously excluded, all five.** Nothing in the application notifies, follows, subscribes, digests or emails. The exclusion is recorded here so the absence of an entire source feature reads as a decision rather than an oversight.
 
-**Decision log.** [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md).
+**Decision log.** [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
 ## SRS feature coverage roll-up
 
 Ten rows, one per feature of `documentation/Software Requirements Specifications (SRS).md`. Every feature is either mapped to a target artifact or explicitly excluded, so all ten are accounted for in one place.
 
-**This roll-up is at feature level.** The **Target coverage** column names the artifacts that serve the feature; it is **not** a claim that every one of that feature's five sub-requirements is realised in full. The **Not covered** column names every sub-requirement this inventory records as having **no** target artifact. The complete requirement-by-requirement mapping in both directions is the business of [`../../docs/decisions/TRACEABILITY_MATRIX.md` (planned)](../../docs/decisions/TRACEABILITY_MATRIX.md), and this table is the feature-level summary of its unimplemented half.
+**This roll-up is at feature level.** The **Target coverage** column names the artifacts that serve the feature; it is **not** a claim that every one of that feature's five sub-requirements is realised in full. The **Not covered** column names every sub-requirement this inventory records as having **no** target artifact. The complete requirement-by-requirement mapping in both directions is the business of [`../../docs/decisions/TRACEABILITY_MATRIX.md`](../../docs/decisions/TRACEABILITY_MATRIX.md), and this table is the feature-level summary of its unimplemented half.
 
 Every one of the ten features carries at least one sub-requirement with no target artifact, so no row of the **Not covered** column is empty.
 
@@ -403,7 +403,7 @@ Six sub-requirements are named in the roll-up and belong to no flag section. The
 | `F006-1` | "Implement user registration and authentication system" — `SRS:L443` | **Consciously excluded from the application scope.** Identity, authentication and session handling are platform concerns on `sys_user`, which sits outside `x_bst_startuptrk`, and prompt section 6.0 forbids modifying anything outside the scope. The application declares no identity table and no credential column; see [`./access-control.md`](./access-control.md). |
 | `F006-5` | "Develop password reset and account recovery mechanisms" — `SRS:L447` | **Consciously excluded from the application scope.** Same position as `F006-1`: a `sys_user` concern outside the scope, with no counterpart in the authoritative prompt. |
 
-**Decision log.** [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md).
+**Decision log.** [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
 ## Design-system gap inventory
 
@@ -423,7 +423,7 @@ Seven gaps exist between what the five portal routes need and what that library 
 
 Six gaps resolve inside the system; **G6** does not. The five component gaps G1 through G5 are collected as [F7](#f7--design-system-component-gaps); G6 is [F1](#f1--premium-subscription-billing-and-payment-processing); G7 is a boundary rather than a missing component and belongs to no flag. Every resolution above is built per [`./manual-build/04-service-portal-pages-and-widgets.md`](./manual-build/04-service-portal-pages-and-widgets.md), which carries the markup, the option schemas and the class lists.
 
-**Decision log.** [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md).
+**Decision log.** [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
 ### Responsive stance — the 1024-pixel floor
 
@@ -449,7 +449,7 @@ The layout mechanics are in [`./manual-build/04-service-portal-pages-and-widgets
 - The retired Material-UI packages — `"@material-ui/core": "^4.12.3"` at `package.json:L15` and `"@material-ui/icons": "^4.11.2"` at `package.json:L16` — are **left in place, untouched**, together with the declared-and-never-imported `chart.js` and `react-chartjs-2`. The legacy manifest is read-only reference.
 - The two-level Update Set XML validator at [`../scripts/validate_update_set_xml.py`](../scripts/validate_update_set_xml.py) is written against the Python standard library only, so it introduces no dependency either.
 
-**Decision log.** [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md).
+**Decision log.** [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
 ## Superseded and retired inventory
 
@@ -489,7 +489,7 @@ The brief's remaining requested attributes are delivered under different names w
 
 **Disposition — consciously excluded**, for the eleven attributes in the first table. They are recorded here so a future reader does not mistake their absence for an oversight.
 
-**Decision log.** [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md).
+**Decision log.** [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
 ### Capabilities named out of scope
 
@@ -507,7 +507,7 @@ Prompt section 7.2 names these capabilities as out of scope. Each row gives the 
 
 The six sample CSV files and the import procedure are in [`./manual-build/06-staging-table-csv-import.md`](./manual-build/06-staging-table-csv-import.md) and [`../sample-data/README.md`](../sample-data/README.md); the flow build rules that forbid spokes are in [`./manual-build/02-flow-crunchbase-ingestion.md`](./manual-build/02-flow-crunchbase-ingestion.md) and [`./manual-build/03-flow-linkedin-ingestion.md`](./manual-build/03-flow-linkedin-ingestion.md).
 
-**Decision log.** [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md).
+**Decision log.** [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
 ### Ambiguity resolutions besides F6
 
@@ -517,9 +517,9 @@ Two further ambiguities in the requirements were resolved. Both are stated here 
 
 **"Exactly 7 custom tables" against ten physical tables.** Prompt section 1.0 states exactly seven custom tables; the application declares ten. **Resolution: the seven-table count governs the entity tables**, and prompt section 10.0 criterion 1 is evaluated against those seven only. The other three are documented separately as **supporting artifacts**: `x_bst_startuptrk_m2m_round_investor`, named verbatim by prompt section 1.5; `x_bst_startuptrk_ingest_staging`, required by prompt section 4.0's fallback dataset; and `x_bst_startuptrk_rate_limit_counter`, required to emit prompt section 8.0's rate-limit response body with a computed retry interval.
 
-Both resolutions are specified in full in [`./data-model.md`](./data-model.md), and both are among the ambiguity resolutions that [`../../docs/review/CRITICAL_DECISIONS.md` (planned)](../../docs/review/CRITICAL_DECISIONS.md) is required to call out.
+Both resolutions are specified in full in [`./data-model.md`](./data-model.md), and both are among the ambiguity resolutions that [`../../docs/review/CRITICAL_DECISIONS.md`](../../docs/review/CRITICAL_DECISIONS.md) is required to call out.
 
-**Decision log.** [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md).
+**Decision log.** [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
 ### Defensive exclusion — the named gRPC path
 
@@ -536,7 +536,7 @@ The **operative** half of that clause — any backend that is not part of this S
 | [`./api-reference.md`](./api-reference.md) | The physical base path behind [F5](#f5--a-namespace-free-api-base-path), and the property inventory behind [F3](#f3--runtime-configurable-flow-schedule-interval). |
 | [`./manual-build-instructions.md`](./manual-build-instructions.md) | The index that defers the icon-system split and the requirements with no platform equivalent to this document. |
 | [`./manual-build/04-service-portal-pages-and-widgets.md`](./manual-build/04-service-portal-pages-and-widgets.md) | The build mechanics for every resolution in the [Design-system gap inventory](#design-system-gap-inventory). |
-| [`./validation-checklist.md` (planned)](./validation-checklist.md) | The evidence record whose criterion 2 depends on [F10](#f10--the-administrator-access-control-override) and whose criterion 4 depends on [F3](#f3--runtime-configurable-flow-schedule-interval). |
-| [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md) | The single source of truth for the "why" behind every entry above. |
-| [`../../docs/decisions/TRACEABILITY_MATRIX.md` (planned)](../../docs/decisions/TRACEABILITY_MATRIX.md) | The bidirectional matrix that resolves at full coverage only if every entry above is present. |
-| [`../../docs/review/CRITICAL_DECISIONS.md` (planned)](../../docs/review/CRITICAL_DECISIONS.md) | The five risk-ordered review entries, three of whose call-out categories this inventory supplies. |
+| [`./validation-checklist.md`](./validation-checklist.md) | The evidence record whose criterion 2 depends on [F10](#f10--the-administrator-access-control-override) and whose criterion 4 depends on [F3](#f3--runtime-configurable-flow-schedule-interval). |
+| [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md) | The single source of truth for the "why" behind every entry above. |
+| [`../../docs/decisions/TRACEABILITY_MATRIX.md`](../../docs/decisions/TRACEABILITY_MATRIX.md) | The bidirectional matrix that resolves at full coverage only if every entry above is present. |
+| [`../../docs/review/CRITICAL_DECISIONS.md`](../../docs/review/CRITICAL_DECISIONS.md) | The five risk-ordered review entries, three of whose call-out categories this inventory supplies. |

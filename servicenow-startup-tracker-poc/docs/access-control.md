@@ -6,15 +6,15 @@ This document is the authorization reference for the ServiceNow scoped applicati
 
 The table names, column names and premium markers used below are the ones established in [`./data-model.md`](./data-model.md). The seven fields marked **P** there are the seven fields gated here, and the two documents carry the same seven names.
 
-This document carries no rationale. Every decision behind this scheme, every alternative considered and every risk it carries is to be recorded in [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md), which is to be the single source of truth for "why".
+This document carries no rationale. Every decision behind this scheme, every alternative considered and every risk it carries is recorded in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md), which is to be the single source of truth for "why".
 
 ## Referenced documents
 
 This document is self-contained. The three roles, the five ACL layers, every ACL and role join, the role-by-field matrix, the enforcement rules and the verification procedure are stated here in full; no statement of the scheme requires reading another file.
 
-Some documents named below are **planned artifacts of this package**. Every link to one carries the marker **(planned)** in its link text. A statement about a planned document describes what that document is required to contain; it is not a claim that the content can be read from it. The delivered package documents are the Update Set XML, `./data-model.md`, `./api-reference.md`, `./validation-gates.md` and `../sample-data/README.md`.
+**Every document named below is delivered and readable.** Each link resolves to a file in this package, among them the Update Set XML, `./data-model.md`, `./api-reference.md`, `./validation-gates.md` and `../sample-data/README.md`, so a reader can follow any link and read the content the statement around it describes; no link is a forward reference to something still to be written.
 
-**Reviewer.** This document is to be the artifact validated by the **Security** reviewer entry in [`../../docs/review/CRITICAL_DECISIONS.md` (planned)](../../docs/review/CRITICAL_DECISIONS.md). That reviewer must check one thing above all others: that all twenty-one field-by-role assertions run under impersonated users each holding exactly one scoped role and none of the elevated platform roles. That requirement is stated in full under [Verification procedure](#verification-procedure).
+**Reviewer.** This document is to be the artifact validated by the **Security** reviewer entry in [`../../docs/review/CRITICAL_DECISIONS.md`](../../docs/review/CRITICAL_DECISIONS.md). That reviewer must check one thing above all others: that all twenty-one field-by-role assertions run under impersonated users each holding exactly one scoped role and none of the elevated platform roles. That requirement is stated in full under [Verification procedure](#verification-procedure).
 
 ## The three roles
 
@@ -30,7 +30,7 @@ Both non-administrative roles are **read-only**. Neither `x_bst_startuptrk.premi
 
 The three roles are granted on platform `sys_user` records. **This application declares no custom identity table.** There is no user table, no credential column and no session record inside the `x_bst_startuptrk` scope; identity, authentication and role membership are all platform concerns, and the application reads the caller's effective roles from the platform.
 
-`sys_user` sits **outside** the `x_bst_startuptrk` scope. The application creates no user records and grants no roles as part of the Update Set: the delivered XML contains three `sys_user_role` definitions and zero `sys_user_has_role` assignments. Granting a role to a person is an administrative act performed on the instance after the Update Set commits. The three purpose-built users the field-ACL assertions require are created by Automated Test Framework setup steps at run time, and their required role membership is specified under [Verification procedure](#verification-procedure) below. The setup steps themselves are to be specified in [`./manual-build/05-atf-test-suites.md` (planned)](./manual-build/05-atf-test-suites.md). Both points are to be recorded in [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md).
+`sys_user` sits **outside** the `x_bst_startuptrk` scope. The application creates no user records and grants no roles as part of the Update Set: the delivered XML contains three `sys_user_role` definitions and zero `sys_user_has_role` assignments. Granting a role to a person is an administrative act performed on the instance after the Update Set commits. The three purpose-built users the field-ACL assertions require are created by Automated Test Framework setup steps at run time, and their required role membership is specified under [Verification procedure](#verification-procedure) below. The setup steps themselves are specified in [`./manual-build/05-atf-test-suites.md`](./manual-build/05-atf-test-suites.md). Both points are recorded in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
 ## The table access posture
 
@@ -45,7 +45,7 @@ Before any access control is evaluated, the platform decides whether a caller's 
 
 This matters because unsecured server-side record access does not consult access controls. Leaving a table `public` with cross-scope read enabled would let a script in another scope read every premium field directly, and the 47 record access controls below would never be consulted — they would report no denial because they were never reached. Leaving `ws_access` true would expose a second route to the same rows that skips the rate limiter, the per-field read gate and the endpoint access controls of layer 5.
 
-The consequence for deployment is that the post-commit gates cannot read application tables over the Table API. [`./validation-gates.md`](./validation-gates.md) therefore verifies the tables through `sys_db_object` and `sys_dictionary` metadata instead, and gates the posture itself as `GATE-SEC-01` and `GATE-SEC-02`. That substitution is a deliberate departure from the AAP, recorded in [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md).
+The consequence for deployment is that the post-commit gates cannot read application tables over the Table API. [`./validation-gates.md`](./validation-gates.md) therefore verifies the tables through `sys_db_object` and `sys_dictionary` metadata instead, and gates the posture itself as `GATE-SEC-01` and `GATE-SEC-02`. That substitution is a deliberate departure from the AAP, recorded in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
 ## The five layers
 
@@ -213,7 +213,7 @@ Seven premium-gated fields across three roles. Twenty-one cells, all populated.
 
 `x_bst_startuptrk.admin` reads all seven. `x_bst_startuptrk.premium_user` reads all seven. `x_bst_startuptrk.user` is denied all seven. 7 fields × 3 roles = 21 outcomes.
 
-This matrix is the specification for the 21 Automated Test Framework field-ACL tests: one test per cell, asserting that cell's outcome. The suite and its run-time user creation are to be built per [`./manual-build/05-atf-test-suites.md` (planned)](./manual-build/05-atf-test-suites.md), and the pass condition is prompt section 10.0 criterion 2, whose evidence is to be collected by [`./validation-checklist.md` (planned)](./validation-checklist.md).
+This matrix is the specification for the 21 Automated Test Framework field-ACL tests: one test per cell, asserting that cell's outcome. The suite and its run-time user creation are to be built per [`./manual-build/05-atf-test-suites.md`](./manual-build/05-atf-test-suites.md), and the pass condition is prompt section 10.0 criterion 2, whose evidence is to be collected by [`./validation-checklist.md`](./validation-checklist.md).
 
 ### The role difference is at field level only
 
@@ -253,7 +253,7 @@ The secured read path returns an **empty string** for a denied field, not an err
 
 To omit, the serialiser tests each field with an element-level read check and **skips the key entirely** when the check fails. `RestResponseBuilder.serialize()` obtains the element with `getElement()`, evaluates `canRead()` on it, and continues past the field without assigning a key when the evaluation is false. A denied premium field is consequently **absent from** the response object; the key does not appear with a null, an empty string or a placeholder.
 
-This gate lives exactly once, in the `RestResponseBuilder` Script Include, and is used by all 31 REST operations. Every widget server script must use it too. A response object built by any other means is not permitted. The absence of the key, in place of a present-and-null key, is the one point at which this document records something other than a literal reading of a field being "hidden"; that reading is to be entered in [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md).
+This gate lives exactly once, in the `RestResponseBuilder` Script Include, and is used by all 31 REST operations. Every widget server script must use it too. A response object built by any other means is not permitted. The absence of the key, in place of a present-and-null key, is the one point at which this document records something other than a literal reading of a field being "hidden"; that reading is to be entered in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
 ### No bypass
 
@@ -283,7 +283,7 @@ Verify as follows.
 4. Spot-check omission against nulling. For a caller holding only `x_bst_startuptrk.user`, confirm the denied field's key is **absent from** the response object — not present with an empty string, and not present with a null.
 5. Confirm both layers are load-bearing by reading a non-premium column under `x_bst_startuptrk.user` in the same call. It must return a value, which establishes that the layer-1 grant passed and that the denial came from layer 3.
 
-The three users are to be created by test setup steps at run time; how they are created and torn down is to be specified in [`./manual-build/05-atf-test-suites.md` (planned)](./manual-build/05-atf-test-suites.md). The pass condition for this procedure is prompt section 10.0 criterion 2, whose evidence record is to be kept in [`./validation-checklist.md` (planned)](./validation-checklist.md).
+The three users are to be created by test setup steps at run time; how they are created and torn down is specified in [`./manual-build/05-atf-test-suites.md`](./manual-build/05-atf-test-suites.md). The pass condition for this procedure is prompt section 10.0 criterion 2, whose evidence record is to be kept in [`./validation-checklist.md`](./validation-checklist.md).
 
 ## Legacy provenance
 
@@ -313,23 +313,18 @@ For reverse traceability only: `src/shared/types.ts:L72-L76` declares `enum User
 | `src/backend/services/user_service.py` | **No target artifact** — replaced by platform identity |
 | Role tier list, `documentation/Software Requirements Specifications (SRS).md:L77` | The 3 roles; the SRS's "free users" is the `x_bst_startuptrk.user` role, its "premium subscribers" is `x_bst_startuptrk.premium_user`, and its "administrators" is `x_bst_startuptrk.admin` |
 
-This table is the access-control section of the bidirectional matrix to be authored at [`../../docs/decisions/TRACEABILITY_MATRIX.md` (planned)](../../docs/decisions/TRACEABILITY_MATRIX.md).
+This table is the access-control section of the bidirectional matrix at [`../../docs/decisions/TRACEABILITY_MATRIX.md`](../../docs/decisions/TRACEABILITY_MATRIX.md).
 
 ## Related documents
-
-Delivered with this package:
 
 - [`../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`](../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml) — the authoritative role, ACL and ACL-role records this document transcribes
 - [`./data-model.md`](./data-model.md) — the ten tables field by field, and the seven **P** markers this matrix gates
 - [`./api-reference.md`](./api-reference.md) — the six REST resources, the pagination envelope carrying `total_count`, and the error bodies
 - [`./validation-gates.md`](./validation-gates.md) — the machine-checkable post-commit gates, including one record for each of the three roles, the table access posture as `GATE-SEC-01` and `GATE-SEC-02`, and the two layer-5 controls as `GATE-SEC-03`
-
-Planned artifacts of this package:
-
-- [`./validation-checklist.md` (planned)](./validation-checklist.md) — the five success criteria; criterion 2 is the pass condition for the matrix above
+- [`./validation-checklist.md`](./validation-checklist.md) — the five success criteria; criterion 2 is the pass condition for the matrix above
 - [`./manual-build/04-service-portal-pages-and-widgets.md`](./manual-build/04-service-portal-pages-and-widgets.md) — the portal build, including the `bst-premium-upsell` widget
-- [`./manual-build/05-atf-test-suites.md` (planned)](./manual-build/05-atf-test-suites.md) — the 21 field-ACL tests and the run-time creation of the three impersonated users
-- [`./gaps-and-flags.md` (planned)](./gaps-and-flags.md) — requirements with no clean platform equivalent, including the administrator-override flag
-- [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md) — the single source of truth for every decision, alternative and risk behind this scheme
-- [`../../docs/decisions/TRACEABILITY_MATRIX.md` (planned)](../../docs/decisions/TRACEABILITY_MATRIX.md) — the bidirectional source-to-target matrix this section feeds
-- [`../../docs/review/CRITICAL_DECISIONS.md` (planned)](../../docs/review/CRITICAL_DECISIONS.md) — the five highest-risk decisions, including the Security reviewer entry for this document
+- [`./manual-build/05-atf-test-suites.md`](./manual-build/05-atf-test-suites.md) — the 21 field-ACL tests and the run-time creation of the three impersonated users
+- [`./gaps-and-flags.md`](./gaps-and-flags.md) — requirements with no clean platform equivalent, including the administrator-override flag
+- [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md) — the single source of truth for every decision, alternative and risk behind this scheme
+- [`../../docs/decisions/TRACEABILITY_MATRIX.md`](../../docs/decisions/TRACEABILITY_MATRIX.md) — the bidirectional source-to-target matrix this section feeds
+- [`../../docs/review/CRITICAL_DECISIONS.md`](../../docs/review/CRITICAL_DECISIONS.md) — the five highest-risk decisions, including the Security reviewer entry for this document

@@ -4,7 +4,7 @@ This guide builds the Service Portal experience of the ServiceNow scoped applica
 
 **Authority.** The frozen prompt and the Agent Action Plan are authoritative for all application content. The Update Set XML at [`../../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`](../../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml) is the authoritative source for every table name, column name, choice value, Script Include class name, method name, system-property key and role name cited below; the identifiers used here match those records character for character, and the same identifiers appear in [`../data-model.md`](../data-model.md), [`../access-control.md`](../access-control.md) and [`../api-reference.md`](../api-reference.md). No variant spelling of any identifier is valid. Where this guide and those records disagree, the records are checked against the prompt and the plan first; where the records match the specification, this guide is corrected to them.
 
-This document carries **no rationale**. It states what to build and how to build it. Every decision behind the portal, every alternative considered and every risk it carries is recorded in [`../../../docs/decisions/DECISION_LOG.md` (planned)](../../../docs/decisions/DECISION_LOG.md), which is the single source of truth for "why". Five points in this guide depart from a literal reading of the requirements — the five-tab company profile, the "Team" to "People" tab rename, the dropped "Similar Companies" tab, query-parameter routing in place of path-style routes, and the 1024-pixel viewport floor. Each is stated below as a build mechanic and cross-referenced to that log. None is argued here.
+This document carries **no rationale**. It states what to build and how to build it. Every decision behind the portal, every alternative considered and every risk it carries is recorded in [`../../../docs/decisions/DECISION_LOG.md`](../../../docs/decisions/DECISION_LOG.md), which is the single source of truth for "why". Five points in this guide depart from a literal reading of the requirements — the five-tab company profile, the "Team" to "People" tab rename, the dropped "Similar Companies" tab, query-parameter routing in place of path-style routes, and the 1024-pixel viewport floor. Each is stated below as a build mechanic and cross-referenced to that log. None is argued here.
 
 Operational warnings **are** in scope for this guide and are marked as such. The administrator-override warning under [Operational warning — the administrator override](#operational-warning--the-administrator-override) is the most important one in this file and must not be skipped.
 
@@ -12,22 +12,22 @@ Operational warnings **are** in scope for this guide and are marked as such. The
 
 This guide is executable on its own. The portal, the theme, the token declarations, all five pages, all eight widgets, the design-system contract, the access-control rules and the verification checklist are stated here in full. An operator needs no other file to build the portal.
 
-Some documents named below are **planned artifacts of this package**. Every link to one carries the marker **(planned)** in its link text. A statement about a planned document describes what that document is required to contain; it is not a claim that the content can be read from it. The delivered files referenced from here are `../../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`, `../data-model.md`, `../access-control.md`, `../api-reference.md` and `../validation-gates.md`.
+**Every document named below is delivered and readable.** Each link resolves to a file in this package, among them `../../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`, `../data-model.md`, `../access-control.md`, `../api-reference.md` and `../validation-gates.md`, so a reader can follow any link and read the content the statement around it describes; no link is a forward reference to something still to be written.
 
-**Reviewer.** This guide is the artifact validated by **entry 5 of [`../../../docs/review/CRITICAL_DECISIONS.md` (planned)](../../../docs/review/CRITICAL_DECISIONS.md), risk Medium, reviewer persona UX**, whose check is to walk all five routes and confirm the premium upsell treatment appears wherever a gated field is denied — an obligation placed on this file by the project rule **Critical Decision Review Document**.
+**Reviewer.** This guide is the artifact validated by **entry 5 of [`../../../docs/review/CRITICAL_DECISIONS.md`](../../../docs/review/CRITICAL_DECISIONS.md), risk Medium, reviewer persona UX**, whose check is to walk all five routes and confirm the premium upsell treatment appears wherever a gated field is denied — an obligation placed on this file by the project rule **Critical Decision Review Document**.
 
 ## Position in the build order
 
-This is **guide 04 of six**, and it is **step 4** of the execution order below. The order is stated in full in [`../manual-build-instructions.md` (planned)](../manual-build-instructions.md); it is repeated here so this guide can be run without it.
+This is **guide 04 of six**, and it is **step 4** of the execution order below. The order is stated in full in [`../manual-build-instructions.md`](../manual-build-instructions.md); it is repeated here so this guide can be run without it.
 
 | Step | Guide | Why it sits here |
 | --- | --- | --- |
-| 1 | [`./01-connection-credential-aliases.md` (planned)](./01-connection-credential-aliases.md) | The two Connection and Credential Aliases the flows bind to by name. Nothing downstream can authenticate without them. |
-| 2 | [`./02-flow-crunchbase-ingestion.md` (planned)](./02-flow-crunchbase-ingestion.md) | The Crunchbase ingestion flow, which requires the alias from step 1. |
-| 3 | [`./03-flow-linkedin-ingestion.md` (planned)](./03-flow-linkedin-ingestion.md) | The LinkedIn ingestion flow, which requires the alias from step 1. |
+| 1 | [`./01-connection-credential-aliases.md`](./01-connection-credential-aliases.md) | The two Connection and Credential Aliases the flows bind to by name. Nothing downstream can authenticate without them. |
+| 2 | [`./02-flow-crunchbase-ingestion.md`](./02-flow-crunchbase-ingestion.md) | The Crunchbase ingestion flow, which requires the alias from step 1. |
+| 3 | [`./03-flow-linkedin-ingestion.md`](./03-flow-linkedin-ingestion.md) | The LinkedIn ingestion flow, which requires the alias from step 1. |
 | **4** | **This guide** | **The portal, theme, five pages and eight widgets.** |
-| 5 | [`./06-staging-table-csv-import.md` (planned)](./06-staging-table-csv-import.md) | The staging-table CSV load, which puts records on the instance for the portal walkthrough and for the fallback ingestion path. |
-| 6 | [`./05-atf-test-suites.md` (planned)](./05-atf-test-suites.md) | The Automated Test Framework suites, **last**, because they exercise everything the five preceding guides build. |
+| 5 | [`./06-staging-table-csv-import.md`](./06-staging-table-csv-import.md) | The staging-table CSV load, which puts records on the instance for the portal walkthrough and for the fallback ingestion path. |
+| 6 | [`./05-atf-test-suites.md`](./05-atf-test-suites.md) | The Automated Test Framework suites, **last**, because they exercise everything the five preceding guides build. |
 
 Guides 01, 02 and 03 precede this one. Guide 06 follows it, then guide 05 runs last.
 
@@ -228,7 +228,7 @@ The search widget lays its three filters out internally as three `.col-md-4` col
 
 Leaving `page_size` empty on the results instance makes the widget read `x_bst_startuptrk.rest.default_limit` through `AppProperties`. See [`bst-startup-results`](#bst-startup-results).
 
-**The inclusion criteria are applied server-side, by `StartupSearchService`, and by nothing else.** Neither widget re-implements the predicate, adds a condition of its own on `active` or `headquarters_location`, or filters the returned rows in the client controller. The one call sequence permitted is the one specified under [`bst-startup-search`](#bst-startup-search) and [`bst-startup-results`](#bst-startup-results). This is what makes criterion 5 of [`../validation-checklist.md` (planned)](../validation-checklist.md) — "inclusion filter confirmed active" — verifiable by seeding a failing startup and observing its absence, rather than merely assertable.
+**The inclusion criteria are applied server-side, by `StartupSearchService`, and by nothing else.** Neither widget re-implements the predicate, adds a condition of its own on `active` or `headquarters_location`, or filters the returned rows in the client controller. The one call sequence permitted is the one specified under [`bst-startup-search`](#bst-startup-search) and [`bst-startup-results`](#bst-startup-results). This is what makes criterion 5 of [`../validation-checklist.md`](../validation-checklist.md) — "inclusion filter confirmed active" — verifiable by seeding a failing startup and observing its absence, rather than merely assertable.
 
 ### `bst_company` — Company Profile
 
@@ -246,7 +246,7 @@ Leaving `page_size` empty on the results instance makes the widget read `x_bst_s
 
 `bst-premium-upsell` is **embedded by `bst-company-profile`**, not placed on this page. The host builds it in its server script with `$sp.getWidget()` and renders it with `<sp-widget>`; see [`bst-premium-upsell`](#bst-premium-upsell).
 
-**Exactly five tabs**, in this order and with these labels: **Overview**, **Funding**, **People**, **Jobs**, **News**. "People" carries founders and executives together in one pane. The tab strip is built with Bootstrap `.nav.nav-tabs` and `.tab-content` / `.tab-pane` — never a hand-rolled tab control. The legacy component rendered six tabs; the mechanic of the reduction, the "Team" to "People" rename and the dropped "Similar Companies" tab is recorded under [Tab inventory](#tab-inventory) and the decisions behind them are in [`../../../docs/decisions/DECISION_LOG.md` (planned)](../../../docs/decisions/DECISION_LOG.md).
+**Exactly five tabs**, in this order and with these labels: **Overview**, **Funding**, **People**, **Jobs**, **News**. "People" carries founders and executives together in one pane. The tab strip is built with Bootstrap `.nav.nav-tabs` and `.tab-content` / `.tab-pane` — never a hand-rolled tab control. The legacy component rendered six tabs; the mechanic of the reduction, the "Team" to "People" rename and the dropped "Similar Companies" tab is recorded under [Tab inventory](#tab-inventory) and the decisions behind them are in [`../../../docs/decisions/DECISION_LOG.md`](../../../docs/decisions/DECISION_LOG.md).
 
 ### `bst_investor` — Investor Profile
 
@@ -315,7 +315,7 @@ Five pages. Seven of the eight custom widgets are placed on a page; `bst-premium
 
 **Routing is query-parameter based.** A Service Portal page is addressed as `?id=<page>` on the portal's URL suffix, and a record-scoped page adds `&sys_id=<record>`. The portal suffix is `bst`, so the base of every link is `/bst`.
 
-Path-style routes such as `/company/<id>` are **not** reproducible without URL rewriting, so they are not used. Prompt section 5.0 mandates five routes and does not mandate their URL syntax. The deviation is flagged in [`../gaps-and-flags.md` (planned)](../gaps-and-flags.md) and its decision is recorded in [`../../../docs/decisions/DECISION_LOG.md` (planned)](../../../docs/decisions/DECISION_LOG.md).
+Path-style routes such as `/company/<id>` are **not** reproducible without URL rewriting, so they are not used. Prompt section 5.0 mandates five routes and does not mandate their URL syntax. The deviation is flagged in [`../gaps-and-flags.md`](../gaps-and-flags.md) and its decision is recorded in [`../../../docs/decisions/DECISION_LOG.md`](../../../docs/decisions/DECISION_LOG.md).
 
 | Route | Link form | Record parameter |
 | --- | --- | --- |
@@ -1230,7 +1230,7 @@ The figure is rendered inside an `<h2>` so the Bootstrap heading scale supplies 
 | `id` | `bst-trends-charts` |
 | `sys_scope` | `Boston Startup Tracker` |
 
-**Design-system gap G1.** Bootstrap 3 has no chart component. The resolution is platform reporting surfaced through a report or chart widget, or Angular-rendered inline SVG inside this custom widget. Both mechanics are specified below and are selected by the `render_mode` option. The gap is recorded in [`../gaps-and-flags.md` (planned)](../gaps-and-flags.md).
+**Design-system gap G1.** Bootstrap 3 has no chart component. The resolution is platform reporting surfaced through a report or chart widget, or Angular-rendered inline SVG inside this custom widget. Both mechanics are specified below and are selected by the `render_mode` option. The gap is recorded in [`../gaps-and-flags.md`](../gaps-and-flags.md).
 
 #### Option schema
 
@@ -1408,7 +1408,7 @@ if (data.premiumDenied) {
 ```
 
 6. Read **no** application record. This widget reports entitlements, not data.
-7. Publish nothing about billing, payment, price or checkout. The platform grants entitlement through roles and has no commerce capability; the requirement is flagged as **G6** in [`../gaps-and-flags.md` (planned)](../gaps-and-flags.md), and the operational path is an administrator granting `x_bst_startuptrk.premium_user` on the instance.
+7. Publish nothing about billing, payment, price or checkout. The platform grants entitlement through roles and has no commerce capability; the requirement is flagged as **G6** in [`../gaps-and-flags.md`](../gaps-and-flags.md), and the operational path is an administrator granting `x_bst_startuptrk.premium_user` on the instance.
 
 #### Client controller
 
@@ -1486,7 +1486,7 @@ if (data.premiumDenied) {
 | `id` | `bst-premium-upsell` |
 | `sys_scope` | `Boston Startup Tracker` |
 
-**The reusable partial.** It is embedded by **three** hosts — `bst-company-profile`, `bst-investor-profile` and `bst-account-summary` — and is placed on no page. Its option schema must therefore satisfy all three. It resolves design-system gap **G5**, recorded in [`../gaps-and-flags.md` (planned)](../gaps-and-flags.md): no library component exists for a paywall treatment, so it is built as a Bootstrap alert carrying a call to action.
+**The reusable partial.** It is embedded by **three** hosts — `bst-company-profile`, `bst-investor-profile` and `bst-account-summary` — and is placed on no page. Its option schema must therefore satisfy all three. It resolves design-system gap **G5**, recorded in [`../gaps-and-flags.md`](../gaps-and-flags.md): no library component exists for a paywall treatment, so it is built as a Bootstrap alert carrying a call to action.
 
 #### Option schema
 
@@ -1697,7 +1697,7 @@ This is a checklist. Every widget author satisfies every item before a widget is
 - [ ] On every `sp_rectangle`, set `size_md` and `size_lg` and leave `size`, `size_xs` and `size_sm` empty.
 - [ ] Verify the walkthrough at 1024 pixels wide and above. A narrower viewport is not a defect.
 
-The mechanic is stated here; the decision behind the floor is recorded in [`../../../docs/decisions/DECISION_LOG.md` (planned)](../../../docs/decisions/DECISION_LOG.md).
+The mechanic is stated here; the decision behind the floor is recorded in [`../../../docs/decisions/DECISION_LOG.md`](../../../docs/decisions/DECISION_LOG.md).
 
 ### The graceful degradation ladder
 
@@ -1708,7 +1708,7 @@ For each interface element, stop at the **first** viable rung.
 | 1 | Use an exact stock widget directly — Header, Footer, Breadcrumbs, Typeahead Search, Faceted Search, Data Table from Instance Definition, Form, report widget. |
 | 2 | Use a Bootstrap 3 component with class adjustments, and annotate the adjustment in the widget's `docs` field. |
 | 3 | Use a generic `.panel` or `.well` container styled with system tokens only. |
-| 4 | Render a placeholder carrying an explicit gap flag, and add the gap to [`../gaps-and-flags.md` (planned)](../gaps-and-flags.md) as requiring design-system follow-up. |
+| 4 | Render a placeholder carrying an explicit gap flag, and add the gap to [`../gaps-and-flags.md`](../gaps-and-flags.md) as requiring design-system follow-up. |
 
 No element in this portal reaches rung 4.
 
@@ -1717,12 +1717,12 @@ No element in this portal reaches rung 4.
 - [ ] Icons come from the **platform glyph font** and from nothing else: `.icon-search`, `.icon-user`, `.icon-chart`, and the further `.icon-*` classes the release provides.
 - [ ] **NEVER Lucide.** Do not add a Lucide script tag, a Lucide stylesheet, a `data-lucide` attribute or a Lucide SVG to any widget template, client controller, CSS field or theme field.
 - [ ] **Zero emoji.** No emoji character appears in any widget template, option label, option default, alert wording, page title or CSS comment.
-- [ ] The executive deck uses Lucide 0.460.0 by rule mandate, and this portal uses the platform glyph font. **The split is deliberate and permanent, and it is recorded as gap G7** in [`../gaps-and-flags.md` (planned)](../gaps-and-flags.md).
+- [ ] The executive deck uses Lucide 0.460.0 by rule mandate, and this portal uses the platform glyph font. **The split is deliberate and permanent, and it is recorded as gap G7** in [`../gaps-and-flags.md`](../gaps-and-flags.md).
 - [ ] The instruction runs both ways: **do not inject Lucide into a widget, and do not use platform glyphs in the deck.**
 
 ### Resolved design-system gaps
 
-Each gap below is resolved inside the system. The full inventory is in [`../gaps-and-flags.md` (planned)](../gaps-and-flags.md) and is not restated here.
+Each gap below is resolved inside the system. The full inventory is in [`../gaps-and-flags.md`](../gaps-and-flags.md) and is not restated here.
 
 | Gap | Element | Resolution to build |
 | --- | --- | --- |
@@ -1806,7 +1806,7 @@ Verify under **impersonation**, as follows.
 4. Under `x_bst_startuptrk.premium_user` and under `x_bst_startuptrk.admin`, confirm every one of the seven renders its value and that `bst-premium-upsell` does **not** appear.
 5. Confirm that a non-premium column — for example `x_bst_startuptrk_startup.headquarters_location` — renders a value under `x_bst_startuptrk.user` on the same screen. That establishes that the table-level grant passed and that the denial came from the field-level control.
 
-The full procedure, the twenty-one field-by-role outcomes and the reason each step is required are in [`../access-control.md`](../access-control.md). The three users are created by test setup steps at run time, specified in [`./05-atf-test-suites.md` (planned)](./05-atf-test-suites.md), which is also where the twenty-one automated assertions live. The manual walkthrough above does not replace them.
+The full procedure, the twenty-one field-by-role outcomes and the reason each step is required are in [`../access-control.md`](../access-control.md). The three users are created by test setup steps at run time, specified in [`./05-atf-test-suites.md`](./05-atf-test-suites.md), which is also where the twenty-one automated assertions live. The manual walkthrough above does not replace them.
 
 ## Legacy provenance
 
@@ -1824,7 +1824,7 @@ The legacy React tree under `src/frontend/` is read-only historical reference. *
 | 4 | `/user/:id` | `bst_account` | `?id=bst_account` |
 | 5 | *no legacy route* | `bst_dashboard` | `?id=bst_dashboard` |
 
-The legacy tree collapsed `/` and `/search` into two routes rendering related surfaces, and had no dashboard route; the target has one Home / Search page and one Dashboard / Trends page. The path-to-query-parameter change is stated under [Routing and navigation](#routing-and-navigation) and its decision is in [`../../../docs/decisions/DECISION_LOG.md` (planned)](../../../docs/decisions/DECISION_LOG.md).
+The legacy tree collapsed `/` and `/search` into two routes rendering related surfaces, and had no dashboard route; the target has one Home / Search page and one Dashboard / Trends page. The path-to-query-parameter change is stated under [Routing and navigation](#routing-and-navigation) and its decision is in [`../../../docs/decisions/DECISION_LOG.md`](../../../docs/decisions/DECISION_LOG.md).
 
 `src/frontend/App.tsx:L12` reads `import theme from './styles/theme';` — **a module that was never authored.** `src/frontend/styles/` contains only `global.css`. There was consequently no legacy theme object, so **no legacy theme value exists to carry forward even in principle**, and the theme built in [Step 2](#step-2--the-theme-record) is authored from the design system.
 
@@ -1864,7 +1864,7 @@ The target company profile has **five** tabs, specified by prompt section 5.0. T
 | News | **News** | Unchanged in name. |
 | Similar Companies | *no target pane* | **Dropped.** The binding schema of prompt section 1.0 declares no competitor or similarity column on any of the seven entity tables, so there is no data to render. |
 
-The reduction from six panes to five, the "Team" to "People" rename and the dropped "Similar Companies" pane are deviations from a literal reading of the legacy surface. Their decisions are recorded in [`../../../docs/decisions/DECISION_LOG.md` (planned)](../../../docs/decisions/DECISION_LOG.md).
+The reduction from six panes to five, the "Team" to "People" rename and the dropped "Similar Companies" pane are deviations from a literal reading of the legacy surface. Their decisions are recorded in [`../../../docs/decisions/DECISION_LOG.md`](../../../docs/decisions/DECISION_LOG.md).
 
 `src/frontend/components/InvestorProfile/InvestorProfile.tsx:L76-L79` declares **four** tabs: **Overview**, **Portfolio**, **Recent Investments**, **Investment Trends**. The target investor profile uses **no tab control**; it renders an overview panel, a portfolio table, and two rounds tables — rounds led and rounds participated in — all as `.panel` regions in a two-column `.col-md-4` / `.col-md-8` layout, with `x_bst_startuptrk_investor.portfolio_count` surfaced in the overview panel.
 
@@ -1961,33 +1961,28 @@ Run every check before this guide is signed off. A failed check is a defect in t
 
 ### The inclusion filter
 
-- [ ] Seed one startup that fails the criteria — `active` false, or a `headquarters_location` containing neither `Boston` nor `Cambridge, MA`. Load records first with [`./06-staging-table-csv-import.md` (planned)](./06-staging-table-csv-import.md).
+- [ ] Seed one startup that fails the criteria — `active` false, or a `headquarters_location` containing neither `Boston` nor `Cambridge, MA`. Load records first with [`./06-staging-table-csv-import.md`](./06-staging-table-csv-import.md).
 - [ ] Under `x_bst_startuptrk.user`, that startup is **absent** from `bst_home` results and absent from the `bst_dashboard` KPI figures.
 - [ ] The same startup is **present** in the platform list view for `x_bst_startuptrk_startup` under `x_bst_startuptrk.admin`, which is the administrative visibility [`../data-model.md`](../data-model.md) specifies.
 - [ ] `data.total_count` on `bst-startup-results` agrees with the number of rows the pager reports across all pages. A count that disagrees with the page contents means the plan was applied to one and not the other.
 - [ ] No widget template, client controller or server script evaluates `active` or `headquarters_location` outside `StartupSearchService.applyPlan()`.
 
-This is the evidence for criterion 5 of [`../validation-checklist.md` (planned)](../validation-checklist.md), which records the outcome.
+This is the evidence for criterion 5 of [`../validation-checklist.md`](../validation-checklist.md), which records the outcome.
 
 ## Related documents
-
-Delivered with this package:
 
 - [`../../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`](../../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml) — the authoritative table, column, choice, Script Include, property and role records this guide cites, and the artifact whose commit is precondition 3
 - [`../data-model.md`](../data-model.md) — the ten tables field by field, the seven premium markers, the closed choice lists the widgets render, the `participating_investors` projection and the inclusion criteria
 - [`../access-control.md`](../access-control.md) — the three roles, the five access-control layers, the role-by-field matrix, the secured read path, the omit-not-null rule and the impersonation procedure
 - [`../api-reference.md`](../api-reference.md) — the Script Include call graph with every public method, the thirteen system properties including the two page-size properties this portal shares with the API, and the pagination envelope
 - [`../validation-gates.md`](../validation-gates.md) — the sixteen post-commit gates that are precondition 4
-
-Planned artifacts of this package:
-
-- [`../manual-build-instructions.md` (planned)](../manual-build-instructions.md) — the index and dependency ordering of the six manual-build guides
-- [`./01-connection-credential-aliases.md` (planned)](./01-connection-credential-aliases.md) — step 1, the two Connection and Credential Aliases
-- [`./02-flow-crunchbase-ingestion.md` (planned)](./02-flow-crunchbase-ingestion.md) — step 2, the Crunchbase ingestion flow
-- [`./03-flow-linkedin-ingestion.md` (planned)](./03-flow-linkedin-ingestion.md) — step 3, the LinkedIn ingestion flow
-- [`./05-atf-test-suites.md` (planned)](./05-atf-test-suites.md) — the last step, carrying the twenty-one field-by-role assertions and the run-time creation of the three impersonated users this guide's walkthrough also requires
-- [`./06-staging-table-csv-import.md` (planned)](./06-staging-table-csv-import.md) — step 5, the staging-table CSV load that puts records on the instance before the walkthrough
-- [`../validation-checklist.md` (planned)](../validation-checklist.md) — the five success criteria; criterion 5 is the pass condition for the route walkthrough and the inclusion filter
-- [`../gaps-and-flags.md` (planned)](../gaps-and-flags.md) — the design-system gaps G1 through G5 and G7, the query-parameter routing deviation and the premium-billing flag
-- [`../../../docs/decisions/DECISION_LOG.md` (planned)](../../../docs/decisions/DECISION_LOG.md) — the single source of truth for every decision behind this portal, including the five deviations named at the top of this guide
-- [`../../../docs/review/CRITICAL_DECISIONS.md` (planned)](../../../docs/review/CRITICAL_DECISIONS.md) — the five highest-risk decisions, whose entry 5 is the UX reviewer entry for this guide
+- [`../manual-build-instructions.md`](../manual-build-instructions.md) — the index and dependency ordering of the six manual-build guides
+- [`./01-connection-credential-aliases.md`](./01-connection-credential-aliases.md) — step 1, the two Connection and Credential Aliases
+- [`./02-flow-crunchbase-ingestion.md`](./02-flow-crunchbase-ingestion.md) — step 2, the Crunchbase ingestion flow
+- [`./03-flow-linkedin-ingestion.md`](./03-flow-linkedin-ingestion.md) — step 3, the LinkedIn ingestion flow
+- [`./05-atf-test-suites.md`](./05-atf-test-suites.md) — the last step, carrying the twenty-one field-by-role assertions and the run-time creation of the three impersonated users this guide's walkthrough also requires
+- [`./06-staging-table-csv-import.md`](./06-staging-table-csv-import.md) — step 5, the staging-table CSV load that puts records on the instance before the walkthrough
+- [`../validation-checklist.md`](../validation-checklist.md) — the five success criteria; criterion 5 is the pass condition for the route walkthrough and the inclusion filter
+- [`../gaps-and-flags.md`](../gaps-and-flags.md) — the design-system gaps G1 through G5 and G7, the query-parameter routing deviation and the premium-billing flag
+- [`../../../docs/decisions/DECISION_LOG.md`](../../../docs/decisions/DECISION_LOG.md) — the single source of truth for every decision behind this portal, including the five deviations named at the top of this guide
+- [`../../../docs/review/CRITICAL_DECISIONS.md`](../../../docs/review/CRITICAL_DECISIONS.md) — the five highest-risk decisions, whose entry 5 is the UX reviewer entry for this guide

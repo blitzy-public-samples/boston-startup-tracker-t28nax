@@ -4,17 +4,17 @@ This document is the field-by-field reference for the data model of the ServiceN
 
 **Authority.** The frozen prompt and the Agent Action Plan are authoritative for all application content, and they govern the Update Set XML and this document alike. The Update Set XML at [`../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`](../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml) is the implementation of that specification and the transcription source for everything below: the `sys_db_object`, `sys_dictionary`, `sys_documentation` and `sys_choice` records it carries. Where this document and those records disagree about a table name, a column name, a type, a length, a flag, a default or a choice value, the records are checked against the prompt and the plan first. Where the records match the specification, this document is corrected to them. Where the records depart from it, the records are corrected.
 
-This document carries no rationale. Every decision behind the model, every alternative considered and every risk is to be recorded in [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md), which is to be the single source of truth for "why".
+This document carries no rationale. Every decision behind the model, every alternative considered and every risk is recorded in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md), which is to be the single source of truth for "why".
 
-The identifiers established here — table names, column names, choice values, mandatory flags and premium markers — are reused verbatim by [`./access-control.md`](./access-control.md), [`./api-reference.md`](./api-reference.md) and [`./validation-gates.md`](./validation-gates.md), and are to be reused by [`./validation-checklist.md` (planned)](./validation-checklist.md) and [`./gaps-and-flags.md` (planned)](./gaps-and-flags.md).
+The identifiers established here — table names, column names, choice values, mandatory flags and premium markers — are reused verbatim by [`./access-control.md`](./access-control.md), [`./api-reference.md`](./api-reference.md) and [`./validation-gates.md`](./validation-gates.md), and are to be reused by [`./validation-checklist.md`](./validation-checklist.md) and [`./gaps-and-flags.md`](./gaps-and-flags.md).
 
 ## Referenced documents
 
 This document is self-contained. Every table, column, type, length, flag, default, choice value, premium marker, cascade rule, derivation and predicate is stated here in full; no statement of the model requires reading another file.
 
-Some documents named below are **planned artifacts of this package**. Every link to one carries the marker **(planned)** in its link text. A statement about a planned document describes what that document is required to contain; it is not a claim that the content can be read from it. The delivered package documents are the Update Set XML, `./access-control.md`, `./api-reference.md`, `./validation-gates.md` and `../sample-data/README.md` with its six CSVs.
+**Every document named below is delivered and readable.** Each link resolves to a file in this package, among them the Update Set XML, `./access-control.md`, `./api-reference.md`, `./validation-gates.md` and `../sample-data/README.md` with its six CSVs, so a reader can follow any link and read the content the statement around it describes; no link is a forward reference to something still to be written.
 
-**Reviewer.** This document is to be the artifact validated by the **Data/SME** reviewer entry in [`../../docs/review/CRITICAL_DECISIONS.md` (planned)](../../docs/review/CRITICAL_DECISIONS.md), covering the join-table authority, the cascade rules and the stored portfolio count.
+**Reviewer.** This document is to be the artifact validated by the **Data/SME** reviewer entry in [`../../docs/review/CRITICAL_DECISIONS.md`](../../docs/review/CRITICAL_DECISIONS.md), covering the join-table authority, the cascade rules and the stored portfolio count.
 
 ## Table inventory
 
@@ -33,7 +33,7 @@ Ten physical tables. Seven are the entity tables declared by prompt section 1.0;
 | 9 | `x_bst_startuptrk_ingest_staging` | Ingestion staging | Supporting — staging table | 40 |
 | 10 | `x_bst_startuptrk_rate_limit_counter` | Rate limit counter | Supporting — counter table | 5 |
 
-Prompt section 1.0 states exactly seven custom tables; the application declares ten physical tables. Prompt section 10.0 criterion 1's table count is evaluated against the seven entity tables only, and the join table, the staging table and the rate-limit counter table are supporting artifacts counted separately. The resolution of that count is to be recorded in [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md).
+Prompt section 1.0 states exactly seven custom tables; the application declares ten physical tables. Prompt section 10.0 criterion 1's table count is evaluated against the seven entity tables only, and the join table, the staging table and the rate-limit counter table are supporting artifacts counted separately. The resolution of that count is recorded in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
 None of the ten tables extends another table and none is extendable. Every table name carries the full `x_bst_startuptrk_` scope prefix. Three entity table names are single words with no separating underscore between the parts: `_fundinground`, `_jobposting` and `_newsarticle`. The three supporting table names are `_m2m_round_investor`, `_ingest_staging` and `_rate_limit_counter`.
 
@@ -193,7 +193,7 @@ Label **Funding round**. Eight columns. The table declares no display column; a 
 
 `lead_investor` is a first-class reference and carries the lead-versus-participating distinction.
 
-`participating_investors` is a **list of references** to `x_bst_startuptrk_investor` — the platform's List type, which is what prompt section 1.5 declares — and it is **stored, read-only and derived**. It is a one-way projection of the join table `x_bst_startuptrk_m2m_round_investor`, which stays authoritative and remains the only write target for participation; `InvestorPortfolioService.refreshRoundParticipants()` rewrites the column whenever a link row is inserted, updated or deleted. Nothing writes both. This interpretation of prompt section 1.5's List declaration is recorded in [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md).
+`participating_investors` is a **list of references** to `x_bst_startuptrk_investor` — the platform's List type, which is what prompt section 1.5 declares — and it is **stored, read-only and derived**. It is a one-way projection of the join table `x_bst_startuptrk_m2m_round_investor`, which stays authoritative and remains the only write target for participation; `InvestorPortfolioService.refreshRoundParticipants()` rewrites the column whenever a link row is inserted, updated or deleted. Nothing writes both. This interpretation of prompt section 1.5's List declaration is recorded in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
 **The projection is bounded, and the bound is enforced rather than assumed.** A `glide_list` stores its members as comma-separated 32-character identifiers, so each member costs 33 characters and the declared `max_length` of 4000 holds **121** investors. The join table itself is unbounded, so a round could in principle link more. `refreshRoundParticipants()` therefore measures the derived value against the declared length before writing it: within the bound it stores the complete list, and beyond the bound it **empties the projection and records the overflow** through `gs.error` tagged `[x_bst_startuptrk.InvestorPortfolioService]`, naming the round, the number of investors linked and the capacity. It never stores a partial identifier list, because a partial list is indistinguishable from a complete one when read and would misrepresent participation. The two numbers are declared once, as `PROJECTION_LENGTH` with `PROJECTION_CAPACITY` derived from it, so raising the column length raises the capacity with it.
 
@@ -245,7 +245,7 @@ Label **News article**. Six columns. The display column is `title`.
 | `published_date` | `glide_date` | — | — | — | — | — |
 | `summary` | `string` | 2000 | — | — | — | — |
 
-Prompt sections 1.7 and 4.0 exclude NewsArticle from automated ingestion. Neither ingestion flow writes this table, and the fallback dataset carries no NewsArticle file; records are created by manual entry or by a separate ad hoc import. The REST resource `/news` serves read plus manual write only. The exclusion is to be recorded in [`./gaps-and-flags.md` (planned)](./gaps-and-flags.md).
+Prompt sections 1.7 and 4.0 exclude NewsArticle from automated ingestion. Neither ingestion flow writes this table, and the fallback dataset carries no NewsArticle file; records are created by manual entry or by a separate ad hoc import. The REST resource `/news` serves read plus manual write only. The exclusion is recorded in [`./gaps-and-flags.md`](./gaps-and-flags.md).
 
 ### Column count roll-up
 
@@ -264,7 +264,7 @@ Prompt sections 1.7 and 4.0 exclude NewsArticle from automated ingestion. Neithe
 
 Seven columns across four of those tables are premium-gated: `x_bst_startuptrk_startup.total_funding_usd`, `x_bst_startuptrk_startup.institutional_funding_last_5yrs`, `x_bst_startuptrk_founder.contact_email`, `x_bst_startuptrk_executive.contact_email`, `x_bst_startuptrk_investor.aum_usd`, `x_bst_startuptrk_fundinground.amount_usd` and `x_bst_startuptrk_fundinground.valuation_usd`. Fourteen columns are mandatory: `name`, `headquarters_location` and `active` on Startup; `name` and `startup` on Founder; `name` and `startup` on Executive; `name` on Investor; `startup` and `round_date` on Funding round; `startup` and `title` on Job posting; `startup` and `title` on News article.
 
-This roll-up is the field-count evidence that prompt section 10.0 criterion 1 depends on. The machine-checkable table reads are in [`./validation-gates.md`](./validation-gates.md); the criterion's field-by-field verification steps are to be specified in [`./validation-checklist.md` (planned)](./validation-checklist.md).
+This roll-up is the field-count evidence that prompt section 10.0 criterion 1 depends on. The machine-checkable table reads are in [`./validation-gates.md`](./validation-gates.md); the criterion's field-by-field verification steps are specified in [`./validation-checklist.md`](./validation-checklist.md).
 
 ## Supporting tables
 
@@ -297,7 +297,7 @@ This table is **authoritative** for the participating investors of a funding rou
 
 **The `(funding_round, investor)` pair is unique.** A unique composite database index on the two columns is declared in the Update Set, so the same investor cannot be linked to the same round twice, whatever the write path. `InvestorPortfolioService.linkInvestorToRound()` is the programmatic write path and is idempotent: given a pair that already exists it returns the existing row rather than attempting a second insert. The indexes this application declares are listed under [Declared indexes](#declared-indexes).
 
-The lead-versus-participating distinction is carried by `x_bst_startuptrk_fundinground.lead_investor`, a first-class reference column on the funding round and not a row in this table. The same investor may be both the lead investor of a round and a participating investor in it. The decision behind this table's authority is to be recorded in [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md).
+The lead-versus-participating distinction is carried by `x_bst_startuptrk_fundinground.lead_investor`, a first-class reference column on the funding round and not a row in this table. The same investor may be both the lead investor of a round and a participating investor in it. The decision behind this table's authority is recorded in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
 Rows in this table drive the second maintenance trigger for `x_bst_startuptrk_investor.portfolio_count`; see [Investor.portfolio_count](#investorportfolio_count).
 
@@ -420,7 +420,7 @@ The column names above bind three artifacts, and all three must change together.
 | --- | --- | --- |
 | a | The header rows of the six CSVs under `../sample-data/`, documented in [`../sample-data/README.md`](../sample-data/README.md) | The wire format |
 | b | The `x_bst_startuptrk_ingest_staging` dictionary records in [`../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`](../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml) | **Authoritative** |
-| c | The field mapping in [`./manual-build/06-staging-table-csv-import.md` (planned)](./manual-build/06-staging-table-csv-import.md) | The load instructions |
+| c | The field mapping in [`./manual-build/06-staging-table-csv-import.md`](./manual-build/06-staging-table-csv-import.md) | The load instructions |
 
 A change to any one leg alone breaks the fallback path **silently**: the Data Import Wizard maps columns by header name, so a renamed or misspelled column is left unmapped, the field loads empty, and no error is raised.
 
@@ -543,9 +543,9 @@ Two business rules maintain the stored value. Both delegate to `InvestorPortfoli
 Two operational instructions follow. Both are requirements.
 
 - Any ingestion or import path that writes `x_bst_startuptrk_fundinground` or `x_bst_startuptrk_m2m_round_investor` **must run business rules**, otherwise the stored count is not maintained for the records it writes.
-- `InvestorPortfolioService.recalculateAll()` **must be invoked from a background script after any bulk load**, including every load of the fallback dataset whose files and load order are documented in [`../sample-data/README.md`](../sample-data/README.md) and whose transform is to be specified in [`./manual-build/06-staging-table-csv-import.md` (planned)](./manual-build/06-staging-table-csv-import.md).
+- `InvestorPortfolioService.recalculateAll()` **must be invoked from a background script after any bulk load**, including every load of the fallback dataset whose files and load order are documented in [`../sample-data/README.md`](../sample-data/README.md) and whose transform is specified in [`./manual-build/06-staging-table-csv-import.md`](./manual-build/06-staging-table-csv-import.md).
 
-The decision behind the derivation is to be recorded in [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md).
+The decision behind the derivation is recorded in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
 ## Referential rules
 
@@ -575,7 +575,7 @@ The operational consequences are these:
 
 A delete that cascades into funding rounds or join-table rows fires the two portfolio business rules, so `portfolio_count` is maintained through a cascade.
 
-The decision behind the cascade setting is to be recorded in [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md).
+The decision behind the cascade setting is recorded in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
 ### Declared indexes
 
@@ -609,7 +609,7 @@ A startup is eligible for Service Portal search results only if:
 
 Records failing these criteria **remain in the table for administrative visibility** and are excluded from all portal-facing and non-administrative list and search queries.
 
-The filter tests **only** two columns: `x_bst_startuptrk_startup.active` and `x_bst_startuptrk_startup.headquarters_location`. `x_bst_startuptrk_startup.institutional_funding_last_5yrs` is a premium-gated display attribute and is **not** part of the predicate. The resolution of that point is stated here and is to be recorded in [`./gaps-and-flags.md` (planned)](./gaps-and-flags.md).
+The filter tests **only** two columns: `x_bst_startuptrk_startup.active` and `x_bst_startuptrk_startup.headquarters_location`. `x_bst_startuptrk_startup.institutional_funding_last_5yrs` is a premium-gated display attribute and is **not** part of the predicate. The resolution of that point is stated here and is recorded in [`./gaps-and-flags.md`](./gaps-and-flags.md).
 
 `StartupSearchService` is the single Script Include that builds the query. Both callers use it, so the filter cannot drift between the two surfaces: the `/startups` REST list operation documented in [`./api-reference.md`](./api-reference.md), and the portal search widget on the Home/Search route.
 
@@ -668,7 +668,7 @@ A natural key is measured against the column it **resolves against**, not agains
 
 ## Legacy provenance
 
-This section records what the migration carried over from the legacy Flask and SQLAlchemy tree under `src/backend/models/`, and what it did not. The legacy tree is read-only reference: it supplied the entity-name spine, and no legacy field name, type, length, default or enumeration value was carried forward. It is the source side of the bidirectional traceability matrix to be authored at [`../../docs/decisions/TRACEABILITY_MATRIX.md` (planned)](../../docs/decisions/TRACEABILITY_MATRIX.md).
+This section records what the migration carried over from the legacy Flask and SQLAlchemy tree under `src/backend/models/`, and what it did not. The legacy tree is read-only reference: it supplied the entity-name spine, and no legacy field name, type, length, default or enumeration value was carried forward. It is the source side of the bidirectional traceability matrix at [`../../docs/decisions/TRACEABILITY_MATRIX.md`](../../docs/decisions/TRACEABILITY_MATRIX.md).
 
 ### Legacy model to target table
 
@@ -704,7 +704,7 @@ Two of those seven are the columns the inclusion criteria test — `headquarters
 
 Seven legacy columns have no target column: `sub_sector`, `employee_count`, `local_employee_count`, `headcount_growth_rate`, `is_hiring`, `last_funding_date` and `last_updated`.
 
-Prompt section 1.0's field list is binding and complete, so none of these becomes a column on `x_bst_startuptrk_startup`. Their exclusion is to be recorded in [`./gaps-and-flags.md` (planned)](./gaps-and-flags.md) and in [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md).
+Prompt section 1.0's field list is binding and complete, so none of these becomes a column on `x_bst_startuptrk_startup`. Their exclusion is recorded in [`./gaps-and-flags.md`](./gaps-and-flags.md) and in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
 ### Founder and Executive
 
@@ -722,7 +722,7 @@ The association table at `src/backend/models/funding_round.py:L6-L9` carries onl
 
 ### Type and length divergences
 
-Each row below is a divergence from the legacy schema. Every one is to be recorded in [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md).
+Each row below is a divergence from the legacy schema. Every one is recorded in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
 | Legacy declaration | Target declaration |
 | --- | --- |
@@ -783,19 +783,14 @@ Which columns take which outcome:
 
 ## Related documents
 
-Delivered with this package:
-
 - [`../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`](../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml) — the authoritative dictionary, choice and ACL records this document transcribes
 - [`./access-control.md`](./access-control.md) — the three roles, the premium field ACL matrix, the five ACL layers and the twelve supporting-table controls layered above the access posture stated here
 - [`./api-reference.md`](./api-reference.md) — the six REST resources, the nested sub-resource, the pagination envelope, the JSON-only media-type contract, the field validation applied to every stored value and the error bodies
 - [`./validation-gates.md`](./validation-gates.md) — the machine-checkable post-commit gates, including the `sys_db_object` metadata check on each of the seven entity tables, the 53-column count and the two access-posture gates
 - [`../sample-data/README.md`](../sample-data/README.md) — the authoritative CSV header rows and column contract for the fallback dataset, and the measured inventory of every unmatched choice value
-
-Planned artifacts of this package:
-
-- [`./validation-checklist.md` (planned)](./validation-checklist.md) — the five success criteria and the evidence each requires
-- [`./gaps-and-flags.md` (planned)](./gaps-and-flags.md) — requirements with no clean platform equivalent, and the excluded legacy attributes
-- [`./manual-build/06-staging-table-csv-import.md` (planned)](./manual-build/06-staging-table-csv-import.md) — the staging-table load and its transform map
-- [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md) — the single source of truth for every decision, alternative and risk behind this model
-- [`../../docs/decisions/TRACEABILITY_MATRIX.md` (planned)](../../docs/decisions/TRACEABILITY_MATRIX.md) — the bidirectional source-to-target matrix this section feeds
-- [`../../docs/review/CRITICAL_DECISIONS.md` (planned)](../../docs/review/CRITICAL_DECISIONS.md) — the five highest-risk decisions, including the Data/SME reviewer entry for this document
+- [`./validation-checklist.md`](./validation-checklist.md) — the five success criteria and the evidence each requires
+- [`./gaps-and-flags.md`](./gaps-and-flags.md) — requirements with no clean platform equivalent, and the excluded legacy attributes
+- [`./manual-build/06-staging-table-csv-import.md`](./manual-build/06-staging-table-csv-import.md) — the staging-table load and its transform map
+- [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md) — the single source of truth for every decision, alternative and risk behind this model
+- [`../../docs/decisions/TRACEABILITY_MATRIX.md`](../../docs/decisions/TRACEABILITY_MATRIX.md) — the bidirectional source-to-target matrix this section feeds
+- [`../../docs/review/CRITICAL_DECISIONS.md`](../../docs/review/CRITICAL_DECISIONS.md) — the five highest-risk decisions, including the Data/SME reviewer entry for this document

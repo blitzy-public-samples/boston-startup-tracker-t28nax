@@ -4,9 +4,9 @@ This document is the index for the six manual-build guides of the ServiceNow sco
 
 The artifacts indexed here are the ones that are **not** in the Update Set XML. Everything expressible as declarative metadata — the scoped application, the ten tables, the choices, the three roles, the access-control records, the Script Includes, the REST definition and its operations, the system properties, the business rules, the scheduled job, the form and list views, and the application menu — ships in the single Update Set at [`../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`](../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml) and is imported, previewed and committed before any guide below begins.
 
-**Authority.** This document is authoritative for two things across the package: the **execution order** of the six guides, and the **split rule** that decides which artifacts ship as Update Set XML and which are built by hand. Each guide repeats both locally so that it can be run without this file; where a guide and this index disagree about the order, this index governs. The execution order stated here matches the deploy order declared in [`../README.md` (planned)](../README.md). Every identifier below — alias name, portal URL suffix, page name, widget name, table name, file name — matches the guide that owns it character for character. No variant spelling is valid.
+**Authority.** This document is authoritative for two things across the package: the **execution order** of the six guides, and the **split rule** that decides which artifacts ship as Update Set XML and which are built by hand. Each guide repeats both locally so that it can be run without this file; where a guide and this index disagree about the order, this index governs. The execution order stated here matches the deploy order declared in [`../README.md`](../README.md). Every identifier below — alias name, portal URL suffix, page name, widget name, table name, file name — matches the guide that owns it character for character. No variant spelling is valid.
 
-This document carries **no rationale**. It states the inventory, the dependencies and the order as fact and instruction. Every decision behind the split, the guide boundaries and the ordering, every alternative considered and every risk each carries is recorded in [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md), which is the single source of truth for "why".
+This document carries **no rationale**. It states the inventory, the dependencies and the order as fact and instruction. Every decision behind the split, the guide boundaries and the ordering, every alternative considered and every risk each carries is recorded in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md), which is the single source of truth for "why".
 
 ## The split rule
 
@@ -74,9 +74,9 @@ flowchart LR
     G05 --> VC["Checklist"]
 ```
 
-This order matches the deploy order declared in [`../README.md` (planned)](../README.md): validate the XML, then import, preview and commit per [`./deployment-runbook.md`](./deployment-runbook.md), then guide 01, then guides 02 and 03, then guide 04, then guide 06, then guide 05.
+This order matches the deploy order declared in [`../README.md`](../README.md): validate the XML, then import, preview and commit per [`./deployment-runbook.md`](./deployment-runbook.md), then guide 01, then guides 02 and 03, then guide 04, then guide 06, then guide 05.
 
-The step that follows guide 05 is [`./validation-checklist.md` (planned)](./validation-checklist.md), which maps the evidence one-to-one onto the five success criteria of prompt section 10.0.
+The step that follows guide 05 is [`./validation-checklist.md`](./validation-checklist.md), which maps the evidence one-to-one onto the five success criteria of prompt section 10.0.
 
 ## Cross-cutting contracts
 
@@ -86,8 +86,8 @@ These contracts span more than one guide. Each is an instruction; the detail bel
 - **The three-way staging contract.** The CSV header rows under [`../sample-data/`](../sample-data/), the staging table's dictionary columns in the Update Set, and guide 06's field mapping are three legs of one contract. Changing any one leg breaks the fallback path silently. See [`../sample-data/README.md`](../sample-data/README.md), [`./data-model.md`](./data-model.md) and [`./manual-build/06-staging-table-csv-import.md`](./manual-build/06-staging-table-csv-import.md).
 - **Secured reads in widget server scripts.** Every widget server script uses the secured read path and the per-field omission gate, so the portal cannot expose a premium field the API would deny. See [`./access-control.md`](./access-control.md) and [`./manual-build/04-service-portal-pages-and-widgets.md`](./manual-build/04-service-portal-pages-and-widgets.md).
 - **Impersonation for every access-control check.** No access-control verification is performed as the instance administrator. Every check runs under an impersonated user holding exactly one scoped role and none of the elevated platform roles. See [`./access-control.md`](./access-control.md) and [`./manual-build/05-atf-test-suites.md`](./manual-build/05-atf-test-suites.md).
-- **Provenance labelling.** Every ingestion result is labelled live-validated or fallback-validated, so a passing result can never be mistaken for validated live integration. See [`./manual-build/02-flow-crunchbase-ingestion.md`](./manual-build/02-flow-crunchbase-ingestion.md), [`./manual-build/03-flow-linkedin-ingestion.md`](./manual-build/03-flow-linkedin-ingestion.md), [`./manual-build/05-atf-test-suites.md`](./manual-build/05-atf-test-suites.md) and [`./validation-checklist.md` (planned)](./validation-checklist.md).
-- **Icon system.** The portal uses the platform glyph font. The executive deck uses Lucide. The two systems are separate and are not mixed: no widget references Lucide, and no platform glyph appears in the deck. See [`./manual-build/04-service-portal-pages-and-widgets.md`](./manual-build/04-service-portal-pages-and-widgets.md) and [`./gaps-and-flags.md` (planned)](./gaps-and-flags.md).
+- **Provenance labelling.** Every ingestion result is labelled live-validated or fallback-validated, so a passing result can never be mistaken for validated live integration. See [`./manual-build/02-flow-crunchbase-ingestion.md`](./manual-build/02-flow-crunchbase-ingestion.md), [`./manual-build/03-flow-linkedin-ingestion.md`](./manual-build/03-flow-linkedin-ingestion.md), [`./manual-build/05-atf-test-suites.md`](./manual-build/05-atf-test-suites.md) and [`./validation-checklist.md`](./validation-checklist.md).
+- **Icon system.** The portal uses the platform glyph font. The executive deck uses Lucide. The two systems are separate and are not mixed: no widget references Lucide, and no platform glyph appears in the deck. See [`./manual-build/04-service-portal-pages-and-widgets.md`](./manual-build/04-service-portal-pages-and-widgets.md) and [`./gaps-and-flags.md`](./gaps-and-flags.md).
 - **Zero secrets.** No credential value appears in any guide, in any flow input, in any script step, or in the Update Set XML. Guide 01 verifies and binds; it never records a secret.
 
 ## Referenced documents
@@ -102,13 +102,13 @@ These contracts span more than one guide. Each is an instruction; the detail bel
 | [`./manual-build/05-atf-test-suites.md`](./manual-build/05-atf-test-suites.md) | Step 6, last. The ten suites, the thirty-six tests and the ATF execution prerequisite. |
 | [`./deployment-runbook.md`](./deployment-runbook.md) | The import, preview and commit route that precedes guide 01, and the pre-import assertion of the ATF prerequisite. |
 | [`./validation-gates.md`](./validation-gates.md) | The sixteen post-commit gates, and the eleven-gate core within them. |
-| [`./validation-checklist.md` (planned)](./validation-checklist.md) | The step that follows guide 05, mapped one-to-one onto the five success criteria. |
+| [`./validation-checklist.md`](./validation-checklist.md) | The step that follows guide 05, mapped one-to-one onto the five success criteria. |
 | [`./data-model.md`](./data-model.md) | The ten tables field by field, including the staging table leg of the three-way staging contract. |
 | [`./access-control.md`](./access-control.md) | The three roles, the seven premium fields, the secured read path and the impersonation requirement. |
 | [`./api-reference.md`](./api-reference.md) | The six REST resources, the nested sub-resource and the system-property inventory the flows and widgets read. |
-| [`./gaps-and-flags.md` (planned)](./gaps-and-flags.md) | The requirements with no clean platform equivalent, including the icon-system split. |
-| [`../README.md` (planned)](../README.md) | The package index and the authoritative deploy order this execution order matches. |
+| [`./gaps-and-flags.md`](./gaps-and-flags.md) | The requirements with no clean platform equivalent, including the icon-system split. |
+| [`../README.md`](../README.md) | The package index and the authoritative deploy order this execution order matches. |
 | [`../sample-data/README.md`](../sample-data/README.md) | The CSV header rows and the fallback-only posture of the dataset. |
 | [`../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`](../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml) | The declarative metadata that commits before any guide begins. |
 | [`../scripts/validate_update_set_xml.py`](../scripts/validate_update_set_xml.py) | The two-level XML validation that precedes the import. |
-| [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md) | The single source of truth for every "why" behind the split, the guide boundaries and this order. |
+| [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md) | The single source of truth for every "why" behind the split, the guide boundaries and this order. |

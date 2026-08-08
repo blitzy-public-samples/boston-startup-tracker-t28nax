@@ -4,7 +4,7 @@ This guide loads the six fallback-dataset CSV files under [`../../sample-data/`]
 
 **Authority.** The frozen prompt and the Agent Action Plan are authoritative for all application content. The Update Set XML at [`../../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`](../../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml) is the authoritative source for every table name, column name, column type, column length, choice value, Script Include class name, method name and system-property key cited below; the identifiers used here match those records character for character. [`../../sample-data/README.md`](../../sample-data/README.md) is authoritative for the CSV header rows and their order within each file. This guide agrees with both and introduces no third spelling and no different order. No variant spelling of any identifier is valid.
 
-This document carries **no rationale**. It states what to load and how to load it. Every decision behind this procedure, every alternative considered and every risk it carries is recorded in [`../../../docs/decisions/DECISION_LOG.md` (planned)](../../../docs/decisions/DECISION_LOG.md), which is the single source of truth for "why". Three points in this procedure depart from a literal reading of the requirements — the **single** staging table serving all six record types, the shape that carries **both** flattened scalar columns and a `raw_payload` JSON column on the same row, and references expressed as **natural keys** rather than record identifiers. Each is stated below as a load mechanic and cross-referenced to that log. None is argued here.
+This document carries **no rationale**. It states what to load and how to load it. Every decision behind this procedure, every alternative considered and every risk it carries is recorded in [`../../../docs/decisions/DECISION_LOG.md`](../../../docs/decisions/DECISION_LOG.md), which is the single source of truth for "why". Three points in this procedure depart from a literal reading of the requirements — the **single** staging table serving all six record types, the shape that carries **both** flattened scalar columns and a `raw_payload` JSON column on the same row, and references expressed as **natural keys** rather than record identifiers. Each is stated below as a load mechanic and cross-referenced to that log. None is argued here.
 
 Operational warnings **are** in scope for this guide and are marked as such. The five warnings under [Operational warnings](#operational-warnings) are load-bearing and must not be skipped: three of them describe failures that are completely silent, in the sense that the load reports success and the defect surfaces later somewhere else.
 
@@ -12,7 +12,7 @@ Operational warnings **are** in scope for this guide and are marked as such. The
 
 This guide is executable on its own. Every data source, every import set table, every transform map, every field map, the load order, the transform, the recalculation and the verification are stated here in full. An operator needs no other file to perform the load.
 
-Documents marked **(planned)** are in-scope artifacts of this deliverable package that are authored elsewhere in the same delivery. A link to a planned document resolves once that document lands; nothing in this guide depends on reading one first.
+**Every document linked from this guide is delivered and readable**, so no link is a forward reference; each one is an in-scope artifact of this deliverable package. Nothing in this guide depends on reading another document first.
 
 | Document | What this guide takes from it |
 | --- | --- |
@@ -22,18 +22,18 @@ Documents marked **(planned)** are in-scope artifacts of this deliverable packag
 | [`../validation-gates.md`](../validation-gates.md) | The post-commit gates of precondition 4, including the eleven-gate core, and `GATE-SEC-02`, which is why the staged rows are verified in the list view rather than over the Table API. |
 | [`02-flow-crunchbase-ingestion.md`](02-flow-crunchbase-ingestion.md) | The Crunchbase ingestion flow, whose fallback branch reads the `crunchbase` rows this guide loads. |
 | [`03-flow-linkedin-ingestion.md`](03-flow-linkedin-ingestion.md) | The LinkedIn ingestion flow, whose fallback branch reads the `linkedin` rows this guide loads. |
-| [`05-atf-test-suites.md` (planned)](05-atf-test-suites.md) | The two flow tests that depend on this data, and the `fallback validated` result label they apply. |
-| [`../manual-build-instructions.md` (planned)](../manual-build-instructions.md) | The build order for the package as a whole, and the split rule between Update Set XML and manual build. |
-| [`../validation-checklist.md` (planned)](../validation-checklist.md) | Success criterion 4 and its provenance evidence, which the loaded rows supply. |
+| [`05-atf-test-suites.md`](05-atf-test-suites.md) | The two flow tests that depend on this data, and the `fallback validated` result label they apply. |
+| [`../manual-build-instructions.md`](../manual-build-instructions.md) | The build order for the package as a whole, and the split rule between Update Set XML and manual build. |
+| [`../validation-checklist.md`](../validation-checklist.md) | Success criterion 4 and its provenance evidence, which the loaded rows supply. |
 | [`../access-control.md`](../access-control.md) | The role posture of the staging table, which grants read, write, create and delete to `x_bst_startuptrk.admin` alone. |
 | [`../api-reference.md`](../api-reference.md) | The Script Include call graph and the full system-property inventory. |
 | [`../deployment-runbook.md`](../deployment-runbook.md) | The import sequence that commits the Update Set, and the definition of [what counts as a scheduled run](../deployment-runbook.md#what-counts-as-a-scheduled-run). |
-| [`../gaps-and-flags.md` (planned)](../gaps-and-flags.md) | The requirements with no clean platform equivalent, including the NewsArticle ingestion exclusion. |
-| [`../../../docs/decisions/DECISION_LOG.md` (planned)](../../../docs/decisions/DECISION_LOG.md) | The single destination for every "why". |
+| [`../gaps-and-flags.md`](../gaps-and-flags.md) | The requirements with no clean platform equivalent, including the NewsArticle ingestion exclusion. |
+| [`../../../docs/decisions/DECISION_LOG.md`](../../../docs/decisions/DECISION_LOG.md) | The single destination for every "why". |
 
 ## Position in the build order
 
-This is **guide 06 of six**, and it is **step 5** of the execution order below. The execution order is **not** the filename order: guide **06** runs before guide **05**. Guide 04 precedes this one; guide 05 follows it, last. The order is stated in full in [`../manual-build-instructions.md` (planned)](../manual-build-instructions.md); it is repeated here so this guide can be run without it.
+This is **guide 06 of six**, and it is **step 5** of the execution order below. The execution order is **not** the filename order: guide **06** runs before guide **05**. Guide 04 precedes this one; guide 05 follows it, last. The order is stated in full in [`../manual-build-instructions.md`](../manual-build-instructions.md); it is repeated here so this guide can be run without it.
 
 | Step | Guide | Why it sits here |
 | --- | --- | --- |
@@ -42,7 +42,7 @@ This is **guide 06 of six**, and it is **step 5** of the execution order below. 
 | 3 | [`03-flow-linkedin-ingestion.md`](03-flow-linkedin-ingestion.md) | The LinkedIn ingestion flow, which references `x_bst_startuptrk.linkedin_oauth` by name. |
 | 4 | [`04-service-portal-pages-and-widgets.md`](04-service-portal-pages-and-widgets.md) | The portal, theme, five pages and eight widgets. |
 | **5** | **This guide** | **The staging-table CSV load, which puts rows into `x_bst_startuptrk_ingest_staging` and records on the instance for the portal walkthrough.** |
-| 6 | [`05-atf-test-suites.md` (planned)](05-atf-test-suites.md) | The Automated Test Framework suites, **last**, because they exercise everything the five preceding guides build. |
+| 6 | [`05-atf-test-suites.md`](05-atf-test-suites.md) | The Automated Test Framework suites, **last**, because they exercise everything the five preceding guides build. |
 
 The single hop where execution order differs from filename order is this one, and the dependency that fixes it is factual: the two ingestion flows read `x_bst_startuptrk_ingest_staging` on their fallback branch, and the flow tests in guide 05 exercise that branch. **The staging data must exist before guide 05 runs**, or those tests have no rows to act on. Guides 02 and 03 are built before this guide and their fallback branch returns a row count of zero until this guide has run; both guides state that and require the fallback branch to be re-run afterwards.
 
@@ -69,7 +69,7 @@ Guides 01 through 04 do not have to be complete before this guide runs. Nothing 
 
 ### Why this guide exists rather than more Update Set XML
 
-Only tables carrying the update-synch attribute are captured into `sys_update_xml` records, and adding that attribute to a table that lacks it out of the box is unsupported. A data source, an import set table, a transform map and its field maps are all built through the platform's own interface and sit outside the captured set, which is why the delivered Update Set contains **zero** import records — no `sys_data_source`, no `sys_transform_map` and no `sys_transform_entry`. [`../manual-build-instructions.md` (planned)](../manual-build-instructions.md) owns the split rule for the package as a whole.
+Only tables carrying the update-synch attribute are captured into `sys_update_xml` records, and adding that attribute to a table that lacks it out of the box is unsupported. A data source, an import set table, a transform map and its field maps are all built through the platform's own interface and sit outside the captured set, which is why the delivered Update Set contains **zero** import records — no `sys_data_source`, no `sys_transform_map` and no `sys_transform_entry`. [`../manual-build-instructions.md`](../manual-build-instructions.md) owns the split rule for the package as a whole.
 
 ## What this guide builds
 
@@ -111,7 +111,7 @@ Four properties of the table govern this procedure:
 | `sys_db_object.access` | `package_private` | The table is unreachable from any other application scope. A background script that touches it must run **inside** the `x_bst_startuptrk` scope. |
 | `sys_db_object.ws_access` | `false` | The table is **not** served at `/api/now/table/x_bst_startuptrk_ingest_staging`. Verify the load in the list view; a script written against that path fails whether or not the rows loaded. `GATE-SEC-02` asserts this posture across all ten application tables. |
 
-One table serving six record types is a deviation from a literal reading of the requirements. It is stated here as a load mechanic; the decision is recorded in [`../../../docs/decisions/DECISION_LOG.md` (planned)](../../../docs/decisions/DECISION_LOG.md).
+One table serving six record types is a deviation from a literal reading of the requirements. It is stated here as a load mechanic; the decision is recorded in [`../../../docs/decisions/DECISION_LOG.md`](../../../docs/decisions/DECISION_LOG.md).
 
 ## The shared control prefix
 
@@ -172,7 +172,7 @@ The CSV dialect the six files are written in, and which the data sources must be
 
 The longest shipped `raw_payload` value is well inside the column's 8000-character limit, so no value is at risk of truncation on load. Every shipped value parses as JSON.
 
-Carrying **both** the flattened scalar columns and this source-vocabulary JSON column on the same row is a deviation from a literal reading of the requirements: the flattened columns are what make the CSV import a one-to-one mapping by header name, and `raw_payload` is what preserves the source response shape. Both are mapped, on every row of every file. The mechanic is stated here; the decision is recorded in [`../../../docs/decisions/DECISION_LOG.md` (planned)](../../../docs/decisions/DECISION_LOG.md).
+Carrying **both** the flattened scalar columns and this source-vocabulary JSON column on the same row is a deviation from a literal reading of the requirements: the flattened columns are what make the CSV import a one-to-one mapping by header name, and `raw_payload` is what preserves the source response shape. Both are mapped, on every row of every file. The mechanic is stated here; the decision is recorded in [`../../../docs/decisions/DECISION_LOG.md`](../../../docs/decisions/DECISION_LOG.md).
 
 ## References travel as natural keys
 
@@ -196,7 +196,7 @@ A CSV cannot carry a `sys_id` for a record that does not exist yet, so **every r
 
 Both sides of every comparison are trimmed and lowered, so a child row may spell its natural key in any case and with any surrounding whitespace. Several shipped rows deliberately do, which is what makes them evidence that trimming happens before resolution.
 
-The natural-key shape is a deviation from a literal reading of the requirements. It is stated here as a load mechanic; the decision is recorded in [`../../../docs/decisions/DECISION_LOG.md` (planned)](../../../docs/decisions/DECISION_LOG.md).
+The natural-key shape is a deviation from a literal reading of the requirements. It is stated here as a load mechanic; the decision is recorded in [`../../../docs/decisions/DECISION_LOG.md`](../../../docs/decisions/DECISION_LOG.md).
 
 ## The field mapping, file by file
 
@@ -464,7 +464,7 @@ Positions 4, 5 and 6 depend only on position 1, so the three LinkedIn files may 
 
 ### There is no NewsArticle CSV
 
-**There are exactly six CSV files, and none of them is a NewsArticle file.** Automated NewsArticle ingestion is out of scope: no ingestion flow serves `x_bst_startuptrk_newsarticle`, the staging table's `record_type` choice list contains **no** `news_article` member, and there is consequently no seventh sample file, no seventh data source, no seventh import set table and no seventh transform map. **NewsArticle records are created by manual entry** — through the **News articles** module of the Boston Startup Tracker application menu — or by a REST write to the `/news` resource. The absence is intentional. It is recorded in [`../gaps-and-flags.md` (planned)](../gaps-and-flags.md) and in [`../../../docs/decisions/DECISION_LOG.md` (planned)](../../../docs/decisions/DECISION_LOG.md).
+**There are exactly six CSV files, and none of them is a NewsArticle file.** Automated NewsArticle ingestion is out of scope: no ingestion flow serves `x_bst_startuptrk_newsarticle`, the staging table's `record_type` choice list contains **no** `news_article` member, and there is consequently no seventh sample file, no seventh data source, no seventh import set table and no seventh transform map. **NewsArticle records are created by manual entry** — through the **News articles** module of the Boston Startup Tracker application menu — or by a REST write to the `/news` resource. The absence is intentional. It is recorded in [`../gaps-and-flags.md`](../gaps-and-flags.md) and in [`../../../docs/decisions/DECISION_LOG.md`](../../../docs/decisions/DECISION_LOG.md).
 
 ## Steps
 
@@ -736,7 +736,7 @@ An empty join table with ten funding rounds present means `participating_investo
 
 **4. The derived portfolio counts.** After [step 9](#step-9--recalculate-the-derived-portfolio-counts), `x_bst_startuptrk_investor.portfolio_count` is non-zero on **6** of the 7 investors. Exactly one investor is referenced by no funding round, as lead or as participant, and its count is correctly **0**. `recalculateAll()` returns **0** investors rewritten on a load whose business rules ran.
 
-**5. Provenance.** Every staged row reads `run_provenance` `fallback`, and no row reads `live`. A flow run over this dataset sets `x_bst_startuptrk.ingestion.last_run_provenance` to `fallback` and writes a run summary carrying the run identifier, the provenance and the processed, rejected and skipped counts. Any result derived from this dataset must be labelled **`fallback validated`** and never `live validated`; the labelling convention is applied by [`05-atf-test-suites.md` (planned)](05-atf-test-suites.md) and the evidence is collected by [`../validation-checklist.md` (planned)](../validation-checklist.md).
+**5. Provenance.** Every staged row reads `run_provenance` `fallback`, and no row reads `live`. A flow run over this dataset sets `x_bst_startuptrk.ingestion.last_run_provenance` to `fallback` and writes a run summary carrying the run identifier, the provenance and the processed, rejected and skipped counts. Any result derived from this dataset must be labelled **`fallback validated`** and never `live validated`; the labelling convention is applied by [`05-atf-test-suites.md`](05-atf-test-suites.md) and the evidence is collected by [`../validation-checklist.md`](../validation-checklist.md).
 
 ### Retention of the loaded rows
 
@@ -839,7 +839,7 @@ Do not sign this guide off until every line below is true.
 | 20 | `x_bst_startuptrk.ingestion.source_mode` has been set back to `live` if it was set to `fallback` for [step 8](#step-8--run-the-staging-to-entity-transform). | |
 | 21 | Any result derived from this dataset is labelled **`fallback validated`**, never `live validated`. | |
 
-Guide 05 may begin once every line above is true. Success criterion 4 in [`../validation-checklist.md` (planned)](../validation-checklist.md) is satisfied separately, by three consecutive guard-passing flow runs with zero unhandled errors and the provenance of each one recorded.
+Guide 05 may begin once every line above is true. Success criterion 4 in [`../validation-checklist.md`](../validation-checklist.md) is satisfied separately, by three consecutive guard-passing flow runs with zero unhandled errors and the provenance of each one recorded.
 
 ## Related documents
 
@@ -855,15 +855,15 @@ Guide 05 may begin once every line above is true. Success criterion 4 in [`../va
 | [`../../sample-data/linkedin_job_postings_sample.csv`](../../sample-data/linkedin_job_postings_sample.csv) | Load position 6. Record type `job_posting`, 16 columns, 12 rows. |
 | [`02-flow-crunchbase-ingestion.md`](02-flow-crunchbase-ingestion.md) | A **fallback reader** of this table. Its step 4 queries the `crunchbase` rows this guide loads, and its step 6 writes the four Crunchbase tables. |
 | [`03-flow-linkedin-ingestion.md`](03-flow-linkedin-ingestion.md) | A **fallback reader** of this table. Its step 4 queries the `linkedin` rows this guide loads, and its step 6 writes the three LinkedIn tables. |
-| [`05-atf-test-suites.md` (planned)](05-atf-test-suites.md) | The two ingestion-flow tests that **depend on this data**, and the `fallback validated` result label. Runs after this guide. |
+| [`05-atf-test-suites.md`](05-atf-test-suites.md) | The two ingestion-flow tests that **depend on this data**, and the `fallback validated` result label. Runs after this guide. |
 | [`01-connection-credential-aliases.md`](01-connection-credential-aliases.md) | The two credential aliases the live path uses. Not required by this guide; the fallback path needs no credential. |
 | [`04-service-portal-pages-and-widgets.md`](04-service-portal-pages-and-widgets.md) | The portal whose walkthrough reads the entity records this load produces. |
-| [`../manual-build-instructions.md` (planned)](../manual-build-instructions.md) | The build order for the package and the split rule between Update Set XML and manual build. |
+| [`../manual-build-instructions.md`](../manual-build-instructions.md) | The build order for the package and the split rule between Update Set XML and manual build. |
 | [`../data-model.md`](../data-model.md) | The staging table's full column list, the entity choice values, the cascade rules, the `portfolio_count` derivation and the staging retention lifecycle. |
-| [`../validation-checklist.md` (planned)](../validation-checklist.md) | Success criterion 4 and its provenance evidence, which the loaded rows supply. |
+| [`../validation-checklist.md`](../validation-checklist.md) | Success criterion 4 and its provenance evidence, which the loaded rows supply. |
 | [`../validation-gates.md`](../validation-gates.md) | The post-commit gates of precondition 4, and `GATE-SEC-02`, which fixes the list-view verification route. |
 | [`../access-control.md`](../access-control.md) | The staging table's administrator-only posture on all four operations. |
 | [`../api-reference.md`](../api-reference.md) | The Script Include call graph and the system-property inventory, including `ingestion.source_mode` and the two privacy properties. |
 | [`../deployment-runbook.md`](../deployment-runbook.md) | The import sequence that commits the Update Set, and [what counts as a scheduled run](../deployment-runbook.md#what-counts-as-a-scheduled-run). |
-| [`../gaps-and-flags.md` (planned)](../gaps-and-flags.md) | The NewsArticle ingestion exclusion, which is why there are six CSVs and not seven. |
-| [`../../../docs/decisions/DECISION_LOG.md` (planned)](../../../docs/decisions/DECISION_LOG.md) | **Every "why"**, including the single staging table, the flattened-columns-plus-`raw_payload` shape and the natural-key references. |
+| [`../gaps-and-flags.md`](../gaps-and-flags.md) | The NewsArticle ingestion exclusion, which is why there are six CSVs and not seven. |
+| [`../../../docs/decisions/DECISION_LOG.md`](../../../docs/decisions/DECISION_LOG.md) | **Every "why"**, including the single staging table, the flattened-columns-plus-`raw_payload` shape and the natural-key references. |

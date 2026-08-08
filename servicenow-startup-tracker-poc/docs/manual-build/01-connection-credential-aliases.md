@@ -6,7 +6,7 @@ The aliases are **verified and bound**, not created. The live Crunchbase and Lin
 
 **Authority.** The frozen prompt and the Agent Action Plan are authoritative for all application content. The Update Set XML at [`../../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`](../../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml) is the authoritative source for the scope name and for the two non-secret base-URL system-property keys cited below; the identifiers used here match those records character for character, and the same alias names appear in [`../api-reference.md`](../api-reference.md), [`../deployment-runbook.md`](../deployment-runbook.md) and [`../../sample-data/README.md`](../../sample-data/README.md). No variant spelling of any identifier is valid. The platform table, column and choice identifiers below are those of the target instance release.
 
-This document carries **no rationale**. It states what to verify and how. Every decision behind these aliases — the authentication type chosen for each source, and the verify-and-bind posture in place of creation — is recorded in [`../../../docs/decisions/DECISION_LOG.md` (planned)](../../../docs/decisions/DECISION_LOG.md), which is the single source of truth for "why". Requirements with no clean platform equivalent are flagged in [`../gaps-and-flags.md` (planned)](../gaps-and-flags.md) and are not restated here.
+This document carries **no rationale**. It states what to verify and how. Every decision behind these aliases — the authentication type chosen for each source, and the verify-and-bind posture in place of creation — is recorded in [`../../../docs/decisions/DECISION_LOG.md`](../../../docs/decisions/DECISION_LOG.md), which is the single source of truth for "why". Requirements with no clean platform equivalent are flagged in [`../gaps-and-flags.md`](../gaps-and-flags.md) and are not restated here.
 
 Operational warnings **are** in scope for this guide and are marked as such. [Operational warning — the binding is by name](#operational-warning--the-binding-is-by-name) is the most important one in this file and must not be skipped.
 
@@ -14,22 +14,22 @@ Operational warnings **are** in scope for this guide and are marked as such. [Op
 
 This guide is executable on its own. Both aliases, every record, every field, the escalation path, the connection test and the completion criteria are stated here in full. An operator needs no other file to run it.
 
-Some documents named below are **planned artifacts of this package**. Every link to one carries the marker **(planned)** in its link text. A statement about a planned document describes what that document is required to contain; it is not a claim that the content can be read from it. The delivered files referenced from here are `../../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`, `../validation-gates.md`, `../deployment-runbook.md`, `../api-reference.md` and `../../sample-data/README.md`.
+**Every document named below is delivered and readable.** Each link resolves to a file in this package, among them `../../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`, `../validation-gates.md`, `../deployment-runbook.md`, `../api-reference.md` and `../../sample-data/README.md`, so a reader can follow any link and read the content the statement around it describes; no link is a forward reference to something still to be written.
 
-**Reviewer.** This guide is the artifact validated by **entry 3 of [`../../../docs/review/CRITICAL_DECISIONS.md` (planned)](../../../docs/review/CRITICAL_DECISIONS.md), risk High, reviewer persona API/Integration**, whose check is to search the delivered Update Set XML for credential material and to confirm both alias names bind before the flows are saved — an obligation placed on this file by the project rule **Critical Decision Review Document**.
+**Reviewer.** This guide is the artifact validated by **entry 3 of [`../../../docs/review/CRITICAL_DECISIONS.md`](../../../docs/review/CRITICAL_DECISIONS.md), risk High, reviewer persona API/Integration**, whose check is to search the delivered Update Set XML for credential material and to confirm both alias names bind before the flows are saved — an obligation placed on this file by the project rule **Critical Decision Review Document**.
 
 ## Position in the build order
 
-This is **guide 01 of six**, and it is **step 1** of the execution order below. Nothing in the manual build precedes it. The order is stated in full in [`../manual-build-instructions.md` (planned)](../manual-build-instructions.md); it is repeated here so this guide can be run without it. The execution order is not the filename order: guide **06** runs before guide **05**.
+This is **guide 01 of six**, and it is **step 1** of the execution order below. Nothing in the manual build precedes it. The order is stated in full in [`../manual-build-instructions.md`](../manual-build-instructions.md); it is repeated here so this guide can be run without it. The execution order is not the filename order: guide **06** runs before guide **05**.
 
 | Step | Guide | Why it sits here |
 | --- | --- | --- |
 | **1** | **This guide** | **The two Connection & Credential Aliases the ingestion flows bind to by name. Nothing downstream can authenticate without them.** |
-| 2 | [`02-flow-crunchbase-ingestion.md` (planned)](02-flow-crunchbase-ingestion.md) | The Crunchbase ingestion flow, which references `x_bst_startuptrk.crunchbase_api` by name. |
-| 3 | [`03-flow-linkedin-ingestion.md` (planned)](03-flow-linkedin-ingestion.md) | The LinkedIn ingestion flow, which references `x_bst_startuptrk.linkedin_oauth` by name. |
+| 2 | [`02-flow-crunchbase-ingestion.md`](02-flow-crunchbase-ingestion.md) | The Crunchbase ingestion flow, which references `x_bst_startuptrk.crunchbase_api` by name. |
+| 3 | [`03-flow-linkedin-ingestion.md`](03-flow-linkedin-ingestion.md) | The LinkedIn ingestion flow, which references `x_bst_startuptrk.linkedin_oauth` by name. |
 | 4 | [`04-service-portal-pages-and-widgets.md`](04-service-portal-pages-and-widgets.md) | The portal, theme, five pages and eight widgets. |
-| 5 | [`06-staging-table-csv-import.md` (planned)](06-staging-table-csv-import.md) | The staging-table CSV load. |
-| 6 | [`05-atf-test-suites.md` (planned)](05-atf-test-suites.md) | The Automated Test Framework suites, **last**, because they exercise everything the five preceding guides build. |
+| 5 | [`06-staging-table-csv-import.md`](06-staging-table-csv-import.md) | The staging-table CSV load. |
+| 6 | [`05-atf-test-suites.md`](05-atf-test-suites.md) | The Automated Test Framework suites, **last**, because they exercise everything the five preceding guides build. |
 
 Guides **02** and **03** follow this one immediately and both depend on it. Neither may be started until this guide is complete, for the reason given under [Step 3 — Test both connections](#step-3--test-both-connections).
 
@@ -54,7 +54,7 @@ Preconditions 1 through 5 are shared by every guide in this folder. Precondition
 
 ### Why this guide exists rather than more Update Set XML
 
-Only tables carrying the update-synch attribute are captured into `sys_update_xml` records, and adding that attribute to a table that lacks it out of the box is unsupported. The alias, connection, credential and OAuth tables are outside the captured set, so these artifacts are established through the platform interface instead. [`../manual-build-instructions.md` (planned)](../manual-build-instructions.md) owns the split rule for the package as a whole.
+Only tables carrying the update-synch attribute are captured into `sys_update_xml` records, and adding that attribute to a table that lacks it out of the box is unsupported. The alias, connection, credential and OAuth tables are outside the captured set, so these artifacts are established through the platform interface instead. [`../manual-build-instructions.md`](../manual-build-instructions.md) owns the split rule for the package as a whole.
 
 The consequence is the property this guide exists to preserve: the delivered Update Set contains **zero** credential material and **zero** alias records, and the flows still authenticate.
 
@@ -393,7 +393,7 @@ Record the two outcomes:
 
 Record `pass` or `fail`, the timestamp in `YYYY-MM-DD HH:MM:SS` form, and nothing else. **Record no credential value in any field of this table.**
 
-**Neither [`02-flow-crunchbase-ingestion.md` (planned)](02-flow-crunchbase-ingestion.md) nor [`03-flow-linkedin-ingestion.md` (planned)](03-flow-linkedin-ingestion.md) may be started until both aliases test green.** Both outcomes must read `pass`. A flow built against an alias that has not tested green fails at its first execution, and the failure appears as a flow defect rather than as the credential fault it is.
+**Neither [`02-flow-crunchbase-ingestion.md`](02-flow-crunchbase-ingestion.md) nor [`03-flow-linkedin-ingestion.md`](03-flow-linkedin-ingestion.md) may be started until both aliases test green.** Both outcomes must read `pass`. A flow built against an alias that has not tested green fails at its first execution, and the failure appears as a flow defect rather than as the credential fault it is.
 
 For LinkedIn, return to [Step 2.7](#step-27--confirm-the-refresh-token-is-on-file-and-refresh-works) after a successful test and complete its item 5, confirming that the access token was refreshed without operator involvement.
 
@@ -408,8 +408,8 @@ This section applies when an alias, a connection, a credential, an OAuth provide
 3. **Escalate to the credential owner** — the party that holds the Crunchbase API key, or the LinkedIn OAuth 2.0 client identifier, client secret and refresh token. Ask them to provision or re-issue the material on this instance and to confirm the alias name they bound it to.
 4. **Do not invent a key, a token, a client identifier, a client secret or a placeholder that resembles one.** Do not rename an existing unrelated alias to match. Do not point the connection at a different credential to make the test pass.
 5. **Do not modify anything outside `x_bst_startuptrk`** while waiting. Prompt section 6.0 forbids it.
-6. **The ingestion work is not blocked while you wait.** Ingestion has a sanctioned fallback path that requires no live credential: it reads the staging table loaded from the sample dataset. The dataset, its column contract and the property that forces the fallback are specified in [`../../sample-data/README.md`](../../sample-data/README.md), and the load procedure is [`06-staging-table-csv-import.md` (planned)](06-staging-table-csv-import.md).
-7. **Label the evidence accordingly.** While either alias is unprovisioned, every ingestion run reads the fallback dataset, and every result must be labelled `fallback validated` and never `live validated`. That labelling rule and its effect on the acceptance evidence are stated in [`../../sample-data/README.md`](../../sample-data/README.md); the flagged items of this delivery are listed in [`../gaps-and-flags.md` (planned)](../gaps-and-flags.md).
+6. **The ingestion work is not blocked while you wait.** Ingestion has a sanctioned fallback path that requires no live credential: it reads the staging table loaded from the sample dataset. The dataset, its column contract and the property that forces the fallback are specified in [`../../sample-data/README.md`](../../sample-data/README.md), and the load procedure is [`06-staging-table-csv-import.md`](06-staging-table-csv-import.md).
+7. **Label the evidence accordingly.** While either alias is unprovisioned, every ingestion run reads the fallback dataset, and every result must be labelled `fallback validated` and never `live validated`. That labelling rule and its effect on the acceptance evidence are stated in [`../../sample-data/README.md`](../../sample-data/README.md); the flagged items of this delivery are listed in [`../gaps-and-flags.md`](../gaps-and-flags.md).
 8. **Resume at [Step 1.1](#step-11--locate-the-alias-record) or [Step 2.1](#step-21--locate-the-alias-record)** once the owner confirms the material is in place, and run the full confirmation and test sequence for that alias from the beginning.
 
 ## Operational warning — the binding is by name
@@ -429,15 +429,15 @@ Three consequences follow, and each is a step to take rather than a caution to n
 Carry the confirmed names forward. Do this immediately after [Step 3](#step-3--test-both-connections) passes, while the records are still open.
 
 1. Open the alias record of [Step 1.2](#step-12--confirm-the-alias-record-fields) and copy the **Name** field to the clipboard.
-2. Paste it into the alias-name field of the Crunchbase flow's REST step as directed by [`02-flow-crunchbase-ingestion.md` (planned)](02-flow-crunchbase-ingestion.md). Paste; do not type.
+2. Paste it into the alias-name field of the Crunchbase flow's REST step as directed by [`02-flow-crunchbase-ingestion.md`](02-flow-crunchbase-ingestion.md). Paste; do not type.
 3. Compare the pasted value against `x_bst_startuptrk.crunchbase_api` character for character, including both separators.
-4. Repeat items 1 to 3 for the alias record of [Step 2.2](#step-22--confirm-the-alias-record-fields) and [`03-flow-linkedin-ingestion.md` (planned)](03-flow-linkedin-ingestion.md), comparing against `x_bst_startuptrk.linkedin_oauth`.
+4. Repeat items 1 to 3 for the alias record of [Step 2.2](#step-22--confirm-the-alias-record-fields) and [`03-flow-linkedin-ingestion.md`](03-flow-linkedin-ingestion.md), comparing against `x_bst_startuptrk.linkedin_oauth`.
 5. Record the comparison outcome for both.
 
 | # | Alias name as confirmed on the alias record | Consuming guide | Names match character for character |
 | --- | --- | --- | --- |
-| 1 | `x_bst_startuptrk.crunchbase_api` | [`02-flow-crunchbase-ingestion.md` (planned)](02-flow-crunchbase-ingestion.md) | |
-| 2 | `x_bst_startuptrk.linkedin_oauth` | [`03-flow-linkedin-ingestion.md` (planned)](03-flow-linkedin-ingestion.md) | |
+| 1 | `x_bst_startuptrk.crunchbase_api` | [`02-flow-crunchbase-ingestion.md`](02-flow-crunchbase-ingestion.md) | |
+| 2 | `x_bst_startuptrk.linkedin_oauth` | [`03-flow-linkedin-ingestion.md`](03-flow-linkedin-ingestion.md) | |
 
 Both rows must read `yes` before either flow is saved.
 
@@ -487,15 +487,15 @@ Criterion 9 is the gate on guides 02 and 03. Criterion 11 is the gate the review
 
 | Document | Role |
 | --- | --- |
-| [`../manual-build-instructions.md` (planned)](../manual-build-instructions.md) | The index for this folder and the authoritative execution order. It owns the rule that splits the Update Set from the manual build. |
+| [`../manual-build-instructions.md`](../manual-build-instructions.md) | The index for this folder and the authoritative execution order. It owns the rule that splits the Update Set from the manual build. |
 | [`../deployment-runbook.md`](../deployment-runbook.md) | The import, preview and commit procedure that must complete before this guide starts, with its pre-flight checks, polling intervals, timeouts, rollback and failure matrix. |
 | [`../validation-gates.md`](../validation-gates.md) | The sixteen post-commit gates of precondition 4, and the eleven-gate core of precondition 5. |
-| [`02-flow-crunchbase-ingestion.md` (planned)](02-flow-crunchbase-ingestion.md) | Consumes `x_bst_startuptrk.crunchbase_api` by name. Runs after this guide. |
-| [`03-flow-linkedin-ingestion.md` (planned)](03-flow-linkedin-ingestion.md) | Consumes `x_bst_startuptrk.linkedin_oauth` by name. Runs after this guide. |
+| [`02-flow-crunchbase-ingestion.md`](02-flow-crunchbase-ingestion.md) | Consumes `x_bst_startuptrk.crunchbase_api` by name. Runs after this guide. |
+| [`03-flow-linkedin-ingestion.md`](03-flow-linkedin-ingestion.md) | Consumes `x_bst_startuptrk.linkedin_oauth` by name. Runs after this guide. |
 | [`../../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`](../../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml) | Authoritative for the scope name `x_bst_startuptrk` and for the two base-URL property keys. Contains no alias record and no credential material. |
 | [`../api-reference.md`](../api-reference.md) | The system-property inventory, including both base-URL properties and the statement that no property holds a secret. |
 | [`../../sample-data/README.md`](../../sample-data/README.md) | The fallback dataset used while either alias is unprovisioned, and the `fallback validated` labelling rule. |
-| [`06-staging-table-csv-import.md` (planned)](06-staging-table-csv-import.md) | Loads that fallback dataset into the staging table. |
-| [`../gaps-and-flags.md` (planned)](../gaps-and-flags.md) | The flagged items of this delivery. Not restated here. |
-| [`../../../docs/decisions/DECISION_LOG.md` (planned)](../../../docs/decisions/DECISION_LOG.md) | The single source of truth for every "why" behind this guide. |
-| [`../../../docs/review/CRITICAL_DECISIONS.md` (planned)](../../../docs/review/CRITICAL_DECISIONS.md) | The five highest-risk decisions of this delivery. Its entry 3 is the one this guide is written to satisfy; the reviewer pointer is stated once, under [Referenced documents](#referenced-documents). |
+| [`06-staging-table-csv-import.md`](06-staging-table-csv-import.md) | Loads that fallback dataset into the staging table. |
+| [`../gaps-and-flags.md`](../gaps-and-flags.md) | The flagged items of this delivery. Not restated here. |
+| [`../../../docs/decisions/DECISION_LOG.md`](../../../docs/decisions/DECISION_LOG.md) | The single source of truth for every "why" behind this guide. |
+| [`../../../docs/review/CRITICAL_DECISIONS.md`](../../../docs/review/CRITICAL_DECISIONS.md) | The five highest-risk decisions of this delivery. Its entry 3 is the one this guide is written to satisfy; the reviewer pointer is stated once, under [Referenced documents](#referenced-documents). |

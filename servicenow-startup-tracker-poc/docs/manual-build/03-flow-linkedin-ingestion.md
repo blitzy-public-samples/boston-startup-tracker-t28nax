@@ -4,7 +4,7 @@ This guide builds the LinkedIn ingestion flow of the ServiceNow scoped applicati
 
 **Authority.** The frozen prompt and the Agent Action Plan are authoritative for all application content. The Update Set XML at [`../../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`](../../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml) is the authoritative source for every table name, column name, choice value, Script Include class name, method name and system-property key cited below; the identifiers used here match those records character for character, and the same identifiers appear in [`../data-model.md`](../data-model.md) and [`../api-reference.md`](../api-reference.md). No variant spelling of any identifier is valid. Where this guide and those records disagree, the records are checked against the prompt and the plan first; where the records match the specification, this guide is corrected to them.
 
-This document carries **no rationale**. It states what to build and how to build it. Every decision behind this flow, every alternative considered and every risk it carries is recorded in [`../../../docs/decisions/DECISION_LOG.md` (planned)](../../../docs/decisions/DECISION_LOG.md), which is the single source of truth for "why". Four points in this guide depart from a literal reading of the requirements — the hourly trigger paired with an elapsed-time guard in place of a trigger interval read from a property, the split that assigns Founder, Executive and JobPosting to LinkedIn while Startup, Investor and FundingRound go to Crunchbase, LinkedIn's move from a static bearer token to OAuth 2.0, and the `record_type` discriminator that decides whether a person becomes a Founder or an Executive. Each is stated below as a build mechanic and cross-referenced to that log. None is argued here.
+This document carries **no rationale**. It states what to build and how to build it. Every decision behind this flow, every alternative considered and every risk it carries is recorded in [`../../../docs/decisions/DECISION_LOG.md`](../../../docs/decisions/DECISION_LOG.md), which is the single source of truth for "why". Four points in this guide depart from a literal reading of the requirements — the hourly trigger paired with an elapsed-time guard in place of a trigger interval read from a property, the split that assigns Founder, Executive and JobPosting to LinkedIn while Startup, Investor and FundingRound go to Crunchbase, LinkedIn's move from a static bearer token to OAuth 2.0, and the `record_type` discriminator that decides whether a person becomes a Founder or an Executive. Each is stated below as a build mechanic and cross-referenced to that log. None is argued here.
 
 Operational warnings **are** in scope for this guide and are marked as such. The three warnings under [Operational warnings](#operational-warnings) are load-bearing and must not be skipped: one describes a failure that surfaces at run time rather than at build time, one describes a failure that is silent, and one describes a failure that corrupts company identity across both flows.
 
@@ -12,28 +12,28 @@ Operational warnings **are** in scope for this guide and are marked as such. The
 
 This guide is executable on its own. All eight steps, every property read, every table written, every cleaning rule, every log write, the trigger, the activation and the verification are stated here in full. An operator needs no other file to build the flow.
 
-Documents marked **(planned)** are in-scope artifacts of this deliverable package that are authored elsewhere in the same delivery. A link to a planned document resolves once that document lands; nothing in this guide depends on reading one first, with the single exception recorded in precondition 7.
+**Every document linked from this guide is delivered and readable**, so no link is a forward reference; each one is an in-scope artifact of this deliverable package. Nothing in this guide depends on reading another document first, with the single exception recorded in precondition 7.
 
 | Document | What this guide takes from it |
 | --- | --- |
 | [`01-connection-credential-aliases.md`](01-connection-credential-aliases.md) | The alias name `x_bst_startuptrk.linkedin_oauth` this flow binds to, and the connection test that must have passed before this flow is saved. |
 | [`02-flow-crunchbase-ingestion.md`](02-flow-crunchbase-ingestion.md) | The companion flow. It is the **identical** eight-step skeleton, differing only in source system, alias and target tables. Steps 1, 2, 4, 5, 7 and 8 are the same in both guides. It also builds the Startup records this flow's parent references resolve against, through the **shared Startup upsert path** of [6.2](#62--the-shared-startup-upsert-path). |
-| [`06-staging-table-csv-import.md` (planned)](06-staging-table-csv-import.md) | The load that puts rows into `x_bst_startuptrk_ingest_staging`, which step 4 reads. |
-| [`05-atf-test-suites.md` (planned)](05-atf-test-suites.md) | The Automated Test Framework test that exercises this flow, and the `fallback validated` / `live validated` result label. |
-| [`../manual-build-instructions.md` (planned)](../manual-build-instructions.md) | The split rule for the package as a whole: which artifacts ship as Update Set XML and which are built by hand. |
+| [`06-staging-table-csv-import.md`](06-staging-table-csv-import.md) | The load that puts rows into `x_bst_startuptrk_ingest_staging`, which step 4 reads. |
+| [`05-atf-test-suites.md`](05-atf-test-suites.md) | The Automated Test Framework test that exercises this flow, and the `fallback validated` / `live validated` result label. |
+| [`../manual-build-instructions.md`](../manual-build-instructions.md) | The split rule for the package as a whole: which artifacts ship as Update Set XML and which are built by hand. |
 | [`../data-model.md`](../data-model.md) | The Founder and Executive column sets with their two **different** `title` choice lists, JobPosting's three choice lists, the cascade rules, and the staging table's forty columns. |
 | [`../access-control.md`](../access-control.md) | The role and ACL posture of the tables this flow writes, including the two `contact_email` premium fields they carry. |
-| [`../validation-checklist.md` (planned)](../validation-checklist.md) | Success criterion 4, which reads the run-summary surface step 8 writes. |
+| [`../validation-checklist.md`](../validation-checklist.md) | Success criterion 4, which reads the run-summary surface step 8 writes. |
 | [`../validation-gates.md`](../validation-gates.md) | The sixteen post-commit gates of precondition 4, and the eleven-gate core of precondition 5. |
 | [`../deployment-runbook.md`](../deployment-runbook.md) | The definition of a scheduled run, under [What counts as a scheduled run](../deployment-runbook.md#what-counts-as-a-scheduled-run). |
-| [`../gaps-and-flags.md` (planned)](../gaps-and-flags.md) | The requirements with no clean platform equivalent, including the runtime-configurable schedule interval. |
+| [`../gaps-and-flags.md`](../gaps-and-flags.md) | The requirements with no clean platform equivalent, including the runtime-configurable schedule interval. |
 | [`../../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`](../../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml) | **Authoritative** for every identifier this guide cites. |
 | [`../../sample-data/README.md`](../../sample-data/README.md) | The column contract of the fallback dataset step 4 reads, and the three LinkedIn files that carry it. |
-| [`../../../docs/decisions/DECISION_LOG.md` (planned)](../../../docs/decisions/DECISION_LOG.md) | The single destination for every "why". |
+| [`../../../docs/decisions/DECISION_LOG.md`](../../../docs/decisions/DECISION_LOG.md) | The single destination for every "why". |
 
 ## Position in the build order
 
-This is **guide 03 of six**, and it is **step 3** of the execution order below. It runs immediately after guide 02, because this flow binds guide 01's second alias **by name** and resolves its parent Startup references against records guide 02's flow writes. The order is stated in full in [`../manual-build-instructions.md` (planned)](../manual-build-instructions.md); it is repeated here so this guide can be run without it. The execution order is not the filename order: guide **06** runs before guide **05**.
+This is **guide 03 of six**, and it is **step 3** of the execution order below. It runs immediately after guide 02, because this flow binds guide 01's second alias **by name** and resolves its parent Startup references against records guide 02's flow writes. The order is stated in full in [`../manual-build-instructions.md`](../manual-build-instructions.md); it is repeated here so this guide can be run without it. The execution order is not the filename order: guide **06** runs before guide **05**.
 
 | Step | Guide | Why it sits here |
 | --- | --- | --- |
@@ -41,8 +41,8 @@ This is **guide 03 of six**, and it is **step 3** of the execution order below. 
 | 2 | [`02-flow-crunchbase-ingestion.md`](02-flow-crunchbase-ingestion.md) | The Crunchbase ingestion flow, which references `x_bst_startuptrk.crunchbase_api` by name. **Build it before this guide**, because it owns the Startup upsert path this flow shares. |
 | **3** | **This guide** | **The LinkedIn ingestion flow, which references `x_bst_startuptrk.linkedin_oauth` by name. The identical skeleton.** |
 | 4 | [`04-service-portal-pages-and-widgets.md`](04-service-portal-pages-and-widgets.md) | The portal, theme, five pages and eight widgets. |
-| 5 | [`06-staging-table-csv-import.md` (planned)](06-staging-table-csv-import.md) | The staging-table CSV load. |
-| 6 | [`05-atf-test-suites.md` (planned)](05-atf-test-suites.md) | The Automated Test Framework suites, **last**, because they exercise everything the five preceding guides build. |
+| 5 | [`06-staging-table-csv-import.md`](06-staging-table-csv-import.md) | The staging-table CSV load. |
+| 6 | [`05-atf-test-suites.md`](05-atf-test-suites.md) | The Automated Test Framework suites, **last**, because they exercise everything the five preceding guides build. |
 
 Guide **02** precedes this one and is built from the same skeleton. A reader comparing the two guides must find **no discrepancy** in steps 1, 2, 4, 5, 7 and 8, which means:
 
@@ -50,7 +50,7 @@ Guide **02** precedes this one and is built from the same skeleton. A reader com
 - **Steps 4 and 5 are identical in semantics**, with the source-system token substituted: this guide filters the staging table on `linkedin` rather than `crunchbase` and passes that token to the mapper, and the per-source translation table of pass one is the LinkedIn one. The three fallback triggers, the staging query shape, the four cleaning rules and the no-`Other` behaviour do not differ at all.
 - **Only steps 3 and 6 differ substantively**: step 3 names a different alias and base URL and calls different resources, and step 6 writes `x_bst_startuptrk_founder`, `x_bst_startuptrk_executive` and `x_bst_startuptrk_jobposting` instead of guide 02's four tables.
 
-Each of the eight steps is stated here in full rather than deferred to guide 02. Every step, every table, every cleaning rule, every property and every log write appears in both guides, so either guide alone is buildable and the traceability matrix in [`../../../docs/decisions/DECISION_LOG.md` (planned)](../../../docs/decisions/DECISION_LOG.md) has no gap at this flow.
+Each of the eight steps is stated here in full rather than deferred to guide 02. Every step, every table, every cleaning rule, every property and every log write appears in both guides, so either guide alone is buildable and the traceability matrix in [`../../../docs/decisions/DECISION_LOG.md`](../../../docs/decisions/DECISION_LOG.md) has no gap at this flow.
 
 The staging load of step 5 in the order above sits **after** this guide, which means the fallback branch of [Step 4](#step-4--fall-back-to-the-staging-table) will find no rows until guide 06 has run. That is expected. Build the flow now and re-run the fallback branch after guide 06.
 
@@ -78,7 +78,7 @@ Do not begin this guide until every item below holds.
 
 ### Why this guide exists rather than more Update Set XML
 
-Only tables carrying the update-synch attribute are captured into `sys_update_xml` records, and adding that attribute to a table that lacks it out of the box is unsupported. The Flow Designer tables are outside the captured set, so this flow is built through the platform interface instead — which is why the delivered Update Set contains **zero** flow records. [`../manual-build-instructions.md` (planned)](../manual-build-instructions.md) owns the split rule for the package as a whole.
+Only tables carrying the update-synch attribute are captured into `sys_update_xml` records, and adding that attribute to a table that lacks it out of the box is unsupported. The Flow Designer tables are outside the captured set, so this flow is built through the platform interface instead — which is why the delivered Update Set contains **zero** flow records. [`../manual-build-instructions.md`](../manual-build-instructions.md) owns the split rule for the package as a whole.
 
 ## Platform constraint
 
@@ -213,7 +213,7 @@ When `proceed` is `false` the flow reaches its end having done no work: it makes
 
 ### 1.6 — Why the trigger repeats hourly
 
-A Flow Designer scheduled trigger takes a fixed interval and **cannot read a system property at run time**. The trigger is therefore set to repeat **hourly**, and this guard supplies the configurable cadence. The mechanic is stated here; the decision is recorded in [`../../../docs/decisions/DECISION_LOG.md` (planned)](../../../docs/decisions/DECISION_LOG.md), and the requirement is listed as having no clean platform equivalent in [`../gaps-and-flags.md` (planned)](../gaps-and-flags.md).
+A Flow Designer scheduled trigger takes a fixed interval and **cannot read a system property at run time**. The trigger is therefore set to repeat **hourly**, and this guard supplies the configurable cadence. The mechanic is stated here; the decision is recorded in [`../../../docs/decisions/DECISION_LOG.md`](../../../docs/decisions/DECISION_LOG.md), and the requirement is listed as having no clean platform equivalent in [`../gaps-and-flags.md`](../gaps-and-flags.md).
 
 ### 1.7 — What a scheduled run is
 
@@ -221,7 +221,7 @@ This definition is hard, and the acceptance evidence depends on it.
 
 > A **scheduled run** is a flow execution that passed this guard and went on to do work. An execution that started, found the configured cadence had not yet elapsed and exited without ingesting is a **no-op**: it is not a scheduled run, it does not count towards the three consecutive runs, and it is not evidence of anything.
 
-With the shipped cadence of 24 hours and an hourly trigger, roughly twenty-three of every twenty-four executions are no-ops. Those executions **must never appear** in the acceptance evidence for criterion 4 in [`../validation-checklist.md` (planned)](../validation-checklist.md). Collect evidence only from executions that passed this guard. The same definition is stated in [`../deployment-runbook.md`](../deployment-runbook.md#what-counts-as-a-scheduled-run) and in [`../../sample-data/README.md`](../../sample-data/README.md), and how to tell the two apart in the log is under [Reading the flow execution log](#reading-the-flow-execution-log).
+With the shipped cadence of 24 hours and an hourly trigger, roughly twenty-three of every twenty-four executions are no-ops. Those executions **must never appear** in the acceptance evidence for criterion 4 in [`../validation-checklist.md`](../validation-checklist.md). Collect evidence only from executions that passed this guard. The same definition is stated in [`../deployment-runbook.md`](../deployment-runbook.md#what-counts-as-a-scheduled-run) and in [`../../sample-data/README.md`](../../sample-data/README.md), and how to tell the two apart in the log is under [Reading the flow execution log](#reading-the-flow-execution-log).
 
 ## Step 2 — Resolve the source mode
 
@@ -267,7 +267,7 @@ One property: `x_bst_startuptrk.ingestion.source_mode`. It is a choice-list prop
 | `live` | **The default, and what every real run attempts first.** The flow proceeds to step 3 and calls LinkedIn through the alias. If that call fails in one of the three ways listed in [Step 4](#step-4--fall-back-to-the-staging-table), the flow falls back to the staging table for that run. |
 | `fallback` | The flow **skips the live attempt altogether** and goes straight to the staging read of step 4. Set this value to make a test deterministic without touching a credential. Set it back to `live` afterwards. |
 
-Setting the property to `fallback` is the procedure [`../../sample-data/README.md`](../../sample-data/README.md) refers to as forcing the fallback path, and it is how the flow test in [`05-atf-test-suites.md` (planned)](05-atf-test-suites.md) reaches a repeatable result. The difference between the two values is only whether the live call is attempted: a run left on `live` also reads the staging dataset whenever the live call fails.
+Setting the property to `fallback` is the procedure [`../../sample-data/README.md`](../../sample-data/README.md) refers to as forcing the fallback path, and it is how the flow test in [`05-atf-test-suites.md`](05-atf-test-suites.md) reaches a repeatable result. The difference between the two values is only whether the live call is attempted: a run left on `live` also reads the staging dataset whenever the live call fails.
 
 Wrap step 3 in an **`If`** block whose condition is step 2's `attempt_live` output **is** `true`. Steps 4 through 8 sit outside that inner block and run on both paths.
 
@@ -359,7 +359,7 @@ Run this check **before** adding any step, and record the answer.
 2. If the step is offered **and** its **Connection Alias** field populates with `x_bst_startuptrk.linkedin_oauth` when you search for it, the instance supports the primary path. Delete the scratch flow and build **[3a](#3a--the-primary-path-the-flow-designer-rest-step)**.
 3. If the step is not offered, or it is offered but the **Connection Alias** dropdown does not populate, the instance does not support the primary path. Delete the scratch flow and build **[3c](#3c--the-alternate-path-a-scoped-script-step)**.
 
-Record the outcome in the completion criteria at the end of this guide, because the flow test in [`05-atf-test-suites.md` (planned)](05-atf-test-suites.md) needs to know which step type it is asserting against. The mechanic of the branch is stated here; the decision is recorded in [`../../../docs/decisions/DECISION_LOG.md` (planned)](../../../docs/decisions/DECISION_LOG.md).
+Record the outcome in the completion criteria at the end of this guide, because the flow test in [`05-atf-test-suites.md`](05-atf-test-suites.md) needs to know which step type it is asserting against. The mechanic of the branch is stated here; the decision is recorded in [`../../../docs/decisions/DECISION_LOG.md`](../../../docs/decisions/DECISION_LOG.md).
 
 ### 3c — The alternate path: a scoped script step
 
@@ -524,7 +524,7 @@ The effective record-type set on this branch is therefore exactly three, and a r
 
 The staging table ships with `ws_access` **false**. Read it with `GlideRecord` from the script step, and inspect it by eye in the **list view** — not over the Table API.
 
-**[`06-staging-table-csv-import.md` (planned)](06-staging-table-csv-import.md) must have loaded that table for this branch to yield rows.** Until it has run, the fallback branch completes correctly with a row count of zero. The column contract of the loaded rows is in [`../../sample-data/README.md`](../../sample-data/README.md); the three files that carry this flow's rows are `linkedin_founders_sample.csv`, `linkedin_executives_sample.csv` and `linkedin_job_postings_sample.csv`.
+**[`06-staging-table-csv-import.md`](06-staging-table-csv-import.md) must have loaded that table for this branch to yield rows.** Until it has run, the fallback branch completes correctly with a row count of zero. The column contract of the loaded rows is in [`../../sample-data/README.md`](../../sample-data/README.md); the three files that carry this flow's rows are `linkedin_founders_sample.csv`, `linkedin_executives_sample.csv` and `linkedin_job_postings_sample.csv`.
 
 ### 4.5 — The step script
 
@@ -749,9 +749,9 @@ Exhaustively, this flow writes **three** tables and no others.
 
 It **reads** a fourth table, `x_bst_startuptrk_startup`, to resolve each record's mandatory `startup` reference. **It never writes that table**; see [6.2](#62--the-shared-startup-upsert-path).
 
-**This flow does not write `x_bst_startuptrk_newsarticle`.** Automated NewsArticle ingestion is out of scope: no flow ingests it, there is no NewsArticle sample CSV, and the staging table's `record_type` choice list contains no `news_article` member. NewsArticle records are created by manual entry or by a REST write only. The exclusion is recorded in [`../gaps-and-flags.md` (planned)](../gaps-and-flags.md).
+**This flow does not write `x_bst_startuptrk_newsarticle`.** Automated NewsArticle ingestion is out of scope: no flow ingests it, there is no NewsArticle sample CSV, and the staging table's `record_type` choice list contains no `news_article` member. NewsArticle records are created by manual entry or by a REST write only. The exclusion is recorded in [`../gaps-and-flags.md`](../gaps-and-flags.md).
 
-Nor does this flow write `x_bst_startuptrk_startup`, `x_bst_startuptrk_investor`, `x_bst_startuptrk_fundinground` or `x_bst_startuptrk_m2m_round_investor`. Those four belong to [`02-flow-crunchbase-ingestion.md`](02-flow-crunchbase-ingestion.md). The split is stated here as a build mechanic; the decision is recorded in [`../../../docs/decisions/DECISION_LOG.md` (planned)](../../../docs/decisions/DECISION_LOG.md).
+Nor does this flow write `x_bst_startuptrk_startup`, `x_bst_startuptrk_investor`, `x_bst_startuptrk_fundinground` or `x_bst_startuptrk_m2m_round_investor`. Those four belong to [`02-flow-crunchbase-ingestion.md`](02-flow-crunchbase-ingestion.md). The split is stated here as a build mechanic; the decision is recorded in [`../../../docs/decisions/DECISION_LOG.md`](../../../docs/decisions/DECISION_LOG.md).
 
 Two of the columns this flow writes are **premium-gated**: `x_bst_startuptrk_founder.contact_email` and `x_bst_startuptrk_executive.contact_email` each carry a field-level read access control granting `x_bst_startuptrk.admin` and `x_bst_startuptrk.premium_user` only. The flow writes them exactly as it writes any other column; the gate applies on read, not on write. [`../access-control.md`](../access-control.md) is authoritative for both.
 
@@ -800,7 +800,7 @@ This is why precondition 7 requires guide 02's flow to have run first: a LinkedI
 
 The consequence to check for is a **mis-declared** record type rather than a mis-read title: because the two title lists share no member other than `Other`, a person declared on the wrong pass lands on the wrong table and their title silently normalises to `Other` rather than raising anything. Row 12 of [Build verification](#build-verification) is the check.
 
-The legacy implementation decided this by title substring, at `src/data_collection/api_integrators/linkedin_integrator.py:L119-L120`. That is named in [Legacy provenance](#legacy-provenance) as the pattern being replaced, and it is not carried forward. The replacement is recorded in [`../../../docs/decisions/DECISION_LOG.md` (planned)](../../../docs/decisions/DECISION_LOG.md).
+The legacy implementation decided this by title substring, at `src/data_collection/api_integrators/linkedin_integrator.py:L119-L120`. That is named in [Legacy provenance](#legacy-provenance) as the pattern being replaced, and it is not carried forward. The replacement is recorded in [`../../../docs/decisions/DECISION_LOG.md`](../../../docs/decisions/DECISION_LOG.md).
 
 ### 6.4 — The upsert key per entity
 
@@ -1052,7 +1052,7 @@ The parent-resolution rejections of [6.2](#62--the-shared-startup-upsert-path) a
 
 **Step type:** Script (Utilities → Script).
 
-This is the surface criterion 4 in [`../validation-checklist.md` (planned)](../validation-checklist.md) reads for each of the **three consecutive guard-passing runs** it requires. It is also the marker step 1's guard reads on the next execution. It must run on every guard-passing execution, on both the live and the fallback path.
+This is the surface criterion 4 in [`../validation-checklist.md`](../validation-checklist.md) reads for each of the **three consecutive guard-passing runs** it requires. It is also the marker step 1's guard reads on the next execution. It must run on every guard-passing execution, on both the live and the fallback path.
 
 ### 8.1 — Step inputs
 
@@ -1116,7 +1116,7 @@ There are **two** provenance surfaces in this package and they must never be con
 | Surface | Written by | Survives? | Read by |
 | --- | --- | --- | --- |
 | **Scheduled-run provenance** | This step, on a real scheduled execution. | **Yes.** It is outside any test transaction. | Criterion 4. |
-| **ATF result label** | The test setup step in [`05-atf-test-suites.md` (planned)](05-atf-test-suites.md), which labels the result `fallback validated` or `live validated`. | **No.** The Automated Test Framework rolls back the data a test creates, so a provenance row or property written inside a test does not persist. | The test report. |
+| **ATF result label** | The test setup step in [`05-atf-test-suites.md`](05-atf-test-suites.md), which labels the result `fallback validated` or `live validated`. | **No.** The Automated Test Framework rolls back the data a test creates, so a provenance row or property written inside a test does not persist. | The test report. |
 
 Criterion 4 therefore reads **this** step's output and not the test label. Record the provenance of each of the three consecutive scheduled runs from the `run_summary` log record of that run. Criterion 4 explicitly accepts the sample-dataset substitute, so three clean `fallback` runs satisfy it — **provided the mode is recorded for each one.**
 
@@ -1212,7 +1212,7 @@ Before the run, force a deterministic path so the result is repeatable:
 
 1. Set `x_bst_startuptrk.ingestion.source_mode` to **`fallback`**. This skips the live attempt.
 2. Confirm `x_bst_startuptrk.logging.level` is **`info`** or `debug`, or the run summary line will not be written and step 1's guard will lose its marker.
-3. Confirm [`06-staging-table-csv-import.md` (planned)](06-staging-table-csv-import.md) has loaded the staging table, so step 4 has rows to return. If it has not, the run still passes with a row count of zero, but steps 5 through 7 have nothing to demonstrate.
+3. Confirm [`06-staging-table-csv-import.md`](06-staging-table-csv-import.md) has loaded the staging table, so step 4 has rows to return. If it has not, the run still passes with a row count of zero, but steps 5 through 7 have nothing to demonstrate.
 4. Confirm `x_bst_startuptrk_startup` holds the companies the LinkedIn rows name, which guide 02's flow or the Crunchbase startups file supplies. Without them every row is rejected with `no startup carries the name` and the run demonstrates only the rejection path.
 
 Then check each step against the table below.
@@ -1358,7 +1358,7 @@ Do not sign this guide off until every line below is true.
 | 16 | `x_bst_startuptrk.ingestion.source_mode` has been set back to `live`. |
 | 17 | The flow is **activated**. |
 
-Criterion 4 in [`../validation-checklist.md` (planned)](../validation-checklist.md) is satisfied separately, by three consecutive guard-passing runs with zero unhandled errors and the provenance of each one recorded.
+Criterion 4 in [`../validation-checklist.md`](../validation-checklist.md) is satisfied separately, by three consecutive guard-passing runs with zero unhandled errors and the provenance of each one recorded.
 
 ## Related documents
 
@@ -1367,16 +1367,16 @@ Criterion 4 in [`../validation-checklist.md` (planned)](../validation-checklist.
 | [`01-connection-credential-aliases.md`](01-connection-credential-aliases.md) | Establishes `x_bst_startuptrk.linkedin_oauth`, which [step 3](#step-3--call-linkedin-through-the-alias) binds to by name, together with the OAuth 2.0 provider, entity profile and refresh-token records behind it. Must be complete first, with **both** aliases tested green. |
 | [`02-flow-crunchbase-ingestion.md`](02-flow-crunchbase-ingestion.md) | The identical eight-step skeleton for Crunchbase. Steps 1, 2, 4, 5, 7 and 8 match this guide; only the alias, base URL and target tables differ. It also owns the **shared Startup upsert path** of [6.2](#62--the-shared-startup-upsert-path) and writes the Startup records this flow resolves against. Must be complete first. |
 | [`04-service-portal-pages-and-widgets.md`](04-service-portal-pages-and-widgets.md) | The portal that reads the records this flow writes, including the People tab of the company profile. |
-| [`06-staging-table-csv-import.md` (planned)](06-staging-table-csv-import.md) | Loads `x_bst_startuptrk_ingest_staging`, which [step 4](#step-4--fall-back-to-the-staging-table) reads, from `linkedin_founders_sample.csv`, `linkedin_executives_sample.csv` and `linkedin_job_postings_sample.csv`. |
-| [`05-atf-test-suites.md` (planned)](05-atf-test-suites.md) | The flow test that exercises this flow and applies the `fallback validated` / `live validated` label. |
-| [`../manual-build-instructions.md` (planned)](../manual-build-instructions.md) | The build order and the Update Set versus manual-build split rule. |
+| [`06-staging-table-csv-import.md`](06-staging-table-csv-import.md) | Loads `x_bst_startuptrk_ingest_staging`, which [step 4](#step-4--fall-back-to-the-staging-table) reads, from `linkedin_founders_sample.csv`, `linkedin_executives_sample.csv` and `linkedin_job_postings_sample.csv`. |
+| [`05-atf-test-suites.md`](05-atf-test-suites.md) | The flow test that exercises this flow and applies the `fallback validated` / `live validated` label. |
+| [`../manual-build-instructions.md`](../manual-build-instructions.md) | The build order and the Update Set versus manual-build split rule. |
 | [`../data-model.md`](../data-model.md) | The Founder and Executive column sets with their two different `title` choice lists, JobPosting's three choice lists, the staging table's forty columns, and the cascade rules on the `startup` reference. |
 | [`../access-control.md`](../access-control.md) | The role and ACL posture of the three tables this flow writes, including the `contact_email` field-level read controls on Founder and Executive. |
 | [`../api-reference.md`](../api-reference.md) | The Script Include call graph, the full property inventory, and the nested `GET /founders/{startup_id}/executives` sub-resource that serves the Executive records this flow writes. |
-| [`../validation-checklist.md` (planned)](../validation-checklist.md) | Criterion 4, which reads [step 8](#step-8--write-the-run-summary-and-the-provenance-marker). |
+| [`../validation-checklist.md`](../validation-checklist.md) | Criterion 4, which reads [step 8](#step-8--write-the-run-summary-and-the-provenance-marker). |
 | [`../validation-gates.md`](../validation-gates.md) | The sixteen post-commit gates of precondition 4, and the eleven-gate core of precondition 5. |
 | [`../deployment-runbook.md`](../deployment-runbook.md) | Authoritative for [what counts as a scheduled run](../deployment-runbook.md#what-counts-as-a-scheduled-run). |
-| [`../gaps-and-flags.md` (planned)](../gaps-and-flags.md) | Records the runtime-configurable schedule interval and the NewsArticle ingestion exclusion. |
+| [`../gaps-and-flags.md`](../gaps-and-flags.md) | Records the runtime-configurable schedule interval and the NewsArticle ingestion exclusion. |
 | [`../../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`](../../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml) | **Authoritative** for every identifier cited in this guide. |
 | [`../../sample-data/README.md`](../../sample-data/README.md) | The column contract of the fallback dataset, the `data.elements` envelope, the load order that places the Crunchbase startups file first, and the procedure for forcing the fallback path. |
-| [`../../../docs/decisions/DECISION_LOG.md` (planned)](../../../docs/decisions/DECISION_LOG.md) | Every "why" behind this flow, including the four deviations named at the top of this guide. |
+| [`../../../docs/decisions/DECISION_LOG.md`](../../../docs/decisions/DECISION_LOG.md) | Every "why" behind this flow, including the four deviations named at the top of this guide. |
