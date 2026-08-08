@@ -4,7 +4,6 @@ This document is the authorization reference for the ServiceNow scoped applicati
 
 **Authority.** The frozen prompt and the Agent Action Plan are authoritative for all application content, and they govern the Update Set XML and this document alike. The Update Set XML at [`../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`](../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml) is the implementation of that specification and the transcription source for everything below: the three `sys_user_role` records, the 49 `sys_security_acl` records and the 74 `sys_security_acl_role` join records it carries. Where this document and those records disagree about a role name, an ACL name, an operation, a field or a joined role, the records are checked against the prompt and the plan first. Where the records match the specification, this document is corrected to them. Where the records depart from it, the records are corrected.
 
-
 The table names, column names and premium markers used below are the ones established in [`./data-model.md`](./data-model.md). The seven fields marked **P** there are the seven fields gated here, and the two documents carry the same seven names.
 
 This document carries no rationale. Every decision behind this scheme, every alternative considered and every risk it carries is to be recorded in [`../../docs/decisions/DECISION_LOG.md` (planned)](../../docs/decisions/DECISION_LOG.md), which is to be the single source of truth for "why".
@@ -246,7 +245,7 @@ Five server-side maintenance paths read through the unsecured `GlideRecord`, and
 
 None of the five returns record data to a caller, and none reads a premium field on a caller's behalf. Any new unsecured read outside this list is a defect.
 
-**Counting is not an exception to this rule.** `total_count` is produced by secured iteration in `RestResponseBuilder.countState()`, not by an aggregate query. Aggregate queries do not apply access controls, so an aggregate count is not a secured caller-facing read and is not used for one anywhere in this application; the string `GlideAggregate` does not appear in the delivered Update Set.
+**Counting is not an exception to this rule.** `total_count` is produced by secured iteration in `RestResponseBuilder.countState()`, not by an aggregate query. Aggregate queries do not apply access controls, so an aggregate count is not a secured caller-facing read and is not used for one anywhere in this application; **no aggregate query in this application produces a caller-facing value.** Aggregate queries appear in exactly three places in the delivered Update Set, all of them inside maintenance paths 1 and 2 of the table above: `RateLimitService._countClosed()`, which counts closed windows on the administrator-only counter table, and `InvestorPortfolioService._startupsForInvestor()`, which counts distinct startups to derive `portfolio_count`. Neither returns record data to a caller and neither reads a premium field.
 
 ### Omitted, not nulled
 
