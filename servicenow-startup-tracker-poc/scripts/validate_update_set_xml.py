@@ -84,6 +84,18 @@ Exit codes:
 A parser gate refusal is reported as code 2, not code 1: it is a statement
 about the runtime and not about the file.
 
+When the parser gate refuses. The gate has no override, so the fallback is a
+procedure rather than a flag, and the refusal prints it in three ordered steps:
+run --self-test, which parses nothing and therefore runs on any runtime, and
+record its report of this runtime's parser state; re-run on a runtime that
+satisfies the gate, confirmed with --self-test first, which is the only route
+that produces gate G-1 and G-2 evidence; and if no such runtime can be reached,
+leave G-1 and G-2 unrecorded and treat delivery as blocked, recording the
+refusal, the --self-test output and the decision taken. No substitute is
+accepted -- not a parse by eye, not another tool on this same runtime, and not
+an assumption carried from an earlier run. The same procedure is set out in
+docs/deployment-runbook.md under "When the parser gate refuses".
+
 Progress lines and the terminal verdict are written to stdout; failure detail is
 written to stderr.
 """
@@ -268,10 +280,10 @@ def library_exposes_alloc_tracker(library) -> bool:
 def alloc_tracker_state() -> bool | None:
     """Return True if both allocation-tracker entry points resolve.
 
-    False means the probe ran and no library exposed them. None means the probe
-    could not run at all -- no ``ctypes``, or no candidate library that would
-    open -- which is reported distinctly because "absent" and "unknown" warrant
-    the same refusal for different reasons.
+    False means the probe ran and no opened library exposed them. None means the
+    probe could not run at all -- no ``ctypes``, or no candidate library that
+    would open. Both False and None refuse the gate; they are returned as
+    distinct values so the refusal reports which of the two occurred.
     """
     try:
         import ctypes
@@ -1429,12 +1441,34 @@ def main(argv: list[str] | None = None) -> int:
             f"parser gate: REFUSED before parsing -- {gate.reason}. Nothing was "
             "read and nothing was validated."
         )
+        fixed_text = ".".join(str(part) for part in EXPAT_FIXED_VERSION)
+        floor_text = ".".join(str(part) for part in EXPAT_BACKPORT_FLOOR)
         reporter.failure(
-            "  Remedy: run this validator on a Python whose Expat is at or above "
-            f"{'.'.join(str(part) for part in EXPAT_FIXED_VERSION)}, or on a build "
-            "whose Expat carries the allocation-tracker defence as a backport. "
-            "Run --self-test to see this runtime's parser state and confirm the "
-            "gate's own fixtures pass."
+            "  Remedy, in order. There is no option to override this gate, and "
+            "editing the Update Set does not answer a refusal: the refusal is a "
+            "statement about this runtime, not about the file."
+        )
+        reporter.failure(
+            "    1. Run --self-test. It parses nothing, so it runs on any "
+            "runtime, and it reports this runtime's parser state and the gate's "
+            "own fixtures. Record its output as the evidence of what was refused."
+        )
+        reporter.failure(
+            f"    2. Re-run on a runtime whose Expat is at or above {fixed_text}, "
+            f"or at {floor_text} with the allocation-tracker defence backported "
+            "-- a newer distribution, a container image carrying one, or another "
+            "host. Confirm the runtime with --self-test before the run. This is "
+            "the only route that produces gate G-1 and G-2 evidence."
+        )
+        reporter.failure(
+            "    3. If no such runtime can be reached, gates G-1 and G-2 stay "
+            "UNRECORDED and delivery is blocked. Do not substitute a parse by "
+            "eye, a parse on this runtime by another tool, or an assumption from "
+            "a previous run: none of those is evidence of two-level "
+            "well-formedness, and parsing here is the exposure this gate exists "
+            "to prevent. Record the refusal, this runtime's --self-test output, "
+            "and the decision taken. The procedure is in "
+            "docs/deployment-runbook.md, 'When the parser gate refuses'."
         )
         reporter.verdict("REFUSED: parser gate, no file was validated")
         return EXIT_USAGE_OR_IO

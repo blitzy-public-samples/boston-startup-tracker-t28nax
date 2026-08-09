@@ -135,7 +135,7 @@ These contracts span more than one guide. Each is an instruction; the detail bel
 | [`./manual-build/06-staging-table-csv-import.md`](./manual-build/06-staging-table-csv-import.md) | Step 5. The load of the six CSVs into the one staging table. |
 | [`./manual-build/05-atf-test-suites.md`](./manual-build/05-atf-test-suites.md) | Step 6, last. The ten suites, the thirty-six tests and the ATF execution prerequisite. |
 | [`./deployment-runbook.md`](./deployment-runbook.md) | The import, preview and commit route that precedes guide 01, and the pre-import assertion of the ATF prerequisite. |
-| [`./validation-gates.md`](./validation-gates.md) | The eleven required post-commit gates, the four further acceptance-required checks `GATE-COL-01` and `GATE-SEC-01` to `GATE-SEC-03`, and the one external instance prerequisite. |
+| [`./validation-gates.md`](./validation-gates.md) | The eleven required post-commit gates, the one further acceptance-required check `GATE-COL-01`, the four non-normative diagnostics `GATE-SEC-01` to `GATE-SEC-04`, and the one external instance prerequisite. Twelve checks block acceptance, eleven of them also trigger rollback, and the four diagnostics block nothing. |
 | [`./validation-checklist.md`](./validation-checklist.md) | The step that follows guide 05, mapped one-to-one onto the five success criteria. |
 | [`./data-model.md`](./data-model.md) | The ten tables field by field, including the staging table leg of the three-way staging contract. |
 | [`./access-control.md`](./access-control.md) | The three roles, the seven premium fields, the secured read path and the impersonation requirement. |

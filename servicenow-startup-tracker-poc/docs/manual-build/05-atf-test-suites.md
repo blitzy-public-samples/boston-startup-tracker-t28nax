@@ -2951,7 +2951,7 @@ Each test seeds its own rows under the `import_run` token minted at step 20, so 
         stage('investor', { name: T + ' Harbor Ventures, LP', type: 'PE' });
         stage('investor', { type: 'PE' });
         // participating_investor_names is a JSON ARRAY, not a comma-separated list.
-        // IngestionMapper._participantNames() accepts an array, JSON-array text, or a
+        // IngestionMapper.readNameList() accepts an array, JSON-array text, or a
         // PIPE-delimited string; a bare comma is not a delimiter, because an investor
         // name may itself contain one. A comma-separated value would resolve as ONE
         // name, match nothing, and leave the round with zero join rows. The shipped
@@ -3774,17 +3774,17 @@ Step 90 asserts the first cleaning rule and then the consequences the ingestion 
     assertEqual({ name: 'the lead investor did not become a participant row',
         shouldbe: -1, value: linked.indexOf(leadId) });
 
-    // The stored one-way projection the business rule maintains from the join table names
-    // both participants.
+    // The calculated participating_investors column, derived from the join table on this
+    // very read rather than refreshed by any rule, names all three participants.
     round = new GlideRecord('x_bst_startuptrk_fundinground');
     round.get(roundId);
-    var projection = String(round.getValue('participating_investors') || '');
-    assertEqual({ name: 'the projection names participant one',
-        shouldbe: true, value: projection.indexOf(p1) !== -1 });
-    assertEqual({ name: 'the projection names participant two',
-        shouldbe: true, value: projection.indexOf(p2) !== -1 });
-    assertEqual({ name: 'the projection names the comma-named participant',
-        shouldbe: true, value: projection.indexOf(p3) !== -1 });
+    var derived = String(round.getValue('participating_investors') || '');
+    assertEqual({ name: 'the calculated column names participant one',
+        shouldbe: true, value: derived.indexOf(p1) !== -1 });
+    assertEqual({ name: 'the calculated column names participant two',
+        shouldbe: true, value: derived.indexOf(p2) !== -1 });
+    assertEqual({ name: 'the calculated column names the comma-named participant',
+        shouldbe: true, value: derived.indexOf(p3) !== -1 });
 
     // portfolio_count: one startup for each of the four investors — the lead through
     // lead_investor, the three participants through the join rows.
@@ -5913,7 +5913,7 @@ Work through every box before this guide is signed off.
 - [ ] **Suite 1's `active` default is asserted by two separate steps**, a `Record Insert` at 130 and a `Record Validation` at 135 bound to step 130's `record_id`. Confirm no single step is configured as both.
 - [ ] **Step 100 asserts the choice contract at the record layer on every choice column of the table under test** — the dictionary declaration, the exact member list and its order, verbatim storage of every member, a blank, `max_length` truncation, and that the record layer stores a non-member as supplied. Confirm step 100 **instantiates** no ingestion class: search each step-100 script for `new IngestionMapper` and `new IngestionLogger` and expect zero hits. The one prose mention of the mapper inside the script is a comment pointing at suite 10 and is not a call.
 - [ ] All **eleven** choice columns are covered across the seven suites, and their member lists match [The eleven choice columns](#the-eleven-choice-columns-and-their-delivered-lists) exactly: 3 on startup, 1 on founder, 1 on executive, 2 on investor, 1 on funding round, 3 on job posting, 0 on news article.
-- [ ] Suite 4's step 130 asserts the `portfolio_count` write contract, **including that a server-side write is not blocked** and that the field is absent from the `PUT /investors/{id}` write allowlist. Suite 5's step 130 asserts the `participating_investors` projection is recomputed from the join table. Neither step asserts that a script write is refused.
+- [ ] Suite 4's step 130 asserts the `portfolio_count` write contract, **including that a server-side write is not blocked** and that the field is absent from the `PUT /investors/{id}` write allowlist. Suite 5's step 130 asserts that `participating_investors` is declared calculated, virtual and read-only, that its value tracks every join-table change on the read itself with no intervening refresh, and that a script write to it does not survive. Neither step asserts that a script write is refused.
 - [ ] Suite 4's step 140 walks **all eleven mutations** of the table under [Step 140](#step-140--the-portfolio_count-derivation-every-state-and-every-transition), asserting the stored count of **all three** investors after each one — `subject` running 0, 1, 1, 1, 1, 2, 1, 1, 0, 0, 0 — reading the stored value without calling the service, and then asserts stored equals derived.
 - [ ] Suite 7's step 100 asserts `published_date` through record round trips and the two write operations' date validation, with malformed and impossible values refused by **different** messages. Confirm it calls no ingestion date parser.
 - [ ] `enforce_security` is **true** on every record step.
