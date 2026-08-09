@@ -30,8 +30,23 @@ G-9 governance completeness -- are outside this validator's scope. It checks
 well-formedness, outer document shape and header linkage only; a file that
 passes G-1 and G-2 is not thereby certified against G-3 through G-9.
 
-Parser safety. Three structural defences are applied at both XML levels:
+Parser safety. Four structural defences are applied, the first of them before any
+path is opened:
 
+    parser gate           the runtime Expat must carry the disproportionate-
+                          allocation defence, or the run is refused before a byte
+                          is read. Two routes satisfy it: an Expat at or above
+                          2.7.2, where the defence reached the upstream tree, or
+                          an Expat at 2.7.1 that exposes both
+                          XML_SetAllocTrackerActivationThreshold and
+                          XML_SetAllocTrackerMaximumAmplification, which is how a
+                          distribution ships the defence as a backport without
+                          moving the reported version string. The gate is
+                          fail-closed: an undetermined version, an unprobeable
+                          library, and the entry points appearing on a base below
+                          2.7.1 are all refused rather than assumed about.
+                          There is no option to override it. The gate is
+                          decision D-351.
     declaration hygiene   a document declaring a document type or an entity, or
                           referencing any entity other than the five predefined
                           names and numeric character references, is refused
@@ -40,8 +55,10 @@ Parser safety. Three structural defences are applied at both XML levels:
                           nested payload is measured against a payload cap.
     count ceiling         the number of update records is capped.
 
-Every ceiling is adjustable from the command line. The runtime Expat version is
-reported alongside the first progress line. The reasoning behind each defence is
+Every ceiling is adjustable from the command line; the parser gate is not. The
+runtime parser version and its mitigation state are reported alongside the first
+progress line, and --self-test reports the gate's verdict on the current runtime
+and exercises the gate's own fixtures. The reasoning behind each defence is
 recorded in docs/decisions/DECISION_LOG.md, per the Explainability rule.
 
 Usage:
@@ -58,9 +75,14 @@ the cap, and the reported pass and failure counts are always complete.
 
 Exit codes:
     0   every validated file satisfied gate G-1 and gate G-2.
-    1   at least one validation failure at either level.
-    2   usage error, or a path that is missing, not a regular file, or unreadable.
-        Code 2 takes precedence over code 1 when both occur.
+    1   at least one validation failure at either level, or a self-test fixture
+        that did not behave as its label declares.
+    2   usage error; a path that is missing, not a regular file, or unreadable;
+        or a parser gate refusal, in which case no path was opened and no file
+        was validated. Code 2 takes precedence over code 1 when both occur.
+
+A parser gate refusal is reported as code 2, not code 1: it is a statement
+about the runtime and not about the file.
 
 Progress lines and the terminal verdict are written to stdout; failure detail is
 written to stderr.
@@ -103,9 +125,9 @@ UNSET_FIELD = "<unset>"
 LINKAGE_SAMPLE_LIMIT = 5
 
 XML_DECLARATION_PREFIX = b"<?xml"
-# gate G-1: "<?xml" is a declaration only when whitespace follows it. Without this
-# byte, "<?xml-stylesheet ...?>" and "<?xmlfoo?>" are processing instructions whose
-# targets merely begin with those five characters.
+# gate G-1: one of these bytes must be the sixth byte of the file for the leading
+# "<?xml" to be classified as the declaration; "<?xml-stylesheet ...?>" and "<?xmlfoo?>"
+# are classified as processing instructions (decision D-154).
 DECLARATION_DELIMITERS = frozenset({b" ", b"\t", b"\r", b"\n"})
 DECLARATION_DELIMITER_BYTES = b" \t\r\n"
 DECLARATION_CLOSE = b"?>"
@@ -127,10 +149,9 @@ BYTE_ORDER_MARKS = (
 DEFAULT_UPDATE_SET_DIR = "update-set"
 DEFAULT_UPDATE_SET_NAME = "x_bst_startuptrk_boston_startup_tracker_update_set.xml"
 
-# Parser safety ceilings: the largest input document, the largest number of payloads
-# and the largest single payload this validator will read. The delivered Update Set is
-# roughly 1.5 MB across 314 records, so each default leaves ample headroom while
-# bounding hostile input.
+# Parser safety ceilings (decision D-153): the largest input document, the largest
+# number of payloads and the largest single payload this validator will read. Each is
+# a default that --max-bytes, --max-payloads and --max-payload-bytes override.
 DEFAULT_MAX_BYTES = 64 * 1024 * 1024
 DEFAULT_MAX_PAYLOADS = 5000
 DEFAULT_MAX_PAYLOAD_BYTES = 4 * 1024 * 1024
@@ -143,9 +164,208 @@ ENTITY_REFERENCE = re.compile(r"&(#[0-9]+|#x[0-9A-Fa-f]+|[^;&\s]{1,64});")
 DOCTYPE_TOKEN = "<!DOCTYPE"
 ENTITY_TOKEN = "<!ENTITY"
 
+# Parser gate: the release in which Expat's disproportionate-allocation defence
+# reached the upstream tree, and the release immediately before it, which is the
+# only base a backport of that defence is recognised on.
+EXPAT_FIXED_VERSION = (2, 7, 2)
+EXPAT_BACKPORT_FLOOR = (2, 7, 1)
+# The two entry points that defence adds. Their presence is the observable
+# signature of the mitigation, whatever version string the build reports.
+ALLOC_TRACKER_SYMBOLS = (
+    "XML_SetAllocTrackerActivationThreshold",
+    "XML_SetAllocTrackerMaximumAmplification",
+)
+# Probed in order. None is the running process image, which is where the symbols
+# live when the interpreter links Expat statically, as CPython commonly does.
+EXPAT_LIBRARY_CANDIDATES: tuple[str | None, ...] = (
+    None,
+    "libexpat.so.1",
+    "libexpat.so",
+    "libexpat.1.dylib",
+)
+# Fallback when the module exposes no version tuple: "expat_2.7.1" and similar.
+EXPAT_VERSION_TEXT = re.compile(r"(\d+)\.(\d+)\.(\d+)")
+
+MITIGATION_UPSTREAM = "release carries the allocation-tracker defence upstream"
+MITIGATION_BACKPORT = "allocation-tracker entry points present, backported"
+MITIGATION_ABSENT = "no allocation-tracker entry point resolves"
+MITIGATION_UNPROBEABLE = "the allocation-tracker entry points could not be probed"
+
 
 class SourceUnavailable(Exception):
     """A path is missing, not a regular file, or unreadable (exit code 2)."""
+
+
+class ParserGate:
+    """The verdict on whether this runtime's Expat may be handed a document.
+
+    ``allowed`` is the whole decision; every other member exists so a refusal
+    names what was observed rather than only that it refused.
+    """
+
+    __slots__ = ("allowed", "mitigation", "reason", "version", "version_text")
+
+    def __init__(
+        self,
+        allowed: bool,
+        reason: str,
+        version: tuple[int, ...] | None,
+        version_text: str,
+        mitigation: str,
+    ) -> None:
+        self.allowed = allowed
+        self.reason = reason
+        self.version = version
+        self.version_text = version_text
+        self.mitigation = mitigation
+
+    def describe(self) -> str:
+        """Return the one-line parser state written beside each progress line."""
+        return f"{self.version_text}, {self.mitigation}"
+
+
+def expat_version_tuple() -> tuple[int, ...] | None:
+    """Return the runtime Expat version, or None when it cannot be established.
+
+    The module's own tuple is preferred. Where a build omits it the reported
+    version string is read instead. A runtime that yields neither is treated as
+    undetermined, which the gate refuses rather than assumes about.
+    """
+    version = getattr(expat, "version_info", None)
+    if isinstance(version, tuple) and version and all(
+        isinstance(part, int) for part in version
+    ):
+        return version
+    match = EXPAT_VERSION_TEXT.search(str(getattr(expat, "EXPAT_VERSION", "")))
+    if match:
+        return tuple(int(part) for part in match.groups())
+    return None
+
+
+def open_expat_library(ctypes_module, candidate: str | None):
+    """Return an opened handle for one library candidate, or None if it will not open.
+
+    A candidate that does not exist, or a platform that will not open the process
+    image, is not an error here: the caller tries the next candidate and, having
+    exhausted them, reports the probe as unavailable rather than as negative.
+    """
+    try:
+        if candidate is None:
+            return ctypes_module.CDLL(None)
+        return ctypes_module.CDLL(candidate)
+    except (OSError, TypeError, ValueError):
+        return None
+
+
+def library_exposes_alloc_tracker(library) -> bool:
+    """Return True when one opened library exposes both tracker entry points."""
+    try:
+        return all(hasattr(library, symbol) for symbol in ALLOC_TRACKER_SYMBOLS)
+    except (AttributeError, OSError, TypeError, ValueError):
+        return False
+
+
+def alloc_tracker_state() -> bool | None:
+    """Return True if both allocation-tracker entry points resolve.
+
+    False means the probe ran and no library exposed them. None means the probe
+    could not run at all -- no ``ctypes``, or no candidate library that would
+    open -- which is reported distinctly because "absent" and "unknown" warrant
+    the same refusal for different reasons.
+    """
+    try:
+        import ctypes
+    except ImportError:
+        return None
+    probed = False
+    for candidate in EXPAT_LIBRARY_CANDIDATES:
+        library = open_expat_library(ctypes, candidate)
+        if library is None:
+            continue
+        probed = True
+        if library_exposes_alloc_tracker(library):
+            return True
+    return False if probed else None
+
+
+def evaluate_parser_gate(
+    version: tuple[int, ...] | None,
+    tracker: bool | None,
+    version_text: str = "",
+) -> ParserGate:
+    """Decide the gate from an Expat version and an allocation-tracker probe.
+
+    Pure, so the fixtures exercise the same decision the runtime takes. Two
+    routes pass: a release at or above the upstream fix, or the mitigation's
+    entry points present on the release immediately preceding it, which is how a
+    distribution ships the fix without moving the version string. Everything
+    else refuses, including an undetermined version and an unprobeable library.
+    """
+    text = version_text or (
+        ".".join(str(part) for part in version) if version else "version undetermined"
+    )
+    if tracker is True:
+        mitigation = MITIGATION_BACKPORT
+    elif tracker is False:
+        mitigation = MITIGATION_ABSENT
+    else:
+        mitigation = MITIGATION_UNPROBEABLE
+    fixed = ".".join(str(part) for part in EXPAT_FIXED_VERSION)
+    floor = ".".join(str(part) for part in EXPAT_BACKPORT_FLOOR)
+    if version is None:
+        return ParserGate(
+            False,
+            "the runtime Expat version could not be established, so neither the "
+            f"{fixed} floor nor a backport onto {floor} can be confirmed",
+            None,
+            text,
+            mitigation,
+        )
+    if version >= EXPAT_FIXED_VERSION:
+        return ParserGate(
+            True,
+            f"Expat {text} is at or above {fixed}",
+            version,
+            text,
+            MITIGATION_UPSTREAM,
+        )
+    if tracker is True and version >= EXPAT_BACKPORT_FLOOR:
+        return ParserGate(
+            True,
+            f"Expat {text} is below {fixed} but both allocation-tracker entry "
+            "points resolve, so the defence is present as a backport",
+            version,
+            text,
+            mitigation,
+        )
+    if tracker is True:
+        reason = (
+            f"Expat {text} exposes the allocation-tracker entry points but is "
+            f"below {floor}; a backport is recognised only on {floor} or later, "
+            "because on an older base the other allocation defences of the "
+            f"{floor} series are not established by this probe"
+        )
+    elif tracker is False:
+        reason = (
+            f"Expat {text} is below {fixed} and exposes neither allocation-"
+            "tracker entry point, so the disproportionate-allocation defence is "
+            "absent"
+        )
+    else:
+        reason = (
+            f"Expat {text} is below {fixed} and the allocation-tracker entry "
+            "points could not be probed, so the defence cannot be confirmed"
+        )
+    return ParserGate(False, reason, version, text, mitigation)
+
+
+def parser_gate_state() -> ParserGate:
+    """Evaluate the gate against this runtime."""
+    return evaluate_parser_gate(
+        expat_version_tuple(),
+        alloc_tracker_state(),
+        str(getattr(expat, "EXPAT_VERSION", "") or "version undetermined"),
+    )
 
 
 class Limits:
@@ -544,7 +764,9 @@ def validate_outer(
                 "--max-bytes only for a source you trust",
             )
         )
-        reporter.progress(f"    gate {GATE_OUTER} FAILED: source exceeds the byte ceiling")
+        reporter.progress(
+            f"    gate {GATE_OUTER} FAILED: source exceeds the byte ceiling"
+        )
         return failures, []
 
     # gate G-1: declaration hygiene runs before the parser sees the document
@@ -824,11 +1046,16 @@ def emit_failures(outcome: FileOutcome, reporter: Reporter) -> None:
 
 
 def validate_file(
-    path: Path, reporter: Reporter, max_errors: int, limits: Limits
+    path: Path,
+    reporter: Reporter,
+    max_errors: int,
+    limits: Limits,
+    gate: ParserGate | None = None,
 ) -> FileOutcome:
     """Validate one file against gate G-1 then gate G-2 and return its outcome."""
     outcome = FileOutcome(path)
-    reporter.progress(f"Validating {path} (parser {expat.EXPAT_VERSION})")
+    state = gate or parser_gate_state()
+    reporter.progress(f"Validating {path} (parser {state.describe()})")
 
     try:
         data, truncated = read_source_bytes(path, limits.max_bytes)
@@ -962,12 +1189,54 @@ BYTE_PROLOGUE_FIXTURES: tuple[tuple[str, bytes], ...] = (
     ("reject: truncated target", b"<?xm"),
 )
 
+# Parser-gate fixtures exercised by --self-test. Each triple is a label, an Expat
+# version tuple or None for undetectable, and whether the allocation-tracker entry
+# points resolve -- True present, False probed and absent, None unprobeable. A
+# label beginning "accept" must be allowed and every other label must be refused.
+PARSER_GATE_FIXTURES: tuple[tuple[str, tuple[int, ...] | None, bool | None], ...] = (
+    ("accept: 2.7.2, the upstream fix, tracker not probed for", (2, 7, 2), False),
+    ("accept: 2.8.0, above the fix", (2, 8, 0), False),
+    ("accept: 3.0.0, a future major", (3, 0, 0), None),
+    ("accept: 2.7.1 with the tracker backported", (2, 7, 1), True),
+    ("refuse: 2.7.1 with no tracker", (2, 7, 1), False),
+    ("refuse: 2.7.1 with the tracker unprobeable", (2, 7, 1), None),
+    ("refuse: 2.6.4 with the tracker present but below the floor", (2, 6, 4), True),
+    ("refuse: 2.6.4 with no tracker", (2, 6, 4), False),
+    ("refuse: 2.4.0 with no tracker", (2, 4, 0), False),
+    ("refuse: version undetectable, tracker present", None, True),
+    ("refuse: version undetectable, no tracker", None, False),
+    ("refuse: version undetectable, tracker unprobeable", None, None),
+)
+
+
+def run_parser_gate_fixtures(reporter: Reporter) -> tuple[int, int]:
+    """Exercise the parser-gate fixtures and return the passed and failed counts."""
+    passed = 0
+    failed = 0
+    for label, version, tracker in PARSER_GATE_FIXTURES:
+        wants_allowed = label.startswith("accept")
+        state = evaluate_parser_gate(version, tracker)
+        if state.allowed == wants_allowed:
+            passed += 1
+            reporter.payload_line(f"  self-test PASS {label}")
+            continue
+        failed += 1
+        reporter.failure(
+            f"self-test FAIL {label}: expected "
+            f"{'allowed' if wants_allowed else 'refused'}, got "
+            f"{'allowed' if state.allowed else 'refused'} -- {state.reason}"
+        )
+    return passed, failed
+
 
 def run_self_test(reporter: Reporter) -> int:
-    """Exercise the gate G-1 byte-prologue fixtures and return an exit code.
+    """Exercise the byte-prologue and parser-gate fixtures and return an exit code.
 
-    Every fixture whose label begins "accept" must yield no failure, and every
-    other fixture must yield exactly one. Nothing on disk is read.
+    Every fixture whose label begins "accept" must be accepted -- no byte-prologue
+    failure, or an allowed parser gate -- and every other fixture must be
+    rejected. Nothing on disk is read and no document is parsed, so this runs on a
+    runtime the parser gate would refuse to validate a file on; the runtime's own
+    gate state is reported for the record rather than acted on.
     """
     passed = 0
     failed = 0
@@ -991,10 +1260,28 @@ def run_self_test(reporter: Reporter) -> int:
         f"self-test: {len(BYTE_PROLOGUE_FIXTURES)} byte-prologue fixture(s), "
         f"{passed} passed, {failed} failed"
     )
+
+    gate_passed, gate_failed = run_parser_gate_fixtures(reporter)
+    passed += gate_passed
+    failed += gate_failed
+    reporter.progress(
+        f"self-test: {len(PARSER_GATE_FIXTURES)} parser-gate fixture(s), "
+        f"{gate_passed} passed, {gate_failed} failed"
+    )
+
+    state = parser_gate_state()
+    reporter.progress(
+        f"self-test: this runtime's parser is {state.describe()}; the gate would "
+        f"{'admit' if state.allowed else 'refuse'} it -- {state.reason}"
+    )
+    total = len(BYTE_PROLOGUE_FIXTURES) + len(PARSER_GATE_FIXTURES)
+    reporter.progress(
+        f"self-test: {total} fixture(s) in total, {passed} passed, {failed} failed"
+    )
     if failed:
-        reporter.verdict("FAIL: byte-prologue self-test")
+        reporter.verdict("FAIL: self-test")
         return EXIT_VALIDATION_FAILED
-    reporter.verdict("PASS: byte-prologue self-test")
+    reporter.verdict("PASS: self-test")
     return EXIT_OK
 
 
@@ -1012,9 +1299,14 @@ def build_parser() -> argparse.ArgumentParser:
             "carries)."
         ),
         epilog=(
-            "Exit codes: 0 every validated file passed both gates; 1 at least "
-            "one validation failure; 2 usage error or an unreadable path. "
-            "Code 2 takes precedence over code 1."
+            "Before any path is opened the runtime Expat is gated: it must be at "
+            f"or above {'.'.join(str(part) for part in EXPAT_FIXED_VERSION)} or "
+            "expose the allocation-tracker entry points as a backport on "
+            f"{'.'.join(str(part) for part in EXPAT_BACKPORT_FLOOR)}. The gate is "
+            "fail-closed and cannot be overridden. Exit codes: 0 every validated "
+            "file passed both gates; 1 at least one validation failure; 2 usage "
+            "error, an unreadable path, or a parser gate refusal, in which case "
+            "no file was validated. Code 2 takes precedence over code 1."
         ),
     )
     parser.add_argument(
@@ -1082,8 +1374,10 @@ def build_parser() -> argparse.ArgumentParser:
         "--self-test",
         action="store_true",
         help=(
-            f"exercise the gate {GATE_OUTER} byte-prologue fixtures in memory and "
-            "exit; reads no file and validates no Update Set"
+            f"exercise the gate {GATE_OUTER} byte-prologue fixtures and the "
+            "parser-gate fixtures in memory, report this runtime's parser state, "
+            "and exit; reads no file, parses no document and validates no Update "
+            "Set, so it runs even where the parser gate would refuse a file"
         ),
     )
     parser.add_argument(
@@ -1125,8 +1419,28 @@ def main(argv: list[str] | None = None) -> int:
     requested = [Path(candidate) for candidate in args.paths]
     paths = requested or [default_update_set_path()]
     reporter = Reporter(quiet=args.quiet, verbose=args.verbose)
+
+    # The parser gate is evaluated once, before any path is opened and before any
+    # byte reaches Expat. A refusal ends the run and validates nothing. Decision
+    # D-351.
+    gate = parser_gate_state()
+    if not gate.allowed:
+        reporter.failure(
+            f"parser gate: REFUSED before parsing -- {gate.reason}. Nothing was "
+            "read and nothing was validated."
+        )
+        reporter.failure(
+            "  Remedy: run this validator on a Python whose Expat is at or above "
+            f"{'.'.join(str(part) for part in EXPAT_FIXED_VERSION)}, or on a build "
+            "whose Expat carries the allocation-tracker defence as a backport. "
+            "Run --self-test to see this runtime's parser state and confirm the "
+            "gate's own fixtures pass."
+        )
+        reporter.verdict("REFUSED: parser gate, no file was validated")
+        return EXIT_USAGE_OR_IO
+
     outcomes = [
-        validate_file(path, reporter, args.max_errors, limits) for path in paths
+        validate_file(path, reporter, args.max_errors, limits, gate) for path in paths
     ]
     return report_summary(outcomes, reporter)
 

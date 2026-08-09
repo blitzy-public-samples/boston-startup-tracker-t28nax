@@ -26,7 +26,7 @@ Repository-level governance lives under [`docs/`](docs/):
 The executive presentation lives under [`blitzy-deck/`](blitzy-deck/):
 
 - [`blitzy-deck/boston-startup-tracker-servicenow-executive-summary.html`](blitzy-deck/boston-startup-tracker-servicenow-executive-summary.html) — the sixteen-slide executive summary of the replatform, written for non-technical leadership. **Open the file directly in a browser**; it is self-contained and needs no build step, no local server and no other file in this repository.
-- [`blitzy-deck/references/blitzy-reveal-theme.css`](blitzy-deck/references/blitzy-reveal-theme.css) — the canonical presentation theme, delivered at this path. Its CSS is mirrored byte-identically inside the deck rather than linked from it, which is what keeps the deck self-contained.
+- [`blitzy-deck/references/blitzy-reveal-theme.css`](blitzy-deck/references/blitzy-reveal-theme.css) — the canonical presentation theme, delivered at this path. Its CSS is mirrored byte-identically inside the deck and is not linked from it; the deck loads no local file. Recorded at `D-085` and `D-308` in [`docs/decisions/DECISION_LOG.md`](docs/decisions/DECISION_LOG.md).
 
 ## Features
 
@@ -87,18 +87,3 @@ Guidelines for contributing to the project, including coding standards and pull 
 ## License
 
 Information about the project's license.
-
-<!-- Human Tasks:
-- Add more detailed installation instructions, including any required environment variables
-- Expand the Development section with instructions for running tests and linters
-- Provide more information about the project's architecture and component interactions
-- Include troubleshooting tips for common issues
-- Add badges for build status, test coverage, and other relevant metrics
-- Include information about the data sources used and any necessary attributions
-- Add a section on security considerations and data privacy
-- Include contact information or links to project management tools (e.g., issue tracker)
-- Provide examples of API usage if applicable
-- Add a changelog or link to release notes
-
-Superseded — historical reference: the items above pertain to the retired Flask and React stack. The current implementation is documented under servicenow-startup-tracker-poc/.
--->

@@ -5,29 +5,26 @@
 <link rel="icon" href="data:,">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- Supply chain: every executable and static stylesheet asset below is version-pinned AND
-     integrity-pinned with a SHA-384 subresource hash, so a substituted CDN payload fails to
-     execute rather than running silently. The policy that follows admits exactly the five
-     origins those assets come from and nothing else.
-
-     Two deliberate exceptions, both stated rather than left implicit:
-       1. fonts.googleapis.com serves a User-Agent-dependent stylesheet, so its bytes differ
-          between browsers and a fixed hash cannot match. It carries no integrity attribute.
-          Its blast radius is CSS only: style-src cannot introduce script.
-       2. style-src and script-src permit 'unsafe-inline' because this file is required to be a
-          single self-contained document with no build step: the theme is an inline <style> block
-          and the render driver an inline <script>, and Mermaid additionally writes inline style
-          attributes onto the SVG it generates. A nonce cannot be issued without a server.
-
-     Two directives name cdn.jsdelivr.net for a reason worth recording, because a tighter-looking
-     value produces enforced violations on every load rather than better security:
-       - font-src includes it because reveal.js's own theme stylesheet imports a second stylesheet
-         whose @font-face rules point at eight font binaries on that same origin. The deck never
-         displays them, since the inline theme overrides reveal's font stack, but the stylesheet
-         still requests them.
-       - connect-src names it, and unpkg.com, because both library bundles carry a sourceMappingURL
-         that a browser resolves whenever developer tools are attached.
-     Neither widens the trust boundary: both origins are already trusted for script-src. -->
+<!-- Content Security Policy, as enforced. default-src is 'none'; every other directive below
+     is the complete allow-list for its resource type.
+       - script-src: 'self', 'unsafe-inline', cdn.jsdelivr.net, unpkg.com
+       - style-src:  'self', 'unsafe-inline', cdn.jsdelivr.net, fonts.googleapis.com
+       - font-src:   fonts.gstatic.com, cdn.jsdelivr.net, data:
+       - img-src:    'self', data:
+       - connect-src: cdn.jsdelivr.net, unpkg.com
+       - frame-src, object-src, base-uri, form-action: 'none'
+     'unsafe-inline' is required by the inline style element that carries the theme, the inline
+     script element that drives the render, and the inline style attributes Mermaid writes onto
+     the SVG it generates.
+     cdn.jsdelivr.net appears in font-src because reveal.js's theme stylesheet requests font
+     binaries from that origin, and in connect-src, with unpkg.com, because both library bundles
+     carry a sourceMappingURL a browser resolves when developer tools are attached.
+     Subresource Integrity: five remote assets carry a SHA-384 integrity digest and
+     crossorigin="anonymous" - the two reveal.js stylesheets and the three library scripts.
+     The Google Fonts stylesheet carries crossorigin and NO integrity digest, because its
+     response body is negotiated per user agent. Its risk assessment, the alternatives
+     considered and the residual exposure are recorded in docs/decisions/DECISION_LOG.md
+     at D-253 and D-415. -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'none';
  script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com;
  style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com;
@@ -898,19 +895,20 @@
    Deck layout helpers
 
    Layout, density, state and contrast classes used by the slides of this deck
-   only. Every colour, font, gradient and radius resolves through a design
+   only.
+
+   Invariant: every colour, font, gradient and radius resolves through a design
    token declared in the theme above; no hex literal appears in this block.
 
-   Rationale for every choice in this block, including the contrast overrides,
-   is in docs/decisions/DECISION_LOG.md (D-134). This block carries none.
+   Rationale: docs/decisions/DECISION_LOG.md, D-134.
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
    The kpi-grid component when marked up as a list
 
-   Restates the full kpi-grid geometry for a <ul> host, at a specificity above
-   the theme's `.reveal .slides ul` prose rule, on every property the two rules
-   share.
+   Declares the kpi-grid geometry for a <ul> host at a specificity above the
+   theme's `.reveal .slides ul` prose rule, on every property the two share.
+   D-134.
    -------------------------------------------------------------------------- */
 .reveal .slides ul.kpi-grid {
   display: flex;
@@ -980,6 +978,15 @@
   font-weight: 400;
   line-height: 1.35;
   color: var(--blitzy-text);
+}
+
+/* Inverted ink for the supporting line on the dark slide types. The class
+   selector above out-specifies the theme's element-level invert rule, so the
+   inversion is restated here at equal specificity and later in source. */
+.reveal .slides .slide-title .footnote,
+.reveal .slides .slide-divider .footnote,
+.reveal .slides .slide-closing .footnote {
+  color: var(--blitzy-text-invert);
 }
 
 /* Mono strapline used on the title slide */
@@ -1091,7 +1098,7 @@
    -------------------------------------------------------------------------- */
 /* Sizes a sandbox-level render frame from the height Mermaid declares on it, above
    the reveal.js theme's 95% cap on every iframe. This deck renders at the strict
-   level, so the rule is inert here and the svg caps below are the ones in force. */
+   level; the svg caps below are the ones in force. D-305. */
 .reveal .mermaid > iframe,
 .reveal pre.mermaid > iframe,
 .reveal .slides pre.mermaid > iframe {
@@ -1121,11 +1128,9 @@
   max-height: 600px;
 }
 
-/* The timeline is the one diagram whose intrinsic aspect is close to square, so it
-   reaches its height cap rather than its width. This slide also carries four
-   bullets beneath the diagram, and the 1920 by 1080 stage does not scroll, so the
-   container is given a shorter cap and a tighter vertical box than the other
-   diagrams. Without it the fourth bullet renders below the fold and is unreadable. */
+/* Timeline container: a shorter height cap and a tighter vertical box than the
+   other diagram classes. Invariant it holds - the diagram and all four bullets
+   beneath it fit the 1920 by 1080 stage, which does not scroll. D-134. */
 .reveal .slides pre.mermaid.diagram-timeline {
   margin-top: var(--space-2);
   margin-bottom: var(--space-2);
@@ -1136,19 +1141,16 @@
   max-height: 500px;
 }
 
-/* Mermaid's own timeline stylesheet applies filter: brightness(120%) to every event
-   card, which paints the declared cScale values 1.2 times brighter than the brand
-   tokens they are set from - measured as rgb(109,68,255), rgb(54,34,143) and
-   rgb(178,255,255), the last of which clamps two channels and loses the mint hue.
-   The !important is required rather than stylistic: Mermaid scopes its rule to the
-   svg's generated id, so it carries an id in its specificity and is regenerated on
-   every render, leaving no stable author selector able to outrank it. */
+/* Removes the brightness filter Mermaid's own timeline stylesheet applies to every
+   event card; the declared cScale values then paint at their brand token values.
+   Mermaid scopes that rule to the generated svg id, which carries an id in its
+   specificity, so this override carries !important. D-383. */
 .reveal .slides pre.mermaid .eventWrapper {
   filter: none !important;
 }
 
-/* Paints Mermaid subgraph titles with the deck text token. Mermaid nests every
-   glyph of a cluster title inside tspan elements, which carry the fill. */
+/* Paints Mermaid subgraph titles with the deck text token. The fill is carried by
+   the tspan elements Mermaid nests each glyph of a cluster title inside. D-134. */
 .reveal .slides pre.mermaid .cluster-label tspan {
   fill: var(--blitzy-text);
 }
@@ -1156,6 +1158,36 @@
 .reveal .slides .two-col pre.mermaid {
   margin: 0;
   padding: var(--space-3);
+}
+
+/* The visible form of a terminal diagram failure. A container that exhausted its
+   render budget carries this notice instead of an empty box, so the failure reads
+   as reported rather than as a blank area. Every value is a declared token. */
+.reveal .slides pre.mermaid[data-diagram-error='true'] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+  background-color: var(--blitzy-surface-1);
+  border: 1px solid var(--blitzy-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+}
+
+.reveal .slides .diagram-error {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--blitzy-primary-deep);
+  font-family: var(--ff-mono);
+  font-size: 0.5em;
+  text-align: left;
+}
+
+.reveal .slides .diagram-error svg {
+  width: 1.4em;
+  height: 1.4em;
+  flex: none;
 }
 </style>
 </head>
@@ -1198,7 +1230,7 @@
       <span class="kpi-label">Tests designed, in ten suites</span>
     </li>
   </ul>
-  <p class="footnote">One importable package of 314 configuration records, plus six sequenced guides for the parts the platform builds itself.</p>
+  <p class="footnote">One importable package of 313 configuration records, plus six sequenced guides for the parts the platform builds itself.</p>
 </section>
 
 <!-- 3 of 16 - Content: before and after architecture -->
@@ -1312,7 +1344,7 @@ flowchart TB
       <tr><td>Cache, search, proxy</td><td>Retired</td></tr>
     </tbody>
   </table>
-  <p class="footnote">145 traced rows.</p>
+  <p class="footnote">146 traced rows.</p>
 </section>
 
 <!-- 8 of 16 - Content: the data foundation -->
@@ -1354,7 +1386,7 @@ flowchart TB
       <tr><td>Investor</td><td>6</td><td><strong>Total</strong></td><td><strong>53</strong></td></tr>
     </tbody>
   </table>
-  <p class="footnote">The column list is closed.</p>
+  <p class="footnote">Closed column list.</p>
 </section>
 
 <!-- 9 of 16 - Content: the entitlement matrix -->
@@ -1414,7 +1446,7 @@ flowchart TB
       </tr>
     </tbody>
   </table>
-  <p class="footnote"><span class="grant" role="img" aria-label="Read"><i data-lucide="check" aria-hidden="true"></i></span> read <span class="deny" role="img" aria-label="Denied"><i data-lucide="x" aria-hidden="true"></i></span> denied. A denied field is absent, not blank. Twenty-one checks confirm it.</p>
+  <p class="footnote"><span class="grant" role="img" aria-label="Read"><i data-lucide="check" aria-hidden="true"></i></span> read <span class="deny" role="img" aria-label="Denied"><i data-lucide="x" aria-hidden="true"></i></span> denied. A denied field is absent, not blank. Twenty-one checks confirm.</p>
 </section>
 
 <!-- 10 of 16 - Content: integration surface -->
@@ -1423,18 +1455,18 @@ flowchart TB
   <pre class="mermaid diagram-md">
 flowchart LR
   accTitle: How data reaches the tables and how it leaves them
-  accDescr: Crunchbase and LinkedIn both reach two named connections bound by name, which feed two scheduled flows running on a cadence between six and forty-eight hours. A fallback dataset of six files and sixty-five rows can feed the same flows instead. The flows apply four cleaning rules that trim, de-duplicate, normalise and reject, and write to ten tables. Everything read back out passes through forty-nine access-control rules, which serve both the interface layer of thirty-one operations and the five-page Service Portal.
-  CB["Crunchbase"] --> AL["2 named connections, bound by name"]
-  LI["LinkedIn"] --> AL
-  AL --> FL["2 scheduled flows, cadence 6 to 48 hours"]
-  FB["Fallback dataset, 6 files, 65 rows"] -.-> FL
-  FL --> CL["4 rules: trim, de-duplicate, normalise, reject"]
+  accDescr: Crunchbase and LinkedIn each reach a named connection bound by name, and the two connections feed two scheduled flows running on a cadence between six and forty-eight hours. Crunchbase is the only source with a published read contract, and it is not live until its key is supplied. LinkedIn publishes no read interface for people or third-party job postings, so its call confirms company identity only and its rows come from the fallback dataset of six files and sixty-five rows, which also stands in for Crunchbase while that key is outstanding. Four cleaning rules run before anything is written to ten tables. Access control with forty-nine rules then guards both ways out: an interface layer of thirty-one operations and a Service Portal of five pages.
+  CB["Crunchbase<br/>read contract published"] -->|"records, once keyed"| AL["2 named connections<br/>bound by name"]
+  LI["LinkedIn<br/>no read interface"] -->|"company identity only"| AL
+  AL --> FL["2 scheduled flows<br/>cadence 6 to 48 hours"]
+  FB["Fallback dataset<br/>6 files, 65 rows"] ==>|"every row today"| FL
+  FL --> CL["4 rules: trim, de-duplicate<br/>normalise, reject"]
   CL --> DB["10 tables"]
-  DB --> AC["Access control, 49 rules"]
-  AC --> API["Interface layer, 31 operations"]
-  AC --> SP["Service Portal, 5 pages"]
+  DB --> AC["Access control<br/>49 rules"]
+  AC --> API["Interface layer<br/>31 operations"]
+  AC --> SP["Service Portal<br/>5 pages"]
 </pre>
-  <p class="footnote">Every run is labelled &ldquo;live validated&rdquo; or &ldquo;fallback validated&rdquo;, so neither can be mistaken for the other.</p>
+  <p class="footnote">Every run is labelled &ldquo;live validated&rdquo; or &ldquo;fallback validated&rdquo;, so neither can be mistaken for the other. Nothing in this delivery is labelled live validated yet.</p>
 </section>
 
 <!-- 11 of 16 - Content: the user experience -->
@@ -1506,18 +1538,19 @@ flowchart LR
   </ul>
   <pre class="mermaid diagram-sm">
 flowchart LR
-  accTitle: The nine checks between a package and an accepted installation
-  accDescr: Nine validation checks run first, then the package is imported and previewed within a six-hundred-second budget. If the preview reports any problem the package is fixed and re-issued; if it reports none the package is committed. Eleven required gates then run: if all pass the installation is accepted, and if any fails it is rolled back.
-  V["Validate, 9 checks"] --> IM["Import"]
+  accTitle: The checks between a package and an accepted installation
+  accDescr: Nine package checks run first, then the package is imported and previewed within a six-hundred-second budget. If the preview reports any problem the package is fixed and re-issued; if it reports none the package is committed. Twelve checks then decide acceptance and all twelve must pass. Of those twelve, only the eleven required gates trigger a roll back; a failure of the twelfth, which counts the delivered columns, is corrected in the package and re-issued instead.
+  V["Validate, 9 package checks"] --> IM["Import"]
   IM --> PV["Preview, 600 second budget"]
   PV --> Q{"Problems?"}
   Q -->|"none"| CM["Commit"]
   Q -->|"any"| FX["Fix and re-issue"]
-  CM --> GT["11 required gates"]
-  GT -->|"all pass"| OK["Accepted"]
-  GT -->|"any fails"| RB["Roll back"]
+  CM --> GT["12 checks decide acceptance"]
+  GT -->|"all 12 pass"| OK["Accepted"]
+  GT -->|"1 of the 11 gates fails"| RB["Roll back"]
+  GT -->|"the 12th fails"| FX
 </pre>
-  <p class="footnote">The nine checks pass now. Tests and gates need a live instance.</p>
+  <p class="footnote">Two of the nine pass on the file; seven are review checks. Tests and gates need a live instance.</p>
 </section>
 
 <!-- 14 of 16 - Content: risks and mitigations -->
@@ -1570,14 +1603,14 @@ flowchart LR
 
 <!-- 15 of 16 - Content: migration timeline, ownership and continuation -->
 <section>
-  <h2>The migration timeline, and how it changes after</h2>
+  <h2>The timeline, and after</h2>
   <pre class="mermaid diagram-wide diagram-timeline">
 timeline
   accTitle: The migration timeline, in three phases
-  accDescr: Three phases in relative order. Install: validate the package, then import, preview and commit it, then clear the twelve acceptance-blocking checks. Build: bind the two named connections, build both ingestion flows, then the portal with its pages and widgets, and load the six sample files. Prove: run the ten test suites and walk the acceptance record. The order is relative and no calendar dates are stated.
+  accDescr: Three phases in relative order. Install: validate the package, then import, preview and commit it, then clear the fifteen acceptance-blocking checks. Build: bind the two named connections, build both ingestion flows, then the portal with its pages and widgets, and load the six sample files. Prove: run the ten test suites and walk the acceptance record. The order is relative and no calendar dates are stated.
   section Install
     Steps 1 to 2 : Validate the package : Import, preview and commit
-    Step 3 : Clear the twelve checks
+    Step 3 : Clear the fifteen checks
   section Build
     Steps 4 to 6 : Bind the two aliases : Build both ingestion flows
     Steps 7 to 8 : Portal, pages and widgets : Load the six sample files
@@ -1595,13 +1628,13 @@ timeline
 <!-- 16 of 16 - Closing -->
 <section class="slide-closing">
   <span class="eyebrow">In Closing</span>
-  <h2>Specified end to end, pending instance validation</h2>
+  <h2>Fully specified, instance validation pending</h2>
   <ul>
     <li>One package installs the application; six guides build the rest, in order.</li>
     <li>Acceptance is recorded against five criteria after the instance run.</li>
-    <li>Every reason is logged and every shortfall named.</li>
-    <li>Five named reviewers, each with what to check.</li>
+    <li>Every reason logged, every shortfall named, five reviewers told what to check.</li>
   </ul>
+  <p class="footnote">One pinned presentation library carries published advisories; accepting them needs a named signature.</p>
   <div class="accent-bar" aria-hidden="true"></div>
   <div class="brand-lockup"><i data-lucide="zap" aria-hidden="true"></i> Blitzy</div>
 </section>
@@ -1636,18 +1669,22 @@ timeline
   }
 
   /* Stashes each container's original diagram source before any render, so reset()
-     can restore a container from the stash before a re-render. D-126. */
+     can restore a container from the stash before a re-render. The stash is the
+     container's innerHTML rather than its textContent, because a label carrying an
+     authored <br/> is parsed into a real br element: textContent would drop that
+     element and join the two halves of the label into one word, so a restored
+     container would re-render mangled. Mermaid reads the same markup form.
+     D-126, and D-349 for the markup stash. */
   containers().forEach(function (node) {
-    sources.push(node.textContent);
+    sources.push(node.innerHTML);
     attempts.push(0);
   });
 
   /* Configures Mermaid in the same task as this script, ahead of any
-     DOMContentLoaded handler, so automatic start is off before Mermaid's own
-     window-load handler can run, and returns any container already carrying a
-     render to its source so the configured render is never skipped. Rule 2
-     requires automatic start disabled and rendering driven from the reveal.js
-     hooks below. D-179. */
+     DOMContentLoaded handler and ahead of Mermaid's own window-load handler, and
+     returns any container already carrying a render to its source. Rule 2 requires
+     automatic start disabled and rendering driven from the reveal.js hooks below.
+     D-179. */
   reclaim();
 
   /* Settles once the webfonts have loaded. D-127. */
@@ -1675,15 +1712,44 @@ timeline
     }
   }
 
+  /* Terminal failure of one diagram. A console warning alone is invisible to a
+     presenter, so the container is also marked and given a short visible notice
+     carrying the diagram's own accessible title: an unrendered diagram then reads
+     as a reported failure rather than as an empty area on the slide. The notice
+     keeps a Lucide glyph, so the slide still carries a non-text element.
+     Recorded at D-344 in docs/decisions/DECISION_LOG.md. */
+  function fail(node, index, message, detail) {
+    report(message, detail);
+    if (node.getAttribute('data-diagram-error') === 'true') {
+      return;
+    }
+    var title = (sources[index] || '').match(/accTitle:\s*(.+)/);
+    node.setAttribute('data-diagram-error', 'true');
+    node.textContent = '';
+    var box = document.createElement('span');
+    box.className = 'diagram-error';
+    box.setAttribute('role', 'alert');
+    var glyph = document.createElement('i');
+    glyph.setAttribute('data-lucide', 'triangle-alert');
+    glyph.setAttribute('aria-hidden', 'true');
+    var text = document.createElement('span');
+    text.textContent = 'Diagram ' + (index + 1) + ' did not render'
+      + (title ? ': ' + title[1].trim() : '');
+    box.appendChild(glyph);
+    box.appendChild(text);
+    node.appendChild(box);
+    if (window.lucide && typeof window.lucide.createIcons === 'function') {
+      window.lucide.createIcons();
+    }
+  }
+
   /* Configures Mermaid once, with the theme variables this deck's brand rule
-     specifies. This is a hoisted function declaration, so the call above its
-     definition is valid. Rendering is driven from the reveal.js events below, so
-     startOnLoad is false. securityLevel is strict, which sanitises the source and
-     renders inline: the sandbox level draws into an iframe whose src is a data URL,
-     which this document's own frame-src 'none' policy forbids. htmlLabels is false at the
-     top level and under flowchart, which makes every label a native SVG text
+     specifies. The declaration is hoisted; the call above it resolves. Rendering is
+     driven from the reveal.js events below, and startOnLoad is false. securityLevel
+     is strict, which sanitises the source and renders inline. htmlLabels is false at
+     the top level and under flowchart, which makes every label a native SVG text
      node. subGraphTitleMargin reserves the clearance beneath a phase title.
-     Recorded at D-125 in docs/decisions/DECISION_LOG.md. */
+     Recorded at D-125 and D-305 in docs/decisions/DECISION_LOG.md. */
   function configureMermaid() {
     if (mermaidConfigured) {
       return true;
@@ -1734,11 +1800,10 @@ timeline
     return node.offsetWidth > 0 && node.getClientRects().length > 0;
   }
 
-  /* Inspects a completed render. Under securityLevel strict the drawing is an
-     inline svg, which is the form this deck delivers and the branch that runs: it
-     tests the viewBox, the label count and Mermaid's own error graphic. The iframe
-     branch is retained for a sandbox-level render, whose opaque origin allows only
-     the declared height to be tested. */
+  /* Inspects a completed render. The inline-svg branch runs under securityLevel
+     strict, which is the level this deck sets: it tests the viewBox, the label count
+     and Mermaid's own error graphic. The iframe branch tests the declared height
+     alone, which is what an opaque origin exposes. D-305, D-306. */
   function healthy(node) {
     var frame = node.querySelector('iframe');
     if (frame) {
@@ -1760,7 +1825,8 @@ timeline
 
   function reset(node, index) {
     node.removeAttribute('data-processed');
-    node.textContent = sources[index];
+    node.removeAttribute('data-diagram-error');
+    node.innerHTML = sources[index];
   }
 
   /* Applies the Mermaid configuration and returns every container that already
@@ -1793,12 +1859,13 @@ timeline
         return Promise.resolve();
       }
       if (attempts[index] >= MAX_ATTEMPTS) {
+        fail(node, index, 'Diagram ' + (index + 1) + ' carries a processed marker over a degenerate drawing and has no attempts left', node.className);
         return Promise.resolve();
       }
       reset(node, index);
     }
     if (attempts[index] >= MAX_ATTEMPTS) {
-      report('Diagram ' + (index + 1) + ' has no attempts left', node.className);
+      fail(node, index, 'Diagram ' + (index + 1) + ' has no attempts left', node.className);
       return Promise.resolve();
     }
     attempts[index] += 1;
@@ -1814,7 +1881,7 @@ timeline
           reset(node, index);
           return renderDiagram(node, index);
         }
-        report('Diagram ' + (index + 1) + ' left unrendered after '
+        fail(node, index, 'Diagram ' + (index + 1) + ' left unrendered after '
           + MAX_ATTEMPTS + ' attempts', node.className);
         return undefined;
       })
@@ -1823,7 +1890,7 @@ timeline
           reset(node, index);
           return renderDiagram(node, index);
         }
-        report('Diagram ' + (index + 1) + ' skipped', error);
+        fail(node, index, 'Diagram ' + (index + 1) + ' skipped', error);
         return undefined;
       });
   }
@@ -1873,10 +1940,10 @@ timeline
   window.Reveal.on('slidechanged', paint);
 
   /* A third pass, after the slide transition has finished. The slidechanged pass
-     starts while the incoming slide is still animating, so a container can be
+     starts while the incoming slide is still animating, where a container can be
      measured at a transient width; this pass runs once the layout has settled and
      repairs anything the earlier pass drew badly. It is a no-op for a container
-     that is already healthy. */
+     that is already healthy. D-147. */
   window.Reveal.on('slidetransitionend', paint);
 
   window.Reveal.initialize({

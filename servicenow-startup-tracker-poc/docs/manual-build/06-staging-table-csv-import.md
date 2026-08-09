@@ -19,7 +19,7 @@ This guide is executable on its own. Every data source, every import set table, 
 | [`../../sample-data/README.md`](../../sample-data/README.md) | **Leg (a)** of the three-way contract: the authoritative CSV header rows and their order, the per-file `import_run` values, the value conventions, the row counts and the designed-defect inventory. |
 | [`../../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`](../../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml) | **Leg (b)**, and **authoritative** for every identifier this guide cites, including all forty-one staging column names. |
 | [`../data-model.md`](../data-model.md) | The staging table's full column list with types and lengths, the entity choice values, the cascade rules, and the `Investor.portfolio_count` derivation and its `recalculateAll()` contract. |
-| [`../validation-gates.md`](../validation-gates.md) | The eleven required post-commit gates of precondition 4, and the non-normative `GATE-SEC-01`, which records that the staging table stays closed to every external route — which is why the staged rows are verified in the list view rather than over the Table API. It is not a precondition of this guide: it is read for what it records, and its outcome gates nothing here. |
+| [`../validation-gates.md`](../validation-gates.md) | The eleven required post-commit gates of precondition 4, and the acceptance-required security check `GATE-SEC-01`, which records that the staging table stays closed to every external route — which is why the staged rows are verified in the list view rather than over the Table API. It blocks acceptance of the delivery but is **not** a precondition of this guide: it is read here for what it records, and its outcome gates nothing in this procedure. |
 | [`02-flow-crunchbase-ingestion.md`](02-flow-crunchbase-ingestion.md) | The Crunchbase ingestion flow, whose fallback branch reads the `crunchbase` rows this guide loads. |
 | [`03-flow-linkedin-ingestion.md`](03-flow-linkedin-ingestion.md) | The LinkedIn ingestion flow, whose fallback branch reads the `linkedin` rows this guide loads. |
 | [`05-atf-test-suites.md`](05-atf-test-suites.md) | Runs after this guide. Its suites seed **their own** fixtures and read none of these rows; what it shares with this guide is the `fallback validated` result label. |
@@ -68,7 +68,7 @@ Do not begin this guide until every item below holds.
 | 2 | The preview has completed with an **empty error-type problem set**. | A read of `sys_update_preview_problem` filtered to this remote update set and `type=error` returns an empty `result` array. Warnings are logged and do not block. |
 | 3 | The Update Set has **committed**. | The `sys_remote_update_set` record shows `state` `committed`. |
 | 4 | **All eleven required post-commit gates have passed.** | Run the eleven required gates in [`../validation-gates.md`](../validation-gates.md) — the seven entity-table reads `GATE-TBL-01` through `GATE-TBL-07`, the three role-record gates `GATE-ROLE-01` through `GATE-ROLE-03`, and the one scope-record gate `GATE-SCOPE-01` — and record `pass` for all eleven in that document's required-gate evidence table. The aggregate pass condition is `11 of 11`; there is no partial pass, and no required gate may be skipped, deferred or waived. |
-| 5 | `x_bst_startuptrk_ingest_staging` exists with all **forty-one** of its dictionary columns. | The table opens in the list view through the **Ingestion staging** module of the Boston Startup Tracker application menu, and `sys_dictionary` filtered to `name=x_bst_startuptrk_ingest_staging` with a non-empty `element` returns 40 records. |
+| 5 | `x_bst_startuptrk_ingest_staging` exists with all **forty-one** of its dictionary columns. | The table opens in the list view through the **Ingestion staging** module of the Boston Startup Tracker application menu, and `sys_dictionary` filtered to `name=x_bst_startuptrk_ingest_staging` with a non-empty `element` returns **41** records — the seven-column control prefix plus the thirty-four flattened columns of [Mapping roll-up](#mapping-roll-up). The table's own collection record carries an empty `element` and is not one of the forty-one. |
 | 6 | The two tables the staging-to-entity transform writes for participation exist. | `x_bst_startuptrk_fundinground` and `x_bst_startuptrk_m2m_round_investor` both open in the list view. `GATE-TBL-05` covers the first. |
 | 7 | The three Script Includes this guide calls into are on the instance. | `sys_script_include` carries `IngestionMapper`, `IngestionLogger` and `InvestorPortfolioService`, all in the `x_bst_startuptrk` scope. |
 | 8 | The three business rules that maintain the derived columns are on the instance and **active**. | `sys_script` carries `Trim and validate startup`, `Recalculate investor portfolio on funding round` and `Recalculate investor portfolio on round investor link`, all `active` true, all in the `x_bst_startuptrk` scope. |
@@ -140,7 +140,7 @@ source_system,record_type,import_run,import_state,run_provenance,error_message,r
 | 1 | `source_system` | `string`, choice list | 40 | `crunchbase`, `linkedin` | Constant per file. `crunchbase` on the three `crunchbase_*` files, `linkedin` on the three `linkedin_*` files. It is the column each ingestion flow filters its fallback query on. |
 | 2 | `record_type` | `string`, choice list | 40 | `startup`, `founder`, `executive`, `investor`, `funding_round`, `job_posting` | Constant per file, one value per file. The discriminator for the staging-to-entity transform. There is **no** `news_article` member. |
 | 3 | `import_run` | `string` | 64 | — | Constant per file, a stable synthetic token that makes one load traceable end to end. The six values are tabulated below. This is the table's display column. |
-| 4 | `import_state` | `string`, choice list, dictionary default `pending` | 40 | `pending`, `processed`, `rejected`, `error` | **`pending` on every shipped row.** The transform advances it. |
+| 4 | `import_state` | `string`, choice list, dictionary default `pending` | 40 | `pending`, `processed`, `rejected`, `error` — **four** members | **`pending` on every shipped row.** The transform advances it: `IngestionMapper.claimStagingRows()` leases a row it is about to read by writing `run:` plus the run identifier into `import_run`, leaving `import_state` at `pending`, and the row then settles as `processed`, `rejected` or `error`. A leased row is therefore still `pending`, and `pending` is the only value a shipped row carries — see [Returning an abandoned or rejected row to the queue](#returning-an-abandoned-or-rejected-row-to-the-queue). |
 | 5 | `run_provenance` | `string`, choice list | 40 | `live`, `fallback` | **`fallback` on every shipped row.** No shipped row carries `live`. |
 | 6 | `error_message` | `string` | 1000 | — | **Empty on every shipped row.** Written by `IngestionMapper.writeStagingState()` when a row is rejected or errors. |
 | 7 | `raw_payload` | `string` | 8000 | — | A JSON object in the source system's own key vocabulary. Loaded verbatim. |
@@ -179,13 +179,65 @@ The CSV dialect the six files are written in, and which the data sources must be
 
 `raw_payload` is a JSON object carried as one double-quoted CSV field with every inner double quote doubled. It uses the **source system's own key vocabulary**, not the flattened platform column names, because the staging shape is required to mimic the expected API response. **Load it verbatim.** Do not reformat it, do not re-indent it, do not re-quote it and do not parse and re-serialise it; the field map is a plain string-to-string mapping.
 
-| Source | Files | Payload shape |
-| --- | --- | --- |
-| Crunchbase organisation reads | `crunchbase_startups_sample.csv`, `crunchbase_investors_sample.csv` | `data.properties` |
-| Crunchbase funding-round reads | `crunchbase_funding_rounds_sample.csv` | `data.items` |
-| LinkedIn company, employee and job reads | `linkedin_founders_sample.csv`, `linkedin_executives_sample.csv`, `linkedin_job_postings_sample.csv` | `data.elements` |
+**The shipped envelope is not the same shape in all six files, and the two shapes below are exactly what the files carry.**
 
-The longest shipped `raw_payload` value is well inside the column's 8000-character limit, so no value is at risk of truncation on load. Every shipped value parses as JSON.
+| Files | Envelope the shipped rows carry | What `IngestionMapper.unwrapLive()` reduces it to |
+| --- | --- | --- |
+| `crunchbase_startups_sample.csv`, `crunchbase_investors_sample.csv`, `crunchbase_funding_rounds_sample.csv` | A single top-level `properties` object: `{"properties":{ ... }}`. There is **no** `data` wrapper, **no** `items` array and **no** `elements` array on any Crunchbase row, and each row carries exactly **one** entity. | The `properties` object itself, as one source object. |
+| `linkedin_founders_sample.csv`, `linkedin_executives_sample.csv`, `linkedin_job_postings_sample.csv` | `{"synthetic":true,"data":{"elements":[ ... ]}}`, with **exactly one** member in `elements` on every row. `synthetic` marks the payload as sample data and is not mapped. | Each member of `data.elements`, one source object per member — one per row here. |
+
+`IngestionMapper.unwrapLive()` accepts more shapes than the fixtures use, and it resolves them in this fixed order. Author a new fallback row against this order, not against a remembered example:
+
+1. If the payload carries `data`, that becomes the envelope; otherwise the payload itself is the envelope.
+2. The first of `items`, `elements`, `entities` or `results` on the envelope that is an **array** wins, and every member of it becomes one source object.
+3. Otherwise, if the envelope carries `properties`, that object becomes the single source object.
+4. Otherwise the envelope itself becomes the single source object.
+
+So a live Crunchbase organisation read wrapped as `{"data":{"properties":{...}}}` and a paged read shaped `{"data":{"items":[...]}}` are both accepted, which is why the live path needs no per-source unwrapper. **The shipped fixtures use step 3 for Crunchbase and step 2 for LinkedIn.**
+
+**`raw_payload` is not what the fallback transform maps.** `IngestionMapper.mapStagingRow()` reads the flattened staging columns, which already carry the target vocabulary; nothing in the mapper parses `raw_payload`. The column exists because the staging shape is required to mimic the expected API response, and it lets a row be replayed through `unwrapLive()` and `mapLiveRecord()` to exercise the live mapping path without a live call. A malformed `raw_payload` therefore cannot break the load — and cannot be relied on to be correct either, which is why it is loaded verbatim and never regenerated.
+
+The longest shipped `raw_payload` value is 1830 characters, well inside the column's 8000-character limit, so no value is at risk of truncation on load. Every shipped value parses as JSON, and every one is **minified** — no space follows a colon or a comma.
+
+#### One exact example per record type
+
+Each block below is the `raw_payload` field of the **first data row** of that file, verbatim and on one line, with the CSV's doubled inner quotes resolved to single quotes as a JSON parser sees them. Inside the CSV the same text appears in one double-quoted field with every `"` doubled.
+
+`crunchbase_startups_sample.csv`, `record_type` `startup`, `name` `Beacon Hill Robotics`:
+
+```json
+{"properties":{"identifier":{"value":"Beacon Hill Robotics","permalink":"beacon-hill-robotics","uuid":"9ea9e675-7ef7-ddb4-2ad6-d96f177f3810","entity_def_id":"organization"},"facet_ids":["company"],"short_description":"Autonomous inspection robots for commercial building operators.","categories":[{"value":"Science and Engineering","permalink":"science-and-engineering","entity_def_id":"category_group"}],"founded_on":{"value":"2019-01-01","precision":"year"},"location_identifiers":[{"value":"Boston, MA","location_type":"city","permalink":"boston-ma"}],"website":{"value":"https://beaconhillrobotics.example.com"},"image_url":"https://cdn.example.org/logos/beacon-hill-robotics.png","last_funding_type":"series_b","funding_total":{"value":48000000,"currency":"USD","value_usd":48000000},"operating_status":"active","num_employees_enum":"c_00051_c_00200","last_funding_at":"2023-02-21","institutional_funding_last_5yrs":true}}
+```
+
+`crunchbase_investors_sample.csv`, `record_type` `investor`, `name` `Emerald Necklace Angels`:
+
+```json
+{"properties":{"identifier":{"value":"Emerald Necklace Angels","permalink":"emerald-necklace-angels","uuid":"c36e9309-e2c2-b2fb-29b0-2c836183f5d0","entity_def_id":"organization"},"facet_ids":["investor"],"short_description":"Angel collective backing consumer brands across Greater Boston","investor_type":["angel"],"categories":[{"value":"Consumer Goods","permalink":"consumer-goods","entity_def_id":"category_group"}],"website":{"value":"https://emeraldnecklaceangels.example.org"},"assets_under_management":{"value":18500000.5,"currency":"USD","value_usd":18500000.5}}}
+```
+
+`crunchbase_funding_rounds_sample.csv`, `record_type` `funding_round`, the `Seed` round of `Beacon Hill Robotics`:
+
+```json
+{"properties":{"identifier":{"value":"Beacon Hill Robotics Seed","permalink":"beacon-hill-robotics-seed","uuid":"a23952e1-bcd5-58cf-7fac-a2c1c2e0e583","entity_def_id":"funding_round"},"funded_organization_identifier":{"value":"Beacon Hill Robotics","permalink":"beacon-hill-robotics","uuid":"9ea9e675-7ef7-ddb4-2ad6-d96f177f3810","entity_def_id":"organization"},"funded_organization_location":[{"value":"Boston, MA","location_type":"city","permalink":"boston-ma"}],"investment_type":"seed","money_raised":{"value":3200000,"currency":"USD","value_usd":3200000},"announced_on":{"value":"2019-11-12","precision":"day"},"lead_investor_identifiers":[{"value":"Emerald Necklace Angels","permalink":"emerald-necklace-angels","uuid":"c36e9309-e2c2-b2fb-29b0-2c836183f5d0","entity_def_id":"organization"}],"investor_identifiers":[{"value":"Emerald Necklace Angels","permalink":"emerald-necklace-angels","uuid":"c36e9309-e2c2-b2fb-29b0-2c836183f5d0","entity_def_id":"organization"},{"value":"Chickatawbut Seed Partners","permalink":"chickatawbut-seed-partners","uuid":"f558c1cc-7cf8-271b-5054-9b305d9a5830","entity_def_id":"organization"}],"pre_money_valuation":{"value":14000000,"currency":"USD","value_usd":14000000},"permalink":"beacon-hill-robotics-seed","source_url":"https://news.example.com/rounds/beacon-hill-robotics-seed"}}
+```
+
+`linkedin_founders_sample.csv`, `record_type` `founder`, `name` `Marisol Trevanion`:
+
+```json
+{"synthetic":true,"data":{"elements":[{"id":"ln-member-40118","name":"Marisol Trevanion","title":"Chief Executive Officer","summary":"Co-founded Beacon Hill Robotics after a decade in industrial controls, and now leads its commercial strategy.","headline":"CEO at Beacon Hill Robotics","profileUrl":"https://people.example.com/in/marisol-trevanion","companyName":"Beacon Hill Robotics","companyLocation":"Boston, MA","emailAddress":"marisol.trevanion@example.com"}],"paging":{"count":1}}}
+```
+
+`linkedin_executives_sample.csv`, `record_type` `executive`, `name` `Perpetua Aldworth`:
+
+```json
+{"synthetic":true,"data":{"elements":[{"id":"ln-member-51201","name":"Perpetua Aldworth","title":"Chief Financial Officer","summary":"Oversees financial planning, treasury and investor reporting for the robotics group.","headline":"CFO at Beacon Hill Robotics","profileUrl":"https://people.example.com/in/perpetua-aldworth","companyName":"Beacon Hill Robotics","companyLocation":"Boston, MA","emailAddress":"perpetua.aldworth@example.com"}],"paging":{"count":1}}}
+```
+
+`linkedin_job_postings_sample.csv`, `record_type` `job_posting`, `title` `Senior Robotics Software Engineer`:
+
+```json
+{"synthetic":true,"data":{"elements":[{"id":"6104701","title":"Senior Robotics Software Engineer","description":"Own the motion planning stack for autonomous inspection platforms.","jobFunction":"eng","location":{"name":"Boston, MA"},"workplaceType":"HYBRID","experienceLevel":"MID_SENIOR_LEVEL","postedAt":"2026-07-21","applyUrl":"https://jobs.example.com/postings/beacon-hill-robotics/senior-robotics-software-engineer","jobState":"LISTED","companyName":"Beacon Hill Robotics","companyLocation":"Boston, MA"}],"paging":{"count":1}}}
+```
 
 Carrying **both** the flattened scalar columns and this source-vocabulary JSON column on the same row is a deviation from a literal reading of the requirements: the flattened columns are what make the CSV import a one-to-one mapping by header name, and `raw_payload` is what preserves the source response shape. Both are mapped, on every row of every file. The mechanic is stated here; the decision is recorded in [`../../../docs/decisions/DECISION_LOG.md`](../../../docs/decisions/DECISION_LOG.md).
 
@@ -212,7 +264,7 @@ A CSV cannot carry a `sys_id` for a record that does not exist yet, so **every r
 
 Both sides of every comparison are trimmed and lowered, so a child row may spell its natural key in any case and with any surrounding whitespace. Several shipped rows deliberately do, which is what makes them evidence that trimming happens before resolution. One founders row spells its parent location `seaport, boston, ma` in lower case with a leading segment the Startup record does not carry in that case, and it still resolves, because the comparison is normalised on both sides.
 
-**Why the parent key carries the location as well as the name.** Cleaning rule 2 deduplicates Startup records on `name` plus `headquarters_location`, so two genuinely different companies may legitimately share a name when their locations differ, and a child row that named only the parent's name could not then say which one it meant. Carrying both halves is what makes the child attachment deterministic on exactly the key the parent is de-duplicated on. `startup_headquarters_location` is **never written to the child record** — the child tables carry no location column.
+**The parent key is both halves: `startup_name` and `startup_headquarters_location`.** Cleaning rule 2 deduplicates Startup records on `name` plus `headquarters_location`, so the parent is identified by that pair and a child row must state both halves of it. `startup_headquarters_location` is **never written to the child record** — the child tables carry no location column.
 
 **No shipped row isolates the blank-second-half rejection, and that is worth stating rather than implying.** Five child rows across the four child files leave `startup_headquarters_location` blank, but every one of them also leaves a mandatory column blank — `startup_name` on four of them and `name` on the Kendall Cognition executive — so cleaning rule 4 rejects each of them **before** reference resolution runs, and the reason recorded names the missing mandatory column rather than the missing key half. The blank-second-half rejection is asserted directly against `IngestionMapper.resolveStartupKey()` in the ingestion suites of [`./05-atf-test-suites.md`](./05-atf-test-suites.md), which is where a resolver rule belongs; it is not observable from this load.
 
@@ -242,7 +294,7 @@ Set these on all six `sys_transform_map` records. Only the **Name** and **Source
 
 | Field-map setting | Where it applies | Value |
 | --- | --- | --- |
-| **Choice action** | The four control columns `source_system`, `record_type`, `import_state` and `run_provenance` — the only staging columns carrying a choice list | **`reject`**. An out-of-list value in a control column is a data error: rejecting the row keeps it out of the table and out of the flows. `create` must **not** be used, because it would add a `sys_choice` record and mutate a choice inventory the prompt declares binding and complete. |
+| **Choice action** | The four control columns `source_system`, `record_type`, `import_state` and `run_provenance` — the only staging columns carrying a choice list | **`reject`**, so an out-of-list value in a control column keeps the row out of the table and out of the flows. `create` must **not** be used: it adds a `sys_choice` record, and the choice inventory is binding and complete. |
 | Choice action | The thirty-four flattened columns | Not applicable. None of them carries a choice list. |
 | **Date format** | `round_date` and `posted_date` | **`yyyy-MM-dd`**, matching the ISO 8601 form the files use. |
 | Coalesce | The columns named in [The coalesce key per record type](#the-coalesce-key-per-record-type) | `true` on exactly those columns of that map, `false` on every other field map. |
@@ -264,7 +316,7 @@ source_system,record_type,import_run,import_state,run_provenance,error_message,r
 | 4 | `import_state` | `import_state` | `string` 40, choice | no | Constant `pending`. Choice action `reject`. |
 | 5 | `run_provenance` | `run_provenance` | `string` 40, choice | no | Constant `fallback`. Choice action `reject`. |
 | 6 | `error_message` | `error_message` | `string` 1000 | no | Empty on every row. |
-| 7 | `raw_payload` | `raw_payload` | `string` 8000 | no | JSON in the `data.properties` shape. Verbatim. |
+| 7 | `raw_payload` | `raw_payload` | `string` 8000 | no | JSON carrying a single top-level `properties` object. Verbatim — see [`raw_payload`](#raw_payload). |
 | 8 | `name` | `name` | `string` 100 | **yes** | Writes `x_bst_startuptrk_startup.name`. First half of the cleaning-rule-2 deduplication key. |
 | 9 | `description` | `description` | `string` 4000 | no | Writes `x_bst_startuptrk_startup.description`. |
 | 10 | `industry` | `industry` | `string` 40 | no | Target choice list `Fintech`, `Healthtech`, `SaaS`, `Consumer`, `Deeptech`, `Other`. Normalised at transform time, not here. |
@@ -296,7 +348,7 @@ source_system,record_type,import_run,import_state,run_provenance,error_message,r
 | 4 | `import_state` | `import_state` | `string` 40, choice | no | Constant `pending`. Choice action `reject`. |
 | 5 | `run_provenance` | `run_provenance` | `string` 40, choice | no | Constant `fallback`. Choice action `reject`. |
 | 6 | `error_message` | `error_message` | `string` 1000 | no | Empty on every row. |
-| 7 | `raw_payload` | `raw_payload` | `string` 8000 | no | JSON in the `data.properties` shape. Verbatim. |
+| 7 | `raw_payload` | `raw_payload` | `string` 8000 | no | JSON carrying a single top-level `properties` object. Verbatim — see [`raw_payload`](#raw_payload). |
 | 8 | `name` | `name` | `string` 100 | **yes** | Writes `x_bst_startuptrk_investor.name`. The only mandatory value for this record type, and the natural key `lead_investor_name` and `participating_investor_names` resolve against. |
 | 9 | `type` | `type` | `string` 30 | no | Target choice list `VC`, `Angel`, `PE`, `Corporate`, `Accelerator`. |
 | 10 | `focus_areas` | `focus_areas` | `string` 255 | no | Multi-valued: comma separated inside one quoted field, each member one of the six `Startup.industry` values. Load verbatim; the transform normalises member by member. |
@@ -325,7 +377,7 @@ source_system,record_type,import_run,import_state,run_provenance,error_message,r
 | 4 | `import_state` | `import_state` | `string` 40, choice | no | Constant `pending`. Choice action `reject`. |
 | 5 | `run_provenance` | `run_provenance` | `string` 40, choice | no | Constant `fallback`. Choice action `reject`. |
 | 6 | `error_message` | `error_message` | `string` 1000 | no | Empty on every row. |
-| 7 | `raw_payload` | `raw_payload` | `string` 8000 | no | JSON in the `data.items` shape. Verbatim. |
+| 7 | `raw_payload` | `raw_payload` | `string` 8000 | no | JSON carrying a single top-level `properties` object, the same shape as the other two Crunchbase files. Verbatim — see [`raw_payload`](#raw_payload). |
 | 8 | `startup_name` | `startup_name` | `string` 100 | **yes** | **Natural key, first half.** Resolves to `x_bst_startuptrk_fundinground.startup`. Mandatory for this record type at transform time. |
 | 9 | `startup_headquarters_location` | `startup_headquarters_location` | `string` 100 | no | **Natural key, second half.** The parent Startup's `headquarters_location`, not the round's. Resolves the `startup` reference and is then discarded — it is written to no column of the funding round. Optional in the **dictionary** and required by the **resolver**: a blank identifies no parent and rejects the row. One of the twelve rows leaves it blank — the same row that also leaves `startup_name` blank, so rule 4 rejects it first. |
 | 10 | `round_type` | `round_type` | `string` 40 | **yes** | Target choice list `Pre-Seed`, `Seed`, `Series A`, `Series B`, `Series C+`, `Growth`, `Public`, `Acquired`. The same eight values as `Startup.funding_stage`, and no `Other` member. |
@@ -443,7 +495,7 @@ Two properties of these keys are load-bearing and must survive any edit to them.
 
 **The `startup` key includes `website`. Do not remove it, and do not shorten the key to match cleaning rule 2.** Cleaning rule 2 deduplicates Startup records on `name` plus `headquarters_location`, and `crunchbase_startups_sample.csv` carries a designed pair of rows matching on exactly that pair while differing on `website`. A coalesce key of `import_run` + `name` + `headquarters_location` collapses that pair into **one** staging row at import time: the file loads as 12 rows instead of 13, the rule 2 fixture is gone before the rule that exists to catch it runs, and **the load reports success**. `website` is the one column the pair differs on, so it separates them. The duplicate is resolved by cleaning rule 2 at transform time, never by the import. The choice is recorded at `D-124` in [`../../../docs/decisions/DECISION_LOG.md`](../../../docs/decisions/DECISION_LOG.md), and [`../../sample-data/README.md`](../../sample-data/README.md) is authoritative for the 13-row count.
 
-**`startup_headquarters_location` is deliberately not a coalesce component.** It is a resolution input rather than an identifying one: the four child keys above already separate every shipped row, so adding it would change no match, and leaving it out keeps a row that states the parent location and a row that omits it from being treated as two different rows of the same child record. Set `Coalesce` to false on all four of its field maps.
+**`startup_headquarters_location` is not a coalesce component.** It is a resolution input, not an identifying one: the four child keys above separate every shipped row without it, and a row that states the parent location and a row that omits it are the same child row. Set `Coalesce` to false on all four of its field maps.
 
 Across all six files the keys above yield **65 distinct values over 65 rows**, with no collision within a file, no collision between files, and no row whose key is blank in every non-`import_run` component. Adding the parent-location column changed none of those counts, because it is not part of any key.
 
@@ -483,14 +535,14 @@ Thirty-four flattened columns plus the seven control columns is the table's full
 
 The sequence is therefore expressed as **four dependency groups**, and a group is fully finished — imported *and* transformed to entity records — before the next group begins.
 
-| Group | Files | Record type | Depends on | Why it sits here |
+| Group | Files | Record type | Depends on | What it depends on it for |
 | --- | --- | --- | --- | --- |
 | **A** | `crunchbase_startups_sample.csv` | `startup` | Nothing | **First**, because every other file references its `name` values through `startup_name`. Until the Startup **entity** records exist, every child row's parent reference is unresolvable and the row is rejected. |
-| **B** | `crunchbase_investors_sample.csv` | `investor` | Nothing | Before group C, which references its `name` values through `lead_investor_name` and `participating_investor_names`. Group B has no dependency on group A and may equally be run first; the order A then B is stated so there is one sequence to follow. |
+| **B** | `crunchbase_investors_sample.csv` | `investor` | Nothing | Before group C, which references its `name` values through `lead_investor_name` and `participating_investor_names`. Run it second, in the stated sequence. |
 | **C** | `crunchbase_funding_rounds_sample.csv` | `funding_round` | **A and B** | It references both parents — Startup through `startup_name`, and Investor through `lead_investor_name` and `participating_investor_names` — so both preceding groups must be imported **and transformed** first. |
 | **D** | `linkedin_founders_sample.csv`, `linkedin_executives_sample.csv`, `linkedin_job_postings_sample.csv` | `founder`, `executive`, `job_posting` | **A** | Each references only `startup_name`. All three are imported, then transformed together by a single LinkedIn transform call, because none of the three references either of the others. |
 
-Two properties of this grouping are what make it realizable, and both matter.
+Two properties of this grouping govern how the groups are run.
 
 - **Within group D the three files are independent**, so they are imported in any order and settled by **one** transform rather than three. The transform selects on `source_system` `linkedin`, which covers all three record types in a single pass.
 - **Group D depends on group A only**, so it may run before or after groups B and C. Running it last keeps the sequence linear and keeps the funding-round join rows — the check most likely to reveal a mapping fault — adjacent to the files that produce them.
@@ -641,14 +693,14 @@ This step is invoked from [step 7](#step-7--run-the-dependency-group-sequence), 
 
 Two ways to run it, and both are acceptable evidence:
 
-- **Through the flows.** Set the property `x_bst_startuptrk.ingestion.source_mode` to `fallback`, then run the Crunchbase flow of [`02-flow-crunchbase-ingestion.md`](02-flow-crunchbase-ingestion.md) and the LinkedIn flow of [`03-flow-linkedin-ingestion.md`](03-flow-linkedin-ingestion.md). Each claims the pending rows of its own `source_system`, applies the four cleaning rules, writes the entity records, records each row's outcome and publishes a run summary. A flow reads **every** pending row of its source, so this route cannot scope a call to one `import_run` and is therefore usable only where a whole source system's groups are ready to settle together. Set the property back to `live` afterwards.
+- **Through the flows.** Set the property `x_bst_startuptrk.ingestion.source_mode` to `fallback`, then run the Crunchbase flow of [`02-flow-crunchbase-ingestion.md`](02-flow-crunchbase-ingestion.md) and the LinkedIn flow of [`03-flow-linkedin-ingestion.md`](03-flow-linkedin-ingestion.md). Each claims the pending rows of its own `source_system`, applies the four cleaning rules, writes the entity records, records each row's outcome and publishes a run summary. A flow reads **every** unleased pending row of its source, so this route cannot scope a call to one `import_run` and is therefore usable only where a whole source system's groups are ready to settle together. **Leave the property at `fallback` afterwards unless the readiness rule of [Restoring `source_mode`](#restoring-source_mode-is-readiness-determined-not-a-return-to-live) requires `live`** — on the instance recorded for this delivery it requires `fallback`, so there is nothing to restore.
 - **Directly, from a background script inside the scope**, one call per dependency group. This is the route [step 7](#step-7--run-the-dependency-group-sequence) uses, because it takes the `import_run` scope the sequence depends on.
 
 #### The run identifier must begin with the source system
 
 **`IngestionLogger.sourceOfRun(sourceSystem)` returns the supplied source system when the caller names one, and otherwise the text before the run identifier's first hyphen.** `IngestionMapper.ingest()` always names it, so a run summary written through `ingestStaging()` carries the right source whatever the identifier looks like. The prefix still matters, for two reasons that are not theoretical:
 
-| # | Why the prefix must be the source system |
+| # | What the source-system prefix establishes |
 | --- | --- |
 | 1 | **Any code path that has no source system to name falls back to the prefix.** An identifier such as `manual-load-<guid>` resolves to the source `manual`, which is not one of `crunchbase` or `linkedin`, so a completion marker written under it is refused and a log line attributed to it names a source that does not exist. |
 | 2 | **The identifier is the correlation key across three surfaces** — the `import_run` column on the staging row, the run summary event, and every per-record log line. An identifier that does not name its source makes a log line unattributable by inspection. |
@@ -728,42 +780,50 @@ Run this from **System Definition > Scripts - Background** with the scope select
 | `skipped` not `0` | A write failed for a reason other than a cleaning rule. A cleaning-rule refusal counts as `rejected`, not `skipped`; `skipped` is always a defect. |
 | `processed` not equal to `accepted` | The logger's counter and the batch's counter disagree, which means an entry settled without being counted. |
 
-`ingestStaging()` selects rows on `source_system` and `import_state` `pending`, with `import_run` as an optional further filter — pass an empty string to take every pending row of that source system, or a specific token to transform one group's rows in isolation. It does **not** read a row that is `in_progress`, `processed`, `rejected` or `error`.
+`ingestStaging()` selects rows on `source_system` and `import_state` `pending`, with `import_run` as an optional further filter — pass an empty string to take every pending row of that source system, or a specific token to transform one group's rows in isolation. It does **not** read a row that is `processed`, `rejected` or `error`, and it skips a `pending` row whose `import_run` carries **another run's `run:` lease**.
 
 Because the query is bounded to `import_state` `pending`, **a row that has already settled is never re-read**. Re-running the transform therefore cannot duplicate entity records from staging, whichever route is used.
 
 #### Returning an abandoned or rejected row to the queue
 
-`pending` is not the only pre-settlement state. A flow **claims** each row it is about to read, setting `import_state` to `in_progress` and `import_run` to that run's identifier, so a row is never read twice within a run and a run that dies hard leaves its rows visible rather than lost. The `import_state` choice list therefore carries **five** members — `pending`, `in_progress`, `processed`, `rejected` and `error` — and [`../data-model.md`](../data-model.md) lists all five.
+`pending` alone does not mean unclaimed. A flow **claims** each row it is about to read by writing the reserved lease value `run:` followed by that run's identifier into `import_run`, leaving `import_state` at `pending`, so a row is never read twice within a run and a run that dies hard leaves its rows visible rather than lost. The `import_state` choice list therefore carries exactly **four** members — `pending`, `processed`, `rejected` and `error` — and [`../data-model.md`](../data-model.md) lists all four and specifies the lease under [The `import_run` run lease](../data-model.md#the-import_run-run-lease). A **leased** `pending` row is one whose `import_run` begins `run:`; an **unleased** `pending` row carries its CSV batch token, which never contains a colon.
 
 A row is returned to the queue by hand, never automatically, and only after its cause has been dealt with.
 
 | Row state | When to return it | How |
 | --- | --- | --- |
-| `in_progress` carrying a run identifier that is no longer executing | The run was cancelled, timed out, or the transaction was killed. Confirm in the flow execution log that the run is not still going. | In the **Ingestion staging** list view, set `import_state` back to `pending` and **clear `import_run`**. Leaving the old identifier in place makes the next run's claim read-back ambiguous. |
+| `pending` carrying a `run:` lease whose run is no longer executing | The run was cancelled, timed out, or the transaction was killed. Confirm in the flow execution log that the run is not still going. | In the **Ingestion staging** list view, **clear `import_run`**, or set it back to that file's batch token — `fallback-sample-<source>-<type>` — so the row is queued and its provenance is still legible. `import_state` is already `pending` and must not be edited. Leaving the dead lease in place is what keeps the next run from taking the row. |
 | `error` | Only after the underlying fault is fixed — the reason is in `error_message`. | Same edit. Clear `error_message` as well, so a second failure is distinguishable from the first. |
 | `rejected` because the sequence was broken, and its `error_message` names an unresolvable parent | After the parent group has been transformed. | Same edit. |
 | `rejected` by a cleaning rule on the row's own content | **Never.** These are the designed fixtures. Returning one to the queue makes it fail again identically and changes the expected `import_state` distribution. | — |
 
-**Nothing returns a row to `pending` on its own.** That is deliberate: a row that killed one run will kill the next, so an automatic retry would turn one failure into an unbounded loop. Two consequences follow, and both are safe to rely on:
+**Nothing returns a row to `pending` on its own.** A row that failed one run fails the next in the same way, so there is no automatic retry. Two consequences follow, and both are safe to rely on:
 
-- A row left `in_progress` is a **diagnostic**, not a leak. It names the run that abandoned it.
+- A row left `pending` under a dead lease is a **diagnostic**, not a leak. Its `import_run` names the run that abandoned it, and no later run will take it until the lease is cleared.
 - Returning a row to `pending` and transforming again **re-applies the whole entity write**. For a record type whose natural key the row carries in full, that write is an update of the record the first attempt created; where the row does not carry a usable key, it is a second insert. The per-type keys are in [What it writes](#what-it-writes).
 
-### Restoring `source_mode` is branch-determined, not a return to `live`
+### Restoring `source_mode` is readiness-determined, not a return to `live`
 
 **Do not set `x_bst_startuptrk.ingestion.source_mode` to `live` as a matter of course after the load.** The property selects which branch each flow attempts, and setting it to `live` on an instance whose credential aliases hold no credential makes every subsequent scheduled execution attempt an outbound call that cannot succeed, fall back, and log an authentication failure on every run. The evidence trail then carries a failure per run that is a configuration error rather than a finding.
 
-The required end state follows from [`01-connection-credential-aliases.md`](01-connection-credential-aliases.md), which records each alias in one of two branches:
+**There is one property, and both flows read it.** `x_bst_startuptrk.ingestion.source_mode` is a single scoped property; there is **no** per-flow source mode, and no flow input carries one. Setting it for the Crunchbase flow sets it for the LinkedIn flow in the same act, and the next execution of **both** takes the branch it names. Three consequences follow and each is a rule:
 
-| Alias branch recorded in guide 01 | Required `source_mode` | What the value follows from |
+| # | Rule | Why |
 | --- | --- | --- |
-| **Both** aliases in **Branch B**, each with a passing connection test | `live` | The live path can succeed, and fallback remains available if a call fails |
-| **Either** alias in **Branch A**, or either connection test not passing | **`fallback`** | The live path cannot succeed. `fallback` is the sanctioned completion path, and it is what makes every result honestly labelled `fallback validated` |
+| 1 | **Live-first is a property of `live` mode, not of every run.** In `live` mode each flow attempts its outbound call first and falls back only on a failure; in `fallback` mode neither flow attempts a call at all. A statement that the live path is attempted first on every run holds only while the property reads `live`. | The `If` block around the fetch step tests `attempt_live`, which is `false` in `fallback` mode, so the call site is not reached. |
+| 2 | **A procedure that changes the value temporarily captures the observed value first and restores that value** — never an unconditional `live`. Record the value you read before you change it, beside the value you restored. | The property is shared, so an unconditional restore imposes one flow's temporary need on the other flow's steady state. |
+| 3 | **The end state is branch-determined**, by the table below, and it is the same value for both flows because there is only one property to set. | A per-flow end state is not expressible. Where the two flows would want different values, the more restrictive one governs: `fallback`. |
 
-**On the instance recorded for this delivery both aliases are in Branch A**, so the value the property must read when this guide is signed off is **`fallback`**. That is not a temporary setting left behind by the load — it is the correct configured state, and both flow guides state the same rule.
+The required end state follows from [`01-connection-credential-aliases.md`](01-connection-credential-aliases.md), which records each alias on one of two **readiness paths** — **Path A** is the provisioned posture and **Path B** is the unprovisioned one. **That vocabulary is not the runbook's `Branch A` and `Branch B`, which name the two rollback branches and have nothing to do with credentials.**
 
-Record the branch and the resulting value here: Crunchbase alias branch `______`, LinkedIn alias branch `______`, `source_mode` set to `______`.
+| Alias readiness path recorded in guide 01 | Required `source_mode` | What the value follows from |
+| --- | --- | --- |
+| **Both** aliases on **Path A**, each with a passing connection test | `live` | The live path can succeed, and fallback remains available if a call fails |
+| **Either** alias on **Path B**, or either connection test not passing | **`fallback`** | The live path cannot succeed. `fallback` is the sanctioned completion path, and it is what makes every result honestly labelled `fallback validated` |
+
+**On the instance recorded for this delivery both aliases are on Path B**, so the value the property must read when this guide is signed off is **`fallback`**. That is not a temporary setting left behind by the load — it is the correct configured state, and both flow guides state the same rule.
+
+Record the path and the resulting value here: Crunchbase alias path `______`, LinkedIn alias path `______`, `source_mode` set to `______`.
 
 ### Step 9 — recalculate the derived portfolio counts
 
@@ -812,7 +872,7 @@ So **two mechanisms protect this procedure from duplicating records, and they op
 
 ### Participating investors become join rows
 
-**The transform materialises `x_bst_startuptrk_m2m_round_investor` rows from `participating_investor_names`.** For each accepted `funding_round` row it reads the quoted JSON array, trims each member, drops an empty member, resolves each remaining member to exactly one Investor record, keeps a repeated member once, and **reconciles the join rows to that set** through `InvestorPortfolioService.linkInvestorToRound()` — inserting the links the row declares and removing any link the round carries that the row does not. A member that resolves to no investor, or to more than one, is logged as a warning and contributes no join row; the members that do resolve still become join rows, and the round is recorded as partial. **A row whose `participating_investor_names` is empty declares nothing and removes nothing**, so an empty value never strips a round's existing participants.
+**The transform materialises `x_bst_startuptrk_m2m_round_investor` rows from `participating_investor_names`.** For each accepted `funding_round` row it reads the quoted JSON array, trims each member, drops an empty member, resolves each remaining member to exactly one Investor record, keeps a repeated member once, and **reconciles the join rows to that set** through `IngestionMapper.linkParticipants()` — inserting the links the row declares and removing any link the round carries that the row does not. `InvestorPortfolioService.linkInvestorToRound()` is the administrative one-off for linking a single investor to a single round by hand; it is not on the ingestion path and this procedure never calls it. A member that resolves to no investor, or to more than one, is logged as a warning and contributes no join row; the members that do resolve still become join rows, and the round is recorded as partial. **A row whose `participating_investor_names` is empty declares nothing and removes nothing**, so an empty value never strips a round's existing participants.
 
 **`linkParticipants()` reconciles rather than appends.** It reads the round's existing join rows, then makes the stored set equal the incoming set:
 
@@ -838,7 +898,7 @@ Three further rules govern the write, and all three matter:
 
 - **`lead_investor` remains a distinct first-class reference** on `x_bst_startuptrk_fundinground`, resolved from `lead_investor_name` and set directly on the funding-round record. It is a single reference, not a join row. An investor that both led a round and participated in it appears in both places, which is correct.
 - **The join table is authoritative for participation.** It is the only table the transform writes for it.
-- **`x_bst_startuptrk_fundinground.participating_investors` is never written by this path.** It is a read-only projection that the business rule on the join table refreshes, and the mapper's write allowlist excludes it, so an attempt to set it is dropped rather than applied.
+- **`x_bst_startuptrk_fundinground.participating_investors` is never written by any path.** It is a **calculated** read-only column derived from the join table on every read — `virtual` true, with a calculation that calls `InvestorPortfolioService.participantList()` — and the mapper's write allowlist excludes it, so an attempt to set it is dropped rather than applied.
 
 Both references on the join table are mandatory and both cascade on delete, so deleting a funding round or an investor removes its join rows with it.
 
@@ -849,10 +909,10 @@ Both references on the join table are mandatory and both cascade on delete, so d
 | Business rule | Table | When |
 | --- | --- | --- |
 | `Recalculate investor portfolio on funding round` | `x_bst_startuptrk_fundinground` | After insert, update and delete. On an update it recalculates **both** the previous and the new `lead_investor`, and handles a change to the round's `startup`. |
-| `Recalculate investor portfolio on round investor link` | `x_bst_startuptrk_m2m_round_investor` | After insert, update and delete. It also refreshes the derived `participating_investors` projection on the affected funding round. |
+| `Recalculate investor portfolio on round investor link` | `x_bst_startuptrk_m2m_round_investor` | After insert, update and delete. It recalculates the linked investor's `portfolio_count` and nothing else: the join table is the only store of participation, and `participating_investors` is derived from it on read rather than written. |
 | `Trim and validate startup` | `x_bst_startuptrk_startup` | Before insert and update. |
 
-Leave **Run business rules** true on all six transform maps, and do not call `setWorkflow(false)` in any script used to load or transform this data.
+Leave **Run business rules** true on all six transform maps, and do not call `setWorkflow(false)` in any script you write to load or transform this data. Two writes inside `IngestionMapper` do suppress rules, and neither is yours to change: the staging-row claim, on a table that carries no business rule at all, and each participant join row, so a round linking twelve investors recalculates once rather than twelve times. That batch closes with **one** explicit convergence step over every investor added, removed or leading, and a batch that did not converge marks the round `partial` rather than `processed`. `portfolio_count` is therefore maintained on both paths; [step 9](#step-9--recalculate-the-derived-portfolio-counts) is the independent check that it was.
 
 **Operational warning.** `portfolio_count` is a **stored** integer. Nothing recomputes it on read. A load performed with rule execution disabled — an import transform with **Run business rules** cleared, or a `setWorkflow(false)` in a background script — leaves the stored aggregate **silently wrong** for every investor touched by that write. There is no error, no warning and no log record; the column simply disagrees with the data, and the portal and the API both report the wrong number. The only signal is the return value of [step 9](#step-9--recalculate-the-derived-portfolio-counts).
 
@@ -869,36 +929,48 @@ Two layers report on the load, and they must not be confused.
 | Import log | **System Import Sets > Administration > Import Log** | Per-row and per-run messages from the import itself: an unmapped column, a coercion refusal, a rejected choice value, a truncated value. Read it after every load, not only after a failure. |
 | Staged rows | The **Ingestion staging** module | The application rows, carrying `import_state` and `error_message`. The place to read the outcome of the cleaning rules. |
 
-**Operational warning — two different state columns.** The import set row carries `sys_import_state` with values such as `Pending`, `Processed`, `Ignored` and `Error`; the application row carries `import_state` with the five values `pending`, `in_progress`, `processed`, `rejected` and `error`. They belong to adjacent layers and mean different things. `sys_import_state` describes whether the **CSV row reached the staging table**; `import_state` describes whether the **staged row became an entity record**. An import set row reading `Processed` says nothing about whether cleaning rule 4 later rejected the staged row. Always name the layer when reporting a count.
+**Operational warning — two different state columns.** The import set row carries `sys_import_state` with values such as `Pending`, `Processed`, `Ignored` and `Error`; the application row carries `import_state` with the four values `pending`, `processed`, `rejected` and `error`. They belong to adjacent layers and mean different things. `sys_import_state` describes whether the **CSV row reached the staging table**; `import_state` describes whether the **staged row became an entity record**. An import set row reading `Processed` says nothing about whether cleaning rule 4 later rejected the staged row. Always name the layer when reporting a count.
 
 ### `import_state` after the transform
 
-Once every file has been imported and transformed, the sixty-five rows reconcile to exactly this distribution:
+Once every file has been imported and transformed, the sixty-five rows reconcile to exactly this distribution across the four `import_state` members:
 
 | `import_state` | Rows | What they are |
 | --- | --- | --- |
 | `processed` | **52** | An entity record was created or updated from the row. |
 | `rejected` | **13** | The row was refused by a cleaning rule: **12** rows blanking a mandatory column for their record type, plus **1** row that repeats an earlier startup's `name` plus `headquarters_location` pair within the same batch. |
 | `error` | **0** | A write failed for a reason other than a cleaning rule, or a funding round's participant links could not be reconciled. |
-| `in_progress` | **0** | A flow claimed the row and never settled it. Non-zero means a run was abandoned; see [Returning an abandoned or rejected row to the queue](#returning-an-abandoned-or-rejected-row-to-the-queue). |
-| `pending` | **0** | Nothing left untransformed. |
+| `pending` | **0** | Nothing left untransformed. **A `pending` row after the transform is a claim that was never settled**: read its `import_run`, and if it carries a `run:` lease the run that held it was abandoned — see [Returning an abandoned or rejected row to the queue](#returning-an-abandoned-or-rejected-row-to-the-queue). |
 
 A different distribution means a file was edited, a field map is mismapped, or the load order was not followed. Investigate before signing off. The per-file defect inventory that produces these numbers is in [`../../sample-data/README.md`](../../sample-data/README.md).
 
 ### How `error_message` is populated
 
-`error_message` is empty on every shipped row and is written by the transform, never by the import. `IngestionMapper.clean()` **returns** the reason a row was refused, and `IngestionMapper.writeStagingState()` writes it to `error_message` — truncated to the column's 1000 characters — together with the matching `import_state`, on the same staging row. The two columns are therefore always consistent: a row reading `rejected` or `error` always names its reason, and a row reading `processed` always has an empty `error_message`.
+`error_message` is empty on every shipped row and is written by the transform, never by the import. It carries a **controlled outcome code and an opaque row reference, and nothing else**:
 
-The reasons a row can carry, and what to do about each:
+```text
+code=<outcome code> ref=<opaque reference>
+```
 
-| `import_state` | `error_message` names | Expected here | Action |
+`IngestionMapper.clean()` returns the code for a refusal, `IngestionMapper.writeStagingState()` writes it with the matching `import_state` on the same staging row, and `_stateMessage()` composes the text. **No upstream response text, exception message, stack frame, field value, personal name or email address ever reaches this column** — every one of those belongs to the run's own log line, which is where the detail is. The two columns are always consistent: a row reading `rejected` or `error` always carries a code, and a row reading `processed` carries `code=processed`.
+
+The reference is `staging:<sys_id>` for every row this procedure loads, because each row has a staging record to name. A live-sourced record with no staging row is referenced by its ordinal within the run instead. Both forms are stripped to `[0-9A-Za-z_.-]` and truncated to 64 characters, so the reference cannot carry content of its own.
+
+**Query on the code, never on prose.** `error_messageCONTAINS code=missing_mandatory` selects the rule 4 rejections; a query written against a sentence will match nothing. The closed vocabulary is fifteen codes wide — `accepted`, `processed`, `rejected`, `duplicate_in_batch`, `missing_mandatory`, `mandatory_value_refused`, `value_over_length`, `record_type_unsupported`, `payload_unmappable`, `cleaning_refused`, `parent_unresolved`, `relationship_incomplete`, `write_failed`, `unexpected_failure` and `run_abandoned` — and a code outside it is recorded as `unexpected_failure` rather than passed through. `IngestionMapper` writes the first fourteen; `run_abandoned` is written only by a flow's terminal-state sweep, and never by this procedure's own background-script transform.
+
+The codes a row can carry here, and what to do about each:
+
+| `import_state` | `error_message` code | Expected here | Action |
 | --- | --- | --- | --- |
-| `rejected` | Every missing mandatory column on the row, so a row blanking two of them names both | **Yes — 12 rows.** These are the cleaning-rule-4 fixtures. | None. This is the designed outcome. |
-| `rejected` | `duplicate startup in the same batch` | **Yes — 1 row.** The cleaning-rule-2 fixture. | None. This is the designed outcome. |
-| `rejected` | `no startup carries the name`, or `the name is ambiguous across <n> startups` | **Only on a row that also blanks a mandatory column.** | On any other row it means the [dependency-group sequence](#step-7--run-the-dependency-group-sequence) was broken, or the parent group was not transformed first. Transform the parent group, then return the row to the queue as [Returning an abandoned or rejected row to the queue](#returning-an-abandoned-or-rejected-row-to-the-queue) sets out. |
-| `rejected` | A natural key reported as ambiguous | No | Two records share a name. Resolve the collision on the entity table, then re-transform. |
-| `error` | An insert or update failure, or a refused value | **No — the expected count is 0.** | A genuine defect. Read the reason, then read the flow execution log for the run identifier. |
-| `error` | `<n> participant link(s) ... could not be reconciled` | **No — the expected count is 0.** | A join-row insert or delete failed. The funding-round record itself **is** written; its participation is incomplete. Fix the cause, then return the row to the queue — the re-transform matches the round on its natural key and reconciles the links again. |
+| `rejected` | `code=missing_mandatory` | **Yes — 12 rows.** The cleaning-rule-4 fixtures. | None. This is the designed outcome. **Which** columns were blank is in the run's log line for the same reference, not in this column. |
+| `rejected` | `code=duplicate_in_batch` | **Yes — 1 row.** The cleaning-rule-2 fixture. | None. This is the designed outcome. |
+| `rejected` | `code=parent_unresolved` | **Only on a row that also blanks a mandatory column**, and then the row records the blocking refusal instead. | On any other row it means the [dependency-group sequence](#step-7--run-the-dependency-group-sequence) was broken, or the parent group was not transformed first. Transform the parent group, then return the row to the queue as [Returning an abandoned or rejected row to the queue](#returning-an-abandoned-or-rejected-row-to-the-queue) sets out. The log line says whether no startup carried the name or the name was ambiguous. |
+| `rejected` | `code=mandatory_value_refused` or `code=value_over_length` | No | A mandatory column held a value cleaning refused, or a value exceeded its column. Read the run's log line for the field, correct the CSV only if the value is genuinely wrong, and re-load. |
+| `rejected` | `code=record_type_unsupported` or `code=payload_unmappable` | No | The row's `record_type` is not one the source supplies, or the row carries nothing mappable. A field map or the `source_system` column is wrong. |
+| `error` | `code=write_failed` | **No — the expected count is 0.** | A genuine defect. Read the log line for the run identifier and the same `ref=` token. |
+| `error` | `code=relationship_incomplete` | **No — the expected count is 0.** | A lead or participating investor did not resolve, or a join-row insert, delete or the convergence step failed. The funding-round record itself **is** written; its participation is incomplete, and the batch counts the round as `partial`. Fix the cause, then return the row to the queue — the re-transform matches the round on its natural key and reconciles the links again. |
+| `error` | `code=unexpected_failure` | **No — the expected count is 0.** | An exception the per-record boundary caught. The batch continued; the detail is in the log line. |
+| `error` | `code=run_abandoned` | **No — impossible here.** Only a scheduled flow's sweep writes it. | A flow claimed the row and ended before settling it. Return it to the queue as [Returning an abandoned or rejected row to the queue](#returning-an-abandoned-or-rejected-row-to-the-queue) sets out, after confirming from `import_run` and the flow execution log that the run is no longer executing. |
 
 A per-record skip arising from a cleaning rule is **expected behaviour, not an error**. Counting the twelve rule 4 rejections or the one duplicate as errors would misreport a clean run. Only `import_state` `error` and an unhandled exception in the flow execution log count as errors for success criterion 4.
 
@@ -941,13 +1013,15 @@ Perform all five checks. Every figure below is fixed by the shipped files, so an
 | Duplicate `funding_round` + `investor` pairs | **None.** The unique composite index forbids them. |
 | Join rows for an investor no longer named by its round's `participating_investor_names` | **None**, on a load whose every participant name resolved. `linkParticipants()` deletes an obsolete row when the incoming set is complete. |
 | A round whose `lead_investor` also appears among its join rows | Permitted and present. It is not a duplicate. |
-| `x_bst_startuptrk_fundinground.participating_investors` | Populated on the rounds that have join rows, by the projection business rule — **not** by the transform. |
+| `x_bst_startuptrk_fundinground.participating_investors` | Renders the investors of the rounds that have join rows, derived on read by the column's own calculation — nothing writes it, and the transform does not. |
 
 An empty join table with ten funding rounds present means `participating_investor_names` was left unmapped, was re-delimited in transit — a JSON array rewritten as a comma-separated list resolves to no investor at all — or the investors file was transformed after the funding-rounds file rather than before it.
 
+The parser side of that seam is covered by two assertions in [`05-atf-test-suites.md`](05-atf-test-suites.md): the suite-10 Crunchbase batch seeds a participant list in this file's carrier naming an investor whose own name contains a comma, and [The participant carrier assertion](05-atf-test-suites.md#the-participant-carrier-assertion) exercises all three accepted carriers plus the single-name reading directly. A build that reintroduces comma splitting fails both.
+
 **4. The derived portfolio counts.** After [step 9](#step-9--recalculate-the-derived-portfolio-counts), `x_bst_startuptrk_investor.portfolio_count` is non-zero on **6** of the 7 investors. Exactly one investor is referenced by no funding round, as lead or as participant, and its count is correctly **0**. `recalculateAll()` returns **0** investors rewritten on a load whose business rules ran.
 
-**5. Provenance.** Every staged row reads `run_provenance` `fallback`, and no row reads `live`. A flow run over this dataset writes that flow's entry into `x_bst_startuptrk.ingestion.last_run_provenance` — `run`, `provenance` `fallback` and `completed`, keyed under `crunchbase` or `linkedin` — and mirrors the same values into a run summary carrying the processed, rejected and skipped counts. Any result derived from this dataset must be labelled **`fallback validated`** and never `live validated`; the labelling convention is applied by [`05-atf-test-suites.md`](05-atf-test-suites.md) and the evidence is collected by [`../validation-checklist.md`](../validation-checklist.md).
+**5. Provenance.** Every staged row reads `run_provenance` `fallback`, and no row reads `live`. A flow run over this dataset writes that flow's entry into `x_bst_startuptrk.ingestion.last_run_provenance`, which serialises one entry per source joined by `;` in the form `<source>=<provenance>|<state>|<stamp>|<run>` — so `crunchbase=fallback|succeeded|<stamp>|<run>` or the same keyed under `linkedin`; the entry is written by `IngestionLogger.markRunComplete()` through `AppProperties.completeRun()`, **not** by the run summary — and mirrors the same values into a run summary carrying the processed, rejected and skipped counts. Any result derived from this dataset must be labelled **`fallback validated`** and never `live validated`; the labelling convention is applied by [`05-atf-test-suites.md`](05-atf-test-suites.md) and the evidence is collected by [`../validation-checklist.md`](../validation-checklist.md).
 
 ### Clearing the loaded rows — a step of this procedure, not an automatic sweep
 
@@ -981,7 +1055,7 @@ Do not repair them, and do not configure the import to compensate for them. Trim
 
 ## Operational warnings
 
-These five are not rationale. They describe failures that are easy to cause and hard to see, and three of them are completely silent.
+These six are not rationale. They describe failures that are easy to cause and hard to see, and three of them are completely silent.
 
 ### A change to one leg of the three-way contract breaks the fallback path silently
 
@@ -998,6 +1072,31 @@ On `x_bst_startuptrk_ingest_staging`, `active` is a **`string` of length 10** ca
 ### Do not open the CSVs in a spreadsheet application
 
 Attach the files exactly as they are. A spreadsheet round trip commonly rewrites LF line endings to CRLF, adds a byte-order mark, re-quotes fields the dialect leaves unquoted, **unquotes or strips the designed leading and trailing spaces the rule 1 fixtures depend on** — all fourteen of which ship quoted for exactly this reason, reformats an ISO date into a locale format, and renders a large plain currency figure in scientific notation. Each of those either breaks a fixture or breaks a coercion, and several of them do so without any visible sign in the loaded rows.
+
+### A staged value can become a spreadsheet formula when the table is exported
+
+**This is an export-path risk, not an import-path one, and the two are easy to conflate.** The warning above is about a spreadsheet **corrupting the fixtures on the way in**. This one is about a staged value **executing in a spreadsheet on the way out**.
+
+`x_bst_startuptrk_ingest_staging` is the one table in the application that holds unvalidated third-party text: `raw_payload` verbatim, and `name`, `title`, `bio`, `linkedin_url`, `contact_email` and `description` as the upstream supplied them. Every mainstream spreadsheet application treats a cell whose first character is `=`, `+`, `-`, `@`, a tab or a carriage return as a **formula** rather than as text. So an administrator who inspects a live-staged row by exporting the list to CSV or Excel — the ordinary way anyone reads sixty-five rows — can execute a payload the upstream source chose, in their own session, with their own privileges. Nothing about the ingestion is involved: the value never needs to be ingested, only staged and exported.
+
+**The six delivered CSVs are clear, and this was checked rather than assumed.** All 65 data rows across all six files were parsed and every field examined: **zero** values begin with `=`, `+`, `-`, `@`, a tab or a carriage return. The fixtures cannot trigger this. The risk arrives with **live** data, or with a row an operator types by hand.
+
+**The control is a platform property, and it is outside this application's scope.**
+
+| | |
+| --- | --- |
+| Property | `glide.export.escape_formulas` |
+| Required value | `true` |
+| What it does | Prefixes an exported value whose first character is one of the six with a single quote, so the spreadsheet reads it as text. It applies to **every** export on the instance, which is why it is a platform setting rather than an application one. |
+| Whose it is | The **platform owner's**. It lives in the Global scope, and prompt section 6.0 forbids this application from creating, modifying or shipping any record outside `x_bst_startuptrk` — so it is **not** in the Update Set and must not be added to it. |
+| How to confirm | Read it in **System Properties** by name, or filter `sys_properties` on that name. Recent releases ship it `true`; an instance upgraded from an older release, or one where it was cleared, will not. **Confirm the value; do not assume the default.** |
+
+**Two further mitigations belong to whoever reads the table, and neither replaces the property.**
+
+- **Read the table in the list view rather than by exporting it.** The list view renders a leading `=` as text. [Verify in the list view, not over the Table API](#verify-in-the-list-view-not-over-the-table-api) already directs this for a different reason — `ws_access` is `false` — and it happens to be the safe habit here too.
+- **Clear settled rows promptly.** A row that has been consumed and deleted cannot be exported at all. That is the same clear-down [Clearing the loaded rows — a step of this procedure, not an automatic sweep](#clearing-the-loaded-rows--a-step-of-this-procedure-not-an-automatic-sweep) already asks for, and it is why `LA1` and `LA2` of the live-activation register gate the live path.
+
+**What this application does instead of the property it may not ship.** It never writes an upstream value into a log line, a flow output, a REST response or an error message without passing it through `AppProperties.safeText()`, which turns a double quote into a single quote, strips control characters and redacts credential-shaped, address-shaped and locator-shaped runs. That protects every surface the application owns. It does **not** protect an export of the staging table, because the staging table holds the value verbatim on purpose — that is what makes a fallback dataset a faithful stand-in for an API response.
 
 ### Verify in the list view, not over the Table API
 
@@ -1020,9 +1119,9 @@ This procedure replaces the following legacy constructs. **Nothing below is port
 
 **None of those literals matches the binding choice lists.** Nothing is carried forward: every value in the six CSVs is authored against the choice values the Update Set declares. The script also writes columns that exist on no target table, and it seeds NewsArticle records at `:L87-L100`, an entity this dataset excludes. The enumeration-replacement rule is recorded at `D-022` and the six-file, no-NewsArticle dataset at `D-054` in [`../../../docs/decisions/DECISION_LOG.md`](../../../docs/decisions/DECISION_LOG.md).
 
-### The cleaner whose transformations are deliberately not applied
+### The legacy cleaner's transformations are not applied
 
-[`../../../src/data_collection/data_cleaning/startup_cleaner.py`](../../../src/data_collection/data_cleaning/startup_cleaner.py) is the pandas cleaning pipeline. **The staged data is deliberately not cleaned by any of it**, and the four cleaning rules are applied downstream by `IngestionMapper`, not by the import transform.
+[`../../../src/data_collection/data_cleaning/startup_cleaner.py`](../../../src/data_collection/data_cleaning/startup_cleaner.py) is the pandas cleaning pipeline. **The staged data is not cleaned by any of it**, and the four cleaning rules are applied downstream by `IngestionMapper`, not by the import transform.
 
 | Citation | What is there | What the binding rule requires instead |
 | --- | --- | --- |
@@ -1052,18 +1151,19 @@ Do not sign this guide off until every line below is true.
 | 10c | For every one of the four calls, all six summary assertions of [step 8](#the-script) passed: a summary was returned, `logged` was `true`, `source_system` equalled the source passed, `provenance` was `fallback`, `events_dropped` was `0`, `skipped` was `0`, and `processed` equalled `accepted`. Recorded per call: `______` | |
 | 11 | `x_bst_startuptrk_ingest_staging` holds **65** rows across the six `import_run` values, in the per-file counts of the [verification table](#verification-after-the-load). | |
 | 12 | Before the transform, every staged row read `import_state` `pending`, `run_provenance` `fallback` and an empty `error_message`. | |
-| 13 | After the transform, `import_state` reconciles to **52 `processed`, 13 `rejected`, 0 `error`, 0 `in_progress`, 0 `pending`**, and every rejected row names its reason in `error_message`. | |
+| 13 | After the transform, `import_state` reconciles to **52 `processed`, 13 `rejected`, 0 `error`, 0 `pending`**, and every rejected row names its reason in `error_message`. | |
 | 14 | The entity record counts are **9, 7, 10, 8, 8, 10** and `x_bst_startuptrk_newsarticle` holds **0**. | |
 | 15 | `x_bst_startuptrk_m2m_round_investor` holds **26** rows, the largest round links **5** investors, no `funding_round` + `investor` pair is duplicated, and no round holds a join row for an investor its `participating_investor_names` does not name. | |
 | 16 | `InvestorPortfolioService.recalculateAll()` was run from a background script with the scope selector set to **Boston Startup Tracker**, and returned: `______` — expected `0`. | |
 | 17 | `portfolio_count` is non-zero on **6** of the 7 investors, and the one investor no round references reads `0`. | |
-| 18 | No transform map, script or import path used `setWorkflow(false)` or ran with business rules suppressed. | |
+| 18 | No transform map and no script **this procedure runs** cleared **Run business rules** or called `setWorkflow(false)` on an entity table. The two suppressions inside `IngestionMapper` are expected and are not defects: the staging-row claim of [Returning an abandoned or rejected row to the queue](#returning-an-abandoned-or-rejected-row-to-the-queue), on a table that carries no business rule, and each participant join row, which the batch closes with one explicit convergence step — confirm instead that check 16 returned `0`, which is what proves the convergence left nothing stale. | |
 | 19 | No CSV file was edited, re-saved, trimmed or otherwise repaired, and no designed defect was corrected. | |
-| 20 | `x_bst_startuptrk.ingestion.source_mode` reads the value **the aliases' branch requires**, per [Restoring `source_mode`](#restoring-source_mode-is-branch-determined-not-a-return-to-live) — `live` only when **both** aliases are in Branch B with a passing connection test, and **`fallback`** otherwise. On the instance recorded for this delivery both are in Branch A, so the required end state is **`fallback`**. Value recorded: `______` | |
-| 19a | No staging row was returned to `pending` except under [Returning an abandoned or rejected row to the queue](#returning-an-abandoned-or-rejected-row-to-the-queue), and no row rejected by a cleaning rule on its own content was returned at all. | |
-| 19b | No retention or minimisation job was expected to clear these rows. The application ships **one** scheduled job and it does not touch this table; clearing the dataset is the administrative delete of [Clearing the loaded rows](#clearing-the-loaded-rows--a-step-of-this-procedure-not-an-automatic-sweep). | |
-| 20 | `x_bst_startuptrk.ingestion.source_mode` has been set back to `live` if it was set to `fallback` for [step 8](#step-8--run-the-staging-to-entity-transform). | |
-| 21 | Any result derived from this dataset is labelled **`fallback validated`**, never `live validated`. | |
+| 20 | No staging row was returned to `pending` except under [Returning an abandoned or rejected row to the queue](#returning-an-abandoned-or-rejected-row-to-the-queue), and no row rejected by a cleaning rule on its own content was returned at all. | |
+| 21 | No retention or minimisation job was expected to clear these rows. The application ships **one** scheduled job and it does not touch this table; clearing the dataset is the administrative delete of [Clearing the loaded rows](#clearing-the-loaded-rows--a-step-of-this-procedure-not-an-automatic-sweep). | |
+| 22 | **The clear-down was performed, and the count that proves it was recorded.** After the delete of [Clearing the loaded rows](#clearing-the-loaded-rows--a-step-of-this-procedure-not-an-automatic-sweep), a list-view count of `x_bst_startuptrk_ingest_staging` filtered on the six `import_run` values returns **0**. Count recorded: `______`. Leaving the rows in place is a permitted choice on a development instance holding only this synthetic dataset — record `retained by choice` and the reason — but it is **not** permitted once live data has reached the table, which is why `LA1` and `LA2` of [the live-activation register](../gaps-and-flags.md#the-live-activation-register) gate `source_mode` `live` on it. | |
+| 23 | **`glide.export.escape_formulas` was read on this instance and its value recorded.** Required value `true`, per [A staged value can become a spreadsheet formula when the table is exported](#a-staged-value-can-become-a-spreadsheet-formula-when-the-table-is-exported). It is a Global-scope platform property, so it is **not** in the Update Set and is not this application's to set — confirm it, do not assume the release default. Value recorded: `______`. A value other than `true` is an instance finding to raise with the platform owner, and it blocks `source_mode` `live` as register row `LA9`. | |
+| 24 | `x_bst_startuptrk.ingestion.source_mode` reads the value **the aliases' branch requires**, per [Restoring `source_mode`](#restoring-source_mode-is-readiness-determined-not-a-return-to-live) — `live` only when **both** aliases are in Branch B with a passing connection test **and** every row of [the live-activation register](../gaps-and-flags.md#the-live-activation-register) carries an owner, a date and an evidence reference; **`fallback`** otherwise. On the instance recorded for this delivery both aliases are in Branch A and the register is empty, so the required end state is **`fallback`**. Value recorded: `______` | |
+| 25 | Any result derived from this dataset is labelled **`fallback validated`**, never `live validated`. | |
 
 Guide 05 may begin once every line above is true. **Its precondition is the settled instance state this guide produces, not access to these rows** — guide 05's ingestion tests seed their own, per [Position in the build order](#position-in-the-build-order).
 
@@ -1077,10 +1177,10 @@ Success criterion 4 in [`../validation-checklist.md`](../validation-checklist.md
 | [`../../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`](../../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml) | **Leg (b)**, and **authoritative for the staging column names**, types and lengths, and for every other identifier cited here. |
 | [`../../sample-data/crunchbase_startups_sample.csv`](../../sample-data/crunchbase_startups_sample.csv) | Load position 1. Record type `startup`, 19 columns, 13 rows. |
 | [`../../sample-data/crunchbase_investors_sample.csv`](../../sample-data/crunchbase_investors_sample.csv) | Load position 2. Record type `investor`, 12 columns, 8 rows. |
-| [`../../sample-data/crunchbase_funding_rounds_sample.csv`](../../sample-data/crunchbase_funding_rounds_sample.csv) | Load position 3. Record type `funding_round`, 15 columns, 12 rows. |
-| [`../../sample-data/linkedin_founders_sample.csv`](../../sample-data/linkedin_founders_sample.csv) | Load position 4. Record type `founder`, 13 columns, 10 rows. |
-| [`../../sample-data/linkedin_executives_sample.csv`](../../sample-data/linkedin_executives_sample.csv) | Load position 5. Record type `executive`, 13 columns, 10 rows. |
-| [`../../sample-data/linkedin_job_postings_sample.csv`](../../sample-data/linkedin_job_postings_sample.csv) | Load position 6. Record type `job_posting`, 16 columns, 12 rows. |
+| [`../../sample-data/crunchbase_funding_rounds_sample.csv`](../../sample-data/crunchbase_funding_rounds_sample.csv) | Load position 3. Record type `funding_round`, 16 columns, 12 rows. |
+| [`../../sample-data/linkedin_founders_sample.csv`](../../sample-data/linkedin_founders_sample.csv) | Load position 4. Record type `founder`, 14 columns, 10 rows. |
+| [`../../sample-data/linkedin_executives_sample.csv`](../../sample-data/linkedin_executives_sample.csv) | Load position 5. Record type `executive`, 14 columns, 10 rows. |
+| [`../../sample-data/linkedin_job_postings_sample.csv`](../../sample-data/linkedin_job_postings_sample.csv) | Load position 6. Record type `job_posting`, 17 columns, 12 rows. |
 | [`02-flow-crunchbase-ingestion.md`](02-flow-crunchbase-ingestion.md) | A **fallback reader** of this table. Its step 4 queries the `crunchbase` rows this guide loads, and its step 6 writes the four Crunchbase tables. |
 | [`03-flow-linkedin-ingestion.md`](03-flow-linkedin-ingestion.md) | A **fallback reader** of this table. Its step 4 queries the `linkedin` rows this guide loads, and its step 6 writes the three LinkedIn tables. |
 | [`05-atf-test-suites.md`](05-atf-test-suites.md) | Runs after this guide. Its two ingestion-flow tests seed **their own** staging rows under a per-execution token and read **none** of this dataset; they share only the `fallback validated` result label. The dependency that fixes the order is the flows' pass 2 and criterion 4, not the ATF fixtures. |

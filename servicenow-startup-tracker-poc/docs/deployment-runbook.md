@@ -2,7 +2,7 @@
 
 This runbook takes the delivered Update Set XML at [`../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`](../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml) from this repository onto the ServiceNow Personal Developer Instance at `https://dev351809.service-now.com`, installing the scoped application `x_bst_startuptrk` version 1.0.0. It covers the pre-delivery validation run against the file on disk, **three** pre-flight checks against the instance, a six-step import sequence, the eleven post-commit gates, the handoff to the manual build work, the rollback, and a complete failure-handling matrix.
 
-An operator holding the deployment credentials runs this document end to end. Running the deployment requires no file other than these two: [`./validation-gates.md`](./validation-gates.md) supplies the post-commit assertions of step 6, and [`./manual-build-instructions.md`](./manual-build-instructions.md) supplies the work that follows a successful commit. Every request shape, poll interval, timeout, abort condition and retry count is stated here.
+An operator holding the deployment credentials runs this document end to end. Every request shape, poll interval, timeout, abort condition and retry count is stated here. Four files are required alongside it: [`../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`](../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml) is the artifact being deployed, [`../scripts/validate_update_set_xml.py`](../scripts/validate_update_set_xml.py) is the pre-delivery validator this runbook runs before the upload, [`./validation-gates.md`](./validation-gates.md) supplies the post-commit assertions of step 6, and [`./manual-build-instructions.md`](./manual-build-instructions.md) supplies the work that follows a successful commit.
 
 ## Referenced documents
 
@@ -64,11 +64,13 @@ esac
 [ -n "${SERVICENOW_USERNAME:-}" ] || fail 'SERVICENOW_USERNAME is unset or empty'
 [ -n "${SERVICENOW_PASSWORD:-}" ] || fail 'SERVICENOW_PASSWORD is unset or empty'
 
-printf 'instance %s, user %s, password present (%s characters, value not shown)\n' \
-  "$SERVICENOW_INSTANCE_URL" "$SERVICENOW_USERNAME" "${#SERVICENOW_PASSWORD}"
+# Report PRESENCE only. Not the value, and not the length: a length narrows a
+# brute-force space and buys nothing the boolean does not already give.
+printf 'instance %s, user %s, password present: yes (neither value nor length shown)\n' \
+  "$SERVICENOW_INSTANCE_URL" "$SERVICENOW_USERNAME"
 ```
 
-**Four conditions, all of which must hold before pre-flight 1 runs.** The URL is set and non-empty; it is `https` — never `http`, because Basic credentials on a cleartext connection are disclosed on the wire; it names a host with no path and no trailing slash, so every `{SERVICENOW_INSTANCE_URL}/api/...` in this document concatenates correctly; and both credential variables are set and non-empty. **The password is never printed.** The line above reports only its length, which is enough to distinguish "unset" from "set to something" without disclosing the value; even that is omitted where a transcript will be shared.
+**Four conditions, all of which must hold before pre-flight 1 runs.** The URL is set and non-empty; it is `https` — never `http`, because Basic credentials on a cleartext connection are disclosed on the wire; it names a host with no path and no trailing slash, so every `{SERVICENOW_INSTANCE_URL}/api/...` in this document concatenates correctly; and both credential variables are set and non-empty. **The password is never printed, and neither is its length.** The line above reports a **boolean**: the variable is set and non-empty, or the block has already aborted. A character count is not a value, but it is not nothing either — it removes every candidate of a different length from an offline guessing attack, and it distinguishes one operator's credential from another's in a shared transcript. The boolean carries the whole of the diagnostic information the operator needs, which is why the length is not reported here or anywhere else in this runbook.
 
 **Failure is fatal and is not retried.** A malformed `SERVICENOW_INSTANCE_URL` or a missing secret is an operator configuration error, not a transient condition. Correct the environment and start again from this block.
 
@@ -86,10 +88,15 @@ trap cleanup EXIT HUP INT TERM
 curl_opts="--silent --show-error --connect-timeout 10 --max-time 120 \
            --cookie-jar $jar --cookie $jar"
 
-# 1. Authenticate. --data-urlencode escapes a password containing &, = or a space.
-login_status="$(curl $curl_opts --output /dev/null --write-out '%{http_code}' \
+# 1. Authenticate. The password is read from STDIN, never placed in argv: the field
+#    spelling is user_password@- with no '=' before the '@', which makes curl read the
+#    value from stdin and still URL-encode it. printf is a shell built-in and forks no
+#    process, so the value appears in no argument list at any point. See
+#    "Pass the password on stdin" under step 1 for the verification of this form.
+login_status="$(printf '%s' "$SERVICENOW_PASSWORD" |
+  curl $curl_opts --output /dev/null --write-out '%{http_code}' \
   --data-urlencode "user_name=${SERVICENOW_USERNAME}" \
-  --data-urlencode "user_password=${SERVICENOW_PASSWORD}" \
+  --data-urlencode "user_password@-" \
   --data "sysparm_login_with_sso=false" \
   "${SERVICENOW_INSTANCE_URL}/login.do")"
 
@@ -104,7 +111,8 @@ ck="$(curl $curl_opts \
 
 # 4. Assert the token before any request depends on it.
 [ -n "$ck" ] || { printf 'sysparm_ck was not present in the upload form\n' >&2; exit 1; }
-printf 'session established, CSRF token acquired (%s characters, value not shown)\n' "${#ck}"
+# Presence again, not length. The token is a bearer value for this session.
+printf 'session established, CSRF token acquired: yes (neither value nor length shown)\n'
 ```
 
 **Six rules govern the session, and each of them prevents a specific failure this runbook would otherwise produce.**
@@ -114,7 +122,7 @@ printf 'session established, CSRF token acquired (%s characters, value not shown
 | 1 | **One jar, created with `0600` permissions inside the working tree, used by every authenticated request.** Both `--cookie-jar` and `--cookie` name it, so each response updates it and each request presents it. | A second `curl` invocation without the jar is an **anonymous** request. The platform answers it with the login page and `HTTP 200`, so the step appears to succeed and the sequence proceeds against work that was never done. |
 | 2 | **Assert the session from the jar, not from the login status.** `POST /login.do` answers `HTTP 200` for a failed login as readily as for a successful one, because it returns the login page again. | Proceeding with an unauthenticated session and misreading every subsequent `HTTP 200` as success. |
 | 3 | **Assert `sysparm_ck` is non-empty before it is used.** | An empty token is submitted as `sysparm_ck=`, which the platform rejects as a CSRF failure — reported as a generic error that reads like a malformed request rather than a missing session. |
-| 4 | **Never print the password, the cookie jar's contents or the token.** Report lengths, never values, and never `cat` the jar. A session cookie is a bearer credential for the duration of the session: a transcript carrying it is a transcript carrying admin access. | Credential disclosure through a shared terminal transcript, a CI log or a defect report. |
+| 4 | **Never print the password, the cookie jar's contents or the token — and never their lengths either.** Report **presence** as a boolean, never a value and never a character count, and never `cat` the jar. A session cookie is a bearer credential for the duration of the session: a transcript carrying it is a transcript carrying admin access, and a transcript carrying its length is a transcript that has narrowed the search for it. | Credential disclosure through a shared terminal transcript, a CI log or a defect report. |
 | 5 | **Remove the jar on every exit path.** The `trap` covers success, failure and interruption. | A live admin session cookie left on disk after the deployment finishes. |
 | 6 | **Re-establish the session, do not reuse a stale one, if any authenticated request answers with the login page.** Sessions expire; the platform's expiry is not this document's to predict. Re-run the block above and reissue the request. | Silent no-ops during the long preview and commit polls, whose elapsed time can exceed the session lifetime. |
 
@@ -124,7 +132,7 @@ The session is required for step 1, step 3 and step 5 only. Every other request 
 **Four further rules bind the session.**
 
 - **Never print or copy the jar.** It holds a live session credential. Do not `cat` it, do not include it in the deployment log, and do not pass `-v`, `--trace` or `--trace-ascii` on any request that carries it.
-- **Let the trap delete it.** The `trap` above removes the jar on every exit path, so no explicit `rm -f "$JAR"` is written at the end of the sequence and none is needed if a step aborts.
+- **Let the trap delete it.** The `trap` above removes the jar on every exit path, so no explicit `rm -f "$jar"` is written at the end of the sequence and none is needed if a step aborts.
 - **Re-read `sysparm_ck` after any re-login.** If the session is lost mid-sequence, log in again and read a fresh token; do not reuse the previous one.
 - **The Table API reads of steps 2, 4 and 6 and of the pre-flight checks use Basic authentication and need no jar.** They may share it harmlessly, but they do not depend on it.
 
@@ -172,7 +180,7 @@ A single "retry any `HTTP 500` once" rule is safe for a read and unsafe for a wr
 
 | Artifact | Path | Detail |
 | --- | --- | --- |
-| Update Set XML | [`../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`](../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml) | One `<unload>` document holding one `<sys_remote_update_set>` header record followed by roughly 250 to 350 `<sys_update_xml>` update records. As delivered it carries **314** update records across about 1.4 MB. |
+| Update Set XML | [`../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`](../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml) | One `<unload>` document holding one `<sys_remote_update_set>` header record followed by roughly 250 to 350 `<sys_update_xml>` update records. As delivered it carries **313** update records across about 1.4 MB. |
 | Scoped application it installs | installed on the instance | Scope `x_bst_startuptrk`, version `1.0.0`, vendor prefix `x_bst`. The header record declares `application_scope` `x_bst_startuptrk` and `application_version` `1.0.0`. |
 | Pre-delivery validator | [`../scripts/validate_update_set_xml.py`](../scripts/validate_update_set_xml.py) | Two-level XML well-formedness validator covering gates G-1 and G-2. Python standard library only. |
 | Post-commit gates | [`./validation-gates.md`](./validation-gates.md) | The assertions run at step 6. |
@@ -188,7 +196,7 @@ Every item must be established and recorded before the pre-flight checks run; ti
       GET {SERVICENOW_INSTANCE_URL}/api/now/table/sys_properties?sysparm_query=name=glide.war&sysparm_fields=value
       ```
 
-      Require `HTTP 200` and a non-empty `value` naming the release and patch level. If the release predates that floor, **request a new Personal Developer Instance rather than downgrading feature usage.** **Do not** read `glide.buildname` or `glide.buildtag`: neither property exists on the instance, so the query returns an empty `result` array and the release cannot be established from it. The requirement is row 8 of [Requirements carried to the deployment runbook](./validation-gates.md#requirements-carried-to-the-deployment-runbook).
+      Require `HTTP 200` and a non-empty `value` naming the release and patch level. If the release predates that floor, **request a new Personal Developer Instance rather than downgrading feature usage.** **Do not** read `glide.buildname` or `glide.buildtag`: neither property exists on the instance, so the query returns an empty `result` array and the release cannot be established from it. The requirement is `REQ-RB-08` of [Requirements carried to the deployment runbook](./validation-gates.md#requirements-carried-to-the-deployment-runbook).
 - [ ] **The instance refuses XML entity resolution.** Read both properties and require `glide.stax.allow_entity_resolution` to be `false` and `glide.stax.whitelist_enabled` to be `true`:
 
       ```text
@@ -207,7 +215,7 @@ Every item must be established and recorded before the pre-flight checks run; ti
 GET {SERVICENOW_INSTANCE_URL}/api/now/table/sys_properties?sysparm_query=name=glide.war&sysparm_fields=value
 ```
 
-**Read `glide.war`.** Its value is of the form `glide-<family>-<date>__patch<n>-<date>`, for example `glide-zurich-06-25-2025__patch10-...`. **Do not** read `glide.buildname` or `glide.buildtag`: neither property exists on the instance, so the query returns an empty `result` array and the release cannot be established from it. That is row 7 of [Requirements carried to the deployment runbook](./validation-gates.md#requirements-carried-to-the-deployment-runbook).
+**Read `glide.war`.** Its value is of the form `glide-<family>-<date>__patch<n>-<date>`, for example `glide-zurich-06-25-2025__patch10-...`. **Do not** read `glide.buildname` or `glide.buildtag`: neither property exists on the instance, so the query returns an empty `result` array and the release cannot be established from it. That is `REQ-RB-08` of [Requirements carried to the deployment runbook](./validation-gates.md#requirements-carried-to-the-deployment-runbook).
 
 **Extract the family token** — the segment between the first and second hyphens after `glide`. For the value above, `zurich`.
 
@@ -251,6 +259,23 @@ With no `PATH`, the sibling Update Set `update-set/x_bst_startuptrk_boston_start
 
 `-q` and `-v` are mutually exclusive. Three further flags bound the parser's work on untrusted input and stay at their defaults for the delivered artifact: `--max-bytes N`, `--max-payloads N` and `--max-payload-bytes N`.
 
+**A fourth defence has no flag, deliberately.** Before any path is opened the validator gates the runtime XML parser itself, and **there is no option to override it**. Expat releases below `2.7.2` lack the defence against disproportionate memory allocation, and a document far below every ceiling above can exhaust memory on an unmitigated parser — so a flag that switched the gate off would reintroduce exactly the exposure the ceilings exist to bound. Two routes satisfy the gate:
+
+| Route | Condition | Why it is accepted |
+| --- | --- | --- |
+| Upstream | The reported Expat version is at or above **`2.7.2`**. | That is the release in which the allocation defence reached the upstream tree. |
+| Backport | The version is **`2.7.1`** and both `XML_SetAllocTrackerActivationThreshold` and `XML_SetAllocTrackerMaximumAmplification` resolve in the loaded library. | Distributions ship the defence as a patch on `2.7.1` **without moving the version string**, so a version test alone would refuse a correctly patched runtime. The two entry points are the defence's observable signature. |
+
+The gate is **fail-closed**: an Expat below `2.7.1`, a version that cannot be established, a library that cannot be probed, and the entry points appearing on a base below `2.7.1` are all **refused** rather than assumed about. A refusal exits `2`, opens no path and parses nothing.
+
+The first progress line names the state the gate observed, so the deployment log records it without a separate command:
+
+```text
+Validating <path> (parser expat_2.7.1, allocation-tracker entry points present, backported)
+```
+
+Record that parenthesis in the deployment log. `release carries the allocation-tracker defence upstream` and `allocation-tracker entry points present, backported` are the two states that proceed; any other text means the run was refused.
+
 The report is two stages on stdout, each labelled by the gate it covers:
 
 - **stage 1, gate G-1 — the outer update-set document.** The byte prologue, XML well-formedness, and the document shape: root `<unload>`, exactly one `<sys_remote_update_set>` header record, at least one `<sys_update_xml>` update record.
@@ -262,11 +287,11 @@ Progress lines and the terminal verdict are written to stdout; failure detail is
 | --- | --- |
 | `0` | Both levels well-formed and all structural assertions pass. |
 | `1` | Validation failure at either level. |
-| `2` | Usage error, or a path that is missing, not a regular file, or unreadable. Code `2` takes precedence over code `1`. |
+| `2` | Usage error; a path that is missing, not a regular file, or unreadable; **or a parser gate refusal**, in which case no path was opened and no file was validated. Code `2` takes precedence over code `1`. |
 
-**A non-zero exit blocks the deployment.** Correct the XML and re-run the validator until it exits `0`. Do not upload a file that failed validation, and do not proceed to the pre-flight checks.
+**A non-zero exit blocks the deployment.** Correct the XML and re-run the validator until it exits `0`. Do not upload a file that failed validation, and do not proceed to the pre-flight checks. **Distinguish the two non-zero codes before acting:** code `1` is a statement about the file and is fixed by correcting the XML; code `2` from a parser gate refusal is a statement about the **runtime** and is fixed by running the validator on a patched Python, not by touching the Update Set. Correcting XML in response to a gate refusal changes a file that was never shown to be wrong.
 
-The validator imports only the Python standard library, so there is nothing to install.
+The validator imports only the Python standard library, so there is nothing to install. It probes the parser library through `ctypes`, also standard library; where `ctypes` is unavailable the gate refuses rather than proceeding unprobed.
 
 Gates G-1 and G-2 are the whole of this validator's scope. The remaining pre-delivery gates — G-3 referential integrity, G-4 scope containment, G-5 secret hygiene, G-6 field-list fidelity, G-7 deliverable completeness, G-8 deck structure and G-9 governance completeness — are established elsewhere. A file that exits `0` here is not thereby certified against them.
 
@@ -278,7 +303,19 @@ Gates G-1 and G-2 are the whole of this validator's scope. The remaining pre-del
 python3 servicenow-startup-tracker-poc/scripts/validate_update_set_xml.py --self-test
 ```
 
-It must report `17 byte-prologue fixture(s), 17 passed, 0 failed`, print `PASS: byte-prologue self-test` and exit `0`. Four of the seventeen are forms that must be **accepted** and thirteen are forms that must be **refused** — among them `<?xml-stylesheet href="s.xsl"?>`, `<?xmlfoo?>` and `<?xmlversion="1.0"?>`, each of which carries no declaration at all and each of which a naive prefix test accepts. Record the fixture line in the deployment log beside the validator's exit code. A check that has only ever been run against a file that passes has not been shown to reject anything.
+It must report all four of these lines, then exit `0`:
+
+```text
+self-test: 17 byte-prologue fixture(s), 17 passed, 0 failed
+self-test: 12 parser-gate fixture(s), 12 passed, 0 failed
+self-test: this runtime's parser is <state>; the gate would admit it -- <reason>
+self-test: 29 fixture(s) in total, 29 passed, 0 failed
+PASS: self-test
+```
+
+Four of the seventeen prologue fixtures are forms that must be **accepted** and thirteen are forms that must be **refused** — among them `<?xml-stylesheet href="s.xsl"?>`, `<?xmlfoo?>` and `<?xmlversion="1.0"?>`, each of which carries no declaration at all and each of which a naive prefix test accepts. Four of the twelve parser-gate fixtures are runtimes that must be **admitted** and eight are runtimes that must be **refused**, including a version that cannot be established and a library that cannot be probed — which is what pins the gate as fail-closed rather than merely strict. The third line is the one to read for this runtime: it must say the gate **would admit** it. Record all four lines in the deployment log beside the validator's exit code. A check that has only ever been run against a file that passes has not been shown to reject anything, and a gate that has only ever been run on a patched runtime has not been shown to refuse one.
+
+`--self-test` parses no document and reads nothing from disk, so it runs — and must be run — even on a runtime the gate would refuse a file on. That is how an operator distinguishes a broken validator from an unpatched parser.
 
 **An independent confirmation, run once before the upload.** The prologue is the one file property whose failure the platform reports as a generic import error rather than as a parse error, so it is confirmed directly rather than inferred from an exit code:
 
@@ -318,19 +355,19 @@ flowchart TD
     S3 -->|"timeout"| A4
     S3 --> S4["Step 4 preview problems<br/>error-type set must be EMPTY<br/>warnings logged only"]
     S4 -->|"any error-type problem"| A3
-    S4 --> PC["Pre-commit completeness<br/>PRE-COMMIT-01 and 02<br/>both must read 314"]
+    S4 --> PC["Pre-commit completeness<br/>PRE-COMMIT-01 and 02<br/>both must read 313"]
     PC -->|"count or summary short"| A6["DO NOT COMMIT<br/>clear by the guarded procedure,<br/>re-import from step 1"]
     PC --> CV["Step 5 phase 2<br/>ASSERT the commit validation<br/>status, answer, tracker"]
     CV -->|"answer empty, unparseable<br/>or reporting a problem"| A3
     CV --> S5["Step 5 commit<br/>every 10 s, timeout 1200 s<br/>never retried"]
     S5 -->|"commit_failed or error"| GD{"Rollback preconditions<br/>all five hold?"}
-    S5 --> S6["Step 6<br/>11 required gates<br/>plus GATE-COL-01<br/>plus 3 diagnostics"]
+    S5 --> S6["Step 6<br/>11 required gates<br/>plus GATE-COL-01<br/>plus 4 diagnostics"]
     S6 -->|"a REQUIRED gate fails"| GD
     S6 -->|"GATE-COL-01 fails"| AB["ACCEPTANCE BLOCKED<br/>correct the XML, re-import<br/>NO rollback"]
     S6 -->|"a DIAGNOSTIC fails"| AD["report and investigate<br/>blocks nothing, NO rollback"]
     AD --> S6
     S6 --> DONE["ACCEPTED<br/>hand off to the manual build guides"]
-    GD -->|"clean install, one scope,<br/>identifier matches, token given"| RB["ROLLBACK<br/>delete the scope by sys_id,<br/>confirm on four surfaces"]
+    GD -->|"clean install, one scope,<br/>identifier matches, token given"| RB["ROLLBACK<br/>delete the scope by sys_id,<br/>confirm on five surfaces,<br/>then clear the role grants"]
     GD -->|"upgrade install"| BO["BACKOUT PATH<br/>no deletion,<br/>platform backout, escalate"]
     GD -->|"any other precondition fails"| A10["REPORT AND STOP<br/>delete nothing"]
 ```
@@ -358,7 +395,7 @@ GET {SERVICENOW_INSTANCE_URL}/api/now/table/sys_remote_update_set?sysparm_limit=
 
 Check every one of the four, in that order, and record which one failed.
 
-**Why the status alone is insufficient.** A hibernated or logged-out instance answers `HTTP 200` with an HTML page — a hibernation notice, a login form or a redirect landing page — rather than Table API JSON. On this instance, at the time of writing, exactly that was observed: `HTTP 200` with `Content-Type: text/html` and hibernation content in the body. A check that tested only the status would have passed and the deployment would have proceeded against an instance that was not awake.
+**What was observed on this instance.** A hibernated or logged-out instance answers `HTTP 200` with an HTML page — a hibernation notice, a login form or a redirect landing page — and not Table API JSON. On this instance, at the time of writing, exactly that was observed: `HTTP 200` with `Content-Type: text/html` and hibernation content in the body. All four checks are therefore required, not the status alone.
 
 **On failure.** **Abort.** Do not proceed to check 2.
 
@@ -414,7 +451,7 @@ The query selects only upgrade rows that have not finished, so an empty result m
 
 **On failure.** **Abort.** An upgrade is in progress. Retry the whole deployment when the instance is idle.
 
-**Do not** issue this check as `sysparm_query=state=executing`. `sys_upgrade_history` carries no `state` field, so the platform drops the condition and returns the instance's entire upgrade history — which this check reads as an upgrade in progress and aborts every deployment. The requirement is row 1 of [Requirements carried to the deployment runbook](./validation-gates.md#requirements-carried-to-the-deployment-runbook).
+**Do not** issue this check as `sysparm_query=state=executing`. `sys_upgrade_history` carries no `state` field, so the platform drops the condition and returns the instance's entire upgrade history — which this check reads as an upgrade in progress and aborts every deployment. The requirement is `REQ-RB-01` of [Requirements carried to the deployment runbook](./validation-gates.md#requirements-carried-to-the-deployment-runbook).
 
 Once all three checks have run, and checks 1 and 3 have passed, proceed to step 1. The installation mode recorded by check 2 travels with the deployment.
 
@@ -424,7 +461,7 @@ Six steps, run in order. Each step states its action, its request, its polling i
 
 `{ruset_sys_id}` below is the remote update set record identifier captured at step 1. Steps 2 through 5 all address that one record, and each of them re-addresses it by that identifier rather than by any query that could resolve to a different record.
 
-`{record_count}` below is the number of `<sys_update_xml>` elements in the uploaded file — **314** for the Update Set delivered with this package, the count [`../scripts/validate_update_set_xml.py`](../scripts/validate_update_set_xml.py) reports as it validates the file. It is the same number on every deployment of a given file.
+`{record_count}` below is the number of `<sys_update_xml>` elements in the uploaded file — **313** for the Update Set delivered with this package, the count [`../scripts/validate_update_set_xml.py`](../scripts/validate_update_set_xml.py) reports as it validates the file. It is the same number on every deployment of a given file.
 
 ### One session for the whole sequence
 
@@ -446,16 +483,9 @@ Record the `sys_id` set returned as `{pre_upload_ids}`. **If it is not empty, st
 
 **Encode each field with a real form encoder; never concatenate the values into the body.** A password containing `&`, `+`, `%` or `=` changes how the body parses when it is pasted in raw: `&` starts a new field, `+` decodes to a space, `%` begins an escape, and `=` splits a name from a value. The login then fails, or worse authenticates with a silently different password.
 
-**Pass the password on stdin, never as a command-line argument.** An argv value is readable by anything that can list the process table for as long as the request runs, so `--data-urlencode "user_password=$SERVICENOW_PASSWORD"` exposes the credential by a mechanism outside this runbook's control. `curl`'s `@-` suffix reads the field's value from stdin and still URL-encodes it, and `printf` is a shell built-in that forks no process of its own, so the value never appears in any argument list. Use this form exactly as written:
+**Pass the password on stdin, never as a command-line argument.** An argv value is readable by anything that can list the process table for as long as the request runs, so a `--data-urlencode "user_password=$SERVICENOW_PASSWORD"` form would expose the credential by a mechanism outside this runbook's control. `curl`'s `@-` suffix reads the field's value from stdin and still URL-encodes it, and `printf` is a shell built-in that forks no process of its own, so the value never appears in any argument list. **This is the only login form this runbook uses**: the session block under [Session lifecycle](#session-lifecycle-for-the-three-form-based-routes) is the same construction with the shared `curl_opts` and the status capture, and there is no second form anywhere in this document. Use it exactly as written:
 
-```bash
-printf '%s' "$SERVICENOW_PASSWORD" |
-curl --silent --show-error --cookie-jar "$JAR" --cookie "$JAR" \
-     --data-urlencode "user_name=$SERVICENOW_USERNAME" \
-     --data-urlencode "user_password@-" \
-     --data "sysparm_login_with_sso=false" \
-     "$SERVICENOW_INSTANCE_URL/login.do" --output /dev/null
-```
+**There is exactly one normative login procedure in this runbook**, the numbered block under [Session lifecycle for the three form-based routes](#session-lifecycle-for-the-three-form-based-routes), and it already uses this form. Do not compose a second one here: run that block, then continue with the upload below on the session it established. What follows is the reasoning that block's item 1 implements.
 
 Note the field spelling: `user_password@-`, with **no** `=` before the `@`. `--data-urlencode "name@filename"` reads the value from that file and encodes it, and `-` is stdin; writing `user_password=@-` would instead send the two literal characters `@-` as the password. The mechanism was verified against `curl` 8.14.1 with a password containing `&`, `=`, `+`, `%`, `"` and a backslash, which produced a correctly encoded body and no argv exposure. The choice is recorded at `D-121` in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
@@ -480,7 +510,7 @@ sysparm_target=sys_remote_update_set
 attachFile=<the raw bytes of ../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml>
 ```
 
-**Order the parts exactly as shown, with `attachFile` last.** Any order placing `attachFile` before the other parts returns `HTTP 200` while importing nothing, so the sequence would proceed against an update set that does not exist. The requirement is row 3 of [Requirements carried to the deployment runbook](./validation-gates.md#requirements-carried-to-the-deployment-runbook).
+**Order the parts exactly as shown, with `attachFile` last.** Any order placing `attachFile` before the other parts returns `HTTP 200` while importing nothing, so the sequence would proceed against an update set that does not exist. The requirement is `REQ-RB-03` of [Requirements carried to the deployment runbook](./validation-gates.md#requirements-carried-to-the-deployment-runbook).
 
 The file part is the file's bytes, unmodified and unwrapped. The upload depends on three file-level properties of that artifact, all three of which gate G-1 has already established:
 
@@ -508,7 +538,7 @@ GET {SERVICENOW_INSTANCE_URL}/api/now/table/sys_remote_update_set?sysparm_query=
 
 **Do not** identify the record with `sysparm_query=ORDERBYDESCsys_created_on^name=Boston Startup Tracker 1.0.0`. The instance is shared, that name is a constant, and the most recently created record carrying it may belong to another deployment or another agent working in parallel — after which the preview, the commit and above all the rollback would all act on someone else's work. [Run identity](#run-identity--one-unique-name-per-deployment) exists to make that impossible.
 
-**Do not** select the update set with `ORDERBYDESCsys_created_on` and `sysparm_limit=1`. The name is not unique, so the newest record carrying it can belong to a retry of this run or to a parallel clone, and the sequence would then preview and commit another run's file. The requirement is row 4 of [Requirements carried to the deployment runbook](./validation-gates.md#requirements-carried-to-the-deployment-runbook).
+**Do not** select the update set with `ORDERBYDESCsys_created_on` and `sysparm_limit=1`. The name is not unique, so the newest record carrying it can belong to a retry of this run or to a parallel clone, and the sequence would then preview and commit another run's file. The requirement is `REQ-RB-04` of [Requirements carried to the deployment runbook](./validation-gates.md#requirements-carried-to-the-deployment-runbook).
 
 | Observed at step 1c | Action |
 | --- | --- |
@@ -517,9 +547,9 @@ GET {SERVICENOW_INSTANCE_URL}/api/now/table/sys_remote_update_set?sysparm_query=
 | More than one identifier outside `{existing_ids}` | Another deployment of the same file completed concurrently. **Abort.** Report every identifier observed, serialise the deployments, and restart from step 1a. Do not guess which record is this run's. |
 | An identifier whose `application_scope` is not `x_bst_startuptrk` | **Abort.** The record does not belong to this artifact. Report it and restart from step 1a. |
 
-**Do not** wait for a `sys_attachment` record for the uploaded file. The XML import consumes the upload and retains no attachment row against `sys_remote_update_set`, so a step that waits for one waits indefinitely. The requirement is row 9 of [Requirements carried to the deployment runbook](./validation-gates.md#requirements-carried-to-the-deployment-runbook).
+**Do not** wait for a `sys_attachment` record for the uploaded file. The XML import consumes the upload and retains no attachment row against `sys_remote_update_set`, so a step that waits for one waits indefinitely. The requirement is `REQ-RB-09` of [Requirements carried to the deployment runbook](./validation-gates.md#requirements-carried-to-the-deployment-runbook).
 
-**Do not** upload by `POST /api/now/table/sys_remote_update_set` with `Content-Type: application/xml`. The Table API does not accept an update-set payload and returns `HTTP 400`. The requirement is row 2 of the same table.
+**Do not** upload by `POST /api/now/table/sys_remote_update_set` with `Content-Type: application/xml`. The Table API does not accept an update-set payload and returns `HTTP 400`. The requirement is `REQ-RB-02` of the same table.
 
 **On a failed upload.** Follow the **upload** row of the [retry policy](#retry-policy--by-operation-not-by-status), which is more specific than the general `HTTP 500` rule and takes precedence over it: re-query by `{RUN_NAME}` first, because an upload that errored may nonetheless have landed. Retry only when no new record exists, at most **3 attempts with 10-second backoff**. If the third attempt still yields no record, **abort**. If more than one record exists, **stop** rather than retry.
 
@@ -547,7 +577,7 @@ GET {SERVICENOW_INSTANCE_URL}/api/now/table/sys_remote_update_set/{ruset_sys_id}
 | `loaded` | Proceed to step 3. |
 | `error` | **Abort.** Report `state` and the preview-problem records for this identifier. Fix the XML, re-export, and restart from step 1a. |
 
-**Do not** request or report `error_detail`. `sys_remote_update_set` has no `error_detail` column, so the platform drops it from the response and a step that logs it logs nothing on every failure it handles. Report `state`, and at step 3 the execution tracker's `message`, instead. The requirements are rows 6 and 7 of [Requirements carried to the deployment runbook](./validation-gates.md#requirements-carried-to-the-deployment-runbook).
+**Do not** request or report `error_detail`. `sys_remote_update_set` has no `error_detail` column, so the platform drops it from the response and a step that logs it logs nothing on every failure it handles. Report `state`, and at step 3 the execution tracker's `message`, instead. The requirements are `REQ-RB-06` and `REQ-RB-07` of [Requirements carried to the deployment runbook](./validation-gates.md#requirements-carried-to-the-deployment-runbook).
 
 **On the timeout elapsing without reaching `loaded`.** Abort and investigate. Do not trigger the preview, and do not commit.
 
@@ -604,17 +634,17 @@ The update set's own states remain the outcome assertion:
 | `error` | **Abort.** Report `state` together with the `message` and `result` of the execution tracker `{tracker_sys_id}` and the preview-problem records. Fix the XML, re-export, and restart from step 1. |
 | `previewing` while the tracker is terminal | **Abort.** The preview process ended without moving the record. This is the case that polling the update set alone cannot see. Report both states and the tracker's `message`. |
 
-**Completeness assertion on reaching `previewed`.** Require `summary` to equal `{record_count}`, that is `314`. This is why the poll reads the content fields and not `state` alone: an Update Set whose customer updates did not attach to its header reaches `previewed` and then `committed` while applying no record at all, the platform reports success, the scope is never created, and all eleven post-commit gates then fail against an application that was never installed. `summary` is the field that distinguishes the two outcomes, and it is read before anything is committed.
+**Completeness assertion on reaching `previewed`.** Require `summary` to equal `{record_count}`, that is `313`. This is why the poll reads the content fields and not `state` alone: an Update Set whose customer updates did not attach to its header reaches `previewed` and then `committed` while applying no record at all, the platform reports success, the scope is never created, and all eleven post-commit gates then fail against an application that was never installed. `summary` is the field that distinguishes the two outcomes, and it is read before anything is committed.
 
 A `summary` of `0` means the preview found nothing to apply. A `summary` below `{record_count}` means it found only part of the file. **On either, abort: do not commit.** Report `state`, `summary`, `inserted`, `updated`, `deleted` and `collisions`, delete the retrieved update set `{ruset_sys_id}`, correct the Update Set XML, and restart from step 1a. Nothing has been committed at this point, so there is no scope and no rollback.
 
 The `inserted`, `updated` and `deleted` split beneath `summary` is recorded as evidence rather than asserted. On a clean install `inserted` equals `summary` with `updated` and `deleted` at `0`; re-importing the same file over records that already exist reports the same `summary` with the total distributed across `inserted` and `updated` instead, so asserting the split would fail a legitimate re-deployment. `collisions` is `0` on a clean instance, and a non-zero value is surfaced by step 4.
 
-**Do not** trigger the preview by `PATCH /api/now/table/sys_remote_update_set/{ruset_sys_id}` with body `{"state":"previewing"}`. That request returns `HTTP 200` and is ignored, so the sequence would poll a preview that was never started. The requirement is row 5 of [Requirements carried to the deployment runbook](./validation-gates.md#requirements-carried-to-the-deployment-runbook).
+**Do not** trigger the preview by `PATCH /api/now/table/sys_remote_update_set/{ruset_sys_id}` with body `{"state":"previewing"}`. That request returns `HTTP 200` and is ignored, so the sequence would poll a preview that was never started. The requirement is `REQ-RB-05` of [Requirements carried to the deployment runbook](./validation-gates.md#requirements-carried-to-the-deployment-runbook).
 
 **On the timeout elapsing without reaching `previewed`.** Abort and investigate. Do not commit a partially previewed set.
 
-**Operational note.** The delivered set carries **314** update records, which makes the preview the longest step in this sequence. Expect it to approach the 600 s timeout. Slowness here is not failure — poll to the timeout before declaring one.
+**Operational note.** The delivered set carries **313** update records, which makes the preview the longest step in this sequence. Expect it to approach the 600 s timeout. Slowness here is not failure — poll to the timeout before declaring one.
 
 ### Step 4 — check the preview problems
 
@@ -646,23 +676,23 @@ Two checks run here, after the preview-problem step and **before** the commit. T
 
 They exist because an Update Set whose customer updates did not attach to its header commits without applying any record: the platform reports success, the scope is never created, and every post-commit gate then fails and would otherwise initiate a rollback of an application that was never installed.
 
-`{record_count}` is the number of `<sys_update_xml>` elements in the uploaded file — **314** for the Update Set delivered with this package, the count [`../scripts/validate_update_set_xml.py`](../scripts/validate_update_set_xml.py) reports at gate G-2.
+`{record_count}` is the number of `<sys_update_xml>` elements in the uploaded file — **313** for the Update Set delivered with this package, the count [`../scripts/validate_update_set_xml.py`](../scripts/validate_update_set_xml.py) reports at gate G-2.
 
 ```text
 GET {SERVICENOW_INSTANCE_URL}/api/now/stats/sys_update_xml?sysparm_query=remote_update_set={ruset_sys_id}&sysparm_count=true
 ```
 
-`PRE-COMMIT-01` passes on `HTTP 200` with a `count` equal to `{record_count}`, that is `314`.
+`PRE-COMMIT-01` passes on `HTTP 200` with a `count` equal to `{record_count}`, that is `313`.
 
 ```text
 GET {SERVICENOW_INSTANCE_URL}/api/now/table/sys_remote_update_set/{ruset_sys_id}?sysparm_fields=state,summary,inserted,updated,deleted,collisions
 ```
 
-`PRE-COMMIT-02` passes on `HTTP 200` with `state` exactly `previewed` and `summary` equal to `314`.
+`PRE-COMMIT-02` passes on `HTTP 200` with `state` exactly `previewed` and `summary` equal to `313`.
 
 **On failure of either check.** **Do not commit.** Neither check initiates the rollback: nothing has been committed and no scope exists, so there is nothing to roll back.
 
-Report every field value observed. A `summary` of `0` means the preview found nothing to apply; a `summary` below `314` means it found only part of the file; a `state` other than `previewed` means the check was read before the preview completed, so re-read it once the preview finishes.
+Report every field value observed. A `summary` of `0` means the preview found nothing to apply; a `summary` below `313` means it found only part of the file; a `state` other than `previewed` means the check was read before the preview completed, so re-read it once the preview finishes.
 
 Then clear the failed import and re-import from step 1. **Clearing it is a deletion, so it runs the guarded procedure and nothing else:** [Removing a failed retrieved update set](./validation-gates.md#removing-a-failed-retrieved-update-set). That procedure acts on `{ruset_sys_id}` alone, requires the record's `name` to equal `{RUN_NAME}` before it deletes anything, deletes only the header record and never issues a request against `sys_update_xml`, and **stops and refers the cleanup to an instance administrator wherever ownership cannot be proven.** Never delete a retrieved update set by name, by state, by creation date or by any other query: the instance is shared, and a query-based deletion can remove another deployment's work.
 
@@ -733,7 +763,7 @@ GET {SERVICENOW_INSTANCE_URL}/api/now/table/sys_remote_update_set/{ruset_sys_id}
 
 **Timeout.** **1200 s** (1200 seconds).
 
-**No-progress bound.** The commit is the one step where a stall must not be cut short quickly: it is applying 326 records and a long pause is normal. Abort on **no change to `percent_complete` and `sys_updated_on` across 30 consecutive passes** — 300 s — and report the last observed values.
+**No-progress bound.** The commit is the one step where a stall must not be cut short quickly: it is applying `{record_count}` records — **313** for the Update Set delivered with this package — and a long pause is normal. Abort on **no change to `percent_complete` and `sys_updated_on` across 30 consecutive passes** — 300 s — and report the last observed values.
 
 | Observed update set `state` | Action |
 | --- | --- |
@@ -751,13 +781,13 @@ GET {SERVICENOW_INSTANCE_URL}/api/now/table/sys_remote_update_set/{ruset_sys_id}
 
 ### Step 6 — post-commit gates
 
-**Action.** Run the **eleven required** gates defined in [`./validation-gates.md`](./validation-gates.md), then run and record the **four further checks** that sit beside them in two separately counted classes — the **acceptance-required** `GATE-COL-01` and the **three non-normative diagnostics** — together with the **one external instance observation**. That document is authoritative for every gate's target, query, expected result and pass condition. They are not restated here.
+**Action.** Run the **eleven required** gates defined in [`./validation-gates.md`](./validation-gates.md), then run and record the **four further checks** that sit beside them in two separately counted classes — the **acceptance-required** `GATE-COL-01` and the **three acceptance-required security checks** `GATE-SEC-01` to `GATE-SEC-03` — together with the **one external instance observation**. That document is authoritative for every gate's target, query, expected result and pass condition. They are not restated here.
 
 **The eleven required gates are the acceptance contract**, exactly as AAP section 0.11.2 and the deployment environment define it:
 
 | Gate group | Count | Gate identifiers |
 | --- | --- | --- |
-| Entity table reads — one authenticated `sysparm_limit=1` read per entity table | 7 | `GATE-TBL-01` through `GATE-TBL-07` |
+| Entity table gates — one scoped `sys_db_object` read per entity table, asserting the table name together with `access` `package_private`, `read_access` `false` and `ws_access` `false` | 7 | `GATE-TBL-01` through `GATE-TBL-07` |
 | Role record gates — one per role | 3 | `GATE-ROLE-01` through `GATE-ROLE-03` |
 | Scope record gate | 1 | `GATE-SCOPE-01` |
 | **Required total** | **11** | |
@@ -766,16 +796,17 @@ GET {SERVICENOW_INSTANCE_URL}/api/now/table/sys_remote_update_set/{ruset_sys_id}
 
 **`GATE-SCOPE-01` is where the rollback's identifier is captured.** Record the `sys_id` that gate returns in the deployment log. The rollback deletes that exact identifier and nothing else, and only under the conditions [Rollback](#rollback) states.
 
-**Two further check classes are run at step 6, and they do not carry the same weight.** [`./validation-gates.md`](./validation-gates.md#three-classes-of-check-and-what-each-one-blocks) defines both. **`GATE-COL-01` — the 53-column count — is acceptance-required and non-rollback**: a failure **blocks acceptance**, because success criterion 1 depends on it, but it never triggers the rollback, because the tables and roles committed correctly and the defect lives in the Update Set. Correct the Update Set and re-import. **`GATE-SEC-01` through `GATE-SEC-03` — the scope-containment, Table-API and REST-control posture checks — are non-normative diagnostics**: run them, record their results, investigate any discrepancy, and report it with the deployment. Neither class triggers the rollback, and only `GATE-COL-01` blocks acceptance.
+**Two further check classes are run at step 6, and they do not carry the same weight.** [`./validation-gates.md`](./validation-gates.md#three-classes-of-check-and-what-each-one-blocks) defines both. **`GATE-COL-01` — the 53-column count — is acceptance-required and non-rollback**: a failure **blocks acceptance**, because success criterion 1 depends on it, but it never triggers the rollback, because the tables and roles committed correctly and the defect lives in the Update Set. Correct the Update Set and re-import. **`GATE-SEC-01` through `GATE-SEC-04` — the scope-containment, write-capability, REST-control and secured-read checks — are non-normative diagnostics**: run them, record their results, investigate any discrepancy, and report it with the deployment. Neither class triggers the rollback, and only `GATE-COL-01` blocks acceptance.
 
-**The four further checks, in the two classes just defined. Only `GATE-COL-01` blocks acceptance; none of the four triggers the rollback:**
+**The five further checks, in the two classes just defined. Only `GATE-COL-01` blocks acceptance; none of the five triggers the rollback:**
 
 | Check | Class | Assertion | On failure |
 | --- | --- | --- | --- |
 | `GATE-COL-01` | **2 — acceptance-required, non-rollback** | The seven entity tables carry exactly 53 columns between them. | Report the count observed and the per-table split. **Acceptance is blocked** until the Update Set is corrected and re-imported, and criterion 1 is not recorded as met while it is failing. **No rollback**: a shortfall with all eleven required gates passing is corrected by re-exporting and re-importing, not by destroying an installation whose tables and roles committed correctly. |
-| `GATE-SEC-01` | 3 — non-normative diagnostic | The three supporting tables are reachable from the `x_bst_startuptrk` scope only. | Report the names observed and investigate. **No rollback**, and acceptance is not blocked. |
+| `GATE-SEC-01` | 3 — non-normative diagnostic | All ten application tables are reachable from the `x_bst_startuptrk` scope only. | Report the names observed and investigate. **No rollback**, and acceptance is not blocked. |
 | `GATE-SEC-02` | 3 — non-normative diagnostic | No application table permits any cross-scope write, configuration or schema operation. | Report the tables missing from the result. **No rollback**, but **do not put the application into use**: correct the dictionary records, re-export and re-import. |
 | `GATE-SEC-03` | 3 — non-normative diagnostic | Both `REST_Endpoint` access controls committed. | Report and correct before the API is exposed. **No rollback**, and acceptance is not blocked. |
+| `GATE-SEC-04` | 3 — non-normative diagnostic | Each of the seven entity tables resolves and is readable through the ACL-respecting path. It is a background script run in the `x_bst_startuptrk` scope, not an HTTP request. | Report the seven log lines. A `can_read=false` means no caller can read that table and every list response will answer `403` — correct the table-level read control before the API is exposed. **No rollback**, and acceptance is not blocked. |
 
 **One external instance observation, which is not a gate at all.** The Global-scope XML entity-resolution properties, under [Instance prerequisite for XML entity resolution](./validation-gates.md#instance-prerequisite-for-xml-entity-resolution). This application cannot set them, cannot test them into compliance, and cannot be rolled back to fix them — deleting this scope would not change a Global property by one byte. **Record the two values read and, where the reading is not the hardened configuration, report it to the platform owner as a finding against the instance.** No reading of it fails the deployment.
 
@@ -785,7 +816,7 @@ GET {SERVICENOW_INSTANCE_URL}/api/now/table/sys_remote_update_set/{ruset_sys_id}
 
 **On a `GATE-COL-01` failure.** Report the count observed and the per-table split, and **stop without rolling back**. The deployment stays in place and **acceptance is blocked**: correct the Update Set so the seven entity tables carry exactly the 53 binding columns, re-import, and do not record criterion 1 as met until the check passes.
 
-**On a non-normative diagnostic failure.** Report it, act on its own row above, and **never roll back**. A diagnostic is not part of the acceptance contract, blocks neither acceptance nor any manual-build guide, and cannot destroy an installation — `GATE-SEC-02` is the one whose failure should stop the application being put into use, and its own row says so.
+**On a class 3 security-check failure.** Report it, act on its own row above, and **never roll back**. A class 3 failure cannot destroy an installation, and it does not hold up a manual-build guide, but it **does** block acceptance and it **does** stop the application being put into use until the delivered posture is corrected and re-imported or the platform owner records written acceptance of the named exposure. All three are treated alike — `GATE-SEC-02` is the one whose failure should stop the application being put into use, and its own row says so.
 
 Record one row per required gate and one per further check in the evidence record of [`./validation-gates.md`](./validation-gates.md), and record no credential value in any field of it.
 
@@ -814,7 +845,33 @@ A **scheduled run** is a flow execution that passed the flow's cadence guard and
 
 Distinguish the two in the flow execution log by the first action after the trigger. A no-op records the cadence-guard comparison and then an early exit, and writes neither durable run state nor a run-summary record. A scheduled run passes the guard, proceeds to the source call or the fallback read, and writes both.
 
-**Read each run's provenance from the durable run state, not from the log.** The scoped property `x_bst_startuptrk.ingestion.last_run_provenance` holds one entry per flow — `run`, `provenance` and `completed` — and `new IngestionLogger().readRunState('crunchbase')` or `('linkedin')` returns it. Read it immediately after each counted run, because it holds only that flow's most recent run. That property is also what the cadence guard reads, so it survives log pruning and the logging severity threshold; the run-summary record carries the same three values as readable evidence, and where the two disagree the property governs. Record each run's provenance as `live` or `fallback`. Per-record skips arising from the four cleaning rules are expected behaviour, not unhandled errors, and are counted separately. The staging-side definition and the provenance contract are in [`../sample-data/README.md`](../sample-data/README.md).
+**Read each run's provenance from the durable run state, not from the log.** The scoped property `x_bst_startuptrk.ingestion.last_run_provenance` holds **one entry per source system, semicolon-separated**, each entry serialised as:
+
+```text
+<source>=<provenance>|<state>|<stamp>|<run>
+```
+
+so a property holding both flows' markers reads, for example, `crunchbase=fallback|succeeded|2026-08-09 04:15:22|crunchbase-20260809041500-3f9c1a7b2d4e5f60;linkedin=fallback|running|2026-08-09 05:02:10|linkedin-20260809050200-a1b2c3d4e5f60718`. The four members are the provenance (`live` or `fallback`), the state (`running` or `succeeded`), the completion timestamp, and the run identifier. **An entry whose four members are not all present is ignored rather than half-read**, and a legacy value of the bare text `live` or `fallback` is recognised as carrying no per-source marker at all.
+
+Read it through `AppProperties`, from a background script with the scope selector set to **Boston Startup Tracker**:
+
+```javascript
+var props = new AppProperties();
+
+// The whole marker set, one member per source system, each null when that source
+// has no entry: { crunchbase: {...}, linkedin: {...}, legacy: '' }.
+var markers = props.readRunMarkers();
+
+// The provenance and completion stamp of one source's last SUCCEEDED run. Both answer
+// an empty string while that run is still `running`, which is what distinguishes a
+// finished run from one in flight.
+gs.info('crunchbase provenance=' + props.getRunProvenance('crunchbase') +
+        ' completed=' + props.getLastSuccessAt('crunchbase'));
+gs.info('linkedin provenance='   + props.getRunProvenance('linkedin') +
+        ' completed='            + props.getLastSuccessAt('linkedin'));
+```
+
+There is no `IngestionLogger.readRunState()`; the logger writes events and counters, and the run state belongs to `AppProperties`. Read the markers immediately after each counted run, because each source's entry holds only that source's most recent run. That property is also what the cadence guard reads, so it survives log pruning and the logging severity threshold; the run-summary record carries the same provenance as readable evidence, and where the two disagree the property governs. Record each run's provenance as `live` or `fallback`. Per-record skips arising from the four cleaning rules are expected behaviour, not unhandled errors, and are counted separately. The staging-side definition and the provenance contract are in [`../sample-data/README.md`](../sample-data/README.md).
 
 ## Rollback
 
@@ -837,7 +894,7 @@ The rollback runs on **exactly two** conditions:
 1. **Commit failure at step 5** — the remote update set reached `commit_failed` or `error` while committing.
 2. **A required post-commit gate failure at step 6** — one of the eleven.
 
-**No other condition triggers the rollback.** A pre-flight failure, an upload failure at step 1, a load error at step 2, a preview error at step 3, an error-type preview problem at step 4, a pre-commit completeness failure, a load or preview timeout, a `GATE-COL-01` failure, and **every non-normative diagnostic failure** all resolve without it — each is handled as its own row of the [failure-handling matrix](#failure-handling-matrix). Report the specific failure that triggered the rollback before the first request below.
+**No other condition triggers the rollback.** A pre-flight failure, an upload failure at step 1, a load error at step 2, a preview error at step 3, an error-type preview problem at step 4, a pre-commit completeness failure, a load or preview timeout, a `GATE-COL-01` failure, and **every class 3 security-check failure** all resolve without it — each is handled as its own row of the [failure-handling matrix](#failure-handling-matrix). Report the specific failure that triggered the rollback before the first request below.
 
 ### Preconditions — all five, before any deletion
 
@@ -846,7 +903,7 @@ A trigger condition makes the rollback *applicable*. These five preconditions ma
 | # | Precondition | How it is established |
 | --- | --- | --- |
 | 1 | **The installation mode recorded at pre-flight 2 is `clean install`.** | Read it from the deployment log, where [Pre-flight 2](#pre-flight-2--starting-state-of-the-scope) wrote it before anything was uploaded. It cannot be re-derived now: after a commit, a scope exists either way, and nothing observable distinguishes one this deployment created from one it updated. |
-| 2 | **Exactly one `sys_scope` record for `x_bst_startuptrk` exists now.** | The read at step R1 below. Zero and more-than-one are both stop conditions. |
+| 2 | **Exactly one `sys_scope` record for `x_bst_startuptrk` exists now.** | The read at step A1 below. Zero and more-than-one are both stop conditions. |
 | 3 | **That record's `sys_id` equals the one `GATE-SCOPE-01` returned during this run.** | Compare against the value recorded at [step 6](#step-6--post-commit-gates). Where `GATE-SCOPE-01` itself was the failing gate and returned no record, precondition 2 has already stopped the rollback. |
 | 4 | **The trigger condition is one of the two above, and it has been reported.** | The report is written before the deletion, not after. |
 | 5 | **A current-run confirmation token is supplied by the operator**, naming this run and this scope identifier: `ROLLBACK {RUN_NAME} {scope_sys_id}`. | Typed by the operator at the moment of the rollback, reproducing `{RUN_NAME}` from step 1 and `{scope_sys_id}` from step R1. This is deliberately not automatable: it is the point at which a human confirms that the identifier about to be deleted is the one this run created. A token that does not reproduce both values exactly **stops the rollback.** |
@@ -890,9 +947,25 @@ GET {SERVICENOW_INSTANCE_URL}/api/now/table/sys_scope?sysparm_query=scope=x_bst_
 
 **Never write `result[0].sys_id` without checking the array length first.** Taking the first element of an unchecked array is how a rollback deletes a record it was never entitled to touch.
 
-**Step R2 — confirm the five preconditions, in writing.** Record in the deployment log, before the deletion: the installation mode from pre-flight 2; the scope record count from R1; `{scope_sys_id}` and the `GATE-SCOPE-01` identifier side by side; the trigger condition and the report already made; and the confirmation token. **This is a step, not a formality** — it is the last point at which the deletion can be reconsidered.
+**Step A2 — confirm the five preconditions, in writing.** Record in the deployment log, before the deletion: the installation mode from pre-flight 2; the scope record count from R1; `{scope_sys_id}` and the `GATE-SCOPE-01` identifier side by side; the trigger condition and the report already made; and the confirmation token. **This is a step, not a formality** — it is the last point at which the deletion can be reconsidered.
 
-**Step R3 — delete the scope record, by identifier.**
+**Step A3 — confirm the branch one last time.** Re-read `START_STATE` from the deployment log and confirm it is `clean`. This is the last point before an irreversible request; a mismatch here means Branch B applies and this branch must not proceed.
+
+**Step A0 — establish what the cascade will take with it.** Run this before step A2 and record every row in the deployment log. It resolves the one question the cascade's blast radius depends on and that no prose can answer for an arbitrary instance: which of the credential-bearing records are inside the scope.
+
+```text
+GET {SERVICENOW_INSTANCE_URL}/api/now/table/sys_alias?sysparm_query=nameSTARTSWITHx_bst_startuptrk.&sysparm_fields=name,sys_scope,sys_id
+GET {SERVICENOW_INSTANCE_URL}/api/now/table/sys_connection?sysparm_query=sys_scope.scope=x_bst_startuptrk&sysparm_fields=name,sys_scope,credential,sys_id
+GET {SERVICENOW_INSTANCE_URL}/api/now/table/discovery_credentials?sysparm_query=sys_scope.scope=x_bst_startuptrk&sysparm_fields=name,type,sys_scope,sys_id
+```
+
+| Observed | What Branch A will do | Action before proceeding |
+| --- | --- | --- |
+| A record's `sys_scope` resolves to `x_bst_startuptrk` | The cascade **destroys** it, and a credential record destroyed this way destroys the encrypted value it holds. | Record the record's name and `sys_id`. Confirm with the credential owner that re-provisioning is acceptable, and confirm the value can be re-supplied, **before** step A3. If it cannot, Branch A is not authorised: escalate. |
+| A record's `sys_scope` resolves to any other scope, including Global | The cascade leaves it in place. | Record it as surviving. It is then a dangling alias once the application is gone, and is removed by hand only on the credential owner's instruction. |
+| No record is returned by a query | Nothing of that class exists to destroy. | Record the empty result. |
+
+**No value is read, printed or logged by this step.** The three requests select name, type, scope and identifier fields only; no request in this runbook reads a credential attribute.
 
 **Step A2 — confirm the branch one last time.** Re-read `START_STATE` from the deployment log and confirm it is `clean`. This is the last point before an irreversible request; a mismatch here means Branch B applies and this branch must not proceed.
 
@@ -906,18 +979,58 @@ Assert `HTTP 204`. On a clean instance this **cascades the application's tables,
 
 **Never delete by query.** `DELETE` against a query rather than a `sys_id` can match more than the intended record. **Never retry the delete**: on any non-`204` response, re-read the record by its `sys_id` — `HTTP 404` means the deletion succeeded — and report anything else rather than reissuing, per the delete row of the [retry policy](#retry-policy--by-operation-not-by-status).
 
-**Step A4 — confirm the tables are gone.**
-
-**Step R4 — confirm the removal, on four surfaces.** One check is not enough: a cascade can remove a table definition while leaving a role, or remove the scope while leaving tables behind. Assert all four.
+**Step A5 — confirm the removal, on five surfaces.** One check is not enough: a cascade can remove a table definition while leaving a role, remove the scope while leaving tables behind, or remove the three roles while leaving every grant that pointed at them. Assert all four.
 
 | # | Check | Request | Assertion |
 | --- | --- | --- | --- |
 | 1 | No table definitions remain. | `GET {SERVICENOW_INSTANCE_URL}/api/now/table/sys_db_object?sysparm_query=nameSTARTSWITHx_bst_startuptrk_&sysparm_fields=name&sysparm_limit=50` | `HTTP 200` with an **empty** `result` array. Any name returned means the cascade did not complete: record the names and escalate. |
-| 2 | The seven entity tables no longer resolve. | `GET {SERVICENOW_INSTANCE_URL}/api/now/table/x_bst_startuptrk_startup?sysparm_limit=1`, and the same for the other six | `HTTP 400` `Invalid table`, `HTTP 403` or `HTTP 404` on **each** of the seven. An `HTTP 200` on any of them means that table survived the cascade. This check is meaningful because the seven entity tables are served by the Table API before the rollback — `GATE-TBL-01` through `GATE-TBL-07` read them — so the transition from `200` to a failure status is observable. |
+| 2 | No dictionary record for any of the ten tables survives. | `GET {SERVICENOW_INSTANCE_URL}/api/now/table/sys_dictionary?sysparm_query=nameSTARTSWITHx_bst_startuptrk_&sysparm_fields=name,element&sysparm_limit=200` | `HTTP 200` with an **empty** `result` array. Any record returned names a table or column that survived the cascade: record the `name` and `element` values and escalate. **A row read is not usable as this check.** All ten tables are delivered `ws_access` `false`, so `GET /api/now/table/x_bst_startuptrk_startup` returns `HTTP 400` `Invalid table` **both before and after** the rollback — the status does not change, and a check built on it would pass against an installation that is still fully present. Check 1 and this check read metadata for exactly that reason. |
 | 3 | The three roles are gone. | `GET {SERVICENOW_INSTANCE_URL}/api/now/table/sys_user_role?sysparm_query=nameSTARTSWITHx_bst_startuptrk.&sysparm_fields=name` | `HTTP 200` with an **empty** `result` array. A surviving role is a dangling grant: record it and remove it by hand. |
 | 4 | The scope record is gone. | `GET {SERVICENOW_INSTANCE_URL}/api/now/table/sys_scope?sysparm_query=scope=x_bst_startuptrk&sysparm_fields=sys_id` | `HTTP 200` with an **empty** `result` array. |
+| 5 | **No user still holds one of the three application roles.** | `GET {SERVICENOW_INSTANCE_URL}/api/now/table/sys_user_has_role?sysparm_query=roleIN2628c956f9c80c23bcdf652eb2e41cec,ab589794d8f6b8de89b0716efcdc7f0f,47685e1edeb6c649bd3248e82bd3a582&sysparm_fields=sys_id,user,role&sysparm_limit=1000` | `HTTP 200`. **An empty `result` array passes.** A non-empty array does **not** fail the rollback — it is the expected outcome wherever an administrator granted a role — but it **does** make **step A6** mandatory before any re-deployment. Record every `sys_id`, `user` and `role` returned. |
 
-Record all four outcomes in the deployment log. **A rollback whose confirmation checks do not all pass is an incomplete rollback**, and the instance is not clean: escalate before any re-deployment, because a partial cascade leaves a state that a fresh import will not reliably repair.
+Record all five outcomes in the deployment log. **A rollback whose confirmation checks do not all pass is an incomplete rollback**, and the instance is not clean: escalate before any re-deployment, because a partial cascade leaves a state that a fresh import will not reliably repair.
+
+**Step A6 — remove the dangling role grants, and prove the count is zero.**
+
+**Run this whenever check 5 of step A5 returned a non-empty array.** Deleting the scope removes the three `sys_user_role` records; it does **not** remove the `sys_user_has_role` rows that pointed at them, because those rows live in the platform's own tables and outside the application scope. Each surviving row is a grant naming a role that no longer exists — harmless while the scope is absent, and **not** harmless the moment it returns.
+
+**Why this is a blocking step rather than housekeeping.** The three role `sys_id`s are **deterministic**: they are fixed values in the delivered Update Set, so a re-deployment recreates the three roles carrying the identical identifiers.
+
+| Role | `sys_id` in every deployment of this package |
+| --- | --- |
+| `x_bst_startuptrk.admin` | `2628c956f9c80c23bcdf652eb2e41cec` |
+| `x_bst_startuptrk.user` | `ab589794d8f6b8de89b0716efcdc7f0f` |
+| `x_bst_startuptrk.premium_user` | `47685e1edeb6c649bd3248e82bd3a582` |
+
+A surviving grant therefore **re-attaches silently** on re-deployment and hands its holder the privilege it names — an administrator grant most of all — without anyone granting it a second time and without any record of the decision. That is a privilege-escalation path created by an incomplete rollback, so the count must reach **zero** before the next import, not before the next audit.
+
+**Step A6.1 — snapshot before deleting anything.** Re-issue check 5's read and record the full result set in the deployment log: every `sys_id`, the `user` it names and the `role` it names, together with the count. This snapshot is the only record of who held what, and re-granting after a successful re-deployment is a **deliberate, separately authorised act** that reads from it.
+
+```text
+GET {SERVICENOW_INSTANCE_URL}/api/now/table/sys_user_has_role?sysparm_query=roleIN2628c956f9c80c23bcdf652eb2e41cec,ab589794d8f6b8de89b0716efcdc7f0f,47685e1edeb6c649bd3248e82bd3a582&sysparm_fields=sys_id,user,role&sysparm_limit=1000
+```
+
+**Record the count. If it exceeds 1000, page with `sysparm_offset` until a page returns fewer than 1000 rows**, and snapshot every page; a truncated snapshot is worse than none, because the rows it omitted are the ones nobody will look for.
+
+**Step A6.2 — delete each row by `sys_id`, one request each.**
+
+```text
+DELETE {SERVICENOW_INSTANCE_URL}/api/now/table/sys_user_has_role/{grant_sys_id}
+```
+
+Assert `HTTP 204` on each. **Never delete by query**: a query-shaped delete against `sys_user_has_role` can match a grant for a role this package never created, and a mistaken deletion here removes someone's unrelated platform access. Iterate the snapshot from A6.1 and delete only the identifiers it recorded. On any non-`204`, re-read that row by its `sys_id`, record what the read returned, and **do not retry blindly**.
+
+**Step A6.3 — prove zero, and record it.** Re-issue the A6.1 read.
+
+| Observed | Action |
+| --- | --- |
+| **Empty** `result` array | Pass. Record `0` in the deployment log against step A6, alongside the A6.1 count, so the log shows both the number removed and the zero that followed. |
+| Any row | **Stop. Do not re-deploy.** Report each surviving `sys_id`, its `user` and its `role`, and escalate. A partial removal is the dangerous state: the rows that remain are the ones that will re-attach. |
+
+**Re-deployment is blocked until step A6.3 records zero.** Add this to the pre-flight of the next run as an explicit read: on any instance where this rollback has been performed, pre-flight 1 is followed by the A6.1 read, and a non-empty result stops the deployment before the upload. A rollback that reached A5 but not A6.3 is an **incomplete rollback**, and the instance is not clean.
+
+**Checks 1 and 4 are the decisive pair.** They read `sys_db_object` and `sys_scope` metadata, so an empty result from each is unambiguous evidence that the definition and the scope no longer exist. Check 2 reads the tables themselves and can only ever corroborate: a denial status proves nothing on its own, which is why an inconclusive `403` there is resolved by check 1 rather than reported as success.
 
 #### What Branch A destroys
 
@@ -928,7 +1041,8 @@ Record all four outcomes in the deployment log. **A rollback whose confirmation 
 #### What Branch A does not do
 
 - It does **not** remove `sys_user` role assignments made by an administrator. Those records live outside the application scope, so a user granted `x_bst_startuptrk.premium_user` retains a now-dangling assignment. Check 3 of step R4 detects the roles' removal; the assignments themselves are removed by hand.
-- It does **not** remove the two Connection & Credential Aliases' stored credentials, and it does not create or reveal any credential value.
+- It does **not** create or reveal any credential value, in any branch.
+- **Whether it removes the two Connection & Credential Aliases and their stored credentials is decided by the `sys_scope` each of those records carries, and that is established by step A0 before the deletion runs — not assumed here.** [`../docs/manual-build/01-connection-credential-aliases.md`](./manual-build/01-connection-credential-aliases.md) builds the alias, connection and credential records **inside** the `x_bst_startuptrk` scope, so on an instance built by that guide they are in-scope artifacts and the cascade destroys them together with their encrypted values, exactly as it destroys every other in-scope artifact above. An alias pre-provisioned by the platform owner in another scope is outside the cascade and survives. The two cases are not reconciled by prose: step A0 reads the scope of each record and the answer is recorded in the deployment log.
 - It does **not** revert instance-level configuration that no step of this runbook set — including the ATF runner property and the Global-scope XML entity-resolution properties, which are the platform owner's and are neither set nor gated by this delivery.
 - It does **not** remove the retrieved update set record. That record is removed only by the guarded procedure at [Removing a failed retrieved update set](./validation-gates.md#removing-a-failed-retrieved-update-set), and only where its ownership is provable.
 
@@ -947,10 +1061,10 @@ Record all four outcomes in the deployment log. **A rollback whose confirmation 
 **Step U1 — record what the commit did before undoing any of it.**
 
 ```text
-GET {SERVICENOW_INSTANCE_URL}/api/now/table/sys_remote_update_set/{ruset_sys_id}?sysparm_fields=state,summary,inserted,updated,deleted,collisions,error_detail
+GET {SERVICENOW_INSTANCE_URL}/api/now/table/sys_remote_update_set/{ruset_sys_id}?sysparm_fields=state,summary,inserted,updated,deleted,collisions
 ```
 
-Record all seven values. The `updated` count is the one that matters here: it is how many existing records this commit overwrote, and therefore the size of the change being reversed.
+Record all six values. **`error_detail` is not requested, because `sys_remote_update_set` has no such column** — the same rule stated at [step 2](#step-2--poll-until-loaded) and [step 5](#step-5--commit). Where a commit failed, its detail is read from the execution tracker and the commit output records named there, not from this row. The `updated` count is the one that matters here: it is how many existing records this commit overwrote, and therefore the size of the change being reversed.
 
 **Step U2 — back out the committed update set.**
 
@@ -968,7 +1082,7 @@ Assert `HTTP 200`, one record, and a `version` equal to the value recorded at pr
 
 **Step U4 — verify the data survived.**
 
-Confirm the row count of each of the ten application tables against the counts recorded in the pre-flight 2 export. Read them through the application's own list views or a background script inside the scope; the native Table API is disabled on all ten tables and cannot be used for this.
+Confirm the row count of each of the ten application tables against the counts recorded in the pre-flight 2 export. **Use one count method for all ten**: the application's own list views, or a background script inside the scope. The Table API is not that method, because it does not reach all ten — the **seven entity tables** are deliberately served by it, which is what `GATE-TBL-01` through `GATE-TBL-07` read, while the **three support tables** `x_bst_startuptrk_m2m_round_investor`, `x_bst_startuptrk_ingest_staging` and `x_bst_startuptrk_rate_limit_counter` are sealed to it. A method valid for seven of ten cannot verify ten.
 
 Assert every count is **unchanged**. Back-out reverses metadata records, not application data — so an unchanged count is the expected result and any shortfall means something other than the back-out removed rows.
 
@@ -976,7 +1090,7 @@ Assert every count is **unchanged**. Back-out reverses metadata records, not app
 
 Import the affected table's export taken at pre-flight 2, and re-verify its row count. **This is the step the pre-flight 2 export requirement exists for**, and it is why proceeding over an existing scope without one is refused: without the export there is no U5, and a shortfall at U4 is then unrecoverable.
 
-**Step U6 — escalate. Do not improvise.** Where the back-out cannot restore the prior state, escalate rather than improvise. Report `{RUN_NAME}`, `{ruset_sys_id}`, the seven-field read from U1, the failing gate or commit state, and the back-out report, and record that a named owner has accepted the recovery.
+**Step U6 — escalate. Do not improvise.** Where the back-out cannot restore the prior state, escalate rather than improvise. Report `{RUN_NAME}`, `{ruset_sys_id}`, the six-field read from U1, the failing gate or commit state, and the back-out report, and record that a named owner has accepted the recovery.
 
 #### What each branch does and does not do
 
@@ -994,9 +1108,9 @@ Import the affected table's export taken at pre-flight 2, and re-verify its row 
 
 Neither rollback removes `sys_user` role assignments, credential values held in the two aliases, or instance-level configuration that no step of this runbook set. Those statements under [What the rollback does not do](#what-each-branch-does-and-does-not-do) apply to both paths.
 
-#### Why Branch B destroys nothing
+#### What Branch B does not delete
 
-Scope deletion is a remedy for an installation that did not exist an hour ago. Applied to an installation that did, it converts a failed upgrade into total data loss: the ten tables and everything in them, plus every manually built flow, portal record and ATF suite in the scope. A back-out that only partially succeeds leaves a recoverable problem; a deletion leaves nothing to recover. That is why pre-flight 2 requires a backup or an expendability statement **before** an upgrade begins, and why an unknown `START_STATE` resolves to this branch.
+Branch B deletes nothing. Scope deletion would remove the ten tables and everything in them, plus every manually built flow, portal record and ATF suite in the scope, so it is confined to Branch A and a confirmed clean install. Two rules follow and both are normative: pre-flight 2 requires a backup or an expendability statement **before** an upgrade begins, and an unknown `START_STATE` resolves to **Branch B**. The branch choice, its alternatives and its residual risks are recorded at `D-194`, and the irreversibility of the deletion at `D-076`.
 
 ## Failure-handling matrix
 
@@ -1032,15 +1146,16 @@ Every abort, retry and rollback path in this runbook appears below as its own ro
 | Load timeout exceeded — `300 s` elapsed without `loaded` | Step 2 | **Abort and investigate.** Do not trigger the preview. | Report the last observed `state` and the elapsed time. No rollback. |
 | Preview timeout exceeded — `600 s` elapsed without `previewed` | Step 3 | **Abort and investigate. Do not commit a partially previewed set.** | Report the last observed `state` and the elapsed time. No rollback. |
 | Commit timeout exceeded — `1200 s` elapsed without `committed` | Step 5 | **Abort and investigate.** Do not run the post-commit gates. | Report the last observed `state` and the elapsed time. Escalate before any rollback or re-deployment. |
-| Import incomplete — `PRE-COMMIT-01` count below `314` | Pre-commit | **Do not commit.** Remove the retrieved update set and re-import from step 1. | Report the observed count against `314`. No rollback: nothing was committed. |
-| Preview applied nothing — `PRE-COMMIT-02` `summary` below `314` | Pre-commit | **Do not commit.** Remove the retrieved update set and re-import from step 1. | Report `state`, `summary`, `inserted`, `updated`, `deleted` and `collisions`. No rollback: nothing was committed. |
+| Import incomplete — `PRE-COMMIT-01` count below `313` | Pre-commit | **Do not commit.** Remove the retrieved update set and re-import from step 1. | Report the observed count against `313`. No rollback: nothing was committed. |
+| Preview applied nothing — `PRE-COMMIT-02` `summary` below `313` | Pre-commit | **Do not commit.** Remove the retrieved update set and re-import from step 1. | Report `state`, `summary`, `inserted`, `updated`, `deleted` and `collisions`. No rollback: nothing was committed. |
 | Commit failure — `state=commit_failed` or `state=error` | Step 5 | **Execute the [rollback](#rollback)** on the branch [`START_STATE`](#which-branch-applies) selects: Branch A when `clean`, Branch B when `existing` or unknown. | Report the specific state observed, with `summary`, `inserted`, `updated`, `deleted` and `collisions`, and report `START_STATE` and the branch taken, before the rollback. |
 | Mandatory post-commit gate failure — any of the eleven | Step 6 | **Execute the [rollback](#rollback)** on the branch `START_STATE` selects, and **report which specific gate failed**. | Report the gate identifier, the HTTP status and the response body, plus `START_STATE` and the branch taken, before the rollback. |
 | **`GATE-COL-01` failure — the 53-column count** | Step 6 | **Do not roll back.** The deployment stays in place and **acceptance is blocked**: record the observed count and the per-table split, correct the Update Set so the seven entity tables carry exactly the 53 binding columns, and re-import. Deleting the scope would discard seven correctly committed tables and three correctly committed roles to fix a defect that lives in the source file. | Report `GATE-COL-01`, the observed count against the expected `53`, the per-table split, and that acceptance is blocked pending a corrected re-import. |
-| Non-normative diagnostic failure — `GATE-SEC-01`, `GATE-SEC-02` or `GATE-SEC-03` | Step 6 | **Do not roll back and do not abort.** Record the result, investigate the discrepancy, and report it with the deployment. These checks are non-normative. | Report the check identifier, the observed value against the expected value, and the investigation outcome. |
+| Non-normative diagnostic failure — `GATE-SEC-01`, `GATE-SEC-02`, `GATE-SEC-03` or `GATE-SEC-04` | Step 6 | **Do not roll back and do not abort.** Record the result, investigate the discrepancy, and report it with the deployment. These checks are non-normative. | Report the check identifier, the observed value against the expected value, and the investigation outcome. |
 | Upgrade precondition unmet — `START_STATE=existing` with no backup or expendability statement, or no identified committed set to back out | Pre-flight 2 | **Abort.** Nothing has touched the instance. Obtain the backup or the written statement from the application owner, or deploy to a clean instance instead. | Report which of the two preconditions was unmet, and the installed `version` observed. |
 | Back-out incomplete on Branch B — the platform reports records it could not reverse | Rollback Branch B step B2 | **Stop and escalate.** Do not delete the scope and do not retry the commit. | Report every record the back-out could not reverse, together with the step B3 gate results. |
-| Cascade incomplete on Branch A — an `x_bst_startuptrk_` table still resolves after step A4 | Rollback Branch A step A4 | **Stop.** Do not re-deploy. | Report the table names still returned, and escalate. |
+| Cascade incomplete on Branch A — an `x_bst_startuptrk_` table still resolves after step A4 | Rollback Branch A step A5 | **Stop.** Do not re-deploy. | Report the table names still returned, and escalate. |
+| Dangling role grants remain on Branch A — step A6 finds `sys_user_has_role` rows for any of the three application roles and cannot bring the count to zero | Rollback Branch A step A6 | **Stop. Do not re-deploy.** A re-deployment recreates the three roles with the **same deterministic `sys_id`s**, so every surviving grant silently re-attaches to the new role and hands its holder the application privilege it names. | Report each surviving `sys_id`, its `user` and its `role`, and escalate. |
 | Commit not accepted — the validate or commit processor returned a non-`200` status, an unparsable body, an absent or empty `answer`, or a verdict reporting a blocking problem | Step 5 | **Abort without polling.** Re-establish the session and restart from step 1a. | Report the status, the body observed and `{ruset_sys_id}`. No rollback: nothing was committed. |
 | Commit not started — the record has not left `previewed` within two poll intervals of a commit whose `answer` was not a tracker identifier | Step 5 | **Abort and investigate.** Do not re-issue the commit against a record whose state is unknown. | Report the `answer` verbatim, the last observed `state` and `{ruset_sys_id}`. Escalate before any re-deployment. |
 | Post-commit gate failure — any of the eleven gates, without exception | Step 6 | **Execute the [rollback](#rollback)** and **report which specific gate failed**. | Report the gate identifier, the HTTP status and the response body, before the rollback. |
@@ -1062,18 +1177,18 @@ Record one row per step per run. This log is the evidence a deployment took the 
 | | Step 1 upload | | `{ruset_sys_id}`, captured by `{RUN_NAME}` | |
 | | Session established | | `session established`, `form token read` — **never their values** | |
 | | Step 2 load | | `{ruset_sys_id}` | |
-| | Step 3 preview | | `{ruset_sys_id}`, `{tracker_sys_id}`, the tracker's terminal `state`, its `message`, and `summary` against `314` | |
+| | Step 3 preview | | `{ruset_sys_id}`, `{tracker_sys_id}`, the tracker's terminal `state`, its `message`, and `summary` against `313` | |
 | | Step 4 preview problems | | error-type count, warning-type count | |
-| | `PRE-COMMIT-01` | | attached customer-update count against `314` | |
-| | `PRE-COMMIT-02` | | `state` and `summary` against `314` | |
+| | `PRE-COMMIT-01` | | attached customer-update count against `313` | |
+| | `PRE-COMMIT-02` | | `state` and `summary` against `313` | |
 | | Step 5 phase 2 commit validation | | the `answer` value, or the tracker `state` and `message` | |
 | | Step 5 commit | | `{ruset_sys_id}` | |
 | | Step 6 required gates | | **`11 of 11`** or the failing gate identifier, and the `sys_id` `GATE-SCOPE-01` returned | |
 | | Step 6 `GATE-COL-01` | | the 53-column count and the per-table split; blocks acceptance, never rolls back | |
-| | Step 6 three diagnostics | | each check's outcome; non-normative, blocks nothing | |
+| | Step 6 four diagnostics — `GATE-SEC-01` to `GATE-SEC-04` | | each check's outcome; non-normative, blocks nothing, never rolls back | |
 | | Step 6 instance observation | | both `glide.stax.*` values, and the owner notified where not hardened | |
 | | Rollback preconditions, if reached | | installation mode, scope count, both identifiers, trigger, token supplied | |
-| | Rollback, if run | | `{scope_sys_id}`, and all four step R4 confirmations | |
+| | Rollback, if run | | `{scope_sys_id}`, all five step A5 confirmations, and the step A6 grant snapshot with its post-removal zero | |
 | | Backout, if run instead | | `{ruset_sys_id}`, the six-field read, and the administrator's backout report | |
 
 Record the time of the request in **Timestamp (UTC)** in `YYYY-MM-DD HH:MM:SS` form. Record `pass`, `fail` or `not run` in **Outcome**, and for a failure the HTTP status and the response body. Record the operator's account name in **Operator**. **Record no credential value in any field** — no password, no session cookie and no `sysparm_ck` value; where a row must refer to one, it names the variable.
@@ -1088,7 +1203,7 @@ This runbook replaces the repository's retired deployment path. The facts below 
 
 | Legacy construct | Location | Surviving counterpart |
 | --- | --- | --- |
-| Prerequisite check function verifying privileges, required tooling and the presence of required secrets | `check_prerequisites`, L20-L44 | [Instance prerequisites](#instance-prerequisites) and the four [pre-flight checks](#pre-flight-checks). Secrets are checked for presence, never for value, in both. |
+| Prerequisite check function verifying privileges, required tooling and the presence of required secrets | `check_prerequisites`, L20-L44 | [Instance prerequisites](#instance-prerequisites) and the three [pre-flight checks](#pre-flight-checks). Secrets are checked for presence, never for value, in both. |
 | Build-and-deploy stage | `build_and_deploy`, L89-L102 | The six-step [import sequence](#import-sequence). |
 | Post-deploy check stage returning non-zero on failure | `post_deploy_checks`, L105-L127 | [Step 6](#step-6--post-commit-gates), delegating to the eleven required gates of [`./validation-gates.md`](./validation-gates.md). |
 | Rollback invoked on that failure | main flow, L150-L163 | The [rollback](#rollback), triggered by commit failure at step 5 or a post-commit gate failure at step 6. |
@@ -1108,7 +1223,7 @@ Not carried forward:
 
 - [`../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`](../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml) — the artifact this runbook deploys
 - [`../scripts/validate_update_set_xml.py`](../scripts/validate_update_set_xml.py) — the pre-delivery validator run before step 1
-- [`./validation-gates.md`](./validation-gates.md) — the eleven required post-commit gates run at step 6, the acceptance-required `GATE-COL-01`, the three non-normative diagnostics recorded beside them, and the one external instance observation
+- [`./validation-gates.md`](./validation-gates.md) — the eleven required post-commit gates run at step 6, the acceptance-required `GATE-COL-01`, the four non-normative diagnostics recorded beside them, and the one external instance observation
 - [`./data-model.md`](./data-model.md) — the ten tables the commit installs
 - [`./access-control.md`](./access-control.md) — the three roles, and the table-level read access controls the seven entity-table gates read through
 - [`./api-reference.md`](./api-reference.md) — the REST definition and operations the commit installs

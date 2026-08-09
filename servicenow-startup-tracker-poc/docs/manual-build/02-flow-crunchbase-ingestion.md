@@ -43,7 +43,7 @@ This guide is executable on its own. All eight steps, every property read, every
 
 This is **guide 02 of six**, and it is **step 2** of the execution order below. It runs immediately after guide 01, because this flow binds guide 01's alias **by name**. The order is stated in full in [`../manual-build-instructions.md`](../manual-build-instructions.md); it is repeated here so this guide can be run without it. The execution order is not the filename order: guide **06** runs before guide **05**.
 
-| Step | Guide | Why it sits here |
+| Step | Guide | What it builds, and what it depends on |
 | --- | --- | --- |
 | 1 | [`01-connection-credential-aliases.md`](01-connection-credential-aliases.md) | The two Connection & Credential Aliases the ingestion flows bind to by name. Nothing downstream can authenticate without them. |
 | **2** | **This guide** | **The Crunchbase ingestion flow, which references `x_bst_startuptrk.crunchbase_api` by name.** |
@@ -73,14 +73,14 @@ Do not begin this guide until every item below holds.
 | 5 | The eleven are the seven entity-table gates `GATE-TBL-01` through `GATE-TBL-07`, the three role-record gates `GATE-ROLE-01` through `GATE-ROLE-03`, and the one scope-record gate `GATE-SCOPE-01`. | Each table gate is a bounded read that returns `HTTP 200`; an empty `result` array is a pass. Any failure triggers the rollback of [`../deployment-runbook.md`](../deployment-runbook.md), with no exception. |
 | 6 | **Guide 01 is complete and the credential posture is recorded.** | [`01-connection-credential-aliases.md`](01-connection-credential-aliases.md) has been run to completion and its [Step 0](01-connection-credential-aliases.md#step-0--establish-the-credential-posture) posture row for `x_bst_startuptrk.crunchbase_api` is recorded. **Either posture satisfies this precondition** — see [Credential posture](01-connection-credential-aliases.md#credential-posture), which separates the build gate from the live-validation gate. Copy the alias name from the propagation table of [Step 4](01-connection-credential-aliases.md#step-4--propagate-both-alias-names-into-guides-02-and-03) rather than typing it; see [Operational warnings](#operational-warnings). |
 | 7 | The four Script Includes this flow calls into are on the instance. | `sys_script_include` carries `AppProperties`, `IngestionMapper`, `IngestionLogger` and `InvestorPortfolioService`, all in the `x_bst_startuptrk` scope. |
-| 8 | The four scoped system properties this flow reads or writes are on the instance. | `sys_properties` carries `x_bst_startuptrk.ingestion.cadence_hours`, `x_bst_startuptrk.ingestion.source_mode`, `x_bst_startuptrk.ingestion.last_run_provenance` and `x_bst_startuptrk.crunchbase.base_url`. **The last-named property is the flow's durable cadence marker and its source lease in one**: it carries one entry per source system, it ships empty, and this source's entry is claimed by step 1 and settled by step `8c`. Its format is stated in [The source lease](#the-source-lease). |
+| 8 | The four scoped system properties this flow reads or writes are on the instance. | `sys_properties` carries `x_bst_startuptrk.ingestion.cadence_hours`, `x_bst_startuptrk.ingestion.source_mode`, `x_bst_startuptrk.ingestion.last_run_provenance` and `x_bst_startuptrk.crunchbase.base_url`. **`x_bst_startuptrk.ingestion.last_run_provenance` is the flow's durable cadence marker and its source lease in one**: it carries one entry per source system, it ships empty, and this source's entry is claimed by step 1 and settled by step `8c`. `x_bst_startuptrk.crunchbase.base_url` is the endpoint authority and carries no run state. Its format is stated in [The source lease](#the-source-lease). |
 | 9 | The four tables this flow writes are on the instance. | `x_bst_startuptrk_startup`, `x_bst_startuptrk_investor`, `x_bst_startuptrk_fundinground` and `x_bst_startuptrk_m2m_round_investor` all open in the list view. Gates `GATE-TBL-01`, `GATE-TBL-04` and `GATE-TBL-05` cover three of the four. |
 | 10 | The staging table this flow reads on the fallback branch is on the instance. | `x_bst_startuptrk_ingest_staging` opens in the list view. It ships with `ws_access` **false**, so confirm it in the list view and not over the Table API. |
 | 11 | The three business rules that maintain the derived columns are on the instance and **active**. | `sys_script` carries `Trim and validate startup`, `Recalculate investor portfolio on funding round` and `Recalculate investor portfolio on round investor link`, all `active` true, all in the `x_bst_startuptrk` scope. |
 | 12 | You are working in the `x_bst_startuptrk` application scope. | The application picker reads **Boston Startup Tracker**. Every record this guide creates must carry that scope. |
 | 13 | You hold a role that can create and publish a flow. | You can open Flow Designer, create a flow in the `x_bst_startuptrk` scope, and see the **Activate** control on a saved flow. |
 
-### Why this guide exists rather than more Update Set XML
+### What is not captured into the Update Set
 
 Only tables carrying the update-synch attribute are captured into `sys_update_xml` records, and adding that attribute to a table that lacks it out of the box is unsupported. The Flow Designer tables are outside the captured set, so this flow is built through the platform interface instead — which is why the delivered Update Set contains **zero** flow records. [`../manual-build-instructions.md`](../manual-build-instructions.md) owns the split rule for the package as a whole.
 
@@ -115,7 +115,7 @@ Only tables carrying the update-synch attribute are captured into `sys_update_xm
 
 ### Switching to live later, without rebuilding
 
-When the alias is provisioned and tests green, the flow does **not** need rebuilding. Add step 3 on whichever path [3b](#31--the-outbound-path-pre-flight-branch) selects, repoint step 4's `live_ok` and `response_body` inputs at its outputs, and set `source_mode` back to `live`. The cadence guard, the mapper call, the write step, the log step and the summary step are untouched. **That is why the fallback route is documented as a first-class construction path rather than as a fork**: the live call is an addition to a working flow, not a precondition of building one.
+When the alias is provisioned and tests green, the flow does **not** need rebuilding. Add step 3 on whichever path [3b](#31--the-outbound-path-pre-flight-branch) selects, repoint step 4's `live_ok` and `response_body` inputs at its outputs, and set `source_mode` back to `live`, which is the value the branch rule then requires. `source_mode` is **one shared setting for both flows**, so the branch rule reaches `live` only when **both** aliases are provisioned with a passing connection test; see [`06-staging-table-csv-import.md#restoring-source_mode-is-readiness-determined-not-a-return-to-live`](06-staging-table-csv-import.md#restoring-source_mode-is-readiness-determined-not-a-return-to-live). The cadence guard, the mapper call, the write step, the log step and the summary step are untouched. **That is why the fallback route is documented as a first-class construction path rather than as a fork**: the live call is an addition to a working flow, not a precondition of building one.
 
 ### Capture rule for this artifact class
 
@@ -134,7 +134,7 @@ One record, containing eight steps.
 | Log action | 1 | Utilities → Log | Part `8b`. It is what puts the ingestion events into the flow execution log; see [8.5](#85--publishing-the-events-to-the-flow-execution-log). |
 | Flow error handler | 1 | Utilities → Log | One handler on the flow, for a platform fault no step catches. See [The flow graph](#the-flow-graph). |
 
-The flow reads **four** system properties and writes **one**, reads and writes **one** staging table, writes **four** entity and join tables, calls **four** Script Includes, and emits **thirty-three** distinct kinds of log record — eleven `IngestionLogger` events, nine step lines it writes itself, and thirteen further step lines that appear only on a failure path. Each is enumerated in its own step, and they are inventoried together in [7.2](#72--every-log-record-this-flow-can-write), which also states the difference between the application log and the flow execution log.
+The flow reads **six** system properties — `ingestion.cadence_hours`, `ingestion.source_mode`, `ingestion.last_run_provenance`, `crunchbase.base_url`, `inclusion.location_tokens` and `logging.level` — and writes exactly **one** of them, `ingestion.last_run_provenance`, reads and writes **one** staging table, writes **four** entity and join tables, calls **four** Script Includes, and emits **thirty-three** distinct kinds of log record — eleven `IngestionLogger` events, nine step lines it writes itself, and thirteen further step lines that appear only on a failure path. Each is enumerated in its own step, and they are inventoried together in [7.2](#72--every-log-record-this-flow-can-write), which also states the difference between the application log and the flow execution log.
 
 ### The flow graph
 
@@ -149,7 +149,7 @@ flowchart TD
     S2 --> S3["Step 3 — call Crunchbase through the alias<br/>REST step or scoped script step,<br/>whichever the pre-flight branch selected"]
     S3 --> S4["Step 4 Script — resolve provenance,<br/>claim staging rows on the fallback branch"]
     S4 --> S5["Step 5 Script — clean, write and account<br/>through IngestionMapper"]
-    S5 --> S6["Step 6 Script — confirm writes,<br/>exact participant sets, projections"]
+    S5 --> S6["Step 6 Script — confirm writes,<br/>exact participant sets,<br/>derived list agrees"]
     S6 --> S7["Step 7 Script — counters, call-log outcomes,<br/>terminal-state sweep"]
     S7 --> S8A["Step 8a Script — render the evidence block"]
     S8A --> S8B["Step 8b Log action — publish log_text"]
@@ -160,7 +160,7 @@ flowchart TD
 
 Three structural rules follow from that graph, and each is enforced in the step that owns it.
 
-| # | Rule | Why it is safe to put every step inside the `If` |
+| # | Rule | What follows from it |
 | --- | --- | --- |
 | 1 | **No step from 2 to 8c throws.** Each wraps its own body and records a failure in its own `step_error` output rather than raising. | Control therefore always reaches `8a`, `8b` and `8c`, so the evidence is published on a failed batch without needing a step outside the `If`. Placement outside the block would additionally make `8a` run on the roughly twenty-three no-op executions of every day, publishing an empty evidence block each time. |
 | 2 | **A no-op publishes nothing at all.** When the guard sets `proceed` `false` the flow ends immediately after the `If`. | [1.5](#15--the-early-exit) states the same thing, and it is how a no-op is told apart from a scheduled run in the execution detail: a no-op carries exactly one log line, the guard's. |
@@ -203,7 +203,7 @@ The **prefix is equally load-bearing**: `IngestionLogger.sourceOfRun()` falls ba
 
 **Two concurrent executions of this flow must not ingest the same source at the same time.** They would claim each other's staging rows, interleave their entity writes, and each settle the other's run-completion marker. Nothing in a scheduled trigger prevents it: an execution that overruns its hour is still running when the next hourly trigger fires, and a manual test run can start beside a scheduled one at any moment.
 
-Step 1 therefore takes a **named lease on the source** before the flow does any work, through `AppProperties.acquireRunLease('crunchbase', run_id)`. The lease is a compare-and-set on the single run-state property `x_bst_startuptrk.ingestion.last_run_provenance`: the method writes a `running` marker carrying this run's identifier, reads it back, and reports whether the identifier that came back is this run's.
+Step 1 therefore takes a **named lease on the source** before the flow does any work, through `AppProperties.acquireRunLease('crunchbase', run_id)`. The lease is a genuine compare-and-set on the single run-state property `x_bst_startuptrk.ingestion.last_run_provenance`: the method reads the property's current value, and writes the new marker set with **one guarded conditional update** whose condition is that the property still carries the value it read. Of two executions reaching the method with the same prior value, exactly one changes it and the other matches nothing. The value is then read back **from the property record** rather than through the cached property API, and the method reports whether the run identifier that came back is this run's. The result also carries an `atomic` member: `false` means the guarded write applied nothing and the property API was used instead — logged at warn — which is the one condition under which two runs could both proceed.
 
 | Lease outcome | `acquireRunLease` returns | What step 1 does |
 | --- | --- | --- |
@@ -211,61 +211,63 @@ Step 1 therefore takes a **named lease on the source** before the flow does any 
 | A `running` marker held by another run, younger than the cadence | `ok` `false` with `holder` naming it | **Do not proceed.** Record the holder and end as a no-op. The other run is still working. |
 | A `running` marker held by another run, older than the cadence | `ok` `true` — the stale claim is taken over | Proceed. A run interrupted by a platform fault cannot block the source forever. |
 | A `succeeded` marker from an earlier completed run | `ok` `true` | Proceed. The cadence guard has already decided the interval elapsed. |
-| The claim could not be written, or another run took it between the write and the read back | `ok` `false` with the reason | **Do not proceed.** Record the reason and end as a no-op. |
+| Another run won the guarded update | `ok` `false`, `reason` `another run took this source` | **Do not proceed.** Record the holder and end as a no-op. |
+| The claim could not be written at all | `ok` `false` with the reason | **Do not proceed.** Record the reason and end as a no-op. |
+| The claim was written but not atomically | `ok` `true`, `atomic` `false` | Proceed, and **record `atomic` in the run evidence**. The property record was not writable through the record API on this instance, so exclusion rests on the cadence guard alone for this run. |
 
 **The lease is released exactly once, by step `8c`.** A healthy run calls `IngestionLogger.markRunComplete()`, which turns the `running` marker into the `succeeded` marker the cadence guard reads. A run that is not healthy calls `AppProperties.releaseRunLease()`, which drops the claim without recording a success, so the next hourly trigger may retry immediately. [8.6](#86--part-8c--assert-publication-then-complete-or-release-the-lease) states both paths. A run that dies hard leaves a `running` marker, which the cadence-aged takeover above clears.
+
+**The completion is refused unless this run still holds the source, and that is why the lease is not optional.** `AppProperties.completeRun(source, run, provenance)` — the call behind `IngestionLogger.markRunComplete()` — reads the run-state marker back before it writes, and refuses with `this run does not hold this source` when the marker names a different run, or with `another run took this source` when the marker changed between its write and its read-back. Three consequences follow, and each is a build rule rather than a caution:
+
+| Condition | What `completeRun` does | What the flow must therefore do |
+| --- | --- | --- |
+| Step 1 acquired the lease and no other run intervened | Writes the `succeeded` marker and reads it back | Nothing further. This is the normal path. |
+| Step 1 never acquired the lease — the `If` was bypassed, the guard's `proceed` was ignored, or the action was reordered | **Refuses.** No marker is written | Never call `markRunComplete()` on a run that did not acquire the lease. A build that reorders step `8c` before step 1, or that runs the ingestion outside the `If`, produces `run_completion_refused` on every execution and never advances the cadence. |
+| A stale claim was taken over by a later run while this one was still working | **Refuses**, naming the run that took it | Accept the refusal. `8c` marks the run unhealthy with `completion_refused` and releases nothing, because the source no longer belongs to this run. |
+
+**A refusal is never silent and never partial.** It writes `run_completion_refused` at `error` with the reason, `8c` sets `healthy` `false`, the cadence marker is left as it was, and the next hourly trigger re-runs the source. What it does **not** do is stamp a `succeeded` marker for work another run owns — which is the outcome the read-back exists to prevent, because a marker written by the wrong run advances the cadence gate for a window in which nothing was ingested.
 
 **The lease is taken after the cadence check, never before.** With the shipped 24-hour cadence roughly twenty-three of every twenty-four executions are no-ops, and a lease taken before the cadence check would have every one of them write the run-state property.
 
 ## The action records
 
-Build all five actions **before** creating the flow. A flow cannot reference an unpublished action, and an action's inputs and outputs are not offered to a flow until it is published.
+Build all seven actions **before** creating the flow. A flow cannot reference an unpublished action, and an action's inputs and outputs are not offered to a flow until it is published.
 
 ### The Action Designer procedure, applied to every action
 
-Run these eleven items once per action. They are identical for all five; only the name, the inputs, the outputs and the steps differ.
+Run these eleven items once per action. They are identical for all seven; only the name, the inputs, the outputs and the steps differ.
 
 1. Set the application picker to **Boston Startup Tracker**, so the action is created in the `x_bst_startuptrk` scope. An action created in Global cannot be moved into the scope afterwards.
 2. Open **Flow Designer**, then **New**, then **Action**.
-3. Set **Action name** to the name in the table below. The **Internal name** is generated from it; confirm it matches the internal name in the table and do not type over it.
-4. Set **Application** to **Boston Startup Tracker**. Set **Description** to the pointer text in the action's own subsection — a statement of what the action does and which requirement it implements, never why.
+3. Set **Action name** to the name in [The seven actions, and the steps each one implements](#the-seven-actions-and-the-steps-each-one-implements). The **Internal name** is generated from it; confirm it matches the internal name in the table and do not type over it.
+4. Set **Application** to **Boston Startup Tracker**. Set **Description** to a statement of what the action does and which requirement it implements, never why — for A1, `Compares elapsed time since the last Crunchbase run summary against x_bst_startuptrk.ingestion.cadence_hours, takes the source lease and mints the run identifier. Implements prompt section 4.0 configurable cadence.`, and for each of the others the same form naming that action's steps.
 5. Set **Protection** to `None`, and leave **Accessible from** at the scoped default. Do **not** set **Run With Roles**: the action must not acquire a role beyond the identity the flow runs as.
 6. Open the **Inputs** section and add each declared input with its exact name, type and mandatory flag. Input names are referenced from the step scripts as `inputs.<name>`, so a spelling variance is a run-time failure.
-7. Add the steps in the order the action's subsection gives. The step type is stated per step. A Script step is **Script** under **Utilities**; a REST step is **REST** under **Integration**.
+7. Add the steps in the order [The seven actions, and the steps each one implements](#the-seven-actions-and-the-steps-each-one-implements) gives. The step type is stated per step. A Script step is **Script** under **Utilities**; a REST step is **REST** under **Integration**; the Log step of A7 is **Log** under **Utilities**.
 8. Open the **Outputs** section and add each declared output with its exact name and type. Output names are assigned in the step scripts as `outputs.<name>`.
 9. In each Script step, map every action input the script reads onto the step's own input pills, and map every action output onto the step's declared output variables. **An output that is not declared on the action is not visible to the flow**, whatever the script assigns to it.
 10. Save, then click **Publish**. An action in the `Draft` state is invisible to Flow Designer. Confirm the action's state reads `Published` before leaving it.
 11. Record the action's name, internal name and published state in the [Build verification](#build-verification) table.
 
-### The five actions, and the step each one implements
+### The seven actions, and the steps each one implements
 
-| # | Action name | Internal name | Step types it contains | Numbered sections it implements | Called by the flow |
-| --- | --- | --- | --- | --- | --- |
-| **A1** | `Cadence Guard` | `cadence_guard` | 1 Script | [Step 1](#step-1--cadence-guard) | **Yes**, first, unconditionally. |
-| **A2** | `Resolve Source Mode` | `resolve_source_mode` | 1 Script | [Step 2](#step-2--resolve-the-source-mode) | **Yes**, inside the `If`. |
-| **A3** | `Fetch Crunchbase Payload` | `fetch_crunchbase_payload` | **2 steps**: the live-call step — a Script step in the delivered variant, a REST step in the variant of [3a](#why-the-generic-rest-step-is-not-buildable-for-this-source) — followed by 1 Script step | [Step 3](#step-3--call-crunchbase-through-the-alias) is its first step, [Step 4](#step-4--fall-back-to-the-staging-table) its second | **Yes**, inside the `If`. |
-| **A4** | `Ingest Crunchbase Batch` | `ingest_crunchbase_batch` | 1 Script | [Step 5](#step-5--clean-write-and-account-for-every-record-through-ingestionmapper), [Step 6](#step-6--confirm-the-writes-the-participant-rows-and-the-derived-columns), [Step 7](#step-7--log-skip-the-record-continue-the-run) and [Step 8](#step-8--publish-the-run-evidence-and-close-the-run) | **Yes**, inside the `If`. **This is the mandatory orchestrator of [8.8](#88--the-mandatory-orchestrator-and-the-diagnostic-variant).** |
-| **A5** | `Reconcile Batch Counters` | `reconcile_batch_counters` | 1 Script | [7.6](#76--step-inputs) to [7.8](#78--the-step-script) | **No.** Diagnostic only; published so an operator can assemble the optional per-phase variant of [8.8](#88--the-mandatory-orchestrator-and-the-diagnostic-variant) in a scratch flow while investigating. |
+**Every numbered step of this guide lives in exactly one action, and every value a later action consumes is a declared output of an earlier one.** That is the whole rule, and it is what makes the flow assemblable from published actions with no step on the flow itself.
 
-**A1 to A4 are the delivered construction and all four are mandatory.** A5 is mandatory to build and publish, and is deliberately not wired into the flow.
-
-### A1 — `Cadence Guard`
-
-**Description:** `Compares elapsed time since the last Crunchbase run summary against x_bst_startuptrk.ingestion.cadence_hours and mints the run identifier. Implements prompt section 4.0 configurable cadence.`
-
-| Direction | Name | Type | Mandatory | Meaning |
+| # | Action name | Internal name | Step types it contains | Numbered sections it implements |
 | --- | --- | --- | --- | --- |
-| Input | `source_system` | String | Yes | `crunchbase`. The token the run identifier is prefixed with and the guard filters the log on. Guide 03 passes `linkedin`. |
-| Output | `proceed` | True/False | — | `true` when the cadence has elapsed. The flow's `If` condition reads this. |
-| Output | `run_id` | String | — | The run identifier of [The run identifier](#the-run-identifier). |
-| Output | `cadence_hours` | Integer | — | The clamped cadence the guard used. |
-| Output | `hours_elapsed` | String | — | Elapsed hours since the last run summary, to one decimal place, or `never` when there is none. |
+| **A1** | `Cadence Guard` | `cadence_guard` | 1 Script | [Step 1](#step-1--cadence-guard) |
+| **A2** | `Resolve Source Mode` | `resolve_source_mode` | 1 Script | [Step 2](#step-2--resolve-the-source-mode) |
+| **A3** | `Fetch Crunchbase Payload` | `fetch_crunchbase_payload` | **2 steps**: the live-call step — a Script step in the delivered variant, a REST step in the variant of [3a](#the-generic-rest-step-is-not-buildable-for-this-source) — followed by 1 Script step | [Step 3](#step-3--call-crunchbase-through-the-alias) is its first step, [Step 4](#step-4--fall-back-to-the-staging-table) its second |
+| **A4** | `Ingest Crunchbase Batch` | `ingest_crunchbase_batch` | 1 Script | [Step 5](#step-5--clean-write-and-account-for-every-record-through-ingestionmapper) |
+| **A5** | `Confirm Crunchbase Writes` | `confirm_crunchbase_writes` | 1 Script | [Step 6](#step-6--confirm-the-writes-the-participant-rows-and-the-derived-columns) |
+| **A6** | `Reconcile Batch Counters` | `reconcile_batch_counters` | 1 Script | [Step 7](#step-7--log-skip-the-record-continue-the-run) |
+| **A7** | `Publish Run Evidence` | `publish_run_evidence` | **3 steps**: 1 Script, then 1 **Log** action step, then 1 Script | [Step 8](#step-8--publish-the-run-evidence-and-close-the-run), as its three parts `8a`, `8b` and `8c` |
 
-Contains one Script step, specified in [1.4](#14--the-guard-script). **Error handling:** the script catches its own exceptions and returns `proceed` `false` with `hours_elapsed` `error`, so a guard fault produces a no-op rather than an unguarded ingestion.
+**All seven are mandatory and all seven are called by the flow.** There is no published-but-unwired action, and no diagnostic action.
 
-### A2 — `Resolve Source Mode`
+### Each action's inputs and outputs are its steps' inputs and outputs
 
-**Description:** `Reads x_bst_startuptrk.ingestion.source_mode and derives whether the run attempts a live call. Implements prompt section 4.0 fallback-only source selection.`
+**An action declares exactly the inputs and outputs its steps declare, with the same names and the same types.** Those declarations are stated once, in the numbered step that owns them, and are not restated here — restating them is how the two drifted apart in an earlier build. Read each action's signature from the section named in the table below, and declare on the action every output variable that section lists.
 
 | Direction | Name | Type | Mandatory | Meaning |
 | --- | --- | --- | --- | --- |
@@ -279,23 +281,31 @@ Contains one Script step, specified in [2.4](#24--the-step-script). **Error hand
 
 **Description:** `Fetches Crunchbase organisation and funding-round payloads through the x_bst_startuptrk.crunchbase_api alias, and falls back to x_bst_startuptrk_ingest_staging on an authentication failure, a timeout or a malformed response. Implements prompt section 4.0 live-with-fallback acquisition.`
 
-**The base URL is not an action input.** The alias's connection record is authoritative for it and the step reads it from the resolved connection info, so no URL is carried on the flow. The property `x_bst_startuptrk.crunchbase.base_url` is the value that record holds, and precondition 8 confirms it is present.
+**The base URL is not an action input.** The property `x_bst_startuptrk.crunchbase.base_url` is the **single endpoint authority**, read through `AppProperties.getCrunchbaseBaseUrl()`, so no URL is carried on the flow. The alias's connection record must carry the **same** value — the platform requires a URL on a connection record — and that record is the property's required mirror, not a second authority. Precondition 8 confirms the property is present, and criterion 4 of [`01-connection-credential-aliases.md`](01-connection-credential-aliases.md) confirms the two are equal.
 
 | Direction | Name | Type | Mandatory | Meaning |
 | --- | --- | --- | --- | --- |
 | Input | `run_id` | String | Yes | From A1's `run_id`. |
 | Input | `source_mode` | String | Yes | From A2's `source_mode`. |
 | Output | `provenance` | String | — | `live` or `fallback`. The value A4 stamps on every record and on the run summary. |
-| Output | `rows` | String | — | The row set as a JSON array string. Empty array string on the fallback branch, where A4 reads the staging table itself. |
+| Output | `rows` | String | — | The row set as a JSON array string, and **the row set A4 ingests on both branches**: the typed live envelopes of [Step 3](#step-3--call-crunchbase-through-the-alias) on the live branch, and one `{ record_type, staging_id }` envelope per **claimed** staging row on the fallback branch. |
 | Output | `row_count` | Integer | — | The number of rows in `rows`. |
+| Output | `staged_ids` | String | — | A JSON array of the `sys_id` values of the staging rows this run **claimed**, in the order read. Empty array string on the live branch. Step 7 sweeps it. |
+| Output | `claimed_count` | Integer | — | How many staging rows this run claimed, so a corrupted `staged_ids` string is detectable rather than silently empty. |
 | Output | `fallback_reason` | String | — | Empty on the live branch; otherwise `auth_failure`, `timeout`, `malformed_response` or `source_mode`. |
+| Output | `step_error` | String | — | Empty on success. Set when the live row pill could not be parsed, which is a failure of this step rather than of the provider. |
 
 Contains **two** steps, in this order:
 
 | # | Step | Specified in | Produces |
 | --- | --- | --- | --- |
-| 1 | The live call. A Script step in the delivered variant; a REST step in the variant of [3a](#why-the-generic-rest-step-is-not-buildable-for-this-source). | [Step 3](#step-3--call-crunchbase-through-the-alias) | Step output variables only: `live_ok`, `rows_json`, `row_count`, `status_code`, `error_message`, `failure_reason`. None of these is an action output. |
-| 2 | Evaluate the outcome and fall back. Always a Script step. | [Step 4](#step-4--fall-back-to-the-staging-table) | The four **action** outputs declared above. |
+| **A1** | [1.2](#12--step-inputs) — none | [1.3](#13--step-outputs) | 7 |
+| **A2** | [2.2](#22--step-inputs) | [2.3](#23--step-outputs) | 2 |
+| **A3** | [3.3](#33--step-inputs) for its first step and [4.2](#42--step-inputs) for its second; the action's own inputs are `run_id` and `source_mode` | [3.4](#34--step-outputs) **and** [4.3](#43--step-outputs) | 11 + 7 = 18 |
+| **A4** | [5.1](#51--step-inputs) | [5.2](#52--step-outputs) | 15 |
+| **A5** | [6.6](#66--step-inputs) | [6.7](#67--step-outputs) | 10 |
+| **A6** | [7.6](#76--step-inputs) | [7.7](#77--step-outputs) | 14 |
+| **A7** | [8.3](#83--part-8a--the-step-inputs-and-outputs) for `8a` and [8.6](#86--part-8c--assert-publication-then-complete-or-release-the-lease) for `8c` | [8.3](#83--part-8a--the-step-inputs-and-outputs) **and** [8.6](#86--part-8c--assert-publication-then-complete-or-release-the-lease) | 8 + 7 = 15 |
 
 The variant of step 1 is chosen by the pre-flight check of [3b](#31--the-outbound-path-pre-flight-branch); step 2 is identical in both variants, which is why the published action signature does not change with the variant. **Error handling:** every failure mode is caught inside the action and converted into a `fallback_reason` plus a `provenance` of `fallback`. The action never throws, because an ingestion run must degrade rather than halt.
 
@@ -307,7 +317,7 @@ The variant of step 1 is chosen by the pre-flight check of [3b](#31--the-outboun
 | --- | --- | --- | --- | --- |
 | Input | `run_id` | String | Yes | From A1's `run_id`. |
 | Input | `provenance` | String | Yes | From A3's `provenance`. |
-| Input | `rows` | String | No | From A3's `rows`. Ignored on the fallback branch. |
+| Input | `rows` | String | No | From A3's `rows`. Ingested on **both** branches: the typed live envelopes on the live branch, the claimed staging envelopes on the fallback branch. |
 | Output | `processed` | Integer | — | Records written. |
 | Output | `rejected` | Integer | — | Records rejected for a missing mandatory field. |
 | Output | `skipped` | Integer | — | Records skipped after a per-record error. |
@@ -315,7 +325,7 @@ The variant of step 1 is chosen by the pre-flight check of [3b](#31--the-outboun
 | Output | `unmatched` | Integer | — | Choice values normalised to `Other`. |
 | Output | `recorded` | True/False | — | `true` when the run summary was written. |
 
-Contains one Script step, specified in [8.8](#88--the-mandatory-orchestrator-and-the-diagnostic-variant). **Error handling:** the orchestrator applies the skip-the-record-and-continue-the-run contract of [7.1](#71--the-contract-every-step-must-honour) per record, and wraps the whole batch so that a batch-level fault still writes a run summary carrying the counters accumulated up to that point.
+Contains one Script step, specified in [8.8](#88--one-ingestion-call-site-and-the-two-entry-points-it-may-use). **Error handling:** the orchestrator applies the skip-the-record-and-continue-the-run contract of [7.1](#71--the-contract-every-step-must-honour) per record, and wraps the whole batch so that a batch-level fault still writes a run summary carrying the counters accumulated up to that point.
 
 ### A5 — `Reconcile Batch Counters`
 
@@ -339,20 +349,26 @@ Contains one Script step, specified in [8.8](#88--the-mandatory-orchestrator-and
 
 Contains one Script step, specified in [7.7](#78--the-step-script). **Error handling:** the script performs integer coercion only and cannot fail on a missing input; an absent pill coerces to `0`.
 
-**Published, and not called by the delivered flow.** The delivered flow calls A1, A2, A3 and A4; A5 is called only by the diagnostic variant of [8.8](#88--the-mandatory-orchestrator-and-the-diagnostic-variant), in which the four ingestion phases are separate actions and their counters must be summed. Publish it with the others so that variant is assemblable without editing the delivered flow, and do **not** add it to the delivered flow. `D-102` carries the decision.
+**Published, and not called by the delivered flow.** The delivered flow calls A1, A2, A3 and A4; A5 is called only by the diagnostic variant of [8.8](#88--one-ingestion-call-site-and-the-two-entry-points-it-may-use), in which the four ingestion phases are separate actions and their counters must be summed. Publish it with the others so that variant is assemblable without editing the delivered flow, and do **not** add it to the delivered flow. `D-102` carries the decision.
 
+1. **A3 and A7 each publish the union of their two or three steps' outputs.** A3 carries step 3's eleven and step 4's seven, because step 7 consumes `call_log`, `failed_calls`, `truncated` and `budget_hit` from step 3 while step 5 consumes `rows` and `provenance` from step 4 — both sets have to leave the action. A7 carries `8a`'s eight and `8c`'s seven. Where the two steps of an action both declare a name — `rows` and `row_count` appear in both [3.4](#34--step-outputs) and [4.3](#43--step-outputs) — **the later step's value is the one the action publishes**, because step 4 resolves the provenance and rewrites both for the branch actually taken.
+2. **An output the script assigns but the action does not declare is invisible**, to the flow and to the ATF suite. After publishing each action, open the flow's data panel and confirm every output in the table above appears under it.
+3. **Nothing is declared that no script assigns.** Each step's `### x.y — Step outputs` table is the authority in both directions.
 
 ### Assembling the flow from the published actions
 
-The flow contains **five builder elements and nothing else**: four action calls and one `If` block. There is no REST step and no Script step on the flow. Position 1 sits outside the `If`; positions 3, 4 and 5 sit inside it.
+The flow contains **eight builder elements and nothing else**: seven action calls and one `If` block. There is no REST step, no Script step and no Log step on the flow itself — every one of those lives inside an action. Position 1 sits outside the `If`; positions 3 to 8 sit inside it.
 
 | Position | Flow item | What to add | Inputs to map |
 | --- | --- | --- | --- |
 | 1 | **Action** | **Action** → `Cadence Guard` (A1). | `source_system` = the literal `crunchbase`. |
-| 2 | **Flow logic** | **If**, with the condition **A1 → `proceed`** `is` `true`. Positions 3 to 5 sit **inside** this block. | — |
-| 3 | **Action**, inside the `If` | **Action** → `Resolve Source Mode` (A2). | `run_id` = data pill **A1 → `run_id`**. |
+| 2 | **Flow logic** | **If**, with the condition **A1 → `proceed`** `is` `true`. Positions 3 to 8 sit **inside** this block. | — |
+| 3 | **Action**, inside the `If` | **Action** → `Resolve Source Mode` (A2). | `run_id` = **A1 → `run_id`**. |
 | 4 | **Action**, inside the `If` | **Action** → `Fetch Crunchbase Payload` (A3). | `run_id` = **A1 → `run_id`**; `source_mode` = **A2 → `source_mode`**. |
 | 5 | **Action**, inside the `If` | **Action** → `Ingest Crunchbase Batch` (A4). | `run_id` = **A1 → `run_id`**; `provenance` = **A3 → `provenance`**; `rows` = **A3 → `rows`**. |
+| 6 | **Action**, inside the `If` | **Action** → `Confirm Crunchbase Writes` (A5). | `run_id` = **A1 → `run_id`**; and every pill [6.6](#66--step-inputs) names, from A4. |
+| 7 | **Action**, inside the `If` | **Action** → `Reconcile Batch Counters` (A6). | `run_id` = **A1 → `run_id`**; and every pill [7.6](#76--step-inputs) names, from A3 and A4. |
+| 8 | **Action**, inside the `If` | **Action** → `Publish Run Evidence` (A7). | `run_id` = **A1 → `run_id`**; and every pill [8.3](#83--part-8a--the-step-inputs-and-outputs) and [8.6](#86--part-8c--assert-publication-then-complete-or-release-the-lease) name, from A3, A4, A5 and A6. |
 
 Three rules govern the mapping, and each is a build step:
 
@@ -360,8 +376,7 @@ Three rules govern the mapping, and each is a build step:
 2. **`source_system` at position 1 is the only literal on the flow.** Everything else is a pill from an earlier action's output.
 3. **If an action's output does not appear in the data panel, the action is not published.** Return to item 10 of [The Action Designer procedure, applied to every action](#the-action-designer-procedure-applied-to-every-action) and publish it; do not work around it by adding a step to the flow.
 
-`Fetch Crunchbase Payload` and `Ingest Crunchbase Batch` both run unconditionally inside the `If`. Neither needs a further condition: A3 resolves its own live-or-fallback branch internally and always emits a `provenance`, and A4 acts on whatever `provenance` and `rows` it receives.
-
+`Fetch Crunchbase Payload` through `Publish Run Evidence` all run unconditionally inside the `If`. None needs a further condition: A3 resolves its own live-or-fallback branch internally and always emits a `provenance`, and each later action acts on whatever it receives and records a fault in its own `step_error` rather than raising.
 
 ## Step 1 — Cadence guard
 
@@ -379,7 +394,7 @@ The last-run marker is the **`crunchbase` entry of the single run-state property
 
 The property holds one entry per source system, in the form `source=provenance|state|stamp|run`, entries joined by a semicolon. `AppProperties` owns the format completely — `readRunMarkers()`, `acquireRunLease()`, `completeRun()` and `releaseRunLease()` are the only readers and writers, and the property is written only when the serialised value actually changes. **Do not parse or write that property from the flow.** One property carrying both sources still keeps their cadences independent, because every accessor is keyed on the source token: guide 03 reads and writes the `linkedin` entry of the same property and the two never overlap.
 
-**The marker is deliberately not a log record.** An earlier design read the most recent `run_summary` line out of `syslog`, which coupled the cadence to two things that have nothing to do with scheduling: the configured log severity threshold, since a `run_summary` emitted below the threshold is never written at all and the guard would then see no marker and run again immediately; and log retention, since a pruned log makes an established flow behave as though it had never run. The property is durable, is unaffected by `x_bst_startuptrk.logging.level`, and is not subject to log rotation.
+**The marker is a property, not a log record.** The property is durable, is unaffected by `x_bst_startuptrk.logging.level`, and is not subject to log rotation, so the cadence guard reads the same value whatever the log severity threshold and whatever has been pruned. **Nothing in this flow reads the application log to establish cadence or provenance.**
 
 ### 1.2 — Step inputs
 
@@ -476,7 +491,7 @@ Add one **`If`** flow-logic block immediately after the guard. Set its condition
 
 When `proceed` is `false` the flow reaches its end having done no work: it makes no outbound call, reads no staging row, claims no staging row, writes no entity record, writes no run summary, publishes no evidence block and takes no lease it must release. That is the intended behaviour and it is not an error. It covers both reasons the guard can refuse — the cadence has not elapsed, and another execution holds the source lease — and the guard's `outcome` output says which.
 
-### 1.6 — Why the trigger repeats hourly
+### 1.6 — The hourly trigger interval
 
 A Flow Designer scheduled trigger takes a fixed interval and **cannot read a system property at run time**. The trigger is therefore set to repeat **hourly**, and this guard supplies the configurable cadence. The mechanic is stated here; the decision is recorded in [`../../../docs/decisions/DECISION_LOG.md`](../../../docs/decisions/DECISION_LOG.md), and the requirement is listed as having no clean platform equivalent in [`../gaps-and-flags.md`](../gaps-and-flags.md).
 
@@ -495,6 +510,8 @@ With the shipped cadence of 24 hours and an hourly trigger, roughly twenty-three
 ### 2.1 — What it reads
 
 One property: `x_bst_startuptrk.ingestion.source_mode`. It is a choice-list property whose only valid values are `live` and `fallback`, and its shipped value is **`live`**. Read it through `AppProperties.getSourceMode()`, which returns `live` for any value it does not recognise.
+
+**It is one property, and the LinkedIn flow reads the same one.** There is no per-flow source mode and no flow input carries one, so setting this property for this flow sets it for [`03-flow-linkedin-ingestion.md`](03-flow-linkedin-ingestion.md) in the same act and the next execution of both takes the branch it names. Two consequences bind every procedure in this guide that touches it: **live-first applies only while the property reads `live`** — in `fallback` mode the `If` around step 3 is false and no outbound call is attempted at all — and **a temporary change captures the observed value and restores that value**, because the end state is branch-determined rather than a return to `live`. The rule, its branch table and the value required on this instance are in [`06-staging-table-csv-import.md#restoring-source_mode-is-readiness-determined-not-a-return-to-live`](06-staging-table-csv-import.md#restoring-source_mode-is-readiness-determined-not-a-return-to-live), which is the single normative statement; `D-111` carries the decision.
 
 ### 2.2 — Step inputs
 
@@ -530,9 +547,11 @@ One property: `x_bst_startuptrk.ingestion.source_mode`. It is a choice-list prop
 | Value | Behaviour |
 | --- | --- |
 | `live` | **The default, and what every real run attempts first.** The flow proceeds to step 3 and calls Crunchbase through the alias. If that call fails in one of the three ways listed in [Step 4](#step-4--fall-back-to-the-staging-table), the flow falls back to the staging table for that run. |
-| `fallback` | The flow **skips the live attempt altogether** and goes straight to the staging read of step 4. Set this value to make a test deterministic without touching a credential. Set it back to `live` afterwards. |
+| `fallback` | The flow **skips the live attempt altogether** and goes straight to the staging read of step 4. Set this value to make a test deterministic without touching a credential. **Capture the value you observed before you change it, and restore that value afterwards** — not an unconditional `live`; the end state is branch-determined, per [`06-staging-table-csv-import.md#restoring-source_mode-is-readiness-determined-not-a-return-to-live`](06-staging-table-csv-import.md#restoring-source_mode-is-readiness-determined-not-a-return-to-live). |
 
-Setting the property to `fallback` is the procedure [`../../sample-data/README.md`](../../sample-data/README.md) refers to as forcing the fallback path, and it is how the flow test in [`05-atf-test-suites.md`](05-atf-test-suites.md) reaches a repeatable result. The difference between the two values is only whether the live call is attempted: a run left on `live` also reads the staging dataset whenever the live call fails.
+Setting the property to `fallback` is the procedure [`../../sample-data/README.md`](../../sample-data/README.md) refers to as forcing the fallback path, and it is how the flow test in [`05-atf-test-suites.md`](05-atf-test-suites.md) reaches a repeatable result. The difference between `live` and `fallback` is only whether the live call is attempted: a run left on `live` also reads the staging dataset whenever the live call fails.
+
+**Restoring `live` is readiness-determined, and it is not a step to take after a test.** The property's **final state on this delivery is `fallback`**, because both aliases are on Path B and neither partner credential is provisioned — guide 01's [Readiness paths](01-connection-credential-aliases.md#readiness-paths--live-and-sanctioned-fallback) records that, and criterion B5 of that guide requires it. Set the property to `live` only once the source's credential is provisioned **and** its probe has read `code=ok` at status `200`. Until then, leaving it on `live` makes the flow fail its live attempt on every hourly execution that passes the cadence guard and report each one as a flow fault; see [A flow left on `live` in the unprovisioned posture fails every hour and reports it as a flow fault](#a-flow-left-on-live-in-the-unprovisioned-posture-fails-every-hour-and-reports-it-as-a-flow-fault).
 
 Wrap step 3 in an **`If`** block whose condition is step 2's `attempt_live` output **is** `true`. Steps 4 through 8 sit outside that inner block and run on both paths.
 
@@ -544,7 +563,7 @@ This step references the alias `x_bst_startuptrk.crunchbase_api` **by name**, us
 
 ### 3.1 — The outbound path pre-flight branch
 
-**The generic Flow Designer REST step is the primary path. The scoped script step is its fallback. Which one this instance builds is decided by two checks, run once at build time and recorded before the flow is activated.** Build exactly one arm.
+**One arm is built, and for Crunchbase the arm is already determined: the scoped script step.** The generic Flow Designer REST step is the arm the Agent Action Plan's two conditions describe, and the second condition — that the provider's credential-bearing header can be supplied by the connection — **cannot hold for Crunchbase**, because the platform resolves a credential only into the standard authentication headers and never into a custom header of the builder's choosing. The determined answer is set out in [Why the generic REST step is not buildable for this source](#the-generic-rest-step-is-not-buildable-for-this-source), and `D-045` and `D-321` carry the decision. Run both checks anyway and record both answers: P1 is instance state a reviewer needs, and P2's answer is what makes the selection auditable rather than asserted. **Build exactly one arm, and for this source it is Arm B.**
 
 Run both checks before adding step 3, and record both answers in the [Build verification](#build-verification) table.
 
@@ -553,25 +572,27 @@ Run both checks before adding step 3, and record both answers in the [Build veri
 | **P1 — is the generic REST step available?** | Open the flow, add an action, and look for the generic **REST** step in the action palette. It is an IntegrationHub-entitled step on many instances and is simply absent from the palette when the instance is not entitled. | Present, or absent. |
 | **P2 — can the connection supply the `X-cb-user-key` header without a literal secret?** | On the alias's connection record, confirm whether the instance offers a request-header or connection-attribute facility that resolves **with the connection** at run time and can carry the credential's Password value. Guide 01 [Step 1.3](01-connection-credential-aliases.md#step-13--build-or-confirm-the-connection-record-fields) is where that record is inspected. | Yes, or no. |
 
-| P1 | P2 | Arm to build | Why |
+| P1 | P2 | Arm to build | What the pair establishes |
 | --- | --- | --- | --- |
-| Present | Yes | **Arm A — generic REST step.** | Both AAP conditions hold: the step exists and the provider's key-bearing header is supplied by the connection, so the secret never enters the flow. This is the primary path. |
+| Present | Yes | **Arm A — generic REST step.** | Both AAP conditions would hold: the step exists and the provider's key-bearing header is supplied by the connection, so the secret never enters the flow. **This row cannot be reached for Crunchbase** — see the determined answer below — and is retained because the same matrix governs the LinkedIn flow, where it can be reached. |
 | Present | No | **Arm B — scoped script step.** | The step exists but cannot carry this provider's credential-bearing header without a literal, and prompt section 4.0 forbids the literal. |
 | Absent | either | **Arm B — scoped script step.** | The instance lacks the entitlement for the step. This is precisely the entitlement fallback the Agent Action Plan defines. |
 
-**Both arms honour every constraint that matters.** Neither is a spoke, neither installs spoke content, both reference the alias `x_bst_startuptrk.crunchbase_api` **by name**, and neither puts a key, secret or token into the flow record, a flow input, a step input, a script body or the Update Set. The arms differ only in which platform facility carries the request.
+**Both arms honour every constraint that matters.** Neither is a spoke, neither installs spoke content, both reference the alias by its generated **API ID** `x_bst_startuptrk.crunchbase_api`, and neither puts a key, secret or token into the flow record, a flow input, a step input, a script body or the Update Set. The arms differ only in which platform facility carries the request.
 
 Why the header question decides it, rather than the authentication type: [The provider wire contract](01-connection-credential-aliases.md#the-provider-wire-contract) establishes that **Crunchbase authenticates with an `X-cb-user-key` request header and does not accept HTTP Basic authentication at all.** The alias's `Basic Auth` credential record is the platform class that stores a password, and the key sits in its Password field — which is exactly what the Agent Action Plan specifies. What the REST step does with that credential is assemble the platform's own Basic `Authorization` header, which this provider rejects. So Arm A is usable only when the connection itself carries the `X-cb-user-key` header, because the REST step's own **Request headers** field takes literals and data pills and a secret may be neither.
 
 | Approach | Reaches Crunchbase | Keeps the secret out of the flow | Verdict |
 | --- | --- | --- | --- |
-| **Arm A** — REST step, **Use Connection Alias**, with the connection supplying `X-cb-user-key` | **Yes** | **Yes.** The header value is resolved with the connection; the flow holds only the alias name. | **Primary.** Build when P1 is present and P2 is yes. |
+| **Arm A** — REST step, **Use Connection Alias**, with the connection supplying `X-cb-user-key` | **Yes** | **Yes.** The header value is resolved with the connection; the flow holds only the alias name. | **Not selectable for this source.** It would be the arm if P2 were yes; for Crunchbase P2 is `no` by the platform's own credential-resolution behaviour, so this row never fires here. It is the arm the LinkedIn flow can select. |
 | REST step, **Use Connection Alias**, relying on the platform's Basic `Authorization` header | **No.** The provider rejects it. | Yes | Unusable for this provider. |
 | REST step with `X-cb-user-key` typed into **Request headers** | Yes | **No.** The key would be a literal in the flow record and captured wherever the flow is exported. | **Forbidden** by prompt section 4.0 and by [Platform constraint](#platform-constraint). |
 | REST step with the key passed in as a flow input | Yes | **No.** Prompt section 4.0 forbids credential material in flow inputs by name. | **Forbidden.** |
-| **Arm B** — scoped script step resolving the alias by name and composing the header | **Yes** | **Yes.** The key is read from the alias inside the step and handed straight to the request; it is never assigned to a named variable that outlives the call, never logged and never emitted as an output. | **Fallback.** Build when P1 is absent, or when P2 is no. |
+| **Arm B** — scoped script step resolving the alias by its API ID and composing the header | **Yes** | **Yes.** The key is read from the alias inside the step and handed straight to the request; it is never assigned to a named variable that outlives the call, never logged and never emitted as an output. | **Fallback.** Build when P1 is absent, or when P2 is no. |
 
-#### Arm A — the generic REST step
+#### Arm A — the generic REST step, which this source cannot select
+
+**Do not build this arm for Crunchbase.** It is specified here because P1 must still be answered and recorded, because the LinkedIn flow can select it, and because a later provider contract could make it selectable — not because a builder chooses between the two. The determined answer for this source is in [Why the generic REST step is not buildable for this source](#the-generic-rest-step-is-not-buildable-for-this-source), immediately below.
 
 Build one **REST** step per pass, three in total, in the order of [3.2](#32--the-three-passes). Each carries the same configuration except its path and body.
 
@@ -587,7 +608,7 @@ Build one **REST** step per pass, three in total, in the order of [3.2](#32--the
 
 Arm A needs one **Script** step after the three REST steps to do what the script arm does inline: unwrap each response body, drive the keyset cursor, apply the budgets of [3.6](#36--the-budgets-that-bound-this-step), build the typed envelopes of [The typed row envelope](#the-typed-row-envelope), and emit the same output variables listed in [3.4](#34--step-outputs). **A single REST step reads one page.** Pagination and the identifier batching of passes 2 and 3 are loops, and Flow Designer expresses them with a **For Each** over the batch list containing the REST step — so Arm A is three REST steps inside two `For Each` blocks plus one Script step, against Arm B's one Script step. Every budget, envelope, error code and output in the rest of this section applies unchanged to both arms; only the transport differs.
 
-#### Why the generic REST step is not buildable for this source
+#### The generic REST step is not buildable for this source
 
 **For Crunchbase, do not build a Flow Designer REST step. Build the scoped variant of [3c](#arm-b--the-scoped-script-step), which is the delivered path.** The transport constraint is stated here so no builder attempts the REST step and then reports its failure as a defect. `D-045` carries the decision, its alternatives and the requirement it reconciles.
 
@@ -606,7 +627,7 @@ Every way of forcing the REST step to carry the key therefore fails, and each fa
 | Set `user_key` from a data pill fed by an earlier action. | The key becomes an action output and a flow variable, visible in every execution detail. **Forbidden** by the same rule. |
 | Set `X-cb-user-key` as a request header, from a literal or from a pill. | Identical outcome to the two rows above by the identical route: a literal writes the key into a step field, and a pill makes it a flow variable. **Forbidden** by the same rule. The alias populates `Authorization`, never this header. |
 
-**What [3c](#arm-b--the-scoped-script-step) builds instead:** a script step inside the scope that resolves the connection and credential at run time **by alias name** and executes the call through the scoped outbound REST message API. That path references the alias by name, uses no spoke, and keeps every secret out of the flow and the Update Set.
+**What [3c](#arm-b--the-scoped-script-step) builds instead:** a script step inside the scope that resolves the connection and credential at run time **by the alias's API ID** and executes the call through the scoped outbound REST message API. That path references the alias by name, uses no spoke, and keeps every secret out of the flow and the Update Set.
 
 **The LinkedIn flow of [`03-flow-linkedin-ingestion.md`](03-flow-linkedin-ingestion.md) is not constrained the same way**, because OAuth 2.0 is carried in an `Authorization` header that the REST step's connection alias populates natively. Guide 03 states which variant it delivers.
 
@@ -629,7 +650,7 @@ Do not build this. It is recorded so the transport constraint is checkable rathe
 
 #### Arm B — the scoped script step
 
-One Script step, given in full in [3.7](#37--the-step-script-arm-b). It resolves the alias to one `sys_alias` record, obtains the connection, composes the `X-cb-user-key` header from the credential at the moment of the call, and paginates within the budgets.
+One Script step, given in full in [3.7](#37--the-step-script-arm-b). It resolves the alias **API ID** to one `sys_alias` record, obtains the connection, composes the `X-cb-user-key` header from the credential at the moment of the call, and paginates within the budgets.
 
 **Record which arm was built, and why, in [Build verification](#build-verification).** The decision, its alternatives and the consequence of each are recorded in [`../../../docs/decisions/DECISION_LOG.md`](../../../docs/decisions/DECISION_LOG.md); the requirement is not flagged as unimplementable, because both arms satisfy it.
 
@@ -792,29 +813,61 @@ The mapper's `LIVE_ALIASES` table maps provider field names onto this applicatio
 
 **Three columns cannot be filled from the live path, and the flow does not pretend otherwise.**
 
-| Column | Why | Consequence |
+| Column | What the provider publishes for it | Consequence |
 | --- | --- | --- |
 | `startup.institutional_funding_last_5yrs` | Crunchbase exposes no field for it. The five-year window is expressed as a *query predicate* in pass 1, not as a returned value. | Left unset by the live path. It is set on the fallback path, where the sample dataset carries it as a column. |
-| `investor.aum_usd` | Crunchbase v4 publishes no assets-under-management field. | Left unset on both paths for a live-sourced investor. Recorded in [`../gaps-and-flags.md`](../gaps-and-flags.md). |
-| `fundinground.source_url` | The funding-round search response carries no public round URL. `permalink` is a slug, not an `https` URL, and the boundary validation of [5.7](#57--url-and-address-validation-at-the-ingestion-boundary) would refuse it. | Left unset rather than filled with a value that is not a URL. Not requested in `field_ids`. |
+| `investor.aum_usd` | Crunchbase v4 publishes no assets-under-management field. | Left unset by the live path. It is set on the fallback path, where the sample dataset carries it as a column, so a fallback-sourced investor has it and a live-sourced one never does. Recorded in [`../gaps-and-flags.md`](../gaps-and-flags.md). |
+| `fundinground.source_url` | The funding-round search response carries no public round URL. `permalink` is a slug, not an `https` URL, and the boundary validation of [5.7](#57--url-and-address-validation-at-the-ingestion-boundary) would refuse it. | Left unset by the live path rather than filled with a value that is not a URL. It is set on the fallback path, where the sample dataset carries a real `https` locator per round. Not requested in `field_ids`. |
 
 **One representable-shape limitation is worth stating plainly.** The schema carries a single `lead_investor` reference, while Crunchbase can report several lead investors on one round. Where it reports more than one, `lead_investor_identifiers` flattens to a comma-joined list, no Investor record matches that string, and the reference is left unset with an unresolved-reference log line. **No wrong lead is stored**, and the participating-investor rows still capture every named investor including the leads. This is a schema limitation rather than a mapping defect, and it is flagged in [`../gaps-and-flags.md`](../gaps-and-flags.md).
 
 ### 3.5 — Resolving the alias correctly (Arm B only)
 
-`ConnectionInfoProvider.getConnectionInfo()` takes the **`sys_id` of the alias record**, not the alias name. Passing the name returns `null`, and because the method answers `null` rather than raising, a flow given the name fails as though the alias did not exist — and reports it as a connectivity fault rather than the programming fault it is.
+`ConnectionInfoProvider.getConnectionInfo()` takes the **`sys_id` of the alias record**, not the alias's dotted API ID. Passing the API ID returns `null`, and because the method answers `null` rather than raising, a flow given the name fails as though the alias did not exist — and reports it as a connectivity fault rather than the programming fault it is.
 
-The step therefore resolves the name to exactly one `sys_alias` record first and asserts singularity before going further.
+The step therefore resolves the alias **API ID** — the dotted value the platform generates in `sys_alias.id`, never the editable `name` column, which holds the unprefixed label to exactly one `sys_alias` record first — `alias.addQuery('id', ALIAS)`, because `ALIAS` holds the dotted value and querying `name` with it matches nothing — and asserts singularity before going further.
 
-| Rows found for the name | Interpretation | Behaviour |
+**The identifier the query must match is the alias's API ID, held in the `sys_alias.id` column — the dotted, scope-prefixed form `x_bst_startuptrk.<alias>`.** It is **not** `sys_alias.name`, which holds the unprefixed label. A query that matches the dotted value against `name` returns zero rows on a correctly built alias, so the step reports `alias_unresolved` and falls back on every run while the alias is present and healthy. Guide 01's [Three identifiers, and which is which](01-connection-credential-aliases.md#three-identifiers-and-which-is-which) is the authority for the three identifiers and their columns.
+
+| Rows found for the API ID | Interpretation | Behaviour |
 | --- | --- | --- |
 | Exactly `1` | The alias resolves. | Pass its `sys_id` to `getConnectionInfo()`. |
 | `0` | The alias is absent or misnamed. | **Fail closed** with `alias_unresolved`. Do not construct a request. |
-| More than `1` | A duplicate-name condition. | **Fail closed** with `alias_ambiguous`. Do not guess which one; guide 01's [Step 0](01-connection-credential-aliases.md#step-0--establish-the-credential-posture) covers the escalation. |
+| More than `1` | A duplicate API-ID condition. | **Fail closed** with `alias_ambiguous`. Do not guess which one; guide 01's [Step 0](01-connection-credential-aliases.md#step-0--establish-the-credential-posture) covers the escalation. |
 
-Both failures are typed, are recorded in the call log, and drive step 4's fallback rather than aborting the run. The alias name is read from a single `ALIAS` constant so it appears exactly once in the step.
+Both failures are typed, are recorded in the call log, and drive step 4's fallback rather than aborting the run. The alias API ID is read from a single `ALIAS` constant so it appears exactly once in the step.
 
 Arm A does not need this resolution: the REST step's **Connection alias** field binds the alias by name and the platform resolves it. An Arm A instance that cannot resolve the alias fails the REST step, and the Script step that follows it records `alias_unresolved` by the same rule.
+
+### 3.5a — The provider origin allowlist, and why the endpoint is fixed first
+
+**The endpoint is fixed before any credential is attached to a request, and it is fixed from an allowlist rather than from configuration.** A credential travels to whatever host the endpoint names. Two values on the instance name a host — the system property ``x_bst_startuptrk.crunchbase.base_url`` and the alias's connection record's **Connection URL** — and both are editable by an administrator. If either can steer the request, then editing one row sends the Crunchbase API key to a host of the editor's choosing, and the platform will do it willingly because the alias, the connection and the credential all still resolve.
+
+`AppProperties` closes that path. It carries a **provider origin allowlist**, and every base-URL read passes through it:
+
+| Member | What it does |
+| --- | --- |
+| `providerBaseUrl(sourceSystem)` | Returns the URL to call. The configured property value when the allowlist accepts it, and the **pinned origin** ``https://api.crunchbase.com/api/v4`` when it does not. It cannot return anything else, so a refused value degrades to the real provider rather than to an attacker's host. |
+| `providerBaseUrlState(sourceSystem)` | Returns `{ allowed, reason, effective, origin }` — the same decision, with the reason exposed so the step can report it. |
+
+The allowlist accepts a value only when **all** of these hold. Each failure has its own closed `reason`, and none of them ever prints the refused value.
+
+| Requirement | `reason` when it fails |
+| --- | --- |
+| The source system is one this application ingests | `unknown_source` |
+| The value is not empty | `empty` |
+| The value parses as an absolute URL | `malformed` |
+| The scheme is `https` | `scheme_not_https` |
+| The authority carries no `user:password@` prefix | `userinfo_present` |
+| The port is the scheme default | `port_not_default` |
+| The host is exactly ``api.crunchbase.com`` | `host_not_allowed` |
+| The path is exactly ``/api/v4`` | `path_not_allowed` |
+
+**Why the reason is reported and the value is not.** A base URL is a place a credential can hide: `?user_key=…` in a query string is a credential in a URL. A step that logged the refused value in order to explain itself would publish the very thing the refusal exists to protect. The closed reason says what was wrong; the pinned origin says what was called instead; neither discloses what was configured.
+
+**The connection record is a mirror, not an authority.** This step reads `connection_url` only to compare it against the property, and logs `connection_url_divergent` when the two differ. The property is what the request uses. [`01-connection-credential-aliases.md`](01-connection-credential-aliases.md#step-13--build-or-confirm-the-connection-record-fields) is where the two are brought into line at build time; this check is what detects a later edit to one of them.
+
+**The pinned origin is code, not configuration. `PROVIDER_ORIGINS` is a member of the `AppProperties` Script Include and travels in the Update Set, so changing it is a scoped code change that goes through an update set like any other — not a property edit an operator can make at run time.**
 
 ### 3.6 — The budgets that bound this step
 
@@ -835,16 +888,20 @@ Arm A does not need this resolution: the REST step's **Connection alias** field 
 
 | `error_code` | Meaning | Detail carried |
 | --- | --- | --- |
-| `alias_unresolved` | The alias name matched no `sys_alias` record. | None. |
-| `alias_ambiguous` | The alias name matched more than one record. | The number of matches. |
-| `connection_unresolved` | The alias resolved but yielded no connection. | None. |
+| `alias_unresolved` | The alias **API ID** matched no `sys_alias` record. | None. |
+| `alias_ambiguous` | The alias **API ID** matched more than one record. | The number of matches. |
+| `connection_unresolved` | The alias resolved but yielded no connection, **or** the endpoint it yielded is not approved. | `endpoint_untrusted: the base-URL property is not an https api.crunchbase.com root`, or `endpoint_untrusted: the connection URL does not equal the base-URL property`. Neither detail carries a URL. Nothing else carries a detail. |
 | `transport` | The call did not complete — a timeout, a DNS failure or a TLS failure. | The transport error, redacted and capped at `DETAIL_LIMIT`. |
 | `http_status` | The call completed with a non-2xx status. | The status code only. |
-| `malformed` | The body did not parse, or carried no `entities` member where one was required. | The exception class, redacted and capped. |
+| `malformed` | The body did not parse, or carried no `entities` member where one was required. | A closed token naming the shape fault, or the exception class name. The exception message is not recorded. |
 | `cursor_missing` | A full page carried no `uuid` on its last row, so the keyset cursor could not advance. | None. |
 | `budget_reached` | A budget of the table above stopped the read. | The budget name. |
 
-`DETAIL_LIMIT` is **120** characters. `redact()` removes anything resembling a key, token or bearer value and anything resembling an address or a locator before the cap is applied, so a provider that echoes a request cannot leak it through the call log.
+`DETAIL_LIMIT` is **120** characters, and it is the `limit` argument the step passes.
+
+**There is exactly one sanitiser in this application, and every diagnostic in this package passes through it.** It is `AppProperties.safeText(value, limit)`, a method of the Script Include that ships in the Update Set, and every probe script and every flow script calls it rather than carrying a copy of it. It replaces control, zero-width and bidirectional-override characters; redacts web tokens, credential-shaped assignments such as `key=`, `token=`, `secret=`, `password=` and `authorization=`, bare authentication scheme words together with the value that follows them, addresses, locators, runs of 28 or more opaque characters and quoted runs of 24 or more; turns a double quote into a single quote so a value cannot break a quoted field; collapses whitespace; and caps the result at the limit it is given, appending `...(truncated)` so a truncation is visible rather than silent. The delivered pattern set and its order are in the `SANITISERS` member of that Script Include, which is the one place they exist.
+
+The step therefore calls `SAFE.safeText(detail, DETAIL_LIMIT)`, where `SAFE` is one `AppProperties` instance, so a provider that echoes a request cannot leak it through the call log, and the redaction cannot drift from the one guide 01's probes and guide 03's step apply.
 
 ### 3.7 — The step script (Arm B)
 
@@ -892,24 +949,34 @@ Arm A does not need this resolution: the REST step's **Connection alias** field 
     outputs.pages_read = 0;
     outputs.call_log = '[]';
 
-    // Removes key-like, token-like, address-like and locator-like substrings, then
-    // caps the length. Applied to every detail before it is recorded. See 3.6.
-    function redact(text) {
-        var value = String(text === null || text === undefined ? '' : text);
-        value = value.replace(/[a-zA-Z][a-zA-Z0-9+.-]*:\/\/[^\s]*/g, '(redacted)');
-        value = value.replace(/[^\s]*@[^\s]*/g, '(redacted)');
-        value = value.replace(/(key|token|secret|password|bearer)[^\s]*/gi, '(redacted)');
-        value = value.replace(/[\u0000-\u001f\u007f]/g, ' ');
-        if (value.length > DETAIL_LIMIT) {
-            value = value.substring(0, DETAIL_LIMIT);
+    // The one application sanitiser. Applied to every detail before it is recorded. See 3.6.
+    var SAFE = new AppProperties();
+
+    // Classifies a transport failure into one closed reason, so no provider, platform or
+    // exception message text is ever recorded as a detail.
+    function faultReason(text) {
+        var value = String(text === null || text === undefined ? '' : text).toLowerCase();
+        if (value.indexOf('time') !== -1) {
+            return 'reason=timeout';
         }
-        return value;
+        if (value.indexOf('unknown host') !== -1 || value.indexOf('unknownhost') !== -1) {
+            return 'reason=dns';
+        }
+        if (value.indexOf('ssl') !== -1 || value.indexOf('tls') !== -1
+                || value.indexOf('certificate') !== -1) {
+            return 'reason=tls';
+        }
+        if (value.indexOf('connect') !== -1 || value.indexOf('refused') !== -1
+                || value.indexOf('reset') !== -1) {
+            return 'reason=connect';
+        }
+        return 'reason=other';
     }
 
     function note(pass, batch, page, status, count, code, detail) {
         calls.push({
             pass: pass, batch: batch, page: page, status: status, rows: count,
-            code: code || '', detail: code ? redact(detail) : ''
+            code: code || '', detail: code ? SAFE.safeText(detail, DETAIL_LIMIT) : ''
         });
         if (code) {
             failedCalls = failedCalls + 1;
@@ -950,9 +1017,13 @@ Arm A does not need this resolution: the REST step's **Connection alias** field 
         return false;
     }
 
-    // ---- Resolve the alias to exactly one sys_id, then to its connection. ----
+    // ---- Resolve the alias by its API ID to exactly one sys_id, then to its connection. ----
     var alias = new GlideRecord('sys_alias');
-    alias.addQuery('name', ALIAS);
+    // The scoped API ID lives in `id`; `name` holds the unprefixed label, so querying
+    // `name` with a dotted value matches nothing and the probe would report
+    // `alias_unresolved` for a reason that is not the alias state. Guide 01's
+    // "Three identifiers" table is authoritative.
+    alias.addQuery('id', ALIAS);
     alias.query();
     var aliasRows = alias.getRowCount();
     if (aliasRows !== 1) {
@@ -976,10 +1047,62 @@ Arm A does not need this resolution: the REST step's **Connection alias** field 
         return;
     }
 
-    var base = info.getAttribute('connection_url');
-    if (!base) {
-        base = new AppProperties().getCrunchbaseBaseUrl();
+    // ---- The endpoint is fixed BEFORE any credential is attached to a request. ----
+    // providerBaseUrl() classifies the configured property against the provider origin
+    // allowlist and returns the pinned origin when it is refused, so the header below can
+    // only ever travel to an allowed origin. The connection record's URL is a mirror of
+    // that property, never the authority. See 3.5a.
+    var props = new AppProperties();
+    var base = props.getCrunchbaseBaseUrl();
+    var endpoint = props.providerBaseUrlState('crunchbase');
+    var configured = String(info.getAttribute('connection_url') || '');
+    if (!endpoint.allowed) {
+        // The refused value is never printed: a base URL can carry a key in its query
+        // string. Only the closed reason and the origin actually used are reported.
+        gs.warn('[x_bst_startuptrk.ingestion] event="endpoint_refused" run="' +
+            inputs.run_id + '" source="crunchbase" reason="' + endpoint.reason +
+            '" outcome="calling the pinned origin ' + endpoint.origin + ' instead"');
     }
+    if (configured !== '' && configured !== base) {
+        gs.warn('[x_bst_startuptrk.ingestion] event="connection_url_divergent" run="' +
+            inputs.run_id + '" source="crunchbase" outcome="the connection record does' +
+            ' not mirror the base-URL property; the property is authoritative and was' +
+            ' used. Correct the connection record per guide 01 step 1.3"');
+    }
+
+    function approvedEndpoint(value) {
+        var text = trimSlash(value);
+        if (text.indexOf(APPROVED_ROOT) !== 0) {
+            return '';
+        }
+        // No credentials, no port, no userinfo and no query on the base.
+        if (/[@?#\s]/.test(text)) {
+            return '';
+        }
+        return text;
+    }
+
+    var declared = approvedEndpoint(new AppProperties().getCrunchbaseBaseUrl());
+    var connected = approvedEndpoint(info.getAttribute('connection_url'));
+    if (declared === '') {
+        note('alias', 0, 0, 0, 0, 'connection_unresolved',
+             'endpoint_untrusted: the base-URL property is not an https ' +
+             APPROVED_HOST + ' root');
+        outputs.error_code = firstCode;
+        outputs.failed_calls = failedCalls;
+        outputs.call_log = JSON.stringify(calls);
+        return;
+    }
+    if (connected !== declared) {
+        note('alias', 0, 0, 0, 0, 'connection_unresolved',
+             'endpoint_untrusted: the connection URL does not equal the base-URL' +
+             ' property');
+        outputs.error_code = firstCode;
+        outputs.failed_calls = failedCalls;
+        outputs.call_log = JSON.stringify(calls);
+        return;
+    }
+    var base = declared;
 
     // ---- One paginated search, bounded by every budget of 3.6. ----
     function search(pass, batch, path, fieldIds, query) {
@@ -1019,7 +1142,7 @@ Arm A does not need this resolution: the REST step's **Connection alias** field 
 
                 if (response.haveError()) {
                     note(pass, batch, page, status, 0, 'transport',
-                         response.getErrorMessage());
+                         faultReason(response.getErrorMessage()));
                     return collected;
                 }
                 if (status < 200 || status >= 300) {
@@ -1046,7 +1169,7 @@ Arm A does not need this resolution: the REST step's **Connection alias** field 
                     return collected;
                 }
             } catch (e) {
-                note(pass, batch, page, status, 0, 'malformed', e.name || e.message);
+                note(pass, batch, page, status, 0, 'malformed', e.name || 'Error');
                 return collected;
             }
 
@@ -1230,7 +1353,7 @@ Arm A does not need this resolution: the REST step's **Connection alias** field 
 | The endpoint | No | No | A search body carries the query; the URL carries no key and no filter, so there is nothing sensitive in it, and it is still not logged. |
 | The request body | No | No | It contains provider field names and the Boston location tokens. Not secret, and not logged, because it is large. |
 | The response body | Only inside `rows`, as `source` | **Never** | Provider data reaches step 5 through the envelope and nothing else. It is bounded by `MAX_ROWS` and `MAX_ROWS_BYTES`, and no step logs, renders or publishes it. |
-| A provider error message | **Never** | **Never** | Only a **closed code** leaves this step, in `error_code` and in each call-log entry's `code`. The provider's own text is passed through `redact()` and capped at `DETAIL_LIMIT` before it is recorded as a `detail`, so a message that echoes the request cannot leak it. |
+| A provider error message | **Never** | **Never** | Only a **closed code** leaves this step, in `error_code` and in each call-log entry's `code`. The provider's own text is passed through `AppProperties.safeText()` and capped at `DETAIL_LIMIT` before it is recorded as a `detail`, so a message that echoes the request cannot leak it. |
 | A failure status code | In `status_code`, and per call in the call log | Yes, through step 7 | A bare integer. |
 
 **`envelope_ok` is deliberately strict about transport and deliberately silent about cardinality.** It is `false` when any single call failed **or** when a budget truncated the read, and `true` otherwise — including when the provider legitimately returned no rows. Step 4 falls back on `envelope_ok` `false` and never on an empty result, so a correct empty live read is recorded as a `live` run with `row_count` zero rather than being overwritten with stale sample data. `failed_calls`, `truncated`, `budget_hit` and `call_log` preserve exactly what did and did not arrive, so a partial or truncated read is diagnosable rather than merely discarded.
@@ -1256,8 +1379,8 @@ Three further conditions reach the same branch, each with its own closed code ra
 
 | Condition | `error_code` | Meaning |
 | --- | --- | --- |
-| The alias name matched no `sys_alias` record | `alias_unresolved` | The alias is absent or misnamed. Guide 01's [Step 0](01-connection-credential-aliases.md#step-0--establish-the-credential-posture) posture will read `unprovisioned`. |
-| The alias name matched more than one | `alias_ambiguous` | A duplicate-name condition. |
+| The alias **API ID** matched no `sys_alias` record | `alias_unresolved` | The alias is absent or misnamed. Guide 01's [Step 0](01-connection-credential-aliases.md#step-0--establish-the-credential-posture) posture will read `unprovisioned`. |
+| The alias **API ID** matched more than one | `alias_ambiguous` | A duplicate-name condition. |
 | The alias resolved but had no active connection | `connection_unresolved` | The connection record is missing or inactive. |
 
 **An empty live result is not a fallback trigger, and this is the correction that matters most in this step.** A search that legitimately matches nothing returns `HTTP 200` with an empty `entities` array, and step 3 records that as a successful, complete read of nothing: `envelope_ok` `true`, `row_count` `0`. This step then resolves provenance `live` with an empty row set, and the run is recorded as a clean live run that ingested nothing. Treating it as a failure would replace a correct empty live read with **stale rows from the sample dataset** and would label the run `fallback` in the criterion-4 evidence — a false statement about where the data came from. `no_rows` is therefore no longer a fallback reason and does not appear in `fallback_reason`.
@@ -1290,39 +1413,42 @@ When step 2 resolved `source_mode` to `fallback`, the live attempt is skipped en
 | `provenance` | String | `live` or `fallback`. Nothing else is valid: `IngestionLogger.writeRunSummary()` in step 5 refuses any other value, returns `summary_logged` `false`, and part `8c` then reports the run unhealthy with the `summary_refused` fault token. |
 | `rows` | String | The row set to ingest, as a JSON array of typed envelopes. Empty array when there is nothing to do. |
 | `row_count` | Integer | The number of rows in `rows`. |
-| `staged_ids` | String | A JSON array of the `sys_id` values of the staging rows this run **claimed**, in the order read. Empty array on a live run. Step 7 uses it to stamp a terminal state on every claimed row even when the run fails partway. |
+| `staged_ids` | String | A JSON array of the `sys_id` values of the staging rows this run **claimed** under its run lease, in the order read. Empty array on a live run. Step 7 uses it to stamp a terminal state on every claimed row even when the run fails partway. |
 | `claimed_count` | Integer | How many staging rows this run claimed. Step 7 compares it against what it recovers, so a corrupted `staged_ids` string is detectable rather than silently empty. |
 | `fallback_reason` | String | Empty on a live run. On a fallback run, the reason the live path was not used: one of `forced`, `alias_unresolved`, `alias_ambiguous`, `connection_unresolved`, `http_status`, `transport`, `malformed`, `budget_reached`. **`no_rows` is not a member of that set**; see [4.1](#41--the-fallback-triggers). |
 | `step_error` | String | Empty on success. Set when the live envelope could not be parsed, which is a failure of this step rather than of the provider. |
 
 #### The staging-row claim
 
-**Every staging row this step reads is claimed before it is emitted.** The claim sets `import_state` to `in_progress` and `import_run` to this run's identifier, then reads both back; a row whose read-back does not carry this run's identifier belongs to another run and is skipped. Only claimed rows enter `rows` and `staged_ids`.
+**Every staging row this step reads is claimed before it is emitted, and the claim is a lease on `import_run` rather than a state change.** The lease value is the reserved prefix `run:` followed by this run's identifier. The claim writes it and reads it back; a row already carrying **another** run's lease is left alone, and a row whose read-back names another run is dropped from the batch. `import_state` stays `pending` for the whole time the row is held. Only claimed rows enter `rows` and `staged_ids`.
 
 | Property of the claim | Value |
 | --- | --- |
-| What it writes | `import_state` = `in_progress`, `import_run` = `run_id` |
-| What it reads back | Both columns, on the same record, before the row is emitted |
+| What it writes | `import_run` = `run:` + `run_id`. **`import_state` is not written by the claim** |
+| What it reads back | `import_run`, on the same record, before the row is emitted |
 | Which rows it considers | `source_system` = `crunchbase` **and** `import_state` = `pending` |
+| Which of those it skips | Any row whose `import_run` already carries a `run:` lease naming another run |
 | What settles it | `IngestionMapper.writeStagingState()` on the normal path, and step 7's sweep for any row the batch never reached |
+
+**`import_state` carries exactly four values** — `pending`, `processed`, `rejected` and `error` — and the Update Set ships no fifth. [`../data-model.md`](../data-model.md) lists all four and specifies the lease under [The `import_run` run lease](../data-model.md#the-import_run-run-lease). `IngestionMapper` owns the mechanism: `leaseValue(runId)` composes the value, `leaseHolder(importRun)` reads the run a value names — the empty string for a CSV batch token — and `claimStagingRows(runId, sourceSystem)` performs exactly the loop this step performs, for a caller that is not a flow.
 
 Three things follow, and each closes a failure this flow could otherwise reach.
 
-1. **Two runs cannot ingest the same row.** The source lease of [The source lease](#the-source-lease) already makes concurrent runs of this source impossible; the claim is defence in depth, and it is what makes the guarantee hold for a manual invocation that bypasses the trigger.
-2. **A row is never read twice within a run.** `in_progress` is outside the `pending` query, so a re-read cannot pick it up.
-3. **A run that dies hard leaves its rows visible.** They stay `in_progress` carrying the run identifier that abandoned them, which is exactly the diagnostic an operator needs. Return them to the queue by setting `import_state` back to `pending` and clearing `import_run` in the list view; [`06-staging-table-csv-import.md`](06-staging-table-csv-import.md) states the procedure. **They are not re-read automatically**, because a row that killed one run will kill the next.
+1. **Two runs cannot ingest the same row.** The guarded update is what makes this a fact rather than a race. The source lease of [The source lease](#the-source-lease) already makes concurrent runs of this source impossible; the claim is defence in depth, and it is what makes the guarantee hold for a manual invocation that bypasses the trigger.
+2. **A row is never read twice within a run.** The lease is read back before the row is emitted, and any row already carrying another run's `run:` lease is skipped, so a second pass over the `pending` query cannot pick this run's rows up again.
+3. **A run that dies hard leaves its rows visible.** They stay `pending` carrying the `run:` lease of the run that abandoned them, which is exactly the diagnostic an operator needs. Return them to the queue by clearing `import_run` in the list view; [`06-staging-table-csv-import.md`](06-staging-table-csv-import.md) states the procedure. **They are not re-read automatically**, because the lease naming another run is what a later run skips on, and a row that killed one run will kill the next.
 
-`in_progress` is a member of the `import_state` choice list shipped in the Update Set, alongside `pending`, `processed`, `rejected` and `error`. [`../data-model.md`](../data-model.md) lists all five.
+`import_state` carries exactly four members in the shipped choice list — `pending`, `processed`, `rejected` and `error` — and the claim adds no fifth, which is why it lives in `import_run`. [`../data-model.md`](../data-model.md) lists all four.
 
 ### 4.4 — The staging query
 
-On the fallback branch the flow reads `x_bst_startuptrk_ingest_staging` with exactly these conditions, which are the conditions the delivered `IngestionMapper.ingestStaging()` applies:
+On the fallback branch **this step** reads `x_bst_startuptrk_ingest_staging` with exactly these conditions, which are also the conditions `IngestionMapper.ingestStaging()` applies — the two agree deliberately, so a row selected here is a row that method would have selected. The flow does not call that method: it claims the rows it reads and hands them to `IngestionMapper.ingest()`, which is why the claim and the ingestion cannot disagree about which rows belong to this run. See [8.8](#88--one-ingestion-call-site-and-the-two-entry-points-it-may-use).
 
 | Condition | Value | Notes |
 | --- | --- | --- |
 | `source_system` | `crunchbase` | Lower-cased before the query is added. This is what keeps the two flows from reading each other's rows. |
-| `import_state` | `pending` | Rows already `in_progress`, `processed`, `rejected` or `error` are never re-read. An `in_progress` row belongs to a run that claimed it. |
-| `import_run` | not a condition | The query does not filter on it. This step **writes** it as part of the claim; see [The staging-row claim](#the-staging-row-claim). |
+| `import_state` | `pending` | Rows already `processed`, `rejected` or `error` are never re-read. A `pending` row carrying another run's `run:` lease is returned by the query and skipped in the loop. |
+| `import_run` | not a query condition | The query does not filter on it; the loop reads it to decide whether another run holds the row, and this step **writes** it as the claim. See [The staging-row claim](#the-staging-row-claim). |
 | order | `orderBy('sys_id')` | Deterministic ordering, which is what makes the batch-level deduplication of step 5 reproducible. |
 
 **`record_type` is not a query condition.** The query returns every pending Crunchbase row and the mapper **reads `record_type` off each row**. The restriction to this flow's three record types is enforced inside the mapper by its source-to-type map, which allows `startup`, `investor` and `funding_round` for `crunchbase` and rejects anything else on that source. Do not add a `record_type` filter to the query.
@@ -1346,7 +1472,7 @@ The step therefore builds the envelope itself, from the staging record:
 }
 ```
 
-| Member | Type | Required | Source | Why |
+| Member | Type | Required | Source | What reads it |
 | --- | --- | --- | --- | --- |
 | `record_type` | String | **Yes** | The staging row's `record_type` column. | `prepareOne()` checks it against `SOURCE_TYPES.crunchbase` before doing anything else. |
 | `staging_id` | String | **Yes** | The staging row's `sys_id`. | Two things need it. `mapRow()` dispatches on its presence to `mapStagingRow()`, which is the correct transformation path for a staged row. And `writeStagingState()` needs it to stamp the outcome back onto the row, which is what makes per-record evidence possible at all. |
@@ -1444,14 +1570,28 @@ The mapper stamps the normal outcomes itself, inside `ingest()`, and does so in 
         staging.orderBy('sys_id');
         staging.query();
 
+        // The lease value: the reserved prefix plus this run. See 4.3.
+        var LEASE = 'run:';
+        var mine = LEASE + inputs.run_id;
+
         while (staging.next()) {
             var stagingId = staging.getUniqueValue();
             var recordType = String(staging.getValue('record_type') || '');
 
+            // A pending row already leased by ANOTHER run was abandoned there. Leave
+            // it alone: it is a diagnostic, and re-reading it would re-run whatever
+            // killed that run. Only import_run distinguishes the two. See 4.3.
+            var held = String(staging.getValue('import_run') || '');
+            if (held.indexOf(LEASE) === 0 && held !== mine) {
+                gs.warn('[x_bst_startuptrk.ingestion] event="claim_held_elsewhere" run="' +
+                    inputs.run_id + '" staging="staging:' + stagingId + '"');
+                continue;
+            }
+
             // Claim the row, then read the claim back. A row whose claim does not
-            // come back carrying this run belongs to another run. See 4.3.
-            staging.setValue('import_state', 'in_progress');
-            staging.setValue('import_run', inputs.run_id);
+            // come back carrying this run belongs to another run. import_state is NOT
+            // written here: it stays pending until the row is settled. See 4.3.
+            staging.setValue('import_run', mine);
             if (!staging.update()) {
                 gs.warn('[x_bst_startuptrk.ingestion] event="claim_refused" run="' +
                     inputs.run_id + '" staging="staging:' + stagingId + '"');
@@ -1461,9 +1601,10 @@ The mapper stamps the normal outcomes itself, inside `ingest()`, and does so in 
             if (!check.get(stagingId)) {
                 continue;
             }
-            if (String(check.getValue('import_run')) !== String(inputs.run_id)) {
+            if (String(check.getValue('import_run')) !== mine) {
                 gs.warn('[x_bst_startuptrk.ingestion] event="claim_lost" run="' +
-                    inputs.run_id + '" staging="staging:' + stagingId + '"');
+                    inputs.run_id + '" staging="staging:' + stagingId +
+                    '" outcome="another run holds this row; skipped"');
                 continue;
             }
 
@@ -1526,7 +1667,7 @@ This step calls **`IngestionMapper.ingest(runId, sourceSystem, provenance, rows)
 | `events_dropped` | Integer | The summary's `events_dropped` member: how many events the logger's buffer ceiling discarded. **Any value above zero is required-data loss and fails the run's health**; see [8.4](#84--what-can-go-wrong-silently-and-the-outputs-that-catch-it). |
 | `provenance` | String | The provenance the summary was written under, echoed back so step 8 asserts the value that was actually used rather than the value that was intended. |
 | `parse_ok` | True/False | `false` when the incoming row array could not be parsed. See [5.8](#58--the-batch-parse-is-guarded). |
-| `step_error` | String | Empty on success. The sanitised failure message when the step could not complete. |
+| `step_error` | String | Empty on success. On a failure, a **closed code**, an opaque diagnostic reference and the caught text's length — never the caught text. See [5.10](#510--a-thrown-orchestrator-reports-a-code-not-its-message). |
 
 **This step writes no property and stamps no marker.** `IngestionLogger.writeRunSummary()` records the `run_summary` event and returns the counters; it does **not** touch `x_bst_startuptrk.ingestion.last_run_provenance`. The run-completion marker is stamped by `IngestionLogger.markRunComplete()`, which step `8c` calls **after** the evidence has been published and every health check has passed. [8.6](#86--part-8c--assert-publication-then-complete-or-release-the-lease) states why the order matters: a marker stamped here would advance the cadence for a run whose evidence never reached the flow execution log, and the next twenty-three hourly executions would then no-op on the strength of a run nobody can audit.
 
@@ -1538,7 +1679,7 @@ These are applied in the order below, which is the order the delivered `Ingestio
 
 **Rule 1 — trim whitespace on all string fields.** `IngestionMapper.trimStrings()` applies `trim()` to every string-typed value on the record before anything else looks at it.
 
-**Rule 2 — deduplicate incoming Startup records on `name` + `headquarters_location`, case-insensitively.** `IngestionMapper.startupKey()` forms the key as the lower-cased name, a pipe, then the lower-cased headquarters location. `IngestionMapper.dedupeBatch()` applies it at **batch scope**, after each record has been prepared and before any reference is resolved: the first occurrence of a key is accepted, and every later occurrence in the same batch is rejected with the reason `duplicate startup in the same batch` and logged by `IngestionLogger.duplicateRecord()`. The rule applies to the `startup` record type only.
+**Rule 2 — deduplicate incoming Startup records on `name` + `headquarters_location`, case-insensitively.** `IngestionMapper.startupKey()` forms the key as the lower-cased name, a pipe, then the lower-cased headquarters location. `IngestionMapper.dedupeBatch()` applies it at **batch scope**, after each record has been prepared and before any reference is resolved: the first occurrence of a key is accepted, and every later occurrence in the same batch is rejected, logged by `IngestionLogger.duplicateRecord()` with the reason text `duplicate startup in the same batch`, and settled on its staging row with the controlled outcome code `duplicate_in_batch` — the reason text reaches the run log, and `error_message` carries the code and an opaque reference only. The rule applies to the `startup` record type only.
 
 This is the **shared deduplication key**. [`03-flow-linkedin-ingestion.md`](03-flow-linkedin-ingestion.md) resolves company identity through the same key, which is what lets a founder ingested from LinkedIn attach to a startup ingested from Crunchbase.
 
@@ -1659,11 +1800,20 @@ and the run summary reports the total as **`rule3_deviations`**. That count is t
         outcome = mapper.ingest(inputs.run_id, 'crunchbase',
             inputs.provenance, incoming);
     } catch (ingestError) {
-        outputs.step_error = 'the batch could not be ingested: ' +
-            ingestError.message;
+        // A closed code and an opaque diagnostic reference, never the caught text. An
+        // exception message is upstream text of unknown content: it can quote the request
+        // that produced it. The text reaches the application log only through safeText,
+        // and reaches no flow output at all. See 5.10.
+        var props = new AppProperties();
+        var caught = String(ingestError && ingestError.message !== undefined &&
+            ingestError.message !== null ? ingestError.message : ingestError);
+        var diagnostic = props.fingerprint(caught);
+        outputs.step_error = 'unexpected_fault (diagnostic ' + diagnostic + ', ' +
+            caught.length + ' characters, text withheld)';
         gs.error('[x_bst_startuptrk.ingestion] event="batch_failed" run="' +
-            inputs.run_id + '" source="crunchbase" outcome="' +
-            outputs.step_error + '"');
+            inputs.run_id + '" source="crunchbase" code="unexpected_fault"' +
+            ' diagnostic="' + diagnostic + '" characters="' + caught.length +
+            '" detail="' + props.safeText(caught, 400) + '"');
     }
 
     var counts = logger.counters();
@@ -1736,7 +1886,7 @@ and the run summary reports the total as **`rule3_deviations`**. That count is t
 
 This step therefore copies exactly the members step 6 and step 7 need, and no others.
 
-| Member | Type | Why it is safe, and what reads it |
+| Member | Type | What it carries, and what reads it |
 | --- | --- | --- |
 | `record_type` | String | Closed vocabulary. Step 6 counts by type. |
 | `state` | String | One of `processed`, `rejected`, `error`. Step 6 counts written entries. |
@@ -1780,6 +1930,22 @@ The script therefore parses inside a `try`, and on failure it sets `parse_ok` `f
 
 The property all four preserve is the same one: **the run reaches step 8 and leaves a run summary behind**, whatever went wrong. A run that failed and left no summary is indistinguishable from a run that never happened.
 
+### 5.10 — A thrown orchestrator reports a code, not its message
+
+**No caught exception text is ever assigned to a flow output, a step output, a staging column or a flow variable.** An exception message is upstream text of unknown content and unknown length: `ingest()` calls the provider mapping, the dictionary, the reference resolver and the record write, so a message can quote the row that produced it, and a row assembled from a provider response can quote the provider's response. Once that text is on a flow output it is in the flow execution history, which no retention sweep and no erasure request can reach.
+
+`step_error` therefore carries three things and nothing else:
+
+| Part | Example | What it is |
+| --- | --- | --- |
+| The closed code | `unexpected_fault` | A member of `IngestionMapper.FAULT_CODES`, which is the closed vocabulary shipped in the Update Set: `batch_expand_failed`, `batch_dedupe_failed`, `row_prepare_failed`, `record_write_failed`, `staging_state_write_failed` and `unexpected_fault`. A code the set does not contain resolves to `unexpected_fault`. |
+| An opaque diagnostic reference | `diagnostic 3f9a1c04` | `AppProperties.fingerprint()` of the caught text: eight hexadecimal characters, stable, non-reversible. Two runs that failed the same way carry the same reference, which is what makes them recognisably the same fault. |
+| The caught text's length | `412 characters, text withheld` | Enough to see that the text was long, and not enough to disclose any of it. |
+
+**The caught text itself reaches exactly one place: the application log, through `AppProperties.safeText(caught, 400)`.** That is the same sanitiser every other diagnostic in this package passes through, and the same construction `IngestionMapper._fault()` uses for the four per-row and per-batch faults it raises inside `ingest()` — so a fault raised inside the mapper and a fault raised by this step read alike in the log and are correlated by the same kind of reference.
+
+**Do not widen this.** A build that writes `ingestError.message` into `step_error` puts provider and record text into the flow execution history on every failure, and a debug flag that turns raw text back on is a flag that will be left on.
+
 ## Step 6 — Confirm the writes, the participant rows and the derived columns
 
 **Step type:** Script (Utilities → Script).
@@ -1809,14 +1975,14 @@ Nor does this flow write `x_bst_startuptrk_founder`, `x_bst_startuptrk_executive
 | --- | --- | --- | --- |
 | **Startup** | `name` + `headquarters_location`, case-insensitively — the same key as cleaning rule 2. | `IngestionMapper.findExistingStartup()` | Exactly one match updates it. No match inserts. **More than one match is an ambiguity failure**: the record is not written, and the reason logged ends `is ambiguous`. |
 | **Investor** | `name` only, with no location component. | `IngestionMapper.findExistingInvestor()` | Exactly one match updates it. No match inserts. More than one match is an ambiguity failure. |
-| **FundingRound** | `startup` + `round_date` + `round_type`, falling back to `startup` + `round_date` when the round type could not be normalised. | `IngestionMapper.findExistingByKey('funding_round', data)` | Exactly one match updates it. No match inserts. More than one match is an ambiguity failure. The fallback key exists because the flagged rule-3 deviation of [5.4](#54--the-no-other-conflict-and-why-it-is-flagged-rather-than-resolved) can leave `round_type` unwritten, and a key containing an empty component would otherwise match every round of that startup on that date. |
+| **FundingRound** | **`source_url` when the round carries one, falling back to `startup` + `round_date` when it does not**. `round_type` is deliberately **not** in the key: it is an updatable attribute, so keying on it would make a corrected round stage insert a second round instead of updating the first. On the live path `source_url` is never populated — Crunchbase v4 does not publish it — so the second alternative governs there; on the fallback path the staged `source_url` governs. | `IngestionMapper.findExistingByKey('funding_round', data)` | Exactly one match updates it. No match inserts. More than one match is an ambiguity failure. The fallback key exists because the flagged rule-3 deviation of [5.4](#54--the-no-other-conflict-and-why-it-is-flagged-rather-than-resolved) can leave `round_type` unwritten, and a key containing an empty component would otherwise match every round of that startup on that date. |
 | **Participant row** | `funding_round` + `investor`. | `IngestionMapper.linkParticipants()` reads the existing rows for that round first. | Only missing pairs are inserted. A failed insert calls `IngestionLogger.skipRecord()` with the record type `round_investor_link` and the reason `join row insert failed`. |
 
 `IngestionMapper.IDENTITY_KEYS` declares the keys for the record types with no name-based lookup, and each is a **list** of candidate keys tried in order:
 
 | Record type | Candidate keys, in order |
 | --- | --- |
-| `funding_round` | `startup` + `round_date` + `round_type`, then `startup` + `round_date` |
+| `funding_round` | `source_url`, then `startup` + `round_date` |
 | `founder`, `executive` | `startup` + `name` |
 | `job_posting` | `startup` + `url`, then `startup` + `title` + `posted_date` |
 
@@ -1837,7 +2003,7 @@ These are two different mechanisms and both must be written.
 
 - **`lead_investor` is a first-class reference column on `x_bst_startuptrk_fundinground`.** It holds exactly one investor and is set directly on the funding-round record.
 - **Participating investors are materialised as rows of `x_bst_startuptrk_m2m_round_investor`.** That join table is authoritative for participation. Each row carries a mandatory `funding_round` reference and a mandatory `investor` reference, both cascading on delete.
-- **`participating_investors` on the funding round is a derived, read-only projection.** Do not write it. It carries `read_only` true and is refreshed by the business rule on the join table. The mapper's write allowlist excludes it, so an attempt to set it from an ingestion path is dropped rather than applied.
+- **`participating_investors` on the funding round is a **calculated** read-only column, not a stored one.** Do not write it, and do not expect a write to it to be visible: the dictionary entry carries `virtual` true, `read_only` true and a calculation that calls `InvestorPortfolioService.participantList()`, which derives the value from `x_bst_startuptrk_m2m_round_investor` on every read. Nothing refreshes it because nothing stores it, so it cannot drift from the join table — the join table is the single store. The mapper's write allowlist excludes it, so an attempt to set it from an ingestion path is dropped rather than applied. A round linking more than **121** investors renders a value cut at a whole identifier and logs a warning; the join table still holds every row.
 
 An investor that both led a round and participated in it appears in both places. That is correct, and the `portfolio_count` derivation counts the company once regardless; see [`../data-model.md`](../data-model.md).
 
@@ -1848,12 +2014,12 @@ An investor that both led a round and participated in it appears in both places.
 | Business rule | Table | When |
 | --- | --- | --- |
 | `Recalculate investor portfolio on funding round` | `x_bst_startuptrk_fundinground` | After insert, update and delete. On an update it recalculates **both** the previous and the new `lead_investor`, and handles a change to the round's `startup`. |
-| `Recalculate investor portfolio on round investor link` | `x_bst_startuptrk_m2m_round_investor` | After insert, update and delete. It also refreshes the derived `participating_investors` projection on the affected funding round. |
+| `Recalculate investor portfolio on round investor link` | `x_bst_startuptrk_m2m_round_investor` | After insert, update and delete. It recalculates the linked investor's `portfolio_count` and nothing else: the join table is the only store of participation, and `participating_investors` is derived from it on read. |
 | `Trim and validate startup` | `x_bst_startuptrk_startup` | Before insert and update. |
 
-Use ordinary `GlideRecord` `insert()` and `update()`. **No write this flow makes calls `setWorkflow(false)`, and no import path this flow uses disables business rules.** If business rules are suppressed during a write, `portfolio_count` silently drifts — see [Operational warnings](#operational-warnings).
+Use ordinary `GlideRecord` `insert()` and `update()`. **No write this flow's own steps make calls `setWorkflow(false)`, and no import path this flow uses disables business rules.** Every Startup, Investor and FundingRound write on this path runs its rules. If business rules are suppressed on a write to `x_bst_startuptrk_fundinground` or `x_bst_startuptrk_m2m_round_investor` without a paired convergence, `portfolio_count` silently drifts — see [Operational warnings](#operational-warnings).
 
-**One write in the application does call `setWorkflow(false)`, and it is not a flow write.** `InvestorPortfolioService.refreshRoundParticipants()` suppresses business rules when it writes the derived `participating_investors` projection back onto a funding round, because that write is itself performed *from* the business rule on the join table and would otherwise re-enter it. The suppression is scoped to that one projection column on that one record, it happens after the join rows are already committed, and it cannot affect `portfolio_count` — which is maintained by the same service on the investor record, not by the projection write. The assertion to make when verifying this flow is therefore precise: **no flow-originated write suppresses business rules.** The decision is recorded in [`../../../docs/decisions/DECISION_LOG.md`](../../../docs/decisions/DECISION_LOG.md).
+**One family of writes in the application does call `setWorkflow(false)`, and none of them is a flow write.** `IngestionMapper.linkParticipants()` suppresses the join table's business rule on every participant row it inserts or deletes, so a round linking twelve investors does not recalculate twelve times; the batch then closes with **one** explicit convergence step that recalculates the portfolio count of every investor added, removed or leading, exactly once each. That convergence is not optional and its failure is not silent: `linkParticipants()` reports `converged` and `recalculated` on its result, and a batch that did not converge marks the round **partial** rather than processed. The suppression is scoped to the join table's own rows; the entity writes this flow makes — Startup, Investor and FundingRound — all run business rules normally, which is what maintains `portfolio_count` on a lead-investor change and trims and validates a Startup. The assertion to make when verifying this flow is therefore precise: **no write this flow's own steps make suppresses business rules**, and the suppression inside `linkParticipants()` is paired with a convergence step that is asserted. The decision is recorded at `D-185` in [`../../../docs/decisions/DECISION_LOG.md`](../../../docs/decisions/DECISION_LOG.md).
 
 After any **bulk** load, invoke `InvestorPortfolioService.recalculateAll()` from a background script. It reads the graph in two passes and writes only the investors whose stored count differs, so it costs nothing on an already-correct table and returns the number of investors it wrote.
 
@@ -1887,10 +2053,10 @@ After any **bulk** load, invoke `InvestorPortfolioService.recalculateAll()` from
 | `by_type` | String | A JSON object of written counts per record type, for the execution detail. |
 | `rounds_checked` | Integer | Funding rounds this run wrote and read back. |
 | `links_confirmed` | Integer | Participant join rows present across those rounds. Reported, not asserted. |
-| `links_exact` | True/False | `true` when **every** round's join set and projection set match the set this run resolved, exactly. This is the assertion. See [6.9](#69--participation-is-reconciled-as-an-exact-set). |
+| `links_exact` | True/False | `true` when **every** round's join set matches the set this run resolved, exactly, and the round's calculated `participating_investors` value agrees with that join set. This is the assertion. See [6.9](#69--participation-is-reconciled-as-an-exact-set). |
 | `rounds_mismatched` | Integer | Rounds whose sets did not match exactly. |
 | `mismatch_detail` | String | A JSON array of at most ten mismatches, each naming the round `sys_id`, the mismatch class, and the counts on each side. Platform identifiers only. |
-| `projection_refreshed` | Integer | Funding rounds whose `participating_investors` projection set equals their join set exactly. |
+| `projection_refreshed` | Integer | Funding rounds whose calculated `participating_investors` value equals their join set exactly. The name is historical: nothing is refreshed, because the column is derived on read. A round that does not agree means the calculation did not evaluate, or the round exceeds the 121-identifier render capacity. |
 | `entries_parse_ok` | True/False | `false` when the entry projection could not be parsed. Fails the run's health. |
 | `step_error` | String | Empty on success. |
 
@@ -1902,7 +2068,7 @@ After any **bulk** load, invoke `InvestorPortfolioService.recalculateAll()` from
 | --- | --- | --- |
 | **Resolved** | The entry projection's `participants` member — the investor `sys_id` values `IngestionMapper.resolveParticipants()` resolved from the incoming row. | What the source asserted, after reference resolution. |
 | **Joined** | `InvestorPortfolioService.participantsForRounds()`, reading `x_bst_startuptrk_m2m_round_investor`. | What the authoritative join table holds. |
-| **Projected** | The round's own `participating_investors` column. | What the derived read-only projection shows. |
+| **Derived** | The round's own `participating_investors` column, read back. | What the calculated column renders from the join table at read time. |
 
 An earlier build compared **counts** and asserted only that `links_confirmed` was at least `links_written`. Three real faults slip through that test, and each of them leaves the application quietly wrong rather than visibly broken.
 
@@ -1910,9 +2076,9 @@ An earlier build compared **counts** and asserted only that `links_confirmed` wa
 | --- | --- | --- |
 | One participant is missing and one extra one is present | The counts match. **Pass.** | Two different sets. **Fail**, class `joined_differs`. |
 | A participant is linked to the wrong round, and another round is short by one | Both counts still add up across the run. **Pass.** | Both rounds' sets differ. **Fail** on both. |
-| The projection column drifted from the join table | The projection is counted, not compared. **Pass** whenever the lengths agree. | The projected set differs from the joined set. **Fail**, class `projection_differs`. |
+| The calculated column does not render the join set — the calculation did not evaluate, or the round exceeds the 121-identifier render capacity | The value is counted, not compared. **Pass** whenever the lengths agree. | The derived set differs from the joined set. **Fail**, class `projection_differs`. |
 
-The assertion is therefore set equality, in both directions, on both comparisons, per round. `links_exact` is `true` only when every round passes both.
+The assertion is therefore set equality, in both directions, on both comparisons, per round. `links_exact` is `true` only when every round passes both. **The two comparisons are not redundant even though the column is derived from the join table.** The joined-versus-resolved comparison tests the ingestion; the derived-versus-joined comparison tests that the calculation evaluates and renders completely, which is exactly what the render capacity and a calculation failure can break.
 
 **One case is deliberately not a failure.** When `IngestionMapper.linkParticipants()` reports `reconciled` `false` for a round — which happens when the incoming record named a participant whose name did not resolve, so the mapper added links without deleting any — the joined set is legitimately a **superset** of the resolved set. For those rounds the assertion relaxes to *resolved is a subset of joined*, and `projection_differs` is still asserted exactly. The mapper's own warning already records the incompleteness, and failing here as well would report the same provider data gap twice.
 
@@ -2040,7 +2206,7 @@ The assertion is therefore set equality, in both directions, on both comparisons
             var resolved = resolvedByRound[roundId] || {};
             var wasReconciled = reconciledByRound[roundId] === true;
 
-            // The projection must equal the join set exactly, always.
+            // The calculated column must render the join set exactly, always.
             var projectionOk = equal(projected, joined);
             if (projectionOk) {
                 outputs.projection_refreshed = outputs.projection_refreshed + 1;
@@ -2207,19 +2373,19 @@ The rule is worth stating as a prohibition, because the arithmetic looks plausib
 
 Every staging row step 4 claimed must carry `processed`, `rejected` or `error` by the time the run ends. `IngestionMapper._applyEntry()` stamps the rows the batch reached, in a `try` of its own, so a per-record exception still leaves a state behind. **This sweep is the backstop for the rows the batch never reached** — because the parse failed, because `ingest()` threw before the loop, or because the flow failed between steps.
 
-A row left at `pending` is re-read by the next run. On a poison row that is a permanent, silent duplicate source, and it is the failure mode this sweep exists to close.
+A row left at `pending` still carrying this run's lease is stranded: the next run skips it because the lease names another run, and no run settles it. That is the failure mode this sweep exists to close.
 
 | Row state when the sweep runs | Action |
 | --- | --- |
 | `processed`, `rejected` or `error` | Left alone. Counted as `settled`. |
-| Still `in_progress` — claimed by this run and never reached | Stamped `error` with a reason naming this run, so the next run does not re-read it and an operator can find every row this run failed to reach. Counted as `swept`. |
-| Still `pending` | The same treatment. A claimed row should not be `pending`, so this is itself a fault; it is swept and counted, and the log line reports it. |
+| Still `pending` and carrying this run's `run:` lease — claimed by this run and never reached | Stamped `error` carrying `code=run_abandoned ref=staging:<sys_id>`, so the next run does not re-read it. **The run identifier is not written to the column**: it is already on the row's `import_run`, and the sweep's own `row_abandoned` log line names the run, the row and the state it was in. Counted as `swept`. |
+| Still `pending` and carrying **no** lease, or another run's | The same treatment and the same code. A row this run's batch reached should carry this run's lease, so an unleased row inside the swept set is itself a fault; it is swept and counted, and the `row_abandoned` log line carries `was="unleased"` so the two cases stay distinguishable. |
 
 The sweep runs on **every** execution that passed the cadence guard, including a failed one, which is why it is its own step rather than a branch of step 5.
 
 #### The claimed set is recovered from the database, not from the pill
 
-**`staged_ids` is a convenience, not the source of truth.** An earlier build parsed it and, on a parse failure, silently continued with an empty claimed set — so a corrupted or truncated pill produced a run that reported `settled` `0`, `swept` `0` and `reconciled` `true` while leaving every claimed row `in_progress` for nobody to find. Two independent recoveries close that.
+**`staged_ids` is a convenience, not the source of truth.** An earlier build parsed it and, on a parse failure, silently continued with an empty claimed set — so a corrupted or truncated pill produced a run that reported `settled` `0`, `swept` `0` and `reconciled` `true` while leaving every claimed row `pending` under a dead lease for nobody to find. Two independent recoveries close that.
 
 | # | Recovery | How |
 | --- | --- | --- |
@@ -2337,15 +2503,20 @@ The recovered set is compared against step 4's `claimed_count`. A shortfall mean
         while (staging.next()) {
             seen = seen + 1;
             var state = String(staging.getValue('import_state'));
-            if (state !== 'pending' && state !== 'in_progress') {
+            if (state !== 'pending') {
                 outputs.settled = outputs.settled + 1;
                 continue;
             }
             staging.setValue('import_state', 'error');
+            // The controlled vocabulary only. The run identifier, the row and the
+            // reason live in the log line below, never in the column. See 7.5.
             staging.setValue('error_message',
-                'run ' + inputs.run_id + ' ended before this row was processed');
+                'code=run_abandoned ref=staging:' + staging.getUniqueValue());
             if (staging.update()) {
                 outputs.swept = outputs.swept + 1;
+                gs.warn('[x_bst_startuptrk.ingestion] event="row_abandoned" run="' +
+                    inputs.run_id + '" staging="' + staging.getUniqueValue() +
+                    '" was="' + state + '"');
             }
         }
         outputs.claim_shortfall = claimedIds.length - seen;
@@ -2454,17 +2625,17 @@ Step 5 recorded the `run_summary` event into the logger's buffer and returned th
 
 This is the surface criterion 4 in [`../validation-checklist.md`](../validation-checklist.md) reads for each of the **three consecutive guard-passing runs** it requires. It runs on every guard-passing execution, on both the live and the fallback path, and on a failed one.
 
-### 8.1 — Why this step is three parts
+### 8.1 — The three parts, and what each sets
 
-An earlier build did all of it in one step: it rendered the evidence block, set an output named `published` to `true`, computed `healthy` from three inputs, and relied on step 5 having already stamped the cadence marker. Three faults lived in that arrangement, and each is closed by a different part of the split.
+| Part | What it does | What it sets |
+| --- | --- | --- |
+| `8a` | Renders the evidence block, the `run_summary` event **first**, before any other event. | `rendered`, never `published`. It reports parse loss and required-data truncation as their own outputs. |
+| `8b` | Publishes the rendered block through the Log action. | Nothing. |
+| `8c` | Runs the health check, then calls `IngestionLogger.markRunComplete()`. | `published`, and only once every health check has passed. It fails the run's health check on either of `8a`'s loss outputs. |
 
-| # | Fault in the single-step build | Consequence | Which part closes it |
-| --- | --- | --- | --- |
-| 1 | `published` was set `true` **in the step that rendered the text**, before the Log action ran. | An execution whose Log action failed still reported `published` `true`. The flow execution log was empty and the evidence flag said otherwise. | `8a` sets **`rendered`** and never `published`. `published` is set by `8c`, which the platform does not execute unless `8b` completed. |
-| 2 | The cadence marker was stamped by **step 5**, inside `writeRunSummary()`, long before the writes were confirmed or the evidence published. | A run that failed at step 6 or 7, or whose Log action never ran, had already advanced the cadence. The next twenty-three hourly executions then no-opped on the strength of a run nobody could audit. | `8c` calls `IngestionLogger.markRunComplete()`, and only once every health check has passed. Step 5 writes no property at all. |
-| 3 | Truncation cut the rendered block at a fixed ceiling **after** the events had been appended in arrival order, and a malformed `events` payload silently became an empty array. | The `run_summary` event — the one record criterion 4 is read from — was the member most likely to be cut, and a parse failure produced a clean-looking empty publication. | `8a` renders the summary **first**, before any other event, and reports parse loss and required-data truncation as their own outputs. `8c` fails the run's health on either. |
+Step 5 writes no property at all; the completion marker is stamped from `8c` alone.
 
-**The ordering is the mechanism.** Flow Designer runs the three parts in sequence and does not run a step whose predecessor failed. `8c` executing at all is therefore the platform's own guarantee that `8b` completed — which is exactly what the single-step build could not assert about itself. Two consequences follow and both are safe directions: a failed Log action leaves `8c` unexecuted, so no completion marker is stamped and the run is retried; and a `running` claim left behind that way is cleared by the cadence-aged takeover of [The source lease](#the-source-lease).
+**The ordering is the mechanism.** Flow Designer runs the three parts in sequence and does not run a step whose predecessor failed. `8c` executing at all is therefore the platform's own guarantee that `8b` completed. Two consequences follow and both are safe directions: a failed Log action leaves `8c` unexecuted, so no completion marker is stamped and the run is retried; and a `running` claim left behind that way is cleared by the cadence-aged takeover of [The source lease](#the-source-lease). The split and the three faults of the single-step build it replaced are recorded at `D-281`, `D-282` and `D-283`.
 
 ### 8.2 — What step 5 already wrote, and what it deliberately did not
 
@@ -2473,7 +2644,7 @@ An earlier build did all of it in one step: it rendered the evidence block, set 
 1. It validates the provenance against the only two valid values, `live` and `fallback`. **Any other value is refused**: the method records a `run_summary_provenance_invalid` event at **error** severity, returns a summary whose `logged` member is `false`, and writes nothing else. There is no third value and no default.
 2. On a valid provenance it records the `run_summary` event at **info** severity carrying `provenance`, `source_system`, `processed`, `rejected`, `skipped`, `duplicates`, `unmatched`, `rule3_deviations` and `events_dropped`, and returns the summary with `logged` `true`.
 
-**It writes no system property.** The completion marker step 1's guard reads is written by `IngestionLogger.markRunComplete()`, and that method is called from exactly one place in the whole flow: part `8c`. The separation is the fix for fault 2 above — a marker written inside `writeRunSummary()` advances the cadence at the moment the counters are totalled, which is several steps before anyone knows whether the run is fit to count.
+**It writes no system property.** The completion marker step 1's guard reads is written by `IngestionLogger.markRunComplete()`, and that method is called from exactly one place in the whole flow: part `8c`. A marker written inside `writeRunSummary()` would advance the cadence at the moment the counters are totalled, several steps before anyone knows whether the run is fit to count; `D-281` records the separation.
 
 **One property write happens per run, at most.** `markRunComplete()` turns this source's `running` marker in `x_bst_startuptrk.ingestion.last_run_provenance` into a `succeeded` marker carrying the provenance and the completion stamp. Nothing else in this flow writes a property. [1.1](#11--what-the-guard-compares) records why the cadence marker is a property rather than a log record, and [The source lease](#the-source-lease) records the marker format.
 
@@ -2501,7 +2672,7 @@ Every input is a data pill. Bind them; do not retype a value.
 | `events_parsed` | True/False | `false` when `events` was unbound or not a parseable JSON array. |
 | `summary_present` | True/False | `true` when the drained event set carried a `run_summary` event. **The single most important output of this part** — without it criterion 4 has nothing to read. |
 | `evidence_complete` | True/False | `true` when the events parsed, the summary is present, nothing was omitted and the block is within the ceiling. |
-| `rendered` | True/False | `true` when a non-empty block was produced. **Not `published`** — see [8.1](#81--why-this-step-is-three-parts). |
+| `rendered` | True/False | `true` when a non-empty block was produced. **Not `published`** — see [8.1](#81--the-three-parts-and-what-each-sets). |
 
 ### 8.4 — What can go wrong silently, and the outputs that catch it
 
@@ -2642,7 +2813,7 @@ run=crunchbase-20260807143000-4f2b91cd77ae0163 source=crunchbase provenance=fall
   severity="warn" source="x_bst_startuptrk.ingestion" run="crunchbase-20260807143000-4f2b91cd77ae0163" event="choice_unmatched" record_type="funding_round" field="round_type" value="Series Q" outcome="left unwritten: the prompt 1.0 choice list declares no Other member (flagged deviation from cleaning rule 3)" deviation="true"
 ```
 
-**Render the event's own members; do not read a `line` member off it.** `drainEvents()` returns the structured entries, which carry no pre-rendered `line`. A renderer that reads one publishes the severity and the event name with an empty detail, which looks like a working Log action and carries none of the evidence prompt section 8.0 requires. [`05-atf-test-suites.md`](05-atf-test-suites.md#the-published-evidence-assertion) asserts the detail is present.
+**Render the event's own members; do not read a `line` member off it.** `drainEvents()` returns the structured entries, which carry no pre-rendered `line`. A renderer that reads one publishes the severity and the event name with an empty detail, which looks like a working Log action and carries none of the evidence prompt section 8.0 requires. The detail's presence is asserted by **this guide's own manual run** — the execution detail of the first data-bearing run must show the `run=` header with the `run_summary` event on the line directly beneath it — because no Automated Test Framework test starts a flow and so none can read a flow execution's published block; see [`05-atf-test-suites.md`](05-atf-test-suites.md#what-half-a-cannot-assert-and-where-that-evidence-lives-instead).
 
 **Part two — `8b`, the Log action itself.**
 
@@ -2816,66 +2987,98 @@ Criterion 4 therefore reads **this** flow's published run summary and not the te
 
 **Which provenance a run resolves to depends on the credential posture recorded in guide 01's [Step 0](01-connection-credential-aliases.md#step-0--establish-the-credential-posture).** In the unprovisioned posture every run of this flow resolves to `fallback`, and every result must be labelled accordingly. [Credential posture](01-connection-credential-aliases.md#credential-posture) is the one factual statement of readiness for this package; do not restate it here or infer it from anything else.
 
-### 8.8 — The mandatory orchestrator and the diagnostic variant
+### 8.8 — One ingestion call site, and the two entry points it may use
 
-**The delivered construction is action A4, built from the orchestrator script below. It is mandatory. Build it.**
+**Step 5 is the only place in this flow that calls `IngestionMapper`, and its script in [5.6](#56--the-step-script) is the only ingestion call site.** Steps 6, 7 and 8 read what step 5 published and write no entity record. Nothing in the flow calls the mapper twice, and no action wraps steps 5 through 8 into one call — that construction was tried and removed, because `8b` is a **Log** action step and steps 6, 7, `8a` and `8c` each declare their own inputs and outputs, so folding them into one script would discard the sweep of [7.5](#75--the-terminal-state-sweep), the published evidence of [8.5](#85--publishing-the-events-to-the-flow-execution-log) and the completion marker of [8.6](#86--part-8c--assert-publication-then-complete-or-release-the-lease). `D-102` carries the decision.
 
-`IngestionMapper` ships two orchestrator methods that perform phases 5 through 8 in one call, in exactly the order the four numbered sections specify:
+`IngestionMapper` exposes two batch entry points, and the delivered flow uses the first:
 
 | Method | Use |
 | --- | --- |
-| `IngestionMapper.ingest(runId, sourceSystem, provenance, rows)` | The live branch. Cleans, deduplicates at batch scope, resolves references, upserts, links participants, stamps staging state, and finishes by calling `IngestionLogger.writeRunSummary()`. |
-| `IngestionMapper.ingestStaging(runId, sourceSystem, importRun, provenance)` | The fallback branch. Applies the staging query of [4.4](#44--the-staging-query) itself, then does everything `ingest()` does. |
+| `IngestionMapper.ingest(runId, sourceSystem, provenance, rows)` | **The method A4 calls, on every branch.** Cleans, deduplicates at batch scope, resolves references, upserts, links participants, stamps staging state, and finishes by calling `IngestionLogger.writeRunSummary()` in a `finally`, so the summary is written even on a thrown exit. |
+| `IngestionMapper.ingestStaging(runId, sourceSystem, importRun, provenance)` | **Not called by this flow.** It runs its own staging query — `source_system`, `import_state` `pending`, optionally `import_run` — and then does everything `ingest()` does. Because A3 has already written this run's `run:` lease onto every row it claimed, this method would re-select the very same rows if A4 called it after the claim, and would ingest them a second time. It is the entry point for an **unclaimed** invocation: an operator running the fallback by hand from a background script, and the ATF ingestion test. |
+
+**A4 therefore has one ingestion call, not two.** The branch that used to exist here was the defect: it claimed rows in A3 and then asked `ingestStaging()` for `pending` rows, so the fallback path ingested zero rows on every run while reporting a clean summary. The row set A3 publishes is the row set A4 ingests, on both branches, which is the single row-ownership model this flow uses end to end.
 
 Because both run on the **one** `IngestionLogger` instance A4 constructs, the run summary carries the complete batch counters — which is the property [7.4](#74--the-counters-come-from-the-logger-never-from-arithmetic) shows the per-phase alternative cannot have. **Phases 5, 6, 7 and 8 all still happen**, each still observable in the log through the events of [7.2](#72--every-log-record-this-flow-can-write), and every statement in those four sections still applies exactly as written.
 
 #### The A4 script
 
-```javascript
-(function execute(inputs, outputs) {
+**A4's script step is the one specified at [5.6](#56--the-step-script), and there is no second version of it.** That script performs the whole batch on one `IngestionLogger` instance and assigns the fifteen step outputs declared at [5.2](#52--step-outputs). Transcribe it there; nothing is repeated here, because two copies of one script are two things to keep in step.
 
+    var SOURCE = 'crunchbase';
+
+    outputs.processed = 0;
+    outputs.rejected = 0;
+    outputs.skipped = 0;
+    outputs.duplicates = 0;
+    outputs.unmatched = 0;
+    outputs.recorded = false;
+
+    // ONE logger for the whole batch. See [7.4](#74--the-counters-come-from-the-logger-never-from-arithmetic).
     var logger = new IngestionLogger();
     var mapper = new IngestionMapper();
     mapper.useLogger(logger);
 
-    var outcome;
-    if (inputs.provenance === 'live') {
-        // inputs.rows is the accumulated TYPED ENVELOPE array of 4.3 — one member per
-        // call site per organisation, each carrying record_type and the verbatim
-        // payload. Never a bare unwrapLive() result and never a bare response body.
-        outcome = mapper.ingest(inputs.run_id, 'crunchbase', 'live',
-                                JSON.parse(inputs.rows || '[]'));
-    } else {
-        // The only supported fallback entry point. It applies the bounded staging
-        // query of 4.4 itself and builds each row's { record_type, staging_id }.
-        // Pass an empty import_run for a scheduled run.
-        outcome = mapper.ingestStaging(inputs.run_id, 'crunchbase', '', 'fallback');
+    // A3 emits the row set for BOTH branches: the typed live envelopes on the live branch,
+    // and one { record_type, staging_id } envelope per row it CLAIMED on the fallback
+    // branch. ingestStaging() is NOT called here: it runs its own pending query and would
+    // re-select the very rows A3 has already leased to this run.
+    var rows = [];
+    try {
+        var parsed = JSON.parse(inputs.rows || '[]');
+        if (parsed && Array.isArray(parsed)) {
+            rows = parsed;
+        }
+    } catch (parseError) {
+        gs.error('[x_bst_startuptrk.ingestion] event="batch_unreadable" run="' +
+            inputs.run_id + '" source="' + SOURCE + '" outcome="the row batch is not' +
+            ' parseable JSON; step 7 sweeps every claimed staging row"');
     }
 
+    // ---- Exactly A4's six declared outputs, and nothing else. ----
+    // An output the script assigns but the action does not declare is invisible to the
+    // flow and to the ATF suite, so seven assignments an earlier revision made here
+    // have been removed rather than left as dead code: `partial`, `errors`,
+    // `links_written`, `links_removed`, `succeeded`, `cadence_recorded` and
+    // `cadence_success`. Five of them also read members `IngestionMapper.ingest()`
+    // does not return — it answers exactly { run, source_system, accepted, rejected,
+    // entries, summary } — so they evaluated to undefined or to a constant false.
+    // Where that information is needed it is already published elsewhere: the
+    // per-record participation diff is on each entry and in the run_summary event, and
+    // the cadence marker is written and verified by 8c, whose `marker_stamped` and
+    // `marker_verified` outputs are the assertion for it.
+    var outcome = null;
+    try {
+        // Expand, prepare, de-duplicate, resolve, write, link, stamp staging state, and
+        // write the run summary in a finally. All on the one logger above.
+        outcome = mapper.ingest(inputs.run_id, SOURCE, inputs.provenance, rows);
+    } catch (ingestError) {
+        // A closed code and an opaque diagnostic reference. The caught text never reaches
+        // a flow output; it reaches the application log only through safeText.
+        var props = new AppProperties();
+        var caught = String(ingestError && ingestError.message !== undefined &&
+            ingestError.message !== null ? ingestError.message : ingestError);
+        gs.error('[x_bst_startuptrk.ingestion] event="batch_failed" run="' +
+            inputs.run_id + '" source="' + SOURCE + '" code="unexpected_fault"' +
+            ' diagnostic="' + props.fingerprint(caught) + '" characters="' +
+            caught.length + '" detail="' + props.safeText(caught, 400) + '"');
+    }
+
+    // Every counter is read from the logger that did the work, never by arithmetic.
     var counts = logger.counters();
     outputs.processed = counts.processed;
     outputs.rejected = counts.rejected;
     outputs.skipped = counts.skipped;
     outputs.duplicates = counts.duplicates;
     outputs.unmatched = counts.unmatched;
-    outputs.partial = outcome.partial;
-    outputs.errors = outcome.errors;
-    outputs.links_written = outcome.links;
-    outputs.links_removed = outcome.links_removed;
-    outputs.succeeded = outcome.succeeded;
+    // writeRunSummary() reports the emission of the run_summary event as `logged`. It
+    // writes no property, so there is no `recorded` member on the summary to read;
+    // markRunComplete(), called by 8c, is the write that moves the provenance marker.
     outputs.recorded = (outcome && outcome.summary &&
-                        outcome.summary.recorded === true);
-    // Empty source_system means neither cadence marker was advanced.
-    outputs.cadence_recorded = (outcome && outcome.summary &&
-                                outcome.summary.source_system !== '');
-    // Non-empty last_success means this run advanced the cadence gate.
-    outputs.cadence_success = (outcome && outcome.summary &&
-                               outcome.summary.last_success !== '');
+                        outcome.summary.logged === true);
 
-})(inputs, outputs);
-```
-
-Map the six assignments onto A4's six declared action outputs. An output the script assigns but the action does not declare is invisible to the flow and to the ATF suite.
+**Read no member off a return value that does not carry it.** The two objects this script reads are exact: `IngestionLogger.counters()` answers `run`, `processed`, `rejected`, `skipped`, `duplicates`, `unmatched` and `rule3_deviations`; and the summary `writeRunSummary()` returns is those seven plus `source_system`, `provenance`, `events_dropped` and `logged`. The batch outcome `ingest()` returns carries `run`, `source_system`, `accepted`, `succeeded`, `rejected`, `partial`, `errors`, `links`, `links_removed`, `entries` and `summary` — `partial` counting the rows written whose declared relationships did not all reach the database, which [6.9](#69--participation-is-reconciled-as-an-exact-set) explains. Anything not in those three lists does not exist, and reading it publishes `undefined`.
 
 #### The diagnostic variant, and the rule that governs it
 
@@ -2883,20 +3086,18 @@ The alternative is to publish the four phases as four further actions — cleani
 
 | | **A4, the delivered orchestrator** | **The per-phase diagnostic variant** |
 | --- | --- | --- |
-| Per-phase counters visible as action outputs in the execution detail | No | **Yes** |
-| Run summary carries the complete batch counters | **Yes** | No — zeros; the totals exist only on A5's outputs |
-| Number of `IngestionLogger` instances | **One for the whole batch** | One per action |
-| Cleaning, deduplication, reference resolution, upsert, participant linking, staging-state stamping, run summary | All present | All present |
-| Valid source of criterion-4 acceptance evidence | **Yes** | **No** |
-| Status | **Mandatory. This is what is delivered.** | Diagnostic only. Assemble it in a scratch flow; never in the delivered flow. |
+| `ingest(runId, sourceSystem, provenance, rows)` | **Step 5, on both branches.** | Cleans, deduplicates at batch scope, resolves references, upserts, links participants, stamps staging state on every row that carries a `staging_id`, and finishes by calling `IngestionLogger.writeRunSummary()` in a `finally`. |
+| `ingestStaging(runId, sourceSystem, importRun, provenance)` | **Not the flow.** The manual and ATF entry point. | Applies the staging query itself for the rows carrying `importRun` — the run lease of [4.3](#43--step-outputs) — then does everything `ingest()` does. |
 
-Two rules bind the variant, and both are checkable:
+**The fallback branch does not use `ingestStaging()`, and that is deliberate.** Step 4 has already claimed the rows and already knows their identifiers, so it hands step 5 the `{ record_type, staging_id }` envelopes and step 5 calls `ingest()` with them. Calling `ingestStaging()` from step 5 as well would re-query the table and ingest the batch a second time.
 
-1. **The delivered flow calls A4 and nothing else for ingestion.** If the delivered flow contains cleaning, upsert or run-summary actions in place of A4, the build is wrong and [Build verification](#build-verification) fails on it.
-2. **No acceptance evidence may come from the variant.** Any run summary read for criterion 4, and any ATF flow-test assertion, must come from an execution that called A4. A run summary of zeros is the signature of the variant and must be treated as an invalid evidence record, not as a failing ingestion.
+**One logger serves the whole batch.** Step 5 constructs the single `IngestionLogger`, injects it with `useLogger()`, reads `counters()` off it after `ingest()` returns and drains its events last, which is the property [5.5](#55--one-logger-per-run-and-why-that-decides-the-build) establishes and [7.4](#74--the-counters-come-from-the-logger-never-from-arithmetic) depends on. Steps 6, 7 and 8 construct no logger and recompute no counter.
 
-The reason A4 is mandatory rather than preferred is recorded at `D-102` in [`../../../docs/decisions/DECISION_LOG.md`](../../../docs/decisions/DECISION_LOG.md).
+**What `ingest()` returns, exactly.** The batch outcome is `{ run, source_system, accepted, rejected, entries, summary }` and has **no other member**. Its `summary` is what `writeRunSummary()` returned: `{ run, processed, rejected, skipped, duplicates, unmatched, rule3_deviations, source_system, provenance, events_dropped, logged }`. There is **no `partial`, no `errors`, no `links`, no `links_removed`, no `succeeded`, no `recorded` and no `last_success`** on either object — a script reading any of those reads `undefined`, and an output derived from it publishes `false` or an empty value on every run. Step 5's script reads `outcome.summary.logged`, `outcome.summary.events_dropped` and `outcome.summary.provenance`, and nothing else off the summary.
 
+**The cadence marker is not written here.** `writeRunSummary()` writes no property. The marker is written once per run, by part `8c`, through `IngestionLogger.markRunComplete()`, and only when all twelve members of the health predicate of [8.6](#86--part-8c--assert-publication-then-complete-or-release-the-lease) hold. A run whose summary was written but whose evidence did not publish therefore leaves the cadence where it was.
+
+**A run summary of all zeros on a batch that did work is a build fault**, not a quiet run: it means the summary was written from a logger instance other than the one the mapper wrote through. [7.4](#74--the-counters-come-from-the-logger-never-from-arithmetic) states the check, and [Build verification](#build-verification) fails on it.
 
 ## The trigger
 
@@ -2947,7 +3148,7 @@ Then check each step against the table below.
 | --- | --- |
 | 1 | `run_id` begins `crunchbase-`. `cadence_hours` is between 6 and 48. `proceed` is `true`. A `cadence_guard` line appears in the log. |
 | 2 | `source_mode` is `fallback` and `attempt_live` is `false`. |
-| 3 | **Skipped**, because it sits inside the `attempt_live` block. Whichever arm was built, it does not execute on the fallback path. |
+| 3 | **Skipped**, because it sits inside the `If attempt_live` block. Step 3 is always present — it is the first half of action **A3** — but it does not execute on the fallback path. |
 | 4 | `provenance` is `fallback`. `row_count` matches the number of `pending` rows on `x_bst_startuptrk_ingest_staging` with `source_system` `crunchbase`. A `source_resolved` line appears. |
 | 5 | `parse_ok` is `true`. `accepted_count` plus `rejected_count` plus `duplicate_count` plus `skipped_count` accounts for every incoming row. **`accepted_count` is greater than zero and the counters are not all zero** — an all-zero set on a non-empty batch is the build fault of [7.4](#74--the-counters-come-from-the-logger-never-from-arithmetic). `summary_logged` is `true`, `events_dropped` is `0`, and `provenance` reads `fallback`. **No property has been written yet.** A `batch_ingested` line appears. Any unmatched choice value has produced a `choice_unmatched` line, and a `round_type` or `investor.type` value that matched nothing has raised `rule3_deviations`. |
 | 6 | `written_count` is greater than zero. Open `x_bst_startuptrk_startup`, `x_bst_startuptrk_investor` and `x_bst_startuptrk_fundinground` and confirm the records exist. Open `x_bst_startuptrk_m2m_round_investor` and confirm the participant rows exist. **`links_exact` is `true` and `rounds_mismatched` is `0`** — the exact-set assertion of [6.9](#69--participation-is-reconciled-as-an-exact-set), not a count comparison. `entries_parse_ok` is `true`. Confirm `x_bst_startuptrk_investor.portfolio_count` is non-zero for an investor that led or joined a round — that proves the business rules ran. A `writes_confirmed` line appears. |
@@ -2962,7 +3163,7 @@ Then confirm the guard works in the other direction: clear `x_bst_startuptrk.ing
 
 Then confirm the unhealthy path once, because it is the path that protects the cadence. Force a fault the flow can detect without corrupting anything — unbind `8a`'s `events` pill, save, and run again. `8a` must report `summary_present` `false`, `8c` must report `published` `false`, `healthy` `false` and `unhealthy_reason` carrying `publication`, `marker_stamped` must be `false`, `lease_released` must be `true`, and **`x_bst_startuptrk.ingestion.last_run_provenance` must carry no `succeeded` entry for `crunchbase` from this run**. Re-bind the pill and run once more to confirm the healthy path returns.
 
-Finally, set `x_bst_startuptrk.ingestion.source_mode` back to **`live`**.
+Finally, restore `x_bst_startuptrk.ingestion.source_mode` to **the value the branch rule requires**, which is `live` only when **both** aliases are provisioned with a passing connection test and **`fallback`** otherwise. Record the value you captured before the run beside the value you restored. The rule and its table are in [`06-staging-table-csv-import.md#restoring-source_mode-is-readiness-determined-not-a-return-to-live`](06-staging-table-csv-import.md#restoring-source_mode-is-readiness-determined-not-a-return-to-live), and `D-111` carries the decision. **Do not return the property to `live` as a matter of course**: it is one property shared by both flows, so an unconditional restore would make the LinkedIn flow attempt a call it can never complete.
 
 ### The data-bearing pass, with exact expected counters
 
@@ -2972,9 +3173,9 @@ Finally, set `x_bst_startuptrk.ingestion.source_mode` back to **`live`**.
 | --- | --- | --- |
 | 4 | Action **A3** outputs | `row_count` is **exactly 33**. |
 | 5 | The log, during **A4** | A `batch_cleaned` line appears and accounts for every one of the 33 rows across accepted, rejected and duplicate. **Exactly 6** `choice_unmatched` lines appear. |
-| 6 | The tables, after **A4** | `x_bst_startuptrk_startup` holds the surviving startups, `x_bst_startuptrk_investor` the investors and `x_bst_startuptrk_fundinground` the rounds. `x_bst_startuptrk_m2m_round_investor` holds the participant rows. `x_bst_startuptrk_investor.portfolio_count` is non-zero for an investor that led or joined a round, which proves the business rules ran. |
-| 7 | Action **A4** outputs | The five counters read **exactly** the values in the table below. |
-| 8 | Action **A4** output `recorded`, and the log | `recorded` is `true`. `last_run_provenance` reads `fallback`. The `run_summary` line's counter members **equal A4's five counters**. |
+| 6 | The tables, after **A5** | `x_bst_startuptrk_startup` holds the surviving startups, `x_bst_startuptrk_investor` the investors and `x_bst_startuptrk_fundinground` the rounds. `x_bst_startuptrk_m2m_round_investor` holds the participant rows. `x_bst_startuptrk_investor.portfolio_count` is non-zero for an investor that led or joined a round, which proves the business rules ran. |
+| 7 | Action **A6** outputs | The five counters read **exactly** the values in the table below. A6 reports them; A4 is where they were counted. |
+| 8 | Action **A7** outputs `published`, `healthy`, `marker_stamped` and `marker_verified`, and the log | All four are `true`. `x_bst_startuptrk.ingestion.last_run_provenance` now carries a `crunchbase` marker whose `provenance` is `fallback` and whose `state` is `succeeded`. The published `run_summary` line's counter members **equal A4's counters**. **Part `8c` inside A7 is the only writer of that property.** |
 
 **The five counters, exactly.** Every value is derived from the designed defects catalogued in [`../../sample-data/README.md`](../../sample-data/README.md), so each is checkable against the files rather than asserted here.
 
@@ -2999,15 +3200,17 @@ Two reconciliation identities hold regardless of the fixture, and both must be c
 | 5 | `accepted_count` plus `rejected_count` plus `duplicate_count` accounts for every incoming row. A `batch_cleaned` line appears. Any unmatched choice value has produced a `choice_unmatched` line. |
 | 6 | `written_count` is greater than zero. Open `x_bst_startuptrk_startup`, `x_bst_startuptrk_investor` and `x_bst_startuptrk_fundinground` and confirm the records exist. Open `x_bst_startuptrk_m2m_round_investor` and confirm `links_written` participant rows exist. Confirm `x_bst_startuptrk_investor.portfolio_count` is non-zero for an investor that led or joined a round — that proves the business rules ran. |
 | 7 | The five counters are reported separately, never folded together. A `batch_reconciled` line appears and `reconciled` is `true`, meaning every incoming row is accounted for. |
-| 8 | `recorded` is `true`. `x_bst_startuptrk.ingestion.last_run_provenance` now carries a `crunchbase` entry whose `provenance` is `fallback`, whose `run` is this execution's run identifier and whose `completed` is this execution's finish time. A `run_summary` line appears carrying all ten members of [8.3](#83--part-8a--the-step-inputs-and-outputs). On the separate-step build its counter members are zeros by design; read the totals from step 7. |
+| 8 | `recorded` is `true`. `x_bst_startuptrk.ingestion.last_run_provenance` now carries a `crunchbase` entry in the delivered form `<source>=<provenance>\|<state>\|<stamp>\|<run>`, whose `provenance` is `fallback`, whose `state` is **`succeeded`**, whose `stamp` is this execution's completion time in `yyyy-MM-dd HH:mm:ss` form, and whose `run` is this execution's run identifier. The entry is written by `8c`'s `markRunComplete()` call, not by A4's run summary. A `run_summary` line appears carrying all ten members of [8.3](#83--part-8a--the-step-inputs-and-outputs). On the separate-step build its counter members are zeros by design; read the totals from step 7. |
 | `row_count` equals `processed` + `rejected` + `duplicates` + `skipped` | 33 = 26 + 6 + 1 + 0 |
 | Staging rows in state `rejected` equal `rejected` + `duplicates` | 7, because a within-batch duplicate reaches the `rejected` state while being counted under `duplicates` |
+
+**The per-section confirmations are the table above this one and are not restated here.** An earlier build repeated all eight of them inside this identity table, which left two statements of the same check that could drift apart.
 
 Then confirm the staging table reconciles: **26 `processed`, 7 `rejected`, 0 `error`, 0 `pending`** among the rows whose `source_system` is `crunchbase`. A remaining `pending` row means the run did not reach it.
 
 Then confirm the guard works in the other direction: run the flow a second time immediately. Step 1 must return `proceed` `false` with `hours_elapsed` `0`, steps 2 through 8 must not run, no second `run_summary` line must appear, and the `crunchbase` entry in `x_bst_startuptrk.ingestion.last_run_provenance` must still carry the **first** run's identifier and completion time.
 
-Finally, set `x_bst_startuptrk.ingestion.source_mode` to the value the Crunchbase alias's branch requires: **`live`** only if that alias is in Path A and its connection test passed; otherwise leave it at **`fallback`**, which on the instance recorded for this delivery is the correct end state.
+Finally, restore `x_bst_startuptrk.ingestion.source_mode` to the value the branch rule requires. The rule is about the **pair** of aliases, not this flow's alias alone, because the property is one shared setting that both flows read: `live` only when **both** aliases are provisioned with a passing connection test, and **`fallback`** otherwise — which on the instance recorded for this delivery is `fallback`. Restore the value you captured before the exercise, and where that value and the branch rule disagree the more restrictive one governs. The rule and its branch table are in [`06-staging-table-csv-import.md#restoring-source_mode-is-readiness-determined-not-a-return-to-live`](06-staging-table-csv-import.md#restoring-source_mode-is-readiness-determined-not-a-return-to-live); `D-111` carries the decision and `D-316` the shared-property consequence.
 
 
 ## Reading the flow execution log
@@ -3043,19 +3246,21 @@ The same rule is stated in [`../deployment-runbook.md`](../deployment-runbook.md
 
 **This section is an operational obligation, not a caution.** Flow Designer persists each execution's step inputs and outputs in the platform's own flow execution context. That is a **different retention surface** from this application's tables: it is outside the `x_bst_startuptrk` scope, it is not covered by any scoped access control this delivery ships, and it is **not** covered by the staging-table retention posture recorded in [`../gaps-and-flags.md`](../gaps-and-flags.md). Two of this flow's step outputs carry upstream content into it, and everything else must be kept out.
 
-### The two data-path values
+### The one data-path value
 
-| Value | Step | What it carries | Why it exists |
+| Output | Step | What it carries | Why it exists |
 | --- | --- | --- | --- |
-| `response_body` | 3 | The verbatim upstream response, which on the live path can contain personal names, contact addresses, biographies and locators. | Step 4 parses it. The mapping cannot run without it. |
-| `rows` | 4 | The mapped row set as JSON, which carries the same values in normalised form. | Step 5 cleans it. |
+| `rows` | 3, consumed by 4 and 5 | On the **live** branch, the typed row envelopes of the read: organisation, funding-round and investor payloads. Commercial content — company names, locators, amounts, dates. **No personal data**, because Crunchbase supplies only the `startup`, `investor` and `funding_round` record types (`IngestionMapper.SOURCE_TYPES`). | Step 4 evaluates it and step 5 cleans it. |
+| `rows` | 4 | On the **fallback** branch, one `{ record_type, staging_id }` envelope per claimed row. A record type and a platform identifier — **no content of any kind**. | Step 5 resolves each identifier against the staging table inside its own call. |
 
-These two are **data-path values, not log values.** Four rules bind them, and each names the failure it prevents:
+**No step of this flow declares a `response_body` output, and none ever publishes an upstream response body.** Step 3 declares the eleven outputs of [3.4](#34--step-outputs) and the body is not among them: the step parses each page inside its own call and emits typed envelopes, so the raw body never crosses a step boundary. An earlier description of this section named a `response_body` output; there is none, and adding one is forbidden by rule 3 below.
+
+The live `rows` output is a **data-path value, not a log value.** Four rules bind it, and each names the failure it prevents:
 
 1. **Never copy either into a third output, a flow variable, an annotation or a Log step.** Every copy is a second residency with the same lifetime and no additional purpose.
 2. **Never pass either to `gs.info`, `gs.warn`, `gs.error` or `IngestionLogger`.** The logger drops personal values on the paths it owns rather than encoding them; a raw body handed to it as free text defeats that on the one path it cannot inspect.
 3. **Never widen either.** Do not add a `response_headers`, a `first_record` or a `sample` output "for diagnostics": each would be a new residency carrying the same content.
-4. **Prefer the orchestrator construction of [8.8](#88--the-mandatory-orchestrator-and-the-diagnostic-variant).** It performs steps 5 through 8 in one call, so the per-record intermediate values — each cleaned record, each resolved reference, each upsert result — never cross a step boundary and therefore never enter the execution context at all. The separate-step construction is supported and correct, and it retains more.
+4. **Keep the single ingestion call site of [8.8](#88--one-ingestion-call-site-and-the-two-entry-points-it-may-use).** Step 5 performs the whole batch in one `ingest()` call, so the per-record intermediate values — each cleaned record, each resolved reference, each upsert result — never cross a step boundary and therefore never enter the execution context at all. The separate-step construction is supported and correct, and it retains more.
 
 ### What the application itself logs
 
@@ -3063,15 +3268,15 @@ Everything this flow logs, whether through `gs.*` or through `IngestionLogger`, 
 
 | Class | Example |
 | --- | --- |
-| Run identifiers | `run="crunchbase-20260110120000"` |
+| Run identifiers | `run="crunchbase-20260807143000-4f2c1ab97e6d8035"`, in the format of [The run identifier](#the-run-identifier) |
 | Opaque record references | `identifier="startup:9f2c…"`, `flow="crunchbase"` |
 | Per-run arrival ordinals | `identifier="staging:3"`, allocated by `IngestionLogger.ordinal(kind)` where no platform identifier exists yet |
-| Bounded codes and counters | `outcome="no_op"`, `error_message="transport_error"`, `processed="42"` |
-| Dropped values | The literal `(redacted)`, or `(blank)` for an empty one |
+| Bounded codes and counters | `outcome="no_op"`, `error_code="transport_error"`, `processed="42"` |
+| Redacted or blank placeholders | The literal `(redacted)` in place of a dropped value, or `(blank)` for an empty one |
 
-**Correlation is by reference, never by a value.** `IngestionLogger.reference(kind, token)` names a **platform record** and `IngestionLogger.ordinal(kind)` allocates a per-run arrival ordinal for a row that has no record yet. Neither is computed from anything the row contains, so neither can be reversed to a value and neither correlates a row across runs. There is no hash, digest or fingerprint of any supplied value anywhere in the pipeline.
+**Correlation is by reference, never by a value.** `IngestionLogger.reference(kind, token)` names a **platform record** and `IngestionLogger.ordinal(kind)` allocates a per-run arrival ordinal for a row that has no record yet. Neither is computed from anything the row contains, so neither can be reversed to a value and neither correlates a row across runs. No hash, digest or fingerprint of any **field value** is computed on any surface. The one fingerprint the application computes, `AppProperties.fingerprint()`, is over the text of a **caught fault** so that text need not be stored — it identifies the fault, not a value that text might quote.
 
-`IngestionLogger` enforces this on every path it owns: a value from a field that can carry personal data is replaced by the literal `(redacted)` rather than encoded, a value that is not a platform record identifier or a `<kind>:<token>` opaque reference is replaced the same way, an unmatched choice value is emitted verbatim only when it has the shape of a short enumeration label on a field that cannot carry personal data, and a row that has no platform identifier yet is named by a per-run arrival ordinal. **No pseudonym, hash, digest or fingerprint is computed anywhere in the pipeline: a value the logger may not repeat is `(redacted)`, an absent one is `(blank)`, and correlation is by reference.**
+`IngestionLogger` enforces this on every path it owns: a value from a field that can carry personal data is replaced by the literal `(redacted)` rather than encoded, a value that is not a platform record identifier or a `<kind>:<token>` opaque reference is replaced the same way, an unmatched choice value is emitted verbatim only when it has the shape of a short enumeration label on a field that cannot carry personal data, and a row that has no platform identifier yet is named by a per-run arrival ordinal. **No pseudonym, hash, digest or fingerprint of a field value is computed on any surface: a value the logger may not repeat is `(redacted)`, an absent one is `(blank)`, and correlation is by reference.**
 
 ### The operator obligation
 
@@ -3108,7 +3313,7 @@ Set the mode to match the posture, and record which mode each of the three crite
 
 ### An unhealthy source retries every hour until the fault is fixed
 
-Part `8c` stamps the completion marker **only** on a healthy run, so an unhealthy run leaves the cadence where it was and releases the source claim. The next hourly trigger therefore passes the guard and runs the whole batch again. That is the correct direction — the alternative advances the cadence on a run nobody can audit, which is fault 2 of [8.1](#81--why-this-step-is-three-parts) — but a **persistent** fault turns it into an hourly retry loop.
+Part `8c` stamps the completion marker **only** on a healthy run, so an unhealthy run leaves the cadence where it was and releases the source claim. The next hourly trigger therefore passes the guard and runs the whole batch again. That is the correct direction — the alternative advances the cadence on a run nobody can audit, which is fault 2 of [8.1](#81--the-three-parts-and-what-each-sets) — but a **persistent** fault turns it into an hourly retry loop.
 
 It is not silent: every attempt writes a `run_incomplete` line at **error** severity naming the fault tokens, and `8c`'s `unhealthy_reason` output carries the same list in the execution detail. Read the tokens first; they say which part failed.
 
@@ -3124,7 +3329,7 @@ Two ways to stop the loop while the fault is investigated, and one that must nev
 
 `x_bst_startuptrk_investor.portfolio_count` is a **stored** integer maintained by the two business rules of [6.4](#64--business-rules-must-run). Nothing recomputes it on read. Any write to `x_bst_startuptrk_fundinground` or `x_bst_startuptrk_m2m_round_investor` that bypasses business rules — `setWorkflow(false)` in a script, or an import transform with rule execution disabled — leaves the stored count stale for every investor touched by that write. **There is no error, no warning and no log record.** The column simply disagrees with the data.
 
-Two obligations follow. Never suppress business rules on an ingestion or import path that writes either table. And after any bulk load, invoke `InvestorPortfolioService.recalculateAll()` from a background script; it writes only the investors whose count differs and returns how many it corrected.
+Two obligations follow. Never suppress business rules on a write to either table **unless the same code path closes with an explicit recalculation of every investor it touched** — which is exactly what `IngestionMapper.linkParticipants()` does, and why its `converged` and `recalculated` members are asserted rather than ignored. And after any bulk load, invoke `InvestorPortfolioService.recalculateAll()` from a background script; it writes only the investors whose count differs and returns how many it corrected.
 
 ### A run that ingests exactly one organisation has no discovery step
 
@@ -3190,10 +3395,10 @@ Do not sign this guide off until every line below is true.
 | --- | --- |
 | 1 | One flow named `Crunchbase Ingestion` exists in the `x_bst_startuptrk` scope, with **Run As** `System User`. |
 | 2 | The trigger is **Scheduled**, set to **repeat hourly**. |
-| 3 | All **eight** steps are present and in order, step 8 is built as the three parts `8a`, `8b` and `8c`, and **every step from 2 to `8c` is inside the `If` block** controlled by step 1's `proceed` output. The build matches [The flow graph](#the-flow-graph) exactly. |
+| 3 | All **eight** steps are present and in order, step 8 is built as the three parts `8a`, `8b` and `8c`, and **every step from 2 to `8c` is inside the `If` block** controlled by step 1's `proceed` output. The build matches [The flow graph](#the-flow-graph) exactly, and the flow itself carries the **eight builder elements** of [Assembling the flow from the published actions](#assembling-the-flow-from-the-published-actions) — seven action calls and one `If`, with all **seven** actions reading `Published`. |
 | 4 | Step 3 is **exactly one** of the two arms of [3.1](#31--the-outbound-path-pre-flight-branch), the arm the build-time pre-flight selected, and which arm was built is recorded below. There is no runtime branch between the arms and no IntegrationHub spoke in either. |
 | 5 | The alias name reads `x_bst_startuptrk.crunchbase_api` exactly, at every occurrence in the flow, and appears in exactly one place — the `ALIAS` constant of step 3. |
-| 6 | Step 3 resolves the alias **name to exactly one `sys_alias` record** and passes that record's `sys_id` to `getConnectionInfo()`. It never passes the name. |
+| 6 | Step 3 resolves the alias **API ID (`sys_alias.id`, queried with `addQuery('id', ALIAS)`) to exactly one `sys_alias` record** and passes that record's `sys_id` to `getConnectionInfo()`. It never passes the name. |
 | 7 | Step 3 sends the API key in an **`X-cb-user-key` request header**, reads it through the alias inside the call, and never assigns it to an output variable or a log line. |
 | 8 | Step 3 paginates every pass with `after_id` until a short page, batches the identifier lists of passes 2 and 3, and records one call-log entry per HTTP call. |
 | 9 | No IntegrationHub spoke is installed, activated, referenced or used. |
@@ -3202,10 +3407,12 @@ Do not sign this guide off until every line below is true.
 | 12 | Every fallback row step 4 emits carries a `record_type` **and** a `staging_id`, per [4.5](#45--the-fallback-row-envelope). Step 4 does **not** call `mapStagingRow()`. |
 | 13 | Step 4 records every staging row it claims in `staged_ids`, and step 7's sweep leaves none at `pending`. |
 | 14 | Step 5 is the **only** step that writes an entity record, constructs exactly **one** `IngestionLogger`, and calls `IngestionMapper.ingest()`. Per [5.5](#55--one-logger-per-run-and-why-that-decides-the-build). |
+| 14a | Step 5 ingests **the row set step 4 published**, on both branches, and **never calls `IngestionMapper.ingestStaging()`**. That method runs its own `import_state` `pending` query, and step 4 has already leased every fallback row to this run, so a build that calls it after the claim re-ingests the same rows and double-counts them in the summary. Per [8.8](#88--one-ingestion-call-site-and-the-two-entry-points-it-may-use). |
+| 14b | Action A4 assigns **exactly its six declared outputs** — `processed`, `rejected`, `skipped`, `duplicates`, `unmatched`, `recorded` — and every value it reads exists on the object it reads it from: the five counters from `IngestionLogger.counters()`, and `recorded` from `outcome.summary.logged`. An assignment to an output the action does not declare is invisible; a read of a member the object does not carry is silently `undefined`. |
 | 15 | Step 5's counter outputs are read from `IngestionLogger.counters()` and **none is derived by subtraction**, per [7.4](#74--the-counters-come-from-the-logger-never-from-arithmetic). |
 | 16 | `linkParticipants()` is called from **exactly one** layer — inside `upsert()` — and step 6 does not call it, per [6.5](#65--participant-rows-are-linked-in-exactly-one-layer). |
 | 17 | Part `8b`'s **Log action** exists, sits between `8a` and `8c`, and its **Message** is bound to `8a`'s `log_text` pill. A manual run's execution detail shows the `run=` header line and, beneath it, the `run_summary` event. Per [8.5](#85--publishing-the-events-to-the-flow-execution-log). |
-| 17a | Part `8a` has an output named **`rendered`** and **no output named `published`**. `published` exists only on `8c`. Per [8.1](#81--why-this-step-is-three-parts). |
+| 17a | Part `8a` has an output named **`rendered`** and **no output named `published`**. `published` exists only on `8c`. Per [8.1](#81--the-three-parts-and-what-each-sets). |
 | 17b | Part `8a` renders the `run_summary` event **before** any other event, so truncation can never remove it, and reports `events_omitted` when it removes anything. Per [8.5](#85--publishing-the-events-to-the-flow-execution-log). |
 | 17c | Part `8c` is the **only** place in the flow that calls `IngestionLogger.markRunComplete()`, and it calls it only when all twelve members of the health predicate hold. No other step writes a property. Per [8.6](#86--part-8c--assert-publication-then-complete-or-release-the-lease). |
 | 17d | Part `8c`'s health predicate includes **`skipped` equal to zero** and every parse and publication check of [8.6](#86--part-8c--assert-publication-then-complete-or-release-the-lease). A run with an operational skip reports `healthy` `false`. |
@@ -3215,7 +3422,7 @@ Do not sign this guide off until every line below is true.
 | 20 | The flow writes `x_bst_startuptrk_startup`, `x_bst_startuptrk_investor`, `x_bst_startuptrk_fundinground` and `x_bst_startuptrk_m2m_round_investor`, and **no other table**. It does not write `x_bst_startuptrk_newsarticle`. |
 | 21 | The flow reads `x_bst_startuptrk_ingest_staging` on the fallback branch, with the query of [4.4](#44--the-staging-query) and **no `record_type` condition**. |
 | 22 | The flow calls `AppProperties`, `IngestionMapper`, `IngestionLogger` and `InvestorPortfolioService`, and re-implements none of their logic. In particular it does not re-implement any cleaning rule. |
-| 23 | **No flow-originated write uses `setWorkflow(false)`**, and the three business rules of [6.4](#64--business-rules-must-run) are active. The one suppressed write in the application is `InvestorPortfolioService.refreshRoundParticipants()`, which is not a flow write; [6.4](#64--business-rules-must-run) states the scope of the assertion. |
+| 23 | **No flow-originated write uses `setWorkflow(false)`**, and the three business rules of [6.4](#64--business-rules-must-run) are active. The suppressed writes in the application are the participant join rows `IngestionMapper.linkParticipants()` reconciles, which are paired with one explicit convergence step whose outcome is reported as `converged`; [6.4](#64--business-rules-must-run) states the scope of the assertion. |
 | 24 | The manual run of [Verification](#verification--one-manual-run) passed every row of its table, the replay left the entity row counts unchanged, and the immediate second run returned `proceed` `false` with no run summary. |
 | 25 | `x_bst_startuptrk.ingestion.source_mode` matches the credential posture recorded in guide 01's [Step 0](01-connection-credential-aliases.md#step-0--establish-the-credential-posture). |
 | 26 | `x_bst_startuptrk.crunchbase.base_url` passed the authenticated activation probe of [3.1](#31--the-outbound-path-pre-flight-branch), or the flow is activated in the `fallback` source mode only. |
