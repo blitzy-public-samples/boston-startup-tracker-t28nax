@@ -56,10 +56,10 @@ fail() { printf 'environment validation failed: %s\n' "$1" >&2; exit 1; }
 case "$SERVICENOW_INSTANCE_URL" in
   https://*.service-now.com) : ;;
   http://*) fail 'SERVICENOW_INSTANCE_URL must use https, not http' ;;
+  # This arm catches a path and a trailing slash alike: the pattern above anchors
+  # on the .com ending, so neither form reaches it. There is deliberately no
+  # separate trailing-slash arm - it could never be entered. See the note below.
   *) fail 'SERVICENOW_INSTANCE_URL must be https://<instance>.service-now.com with no path or trailing slash' ;;
-esac
-case "$SERVICENOW_INSTANCE_URL" in
-  */) fail 'SERVICENOW_INSTANCE_URL must not end in a slash' ;;
 esac
 [ -n "${SERVICENOW_USERNAME:-}" ] || fail 'SERVICENOW_USERNAME is unset or empty'
 [ -n "${SERVICENOW_PASSWORD:-}" ] || fail 'SERVICENOW_PASSWORD is unset or empty'
@@ -70,7 +70,7 @@ printf 'instance %s, user %s, password present: yes (neither value nor length sh
   "$SERVICENOW_INSTANCE_URL" "$SERVICENOW_USERNAME"
 ```
 
-**Four conditions, all of which must hold before pre-flight 1 runs.** The URL is set and non-empty; it is `https` — never `http`, because Basic credentials on a cleartext connection are disclosed on the wire; it names a host with no path and no trailing slash, so every `{SERVICENOW_INSTANCE_URL}/api/...` in this document concatenates correctly; and both credential variables are set and non-empty. **The password is never printed, and neither is its length.** The line above reports a **boolean**: the variable is set and non-empty, or the block has already aborted. A character count is not a value, but it is not nothing either — it removes every candidate of a different length from an offline guessing attack, and it distinguishes one operator's credential from another's in a shared transcript. The boolean carries the whole of the diagnostic information the operator needs, which is why the length is not reported here or anywhere else in this runbook.
+**Four conditions, all of which must hold before pre-flight 1 runs.** The URL is set and non-empty; it is `https` — never `http`, because Basic credentials on a cleartext connection are disclosed on the wire; it names a host with no path and no trailing slash, so every `{SERVICENOW_INSTANCE_URL}/api/...` in this document concatenates correctly; and both credential variables are set and non-empty. **The third condition is enforced by one arm, and that is deliberate.** `https://*.service-now.com` anchors on the `.com` ending, so `https://dev351809.service-now.com/` and `https://dev351809.service-now.com/nav_to.do` both fail to match it and both fall to the catch-all, which names a path and a trailing slash together. A dedicated trailing-slash arm placed after that `case` could never be entered, so **do not add one** — it would read as a live check while testing nothing. **The password is never printed, and neither is its length.** The line above reports a **boolean**: the variable is set and non-empty, or the block has already aborted. A character count is not a value, but it is not nothing either — it removes every candidate of a different length from an offline guessing attack, and it distinguishes one operator's credential from another's in a shared transcript. The boolean carries the whole of the diagnostic information the operator needs, which is why the length is not reported here or anywhere else in this runbook.
 
 **Failure is fatal and is not retried.** A malformed `SERVICENOW_INSTANCE_URL` or a missing secret is an operator configuration error, not a transient condition. Correct the environment and start again from this block.
 
@@ -157,20 +157,52 @@ printf 'run identity: %s\n' "$RUN_NAME"
 | **Never order by creation date to identify the record.** | `ORDERBYDESCsys_created_on` over a shared name returns whichever record was created most recently by anyone. On a shared instance that is a different record from the one this run uploaded, often enough to matter. |
 | **Carry `{RUN_NAME}` into every guarded operation.** | The pre-commit cleanup procedure and the rollback both require the record's `name` to equal `{RUN_NAME}` before they delete anything. That equality is the ownership proof. |
 | **Record both values in the deployment log.** | `{RUN_NAME}` and `{ruset_sys_id}`, written down before step 2 begins. A deployment that cannot state both does not run the cleanup procedure and does not run the rollback. |
+| **Clear the delivered header identifier before uploading.** | The run identity isolates by `name`; **the platform keys the load on the `sys_id` carried inside the file.** Run the check below before step 1 and require its result empty. Renaming the header does not change that identifier, so two clones uploading these bytes collide on it however distinct their names are. |
+
+**The delivered header identifier — a pre-upload check, after the three [pre-flight checks](#pre-flight-checks) and before step 1.**
+
+It runs in that position deliberately. It is a Table API read, so it needs [Pre-flight 1](#pre-flight-1--instance-reachable-and-credentials-valid) to have established that the instance answers with JSON: on a hibernating instance every path returns `HTTP 200` with `text/html`, and this check would read that as neither a `404` nor a record. Pre-flight 1 aborts before it is reached, which is the correct outcome — so if this check ever sees an HTML body, the abort was skipped and the sequence is out of order.
+
+The `<sys_remote_update_set>` header of the delivered file carries a fixed identifier in **both** its `<sys_id>` and its `<remote_sys_id>`, and all 313 `<sys_update_xml>` records carry that same value in `<remote_update_set>`:
+
+```text
+DELIVERED_HEADER_SYS_ID=0755eddb73d2d93cf6b029731ae5026e
+```
+
+It is fixed deliberately — it is what links every customer update to its header, and what gate `G-1` asserts when it reports `313/313 update record(s) carry the header <sys_id>`. **Do not edit it, and do not randomise it:** a header whose identifier no longer matches the 313 `<remote_update_set>` values loads a header with nothing attached to it, and `PRE-COMMIT-01` would then read a count of `0`.
+
+Because it is fixed, a load is **not** a create when a record already holds it. The platform matches the incoming identifier to the existing row and **updates** that row — taking the incoming `<name>`, so the pre-existing record is renamed to `{RUN_NAME}` and then satisfies the "exactly one record under this name" assertion of step 1 while still carrying an earlier build's customer updates and state. Check for it explicitly rather than relying on the name:
+
+```text
+GET {SERVICENOW_INSTANCE_URL}/api/now/table/sys_remote_update_set/{DELIVERED_HEADER_SYS_ID}?sysparm_fields=sys_id,name,state,summary,application_scope,commit_date,sys_created_on
+```
+
+| Observed | Action |
+| --- | --- |
+| `HTTP 404` | No record holds the identifier. **Proceed to step 1.** This is the expected result on a clean instance. |
+| `HTTP 200` and the record's `state` is `committed` | **Stop.** These bytes, or an earlier build of them, are already committed on this instance. Record the `state`, `summary`, `commit_date` and `sys_created_on`, and decide the installation mode from [Pre-flight 2](#pre-flight-2--starting-state-of-the-scope) before any re-import. Do not upload over a committed record. |
+| `HTTP 200` and the record's `state` is anything else — `loaded`, `previewing`, `previewed`, `committing` or `error` | **Stop and clear it first.** An uncommitted retrieved update set is holding the identifier this upload needs. Remove it by [Removing a failed retrieved update set](./validation-gates.md#removing-a-failed-retrieved-update-set) — that procedure acts on this one identifier and nothing else — then re-run the check and require `HTTP 404`. Where the record's ownership cannot be proven, **do not delete it**: report its six fields and refer the cleanup to an instance administrator. |
+| `HTTP 200` and `application_scope` is not `x_bst_startuptrk` | **Stop** and refer the record to an instance administrator. An unrelated application holds the identifier, and neither deleting it nor loading over it is this deployment's decision. |
+
+Record the check's status in the deployment log alongside `{RUN_NAME}`. A `summary` that names a record count other than the one the validator reported is the clearest signal that the record predates these bytes — the QA run of 2026-08-09 found exactly that on the target instance, a `previewed` record carrying `summary=309` from an earlier build.
+
+**Parallel clones must serialise.** `CLONE_INDEX` makes `{RUN_NAME}` unique and does nothing for the identifier, so two clones uploading this file are contending for one row: whichever loads second updates the first one's header and takes its 313 customer updates with it. Only one deployment of this file may hold the load-preview-commit window at a time; a second waits for the first to reach `committed`, or to be cleared by the procedure above.
 
 ### Retry policy — by operation, not by status
 
-A single "retry any `HTTP 500` once" rule is safe for a read and unsafe for a write: reissuing an upload creates a second update set, and reissuing a commit applies records twice. The policy is therefore stated per operation class, and **an operation-specific rule always takes precedence over the general rule below it.**
+A single "retry any server error once" rule is safe for a read and unsafe for a write: reissuing an upload creates a second update set, and reissuing a commit applies records twice. The policy is therefore stated per operation class, and **an operation-specific rule always takes precedence over the general rule below it.**
+
+**"Retryable server error" throughout this runbook means any of `HTTP 500`, `HTTP 502`, `HTTP 503` or `HTTP 504`** — the same class [`./validation-gates.md`](./validation-gates.md#transient-error-retry-rule) defines for the gates. It is four statuses rather than one because requests reach the platform through an edge that answers in its own right: the QA run of 2026-08-09 measured that edge returning `502 Bad Gateway` on between 21.7 % and 25.0 % of requests issued in parallel, and a policy that treated only `500` as transient would abort a healthy deployment on a momentary edge error. **A `200` carrying HTML instead of JSON is not in the class and is never retried** — that is a hibernating or unauthenticated instance, which no wait resolves.
 
 | Operation class | Operations | Policy |
 | --- | --- | --- |
-| **Idempotent reads** | Every pre-flight, every poll, both preview-problem reads, both pre-commit checks, every gate | Retry on `HTTP 500` **exactly once** after 30 seconds, reissuing the identical request. Evaluate on the retry's response. No other status is retried: `400`, `401`, `403` and `404` are evaluated on the first response. A poll that answers `500` counts as one poll attempt and does not reset the step's timeout. |
+| **Idempotent reads** | Every pre-flight, every poll, both preview-problem reads, both pre-commit checks, every gate | Retry on a **retryable server error** — `HTTP 500`, `502`, `503` or `504` — **exactly once** after 30 seconds, reissuing the identical request. Evaluate on the retry's response. No status outside that class is retried: `400`, `401`, `403` and `404` are evaluated on the first response. A poll that answers a retryable server error counts as one poll attempt and does not reset the step's timeout. |
 | **Non-idempotent — upload** | Step 1, `POST /sys_upload.do` | **Never blind-retry.** On any failure, first re-query by `{RUN_NAME}`. If exactly one record now exists, the upload **succeeded** despite the error: capture `{ruset_sys_id}` and continue to step 2. If none exists, retry the upload — at most **3 attempts** in total, 10 seconds apart. If more than one exists, **stop**: two uploads landed, and the duplicate must be removed by an administrator before the deployment continues. |
 | **Non-idempotent — preview** | Step 3, `POST /xmlhttp.do` preview | **Never blind-retry.** On any failure, read the update set's `state`. `previewing` or `previewed` means the preview started: continue polling. Only `loaded` means it did not start, and only then reissue the trigger, at most once. |
 | **Non-idempotent — commit** | Step 5, `POST /xmlhttp.do` commit | **Never retry under any circumstance.** On any failure, read the `state`. `committing` or `committed` means the commit is under way or done: continue polling. Anything else is a commit failure, handled by the [failure-handling matrix](#failure-handling-matrix). Reissuing a commit against a partially committed update set is not recoverable by this runbook. |
 | **Non-idempotent — delete** | The pre-commit cleanup, and the rollback | **Never retry.** On any failure, re-read the target by its exact `sys_id`. `HTTP 404` means the delete succeeded. Any other response means it did not, and the outcome is reported rather than reattempted — a delete that is retried against a shifting instance state is how the wrong record gets removed. |
 
-**The general rule, which every row above overrides where it applies:** an `HTTP 500` anywhere else is retried once after 30 seconds, and a second `HTTP 500` is final.
+**The general rule, which every row above overrides where it applies:** a retryable server error anywhere else is retried once after 30 seconds, and a second one is final.
 
 - **Every form body is `application/x-www-form-urlencoded` and every value is percent-encoded** before it is sent. The values carry characters that are otherwise structural. `sysparm_referring_url=sys_remote_update_set_list.do` is safe as written, but a password containing `&`, `=`, `+`, `%` or a space silently truncates or corrupts the login body — and the failure presents as `HTTP 200` with an unauthenticated session, which then fails at the token read for a reason that points nowhere near the password. Encode `user_name` and `user_password` without exception.
 - **The multipart upload at step 1 is `multipart/form-data`, not URL-encoded**, and it is the only request that is. Mixing the two encodings on one request produces a body the platform parses as empty.
@@ -357,7 +389,8 @@ flowchart TD
     P2 -->|"more than one scope record"| A8["ABORT<br/>ambiguous scope, escalate"]
     P2 --> P3["Pre-flight 3<br/>instance not mid-upgrade"]
     P3 -->|"any unfinished record"| A2["ABORT<br/>retry when idle"]
-    P3 -->|"empty result"| RI["Run identity<br/>unique RUN_NAME,<br/>snapshot the name"]
+    P3 -->|"empty result"| RI["Run identity<br/>unique RUN_NAME,<br/>snapshot the name,<br/>header sys_id must be 404"]
+    RI -->|"a record holds the<br/>delivered header sys_id"| A11["STOP<br/>clear it by the guarded<br/>removal procedure first"]
     RI --> S1["Step 1 upload raw XML<br/>XML import route<br/>attachFile part last<br/>capture BY RUN_NAME"]
     S1 -->|"no new record"| R1["re-query first, then retry<br/>3 attempts, 10 s apart,<br/>then ABORT"]
     S1 -->|"more than one new record"| A9["STOP<br/>two uploads landed, escalate"]
@@ -375,10 +408,10 @@ flowchart TD
     CV -->|"answer empty, unparseable<br/>or reporting a problem"| A3
     CV --> S5["Step 5 commit<br/>every 10 s, timeout 1200 s<br/>never retried"]
     S5 -->|"commit_failed or error"| GD{"Rollback preconditions<br/>all five hold?"}
-    S5 --> S6["Step 6<br/>11 required gates<br/>plus GATE-COL-01<br/>plus 4 diagnostics"]
+    S5 --> S6["Step 6<br/>11 required gates<br/>plus GATE-COL-01<br/>plus 3 security checks<br/>plus 1 diagnostic"]
     S6 -->|"a REQUIRED gate fails"| GD
-    S6 -->|"GATE-COL-01 fails"| AB["ACCEPTANCE BLOCKED<br/>correct the XML, re-import<br/>NO rollback"]
-    S6 -->|"a DIAGNOSTIC fails"| AD["report and investigate<br/>blocks nothing, NO rollback"]
+    S6 -->|"a CLASS 2 check fails"| AB["ACCEPTANCE BLOCKED<br/>correct the records, re-import<br/>NO rollback"]
+    S6 -->|"the DIAGNOSTIC fails"| AD["report and investigate<br/>blocks nothing, NO rollback"]
     AD --> S6
     S6 --> DONE["ACCEPTED<br/>hand off to the manual build guides"]
     GD -->|"clean install, one scope,<br/>identifier matches, token given"| RB["ROLLBACK<br/>delete the scope by sys_id,<br/>confirm on five surfaces,<br/>then clear the role grants"]
@@ -411,6 +444,10 @@ Check every one of the four, in that order, and record which one failed.
 
 **What was observed on this instance.** A hibernated or logged-out instance answers `HTTP 200` with an HTML page — a hibernation notice, a login form or a redirect landing page — and not Table API JSON. On this instance, at the time of writing, exactly that was observed: `HTTP 200` with `Content-Type: text/html` and hibernation content in the body. All four checks are therefore required, not the status alone.
 
+**Hibernation covers the whole instance, including the scoped API.** Every path answers the same page, not only the Table API: `/api/now/table/sys_remote_update_set`, `/api/now/table/sys_scope`, `/api/now/table/sys_user_role`, each of the seven application tables, `/api/x_bst_startuptrk/v1/startups`, `/login.do` and `/stats.do` were all observed returning a byte-identical `5904`-byte HTML body. The content type stays `text/html` even when `Accept: application/json` is negotiated explicitly, and the `Server` response header reads `snow_adc` — the edge answering because no application node is running. No path reports the condition as an error status, which is exactly why check 1 tests the content type and the body rather than the status.
+
+**Waking it needs a different credential from the one this runbook uses.** The wake path the hibernation page itself offers, `https://developer.servicenow.com/dev.do#!/home?wu=true`, is the developer portal's *unauthenticated* home rather than a sign-in form; signing in from there arrives at `https://signon.servicenow.com/x_snc_sso_auth.do?pageId=login`, which asks for a **ServiceNow ID** — the email-keyed developer-portal account that owns the instance. `SERVICENOW_USERNAME` and `SERVICENOW_PASSWORD` are the instance's own administrator credential and do not satisfy it. That gate is identifier-first and its single field is labelled **Email**, so an instance-style user name such as `admin` cannot be submitted at all: the **Next** control stays **disabled** for the whole attempt — no password field is ever presented, **no error text is displayed**, and the field acquires no `aria-invalid` — because the control is enabled only for an identifier carrying an `@` and a dotted domain. The refusal is therefore silent rather than announced, and nothing is transmitted; the developer-portal wake endpoints answer `HTTP 401` to the same credential, and `GET /api/snc/devportal/instance/wakeup` answers `HTTP 401` with `User is not authenticated`. An operator holding only the two environment secrets therefore cannot wake this instance and must escalate to the ServiceNow ID that owns it. Until it is awake every step below is un-runnable, and so is all ATF execution — which is what leaves the coverage gate in [`validation-checklist.md`](./validation-checklist.md) unevaluable rather than failed.
+
 **On failure.** **Abort.** Do not proceed to check 2.
 
 | Observed | Action |
@@ -419,7 +456,7 @@ Check every one of the four, in that order, and record which one failed.
 | `HTTP 401` | Abort. The credentials are invalid. Correct `SERVICENOW_USERNAME` and `SERVICENOW_PASSWORD` in the environment and restart the pre-flight checks. |
 | `HTTP 403` | Abort. The account cannot read `sys_remote_update_set`. Grant the `admin` role and restart the pre-flight checks. |
 | `HTTP 302` or any other redirect | Abort. The request was not authenticated. Do not follow the redirect and do not treat a followed redirect's `HTTP 200` as a pass. |
-| `HTTP 500` | Wait 30 seconds and reissue the identical request exactly once. If the retry does not satisfy all four conditions above, abort. |
+| A retryable server error — `HTTP 500`, `502`, `503` or `504` | Wait 30 seconds and reissue the identical request exactly once. If the retry does not satisfy all four conditions above, abort. |
 | Connection timeout or DNS failure | Abort. The instance is hibernated or unreachable. Wake it, wait 2 minutes, and restart the pre-flight checks. |
 
 ### Pre-flight 2 — starting state of the scope
@@ -487,7 +524,9 @@ Steps 1, 3 and 5 share one authenticated session and one cookie jar, established
 
 **First, establish the run identity and the session.** Both are defined once above and are not restated here: set `{RUN_NAME}` per [Run identity](#run-identity--one-unique-name-per-deployment) and write it into the `<name>` element of the single `<sys_remote_update_set>` header record of a working copy of the XML; then establish the session and acquire `sysparm_ck` per [Session lifecycle for the three form-based routes](#session-lifecycle-for-the-three-form-based-routes). The same cookie jar and the same token serve steps 1, 3 and 5.
 
-**Second, snapshot the name.** Before uploading, record which records already carry `{RUN_NAME}` — on a correctly generated run identity, none:
+**Second, clear the delivered header identifier.** Run the pre-upload check under [Run identity](#run-identity--one-unique-name-per-deployment) and require `HTTP 404` before uploading anything. It is not covered by the name snapshot below: the identifier is fixed in the file, so a record already holding it is **updated** by the load and renamed to `{RUN_NAME}`, at which point the snapshot below would report success against an earlier build's record.
+
+**Third, snapshot the name.** Before uploading, record which records already carry `{RUN_NAME}` — on a correctly generated run identity, none:
 
 ```text
 GET {SERVICENOW_INSTANCE_URL}/api/now/table/sys_remote_update_set?sysparm_query=name={RUN_NAME}&sysparm_fields=sys_id&sysparm_limit=10
@@ -511,7 +550,7 @@ Note the field spelling: `user_password@-`, with **no** `=` before the `@`. `--d
 GET {SERVICENOW_INSTANCE_URL}/upload.do?sysparm_referring_url=sys_remote_update_set_list.do&sysparm_target=sys_remote_update_set
 ```
 
-**Third, post the file** on the established session:
+**Fourth, post the file** on the established session:
 
 ```text
 POST {SERVICENOW_INSTANCE_URL}/sys_upload.do
@@ -565,11 +604,11 @@ GET {SERVICENOW_INSTANCE_URL}/api/now/table/sys_remote_update_set?sysparm_query=
 
 **Do not** upload by `POST /api/now/table/sys_remote_update_set` with `Content-Type: application/xml`. The Table API does not accept an update-set payload and returns `HTTP 400`. The requirement is `REQ-RB-02` of the same table.
 
-**On a failed upload.** Follow the **upload** row of the [retry policy](#retry-policy--by-operation-not-by-status), which is more specific than the general `HTTP 500` rule and takes precedence over it: re-query by `{RUN_NAME}` first, because an upload that errored may nonetheless have landed. Retry only when no new record exists, at most **3 attempts with 10-second backoff**. If the third attempt still yields no record, **abort**. If more than one record exists, **stop** rather than retry.
+**On a failed upload.** Follow the **upload** row of the [retry policy](#retry-policy--by-operation-not-by-status), which is more specific than the general retryable-server-error rule and takes precedence over it: re-query by `{RUN_NAME}` first, because an upload that errored may nonetheless have landed. Retry only when no new record exists, at most **3 attempts with 10-second backoff**. If the third attempt still yields no record, **abort**. If more than one record exists, **stop** rather than retry.
 
 **On a failed upload.** Retry the whole three-request upload — login, token read, file post, then the success assertion — up to **3 attempts in total, with a 10-second wait between attempts**. If the third attempt still does not yield exactly one retrievable record, **abort**.
 
-**This policy governs every upload failure at step 1, including `HTTP 500`.** The general `HTTP 500` rule of the [failure-handling matrix](#failure-handling-matrix) — one retry after 30 seconds — applies to every other step and every gate, and **does not** apply here. Step 1's policy takes precedence, so an `HTTP 500` on the upload is attempt 1 of 3 with a 10-second wait, not a 30-second single retry, and the two are never combined. Read a fresh `sysparm_ck` on every attempt: the token from a failed attempt may already be spent.
+**This policy governs every upload failure at step 1, including a retryable server error.** The general retryable-server-error rule of the [failure-handling matrix](#failure-handling-matrix) — one retry after 30 seconds — applies to every other step and every gate, and **does not** apply here. Step 1's policy takes precedence, so an `HTTP 500` or `HTTP 502` on the upload is attempt 1 of 3 with a 10-second wait, not a 30-second single retry, and the two are never combined. Read a fresh `sysparm_ck` on every attempt: the token from a failed attempt may already be spent.
 
 **Polling.** None. This step is a single sequence of requests per attempt.
 
@@ -659,6 +698,8 @@ The `inserted`, `updated` and `deleted` split beneath `summary` is recorded as e
 **On the timeout elapsing without reaching `previewed`.** Abort and investigate. Do not commit a partially previewed set.
 
 **Operational note.** The delivered set carries **313** update records, which makes the preview the longest step in this sequence. Expect it to approach the 600 s timeout. Slowness here is not failure — poll to the timeout before declaring one.
+
+**Record the elapsed preview duration on success, not only on timeout.** On reaching `previewed`, record the wall-clock seconds from the step 3 trigger to the pass that observed it, and the number of passes taken, in the step 3 row of the [Deployment log](#deployment-log), stated against the budget as `observed s / 600 s`. The budget spread across `{record_count}` records — **313** — is **1.92 s per record**, and that figure is a prediction: **no deployment of this Update Set has been executed, so the preview duration is the one timing in this runbook that has never been observed.** The first deployment is what turns it into a measurement, and only if the number is written down. Record it whatever it is — a preview that finishes in 40 s is as much a result as one that finishes in 590 s, and the second is what tells the next operator to split the set before a timeout is reached rather than after.
 
 ### Step 4 — check the preview problems
 
@@ -810,33 +851,53 @@ GET {SERVICENOW_INSTANCE_URL}/api/now/table/sys_remote_update_set/{ruset_sys_id}
 
 **`GATE-SCOPE-01` is where the rollback's identifier is captured.** Record the `sys_id` that gate returns in the deployment log. The rollback deletes that exact identifier and nothing else, and only under the conditions [Rollback](#rollback) states.
 
-**Two further check classes are run at step 6, and they do not carry the same weight.** [`./validation-gates.md`](./validation-gates.md#three-classes-of-check-and-what-each-one-blocks) defines both. **`GATE-COL-01` — the 53-column count — is acceptance-required and non-rollback**: a failure **blocks acceptance**, because success criterion 1 depends on it, but it never triggers the rollback, because the tables and roles committed correctly and the defect lives in the Update Set. Correct the Update Set and re-import. **`GATE-SEC-01` through `GATE-SEC-04` — the scope-containment, write-capability, REST-control and secured-read checks — are non-normative diagnostics**: run them, record their results, investigate any discrepancy, and report it with the deployment. Neither class triggers the rollback, and only `GATE-COL-01` blocks acceptance.
+**Two further check classes are run at step 6, and they do not carry the same weight.** [`./validation-gates.md`](./validation-gates.md#three-classes-of-check-and-what-each-one-blocks) defines both. **`GATE-COL-01` — the 53-column count — is acceptance-required and non-rollback**: a failure **blocks acceptance**, because success criterion 1 depends on it, but it never triggers the rollback, because the tables and roles committed correctly and the defect lives in the Update Set. Correct the Update Set and re-import. **`GATE-SEC-01` through `GATE-SEC-03` — the scope-containment, write-capability and REST-control checks — are acceptance-required and non-rollback on the same terms**: each names an exposure rather than a preference, so a failure blocks acceptance, and the remedy is to correct the delivered records and re-import — or, uniquely to these three, for the platform owner to record written acceptance of the named exposure. **`GATE-SEC-04` — the secured-read check — is the one non-normative diagnostic**: run it, record its result, investigate any discrepancy, and report it with the deployment. It is the only check at step 6 that is not an HTTP request but a background script a human runs in the platform UI, which is why no pipeline can assert on it and why it decides nothing. Neither class triggers the rollback.
 
-**The five further checks, in the two classes just defined. Only `GATE-COL-01` blocks acceptance; none of the five triggers the rollback:**
+**The five further checks, in the two classes just defined. Four of them block acceptance — `GATE-COL-01` and the three `GATE-SEC` access-posture checks — and none of the five triggers the rollback:**
 
 | Check | Class | Assertion | On failure |
 | --- | --- | --- | --- |
 | `GATE-COL-01` | **2 — acceptance-required, non-rollback** | The seven entity tables carry exactly 53 columns between them. | Report the count observed and the per-table split. **Acceptance is blocked** until the Update Set is corrected and re-imported, and criterion 1 is not recorded as met while it is failing. **No rollback**: a shortfall with all eleven required gates passing is corrected by re-exporting and re-importing, not by destroying an installation whose tables and roles committed correctly. |
-| `GATE-SEC-01` | 3 — non-normative diagnostic | All ten application tables are reachable from the `x_bst_startuptrk` scope only. | Report the names observed and investigate. **No rollback**, and acceptance is not blocked. |
-| `GATE-SEC-02` | 3 — non-normative diagnostic | No application table permits any cross-scope write, configuration or schema operation. | Report the tables missing from the result. **No rollback**, but **do not put the application into use**: correct the dictionary records, re-export and re-import. |
-| `GATE-SEC-03` | 3 — non-normative diagnostic | Both `REST_Endpoint` access controls committed. | Report and correct before the API is exposed. **No rollback**, and acceptance is not blocked. |
-| `GATE-SEC-04` | 3 — non-normative diagnostic | Each of the seven entity tables resolves and is readable through the ACL-respecting path. It is a background script run in the `x_bst_startuptrk` scope, not an HTTP request. | Report the seven log lines. A `can_read=false` means no caller can read that table and every list response will answer `403` — correct the table-level read control before the API is exposed. **No rollback**, and acceptance is not blocked. |
+| `GATE-SEC-01` | **2 — acceptance-required, non-rollback** | All ten application tables are reachable from the `x_bst_startuptrk` scope only. | Report the names observed and investigate. **Acceptance is blocked** — a table outside the scope's reach exposes raw staged payloads over an external route — until the delivered records are corrected and re-imported, or the platform owner records written acceptance of the named exposure. **No rollback.** |
+| `GATE-SEC-02` | **2 — acceptance-required, non-rollback** | No application table permits any cross-scope write, configuration or schema operation. | Report the tables missing from the result. **Acceptance is blocked** and the application is **not put into use**: correct the dictionary records, re-export and re-import, or record the platform owner's written acceptance of the exposure. **No rollback.** |
+| `GATE-SEC-03` | **2 — acceptance-required, non-rollback** | Both `REST_Endpoint` access controls committed. | Report and correct before the API is exposed — without both controls the endpoints carry no authorisation. **Acceptance is blocked** until they are corrected and re-imported, or the exposure is accepted in writing by the platform owner. **No rollback.** |
+| `GATE-SEC-04` | 3 — non-normative diagnostic | Each of the seven entity tables resolves and is readable through the ACL-respecting path. It is a background script run in the `x_bst_startuptrk` scope, not an HTTP request, which is why it decides nothing. | Report the seven log lines. A `can_read=false` means no caller can read that table and every list response will answer `403` — correct the table-level read control before the API is exposed. **No rollback**, and acceptance is not blocked. |
 
 **One external instance observation, which is not a gate at all.** The Global-scope XML entity-resolution properties, under [Instance prerequisite for XML entity resolution](./validation-gates.md#instance-prerequisite-for-xml-entity-resolution). This application cannot set them, cannot test them into compliance, and cannot be rolled back to fix them — deleting this scope would not change a Global property by one byte. **Record the two values read and, where the reading is not the hardened configuration, report it to the platform owner as a finding against the instance.** No reading of it fails the deployment.
 
-**Transient-error retry rule.** This rule applies to every gate and every check, in all three classes, each of which is an idempotent read and follows the idempotent-read row of the [retry policy](#retry-policy--by-operation-not-by-status). A check that returns `HTTP 500` is retried **exactly once, after waiting 30 seconds**, reissuing the identical request, and is then evaluated on the retry's response: a retry that satisfies the pass condition is a pass and is recorded as such; a second `HTTP 500`, or any other status that does not satisfy the pass condition, is final. Nothing is retried more than once, and no status other than `HTTP 500` is retried — `HTTP 400`, `HTTP 401`, `HTTP 403` and `HTTP 404` are evaluated on their first response and fail immediately.
+**Transient-error retry rule.** This rule applies to every gate and every check, in all three classes, each of which is an idempotent read and follows the idempotent-read row of the [retry policy](#retry-policy--by-operation-not-by-status). A check that returns a **retryable server error** — `HTTP 500`, `502`, `503` or `504` — is retried **exactly once, after waiting 30 seconds**, reissuing the identical request, and is then evaluated on the retry's response: a retry that satisfies the pass condition is a pass and is recorded as such; a second retryable server error, or any other status that does not satisfy the pass condition, is final. Nothing is retried more than once, and no status outside that class is retried — `HTTP 400`, `HTTP 401`, `HTTP 403` and `HTTP 404` are evaluated on their first response and fail immediately.
 
 **On a required-gate failure.** Report the failing gate **by its identifier**, together with the HTTP status and the response body observed, then **execute the [rollback](#rollback)** on the branch `START_STATE` selected — but only if every condition that rollback places on itself holds. Where they do not, **report the failure and stop**; do not delete. The failing gate is always reported before any deletion is initiated.
 
 **On a `GATE-COL-01` failure.** Report the count observed and the per-table split, and **stop without rolling back**. The deployment stays in place and **acceptance is blocked**: correct the Update Set so the seven entity tables carry exactly the 53 binding columns, re-import, and do not record criterion 1 as met until the check passes.
 
-**On a class 3 security-check failure.** Report it, act on its own row above, and **never roll back**. A class 3 failure cannot destroy an installation, and it does not hold up a manual-build guide, but it **does** block acceptance and it **does** stop the application being put into use until the delivered posture is corrected and re-imported or the platform owner records written acceptance of the named exposure. All three are treated alike — `GATE-SEC-02` is the one whose failure should stop the application being put into use, and its own row says so.
+**On a `GATE-SEC-01`, `GATE-SEC-02` or `GATE-SEC-03` failure.** Report it, act on its own row above, and **never roll back**. None of the three can destroy an installation and none holds up a manual-build guide, but each **does** block acceptance and each **does** stop the application being put into use until the delivered posture is corrected and re-imported or the platform owner records written acceptance of the named exposure. **All three are treated alike**, because none is milder than the others: `GATE-SEC-01` failing exposes raw staged payloads over an external route, `GATE-SEC-02` failing permits a cross-scope write, and `GATE-SEC-03` failing leaves the endpoints with no authorisation at all.
+
+**On a `GATE-SEC-04` failure.** Report the seven log lines, act on its own row above, and **never roll back**. It blocks neither acceptance nor any manual-build guide — but a `can_read=false` still means no caller can read that table, so correct the table-level read control before the API is exposed.
 
 Record one row per required gate and one per further check in the evidence record of [`./validation-gates.md`](./validation-gates.md), and record no credential value in any field of it.
 
 ## After the gates pass
 
-With all eleven required gates passing, the declarative deliverable is installed: the ten tables, their columns and choices, the three roles, the access controls, the service layer, the REST definition and its operations, the properties, the business rules, the scheduled job, the views and the application menu are all committed on the instance. The manual build work begins now.
+With all eleven required gates passing, the **declarative half** of the deliverable is installed: the ten tables, their columns and choices, the three roles, the access controls, the service layer, the REST definition and its operations, the properties, the business rules, the scheduled job, the views and the application menu are all committed on the instance. The manual build work begins now.
+
+### What is not installed, and what the gates deliberately do not test
+
+**Read this before reporting the deployment as complete.** Every artifact the platform generates through its own interface is **absent at this point**, and the gates are silent about all of it by design — there is nothing yet for a gate to read, so a full pass of the gate set is not evidence that any of the following exists. The counts below are the counts in the delivered Update Set, and each is exactly zero.
+
+| Absent immediately after the commit | Records in the Update Set | Built by | What is consequently untrue of this instance |
+| --- | --- | --- | --- |
+| The portal, its theme, the five pages and the eight widgets — `sp_portal`, `sp_theme`, `sp_page`, `sp_widget`, `sp_container`, `sp_row`, `sp_rectangle` and `sp_instance` | **0 of each of the eight types** | Guide **04** | **None of the five Service Portal routes exists.** `/bst` resolves to nothing, there is no Home / Search, Company Profile, Investor Profile, Dashboard / Trends or Account Management page, and **success criterion 5 cannot be walked, evidenced or recorded as met**. |
+| The two Connection & Credential Aliases, `x_bst_startuptrk.crunchbase_api` and `x_bst_startuptrk.linkedin_oauth` | **0** | Guide **01** | Neither flow has a credential to bind by name, so neither can make a source call. |
+| The two Flow Designer ingestion flows | **0** | Guides **02** and **03** | Nothing ingests on any cadence, no run-summary record is ever written, and **success criterion 4 cannot be measured**. |
+| The ten ATF suites and their thirty-six tests | **0** | Guide **05** | The coverage gate of prompt section 9.0 cannot be evaluated, and **criteria 1, 2 and 3 have no test evidence** beyond what the gates themselves establish. |
+| Any row in `x_bst_startuptrk_ingest_staging` | The table commits empty | Guide **06** | The fallback branch of both flows has nothing to claim, so a fallback-labelled run would ingest zero records. |
+
+**Why the split exists, and why it is not a defect.** Only tables carrying the `update_synch` attribute are captured into `sys_update_xml`, and adding that attribute to a table that lacks it out of the box is unsupported. The record types above are precisely the classes the platform builds through its own interface and does not make portable, which is why prompt section 11.0 requires **step-by-step manual build instructions** for them rather than expecting them in the file. AAP section 0.4.2 records the same split and names the same five artifact classes.
+
+**The one sentence not to mis-read.** *The deliverable is installed* means the declarative half is installed. **Acceptance requires both halves**: the acceptance decision is satisfied only when the fifteen acceptance-blocking checks of [`./validation-gates.md`](./validation-gates.md#gate-roll-up) pass **and** the five success criteria of [`./validation-checklist.md`](./validation-checklist.md) are met, and three of those five — criteria 3, 4 and 5 — cannot even be attempted until the guides below have been followed. Do not record the portal, the flows or the tests as delivered on the strength of a committed Update Set, and do not report criterion 5 as blocked or failing on the ground that `/bst` does not load: at this point it is **not yet built**, which is the expected state.
+
+**What is installed is not the whole application, and the gap is deliberate.** Nothing that the platform builds through its own interface is in the Update Set: the two credential aliases, the two ingestion flows, the portal with its theme, five pages and eight widgets, the ten ATF suites, and the staging-table CSV load are all absent, because only tables carrying the `update_synch` dictionary attribute are captured into `sys_update_xml` and those artifact classes sit on tables that do not carry it. So at this moment the instance has **no portal, no flows and no tests** — `sp_portal`, `sp_page`, `sp_widget` and `sp_theme` all hold zero records for this scope. Two of the five success criteria in [`../docs/validation-checklist.md`](../docs/validation-checklist.md) cannot be attempted yet: criterion 4 needs the flows from guides 02 and 03, and criterion 5 needs the portal from guide 04. Do not report the deployment as satisfying them on the strength of the eleven gates, none of which reads a portal, flow or test record.
 
 Hand off to [`./manual-build-instructions.md`](./manual-build-instructions.md) and follow its guides in this order:
 
@@ -1130,7 +1191,7 @@ Branch B deletes nothing. Scope deletion would remove the ten tables and everyth
 
 Every abort, retry and rollback path in this runbook appears below as its own row. No condition is left to be handled by analogy.
 
-**Precedence.** Where a row below and the [retry policy](#retry-policy--by-operation-not-by-status) both address a condition, the **operation-specific rule wins**. The generic `HTTP 500` row at the foot of this table is the fallback for operations that no more specific rule covers; it never overrides the upload, preview, commit or delete rules, none of which permits a blind retry.
+**Precedence.** Where a row below and the [retry policy](#retry-policy--by-operation-not-by-status) both address a condition, the **operation-specific rule wins**. The generic retryable-server-error row at the foot of this table is the fallback for operations that no more specific rule covers; it never overrides the upload, preview, commit or delete rules, none of which permits a blind retry.
 
 | Condition | Step | Action | Escalation |
 | --- | --- | --- | --- |
@@ -1166,7 +1227,8 @@ Every abort, retry and rollback path in this runbook appears below as its own ro
 | Commit failure — `state=commit_failed` or `state=error` | Step 5 | **Execute the [rollback](#rollback)** on the branch [`START_STATE`](#which-branch-applies) selects: Branch A when `clean`, Branch B when `existing` or unknown. | Report the specific state observed, with `summary`, `inserted`, `updated`, `deleted` and `collisions`, and report `START_STATE` and the branch taken, before the rollback. |
 | Mandatory post-commit gate failure — any of the eleven | Step 6 | **Execute the [rollback](#rollback)** on the branch `START_STATE` selects, and **report which specific gate failed**. | Report the gate identifier, the HTTP status and the response body, plus `START_STATE` and the branch taken, before the rollback. |
 | **`GATE-COL-01` failure — the 53-column count** | Step 6 | **Do not roll back.** The deployment stays in place and **acceptance is blocked**: record the observed count and the per-table split, correct the Update Set so the seven entity tables carry exactly the 53 binding columns, and re-import. Deleting the scope would discard seven correctly committed tables and three correctly committed roles to fix a defect that lives in the source file. | Report `GATE-COL-01`, the observed count against the expected `53`, the per-table split, and that acceptance is blocked pending a corrected re-import. |
-| Non-normative diagnostic failure — `GATE-SEC-01`, `GATE-SEC-02`, `GATE-SEC-03` or `GATE-SEC-04` | Step 6 | **Do not roll back and do not abort.** Record the result, investigate the discrepancy, and report it with the deployment. These checks are non-normative. | Report the check identifier, the observed value against the expected value, and the investigation outcome. |
+| Access-posture check failure — `GATE-SEC-01`, `GATE-SEC-02` or `GATE-SEC-03` | Step 6 | **Do not roll back and do not abort.** The deployment stays in place and **acceptance is blocked**: record the result, investigate the discrepancy, and either correct the delivered records and re-import or record the platform owner's written acceptance of the named exposure. Do not put the application into use while one is failing. |
+| Non-normative diagnostic failure — `GATE-SEC-04` | Step 6 | **Do not roll back and do not abort.** Record the result, investigate the discrepancy, and report it with the deployment. This check is non-normative and blocks nothing; a `can_read=false` is still corrected before the API is exposed. | Report the check identifier, the observed value against the expected value, and the investigation outcome. |
 | Upgrade precondition unmet — `START_STATE=existing` with no backup or expendability statement, or no identified committed set to back out | Pre-flight 2 | **Abort.** Nothing has touched the instance. Obtain the backup or the written statement from the application owner, or deploy to a clean instance instead. | Report which of the two preconditions was unmet, and the installed `version` observed. |
 | Back-out incomplete on Branch B — the platform reports records it could not reverse | Rollback Branch B step B2 | **Stop and escalate.** Do not delete the scope and do not retry the commit. | Report every record the back-out could not reverse, together with the step B3 gate results. |
 | Cascade incomplete on Branch A — an `x_bst_startuptrk_` table still resolves after step A4 | Rollback Branch A step A5 | **Stop.** Do not re-deploy. | Report the table names still returned, and escalate. |
@@ -1174,7 +1236,7 @@ Every abort, retry and rollback path in this runbook appears below as its own ro
 | Commit not accepted — the validate or commit processor returned a non-`200` status, an unparsable body, an absent or empty `answer`, or a verdict reporting a blocking problem | Step 5 | **Abort without polling.** Re-establish the session and restart from step 1a. | Report the status, the body observed and `{ruset_sys_id}`. No rollback: nothing was committed. |
 | Commit not started — the record has not left `previewed` within two poll intervals of a commit whose `answer` was not a tracker identifier | Step 5 | **Abort and investigate.** Do not re-issue the commit against a record whose state is unknown. | Report the `answer` verbatim, the last observed `state` and `{ruset_sys_id}`. Escalate before any re-deployment. |
 | Post-commit gate failure — any of the eleven gates, without exception | Step 6 | **Execute the [rollback](#rollback)** and **report which specific gate failed**. | Report the gate identifier, the HTTP status and the response body, before the rollback. |
-| Server error — `HTTP 500` at any step or any gate | Any step, any gate | **Retry once after 30 seconds**, reissuing the identical request. If the retry does not succeed, **abort**. A gate is retried at most once; a second `HTTP 500` is final. | Report both responses. No status other than `HTTP 500` is retried. |
+| Retryable server error — `HTTP 500`, `502`, `503` or `504` at any step or any gate | Any step, any gate | **Retry once after 30 seconds**, reissuing the identical request. If the retry does not succeed, **abort**. A gate is retried at most once; a second retryable server error is final. | Report both responses, each with the status observed. No status outside the class is retried, and a `200` carrying HTML rather than JSON is not retried at all. |
 
 ## Deployment log
 
@@ -1192,7 +1254,7 @@ Record one row per step per run. This log is the evidence a deployment took the 
 | | Step 1 upload | | `{ruset_sys_id}`, captured by `{RUN_NAME}` | |
 | | Session established | | `session established`, `form token read` — **never their values** | |
 | | Step 2 load | | `{ruset_sys_id}` | |
-| | Step 3 preview | | `{ruset_sys_id}`, `{tracker_sys_id}`, the tracker's terminal `state`, its `message`, and `summary` against `313` | |
+| | Step 3 preview | | `{ruset_sys_id}`, `{tracker_sys_id}`, the tracker's terminal `state`, its `message`, `summary` against `313`, and the **elapsed preview duration in seconds against the 600 s budget** with the pass count | |
 | | Step 4 preview problems | | error-type count, warning-type count | |
 | | `PRE-COMMIT-01` | | attached customer-update count against `313` | |
 | | `PRE-COMMIT-02` | | `state` and `summary` against `313` | |
@@ -1200,7 +1262,8 @@ Record one row per step per run. This log is the evidence a deployment took the 
 | | Step 5 commit | | `{ruset_sys_id}` | |
 | | Step 6 required gates | | **`11 of 11`** or the failing gate identifier, and the `sys_id` `GATE-SCOPE-01` returned | |
 | | Step 6 `GATE-COL-01` | | the 53-column count and the per-table split; blocks acceptance, never rolls back | |
-| | Step 6 four diagnostics — `GATE-SEC-01` to `GATE-SEC-04` | | each check's outcome; non-normative, blocks nothing, never rolls back | |
+| | Step 6 `GATE-SEC-01` to `GATE-SEC-03` | | each check's outcome, and any written acceptance recorded; blocks acceptance, never rolls back | |
+| | Step 6 `GATE-SEC-04` | | the seven log lines; non-normative, blocks nothing, never rolls back | |
 | | Step 6 instance observation | | both `glide.stax.*` values, and the owner notified where not hardened | |
 | | Rollback preconditions, if reached | | installation mode, scope count, both identifiers, trigger, token supplied | |
 | | Rollback, if run | | `{scope_sys_id}`, all five step A5 confirmations, and the step A6 grant snapshot with its post-removal zero | |
@@ -1238,7 +1301,7 @@ Not carried forward:
 
 - [`../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`](../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml) — the artifact this runbook deploys
 - [`../scripts/validate_update_set_xml.py`](../scripts/validate_update_set_xml.py) — the pre-delivery validator run before step 1
-- [`./validation-gates.md`](./validation-gates.md) — the eleven required post-commit gates run at step 6, the acceptance-required `GATE-COL-01`, the four non-normative diagnostics recorded beside them, and the one external instance observation
+- [`./validation-gates.md`](./validation-gates.md) — the eleven required post-commit gates run at step 6, the four acceptance-required checks beside them — `GATE-COL-01` and `GATE-SEC-01` to `GATE-SEC-03` — the one non-normative diagnostic `GATE-SEC-04`, and the one external instance observation
 - [`./data-model.md`](./data-model.md) — the ten tables the commit installs
 - [`./access-control.md`](./access-control.md) — the three roles, and the table-level read access controls the seven entity-table gates read through
 - [`./api-reference.md`](./api-reference.md) — the REST definition and operations the commit installs

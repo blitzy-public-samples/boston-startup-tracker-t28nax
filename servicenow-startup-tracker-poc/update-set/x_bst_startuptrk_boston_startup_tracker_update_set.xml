@@ -8,7 +8,7 @@
     <collisions/>
     <commit_date/>
     <deleted/>
-    <description>Boston Startup Tracker scoped application: 314 update records, being 1 application, 10 tables, 13 indexes, 78 choices, 3 roles, 49 ACLs including 2 REST endpoint ACLs, 74 ACL role grants, 8 script includes, 1 scripted REST API with 31 JSON only operations, 11 properties, 3 business rules, 1 scheduled job, 10 form sections, 10 lists, 1 related list, 1 application menu and 9 modules.</description>
+    <description>Boston Startup Tracker scoped application: 313 update records, being 1 application, 10 tables, 13 indexes, 77 choices, 3 roles, 49 ACLs including 2 REST endpoint ACLs, 74 ACL role grants, 8 script includes, 1 scripted REST API with 31 JSON only operations, 11 properties, 3 business rules, 1 scheduled job, 10 form sections, 10 lists, 1 related list, 1 application menu and 9 modules.</description>
     <inserted/>
     <name>Boston Startup Tracker 1.0.0</name>
     <origin_sys_id/>
@@ -146,9 +146,9 @@
     <comments/>
     <name>sys_db_object_5663b376ed647393b0af28bd00d7c7eb</name>
     <payload>&lt;record_update table="sys_db_object"&gt;&lt;sys_db_object action="INSERT_OR_UPDATE"&gt;&lt;access&gt;package_private&lt;/access&gt;&lt;actions_access&gt;false&lt;/actions_access&gt;&lt;alter_access&gt;false&lt;/alter_access&gt;&lt;caller_access/&gt;&lt;client_scripts_access&gt;false&lt;/client_scripts_access&gt;&lt;configuration_access&gt;false&lt;/configuration_access&gt;&lt;create_access&gt;false&lt;/create_access&gt;&lt;create_access_controls&gt;false&lt;/create_access_controls&gt;&lt;delete_access&gt;false&lt;/delete_access&gt;&lt;extension_model/&gt;&lt;is_extendable&gt;false&lt;/is_extendable&gt;&lt;label&gt;Funding round&lt;/label&gt;&lt;live_feed_enabled&gt;false&lt;/live_feed_enabled&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;number_ref/&gt;&lt;provider_class/&gt;&lt;read_access&gt;false&lt;/read_access&gt;&lt;scriptable_table&gt;false&lt;/scriptable_table&gt;&lt;sys_class_name&gt;sys_db_object&lt;/sys_class_name&gt;&lt;sys_id&gt;5663b376ed647393b0af28bd00d7c7eb&lt;/sys_id&gt;&lt;sys_name&gt;Funding round&lt;/sys_name&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;sys_policy/&gt;&lt;sys_update_name&gt;sys_db_object_x_bst_startuptrk_fundinground&lt;/sys_update_name&gt;&lt;super_class/&gt;&lt;update_access&gt;false&lt;/update_access&gt;&lt;user_role/&gt;&lt;ws_access&gt;false&lt;/ws_access&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_db_object&gt;&lt;sys_dictionary action="INSERT_OR_UPDATE"&gt;&lt;active&gt;true&lt;/active&gt;&lt;array&gt;false&lt;/array&gt;&lt;attributes/&gt;&lt;audit&gt;false&lt;/audit&gt;&lt;column_label&gt;Funding round&lt;/column_label&gt;&lt;display&gt;false&lt;/display&gt;&lt;element/&gt;&lt;internal_type display_value="Collection"&gt;collection&lt;/internal_type&gt;&lt;mandatory&gt;false&lt;/mandatory&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;primary&gt;false&lt;/primary&gt;&lt;read_only&gt;false&lt;/read_only&gt;&lt;sys_id&gt;ee2562afa1d58b3c3bf25866873b3684&lt;/sys_id&gt;&lt;sys_name&gt;Funding round&lt;/sys_name&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;unique&gt;false&lt;/unique&gt;&lt;virtual&gt;false&lt;/virtual&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_dictionary&gt;&lt;sys_dictionary action="INSERT_OR_UPDATE"&gt;&lt;active&gt;true&lt;/active&gt;&lt;array&gt;false&lt;/array&gt;&lt;attributes/&gt;&lt;audit&gt;false&lt;/audit&gt;&lt;calculation/&gt;&lt;choice/&gt;&lt;column_label&gt;Startup&lt;/column_label&gt;&lt;default_value/&gt;&lt;display&gt;false&lt;/display&gt;&lt;dynamic_default_value/&gt;&lt;element&gt;startup&lt;/element&gt;&lt;internal_type display_value="Reference"&gt;reference&lt;/internal_type&gt;&lt;mandatory&gt;true&lt;/mandatory&gt;&lt;max_length&gt;32&lt;/max_length&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;primary&gt;false&lt;/primary&gt;&lt;read_only&gt;false&lt;/read_only&gt;&lt;reference display_value="Startup"&gt;x_bst_startuptrk_startup&lt;/reference&gt;&lt;reference_cascade_rule display_value="Cascade"&gt;delete&lt;/reference_cascade_rule&gt;&lt;reference_floats&gt;false&lt;/reference_floats&gt;&lt;reference_type/&gt;&lt;sizeclass/&gt;&lt;spell_check&gt;false&lt;/spell_check&gt;&lt;staged&gt;false&lt;/staged&gt;&lt;sys_id&gt;cb89c5e865de4214eafc60d6f2ff7f9b&lt;/sys_id&gt;&lt;sys_name&gt;Startup&lt;/sys_name&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;table_reference&gt;false&lt;/table_reference&gt;&lt;text_index&gt;false&lt;/text_index&gt;&lt;unique&gt;false&lt;/unique&gt;&lt;use_dependent_field&gt;false&lt;/use_dependent_field&gt;&lt;use_dynamic_default&gt;false&lt;/use_dynamic_default&gt;&lt;virtual&gt;false&lt;/virtual&gt;&lt;widget/&gt;&lt;xml_view&gt;false&lt;/xml_view&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_dictionary&gt;&lt;sys_dictionary action="INSERT_OR_UPDATE"&gt;&lt;active&gt;true&lt;/active&gt;&lt;array&gt;false&lt;/array&gt;&lt;attributes/&gt;&lt;audit&gt;false&lt;/audit&gt;&lt;calculation/&gt;&lt;choice&gt;1&lt;/choice&gt;&lt;column_label&gt;Round type&lt;/column_label&gt;&lt;default_value/&gt;&lt;display&gt;false&lt;/display&gt;&lt;dynamic_default_value/&gt;&lt;element&gt;round_type&lt;/element&gt;&lt;internal_type display_value="String"&gt;string&lt;/internal_type&gt;&lt;mandatory&gt;false&lt;/mandatory&gt;&lt;max_length&gt;40&lt;/max_length&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;primary&gt;false&lt;/primary&gt;&lt;read_only&gt;false&lt;/read_only&gt;&lt;reference/&gt;&lt;reference_cascade_rule/&gt;&lt;reference_floats&gt;false&lt;/reference_floats&gt;&lt;reference_type/&gt;&lt;sizeclass/&gt;&lt;spell_check&gt;false&lt;/spell_check&gt;&lt;staged&gt;false&lt;/staged&gt;&lt;sys_id&gt;a854c27ce5ee684f3d36681c0a8c00b0&lt;/sys_id&gt;&lt;sys_name&gt;Round type&lt;/sys_name&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;table_reference&gt;false&lt;/table_reference&gt;&lt;text_index&gt;false&lt;/text_index&gt;&lt;unique&gt;false&lt;/unique&gt;&lt;use_dependent_field&gt;false&lt;/use_dependent_field&gt;&lt;use_dynamic_default&gt;false&lt;/use_dynamic_default&gt;&lt;virtual&gt;false&lt;/virtual&gt;&lt;widget/&gt;&lt;xml_view&gt;false&lt;/xml_view&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_dictionary&gt;&lt;sys_dictionary action="INSERT_OR_UPDATE"&gt;&lt;active&gt;true&lt;/active&gt;&lt;array&gt;false&lt;/array&gt;&lt;attributes/&gt;&lt;audit&gt;false&lt;/audit&gt;&lt;calculation/&gt;&lt;choice/&gt;&lt;column_label&gt;Amount USD&lt;/column_label&gt;&lt;default_value/&gt;&lt;display&gt;false&lt;/display&gt;&lt;dynamic_default_value/&gt;&lt;element&gt;amount_usd&lt;/element&gt;&lt;internal_type display_value="Currency"&gt;currency&lt;/internal_type&gt;&lt;mandatory&gt;false&lt;/mandatory&gt;&lt;max_length/&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;primary&gt;false&lt;/primary&gt;&lt;read_only&gt;false&lt;/read_only&gt;&lt;reference/&gt;&lt;reference_cascade_rule/&gt;&lt;reference_floats&gt;false&lt;/reference_floats&gt;&lt;reference_type/&gt;&lt;sizeclass/&gt;&lt;spell_check&gt;false&lt;/spell_check&gt;&lt;staged&gt;false&lt;/staged&gt;&lt;sys_id&gt;a2480c001c86673b16823d0f6cf3af5a&lt;/sys_id&gt;&lt;sys_name&gt;Amount USD&lt;/sys_name&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;table_reference&gt;false&lt;/table_reference&gt;&lt;text_index&gt;false&lt;/text_index&gt;&lt;unique&gt;false&lt;/unique&gt;&lt;use_dependent_field&gt;false&lt;/use_dependent_field&gt;&lt;use_dynamic_default&gt;false&lt;/use_dynamic_default&gt;&lt;virtual&gt;false&lt;/virtual&gt;&lt;widget/&gt;&lt;xml_view&gt;false&lt;/xml_view&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_dictionary&gt;&lt;sys_dictionary action="INSERT_OR_UPDATE"&gt;&lt;active&gt;true&lt;/active&gt;&lt;array&gt;false&lt;/array&gt;&lt;attributes/&gt;&lt;audit&gt;false&lt;/audit&gt;&lt;calculation/&gt;&lt;choice/&gt;&lt;column_label&gt;Round date&lt;/column_label&gt;&lt;default_value/&gt;&lt;display&gt;false&lt;/display&gt;&lt;dynamic_default_value/&gt;&lt;element&gt;round_date&lt;/element&gt;&lt;internal_type display_value="Date"&gt;glide_date&lt;/internal_type&gt;&lt;mandatory&gt;true&lt;/mandatory&gt;&lt;max_length/&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;primary&gt;false&lt;/primary&gt;&lt;read_only&gt;false&lt;/read_only&gt;&lt;reference/&gt;&lt;reference_cascade_rule/&gt;&lt;reference_floats&gt;false&lt;/reference_floats&gt;&lt;reference_type/&gt;&lt;sizeclass/&gt;&lt;spell_check&gt;false&lt;/spell_check&gt;&lt;staged&gt;false&lt;/staged&gt;&lt;sys_id&gt;524ccad849ee48106ca312673b19c156&lt;/sys_id&gt;&lt;sys_name&gt;Round date&lt;/sys_name&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;table_reference&gt;false&lt;/table_reference&gt;&lt;text_index&gt;false&lt;/text_index&gt;&lt;unique&gt;false&lt;/unique&gt;&lt;use_dependent_field&gt;false&lt;/use_dependent_field&gt;&lt;use_dynamic_default&gt;false&lt;/use_dynamic_default&gt;&lt;virtual&gt;false&lt;/virtual&gt;&lt;widget/&gt;&lt;xml_view&gt;false&lt;/xml_view&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_dictionary&gt;&lt;sys_dictionary action="INSERT_OR_UPDATE"&gt;&lt;active&gt;true&lt;/active&gt;&lt;array&gt;false&lt;/array&gt;&lt;attributes/&gt;&lt;audit&gt;false&lt;/audit&gt;&lt;calculation/&gt;&lt;choice/&gt;&lt;column_label&gt;Lead investor&lt;/column_label&gt;&lt;default_value/&gt;&lt;display&gt;false&lt;/display&gt;&lt;dynamic_default_value/&gt;&lt;element&gt;lead_investor&lt;/element&gt;&lt;internal_type display_value="Reference"&gt;reference&lt;/internal_type&gt;&lt;mandatory&gt;false&lt;/mandatory&gt;&lt;max_length&gt;32&lt;/max_length&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;primary&gt;false&lt;/primary&gt;&lt;read_only&gt;false&lt;/read_only&gt;&lt;reference display_value="Investor"&gt;x_bst_startuptrk_investor&lt;/reference&gt;&lt;reference_cascade_rule/&gt;&lt;reference_floats&gt;false&lt;/reference_floats&gt;&lt;reference_type/&gt;&lt;sizeclass/&gt;&lt;spell_check&gt;false&lt;/spell_check&gt;&lt;staged&gt;false&lt;/staged&gt;&lt;sys_id&gt;1f9f5dba2cebe034c88618f64cdce3c8&lt;/sys_id&gt;&lt;sys_name&gt;Lead investor&lt;/sys_name&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;table_reference&gt;false&lt;/table_reference&gt;&lt;text_index&gt;false&lt;/text_index&gt;&lt;unique&gt;false&lt;/unique&gt;&lt;use_dependent_field&gt;false&lt;/use_dependent_field&gt;&lt;use_dynamic_default&gt;false&lt;/use_dynamic_default&gt;&lt;virtual&gt;false&lt;/virtual&gt;&lt;widget/&gt;&lt;xml_view&gt;false&lt;/xml_view&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_dictionary&gt;&lt;sys_dictionary action="INSERT_OR_UPDATE"&gt;&lt;active&gt;true&lt;/active&gt;&lt;array&gt;false&lt;/array&gt;&lt;attributes/&gt;&lt;audit&gt;false&lt;/audit&gt;&lt;calculation&gt;(function calculatedFieldValue(current) {
-    /* Returns FundingRound.participating_investors from the authoritative join table
-       x_bst_startuptrk_m2m_round_investor. The column is calculated, so the value is
-       derived on every read and nothing is stored. Implements prompt 1.5. */
+    /* x_bst_startuptrk_m2m_round_investor is the only store of participation. This
+       column derives its value from it on every read, so nothing is projected,
+       nothing is refreshed and nothing can drift. Implements prompt 1.5. */
     return new InvestorPortfolioService().participantList(current.getUniqueValue());
 })(current);&lt;/calculation&gt;&lt;choice/&gt;&lt;column_label&gt;Participating investors&lt;/column_label&gt;&lt;default_value/&gt;&lt;display&gt;false&lt;/display&gt;&lt;dynamic_default_value/&gt;&lt;element&gt;participating_investors&lt;/element&gt;&lt;internal_type display_value="List"&gt;glide_list&lt;/internal_type&gt;&lt;mandatory&gt;false&lt;/mandatory&gt;&lt;max_length&gt;4000&lt;/max_length&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;primary&gt;false&lt;/primary&gt;&lt;read_only&gt;true&lt;/read_only&gt;&lt;reference&gt;x_bst_startuptrk_investor&lt;/reference&gt;&lt;reference_cascade_rule/&gt;&lt;reference_floats&gt;false&lt;/reference_floats&gt;&lt;reference_type/&gt;&lt;sizeclass/&gt;&lt;spell_check&gt;false&lt;/spell_check&gt;&lt;staged&gt;false&lt;/staged&gt;&lt;sys_id&gt;2ba0cac4221f51e40bc3fbfe788c059e&lt;/sys_id&gt;&lt;sys_name&gt;Participating investors&lt;/sys_name&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;table_reference&gt;false&lt;/table_reference&gt;&lt;text_index&gt;false&lt;/text_index&gt;&lt;unique&gt;false&lt;/unique&gt;&lt;use_dependent_field&gt;false&lt;/use_dependent_field&gt;&lt;use_dynamic_default&gt;false&lt;/use_dynamic_default&gt;&lt;virtual&gt;true&lt;/virtual&gt;&lt;widget/&gt;&lt;xml_view&gt;false&lt;/xml_view&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_dictionary&gt;&lt;sys_dictionary action="INSERT_OR_UPDATE"&gt;&lt;active&gt;true&lt;/active&gt;&lt;array&gt;false&lt;/array&gt;&lt;attributes/&gt;&lt;audit&gt;false&lt;/audit&gt;&lt;calculation/&gt;&lt;choice/&gt;&lt;column_label&gt;Valuation USD&lt;/column_label&gt;&lt;default_value/&gt;&lt;display&gt;false&lt;/display&gt;&lt;dynamic_default_value/&gt;&lt;element&gt;valuation_usd&lt;/element&gt;&lt;internal_type display_value="Currency"&gt;currency&lt;/internal_type&gt;&lt;mandatory&gt;false&lt;/mandatory&gt;&lt;max_length/&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;primary&gt;false&lt;/primary&gt;&lt;read_only&gt;false&lt;/read_only&gt;&lt;reference/&gt;&lt;reference_cascade_rule/&gt;&lt;reference_floats&gt;false&lt;/reference_floats&gt;&lt;reference_type/&gt;&lt;sizeclass/&gt;&lt;spell_check&gt;false&lt;/spell_check&gt;&lt;staged&gt;false&lt;/staged&gt;&lt;sys_id&gt;a3103e1f277e3e63b89681182892531d&lt;/sys_id&gt;&lt;sys_name&gt;Valuation USD&lt;/sys_name&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;table_reference&gt;false&lt;/table_reference&gt;&lt;text_index&gt;false&lt;/text_index&gt;&lt;unique&gt;false&lt;/unique&gt;&lt;use_dependent_field&gt;false&lt;/use_dependent_field&gt;&lt;use_dynamic_default&gt;false&lt;/use_dynamic_default&gt;&lt;virtual&gt;false&lt;/virtual&gt;&lt;widget/&gt;&lt;xml_view&gt;false&lt;/xml_view&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_dictionary&gt;&lt;sys_dictionary action="INSERT_OR_UPDATE"&gt;&lt;active&gt;true&lt;/active&gt;&lt;array&gt;false&lt;/array&gt;&lt;attributes/&gt;&lt;audit&gt;false&lt;/audit&gt;&lt;calculation/&gt;&lt;choice/&gt;&lt;column_label&gt;Source URL&lt;/column_label&gt;&lt;default_value/&gt;&lt;display&gt;false&lt;/display&gt;&lt;dynamic_default_value/&gt;&lt;element&gt;source_url&lt;/element&gt;&lt;internal_type display_value="String"&gt;string&lt;/internal_type&gt;&lt;mandatory&gt;false&lt;/mandatory&gt;&lt;max_length&gt;255&lt;/max_length&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;primary&gt;false&lt;/primary&gt;&lt;read_only&gt;false&lt;/read_only&gt;&lt;reference/&gt;&lt;reference_cascade_rule/&gt;&lt;reference_floats&gt;false&lt;/reference_floats&gt;&lt;reference_type/&gt;&lt;sizeclass/&gt;&lt;spell_check&gt;false&lt;/spell_check&gt;&lt;staged&gt;false&lt;/staged&gt;&lt;sys_id&gt;1f7d4a9b1b07e94e2514ebc49e1dd560&lt;/sys_id&gt;&lt;sys_name&gt;Source URL&lt;/sys_name&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;table_reference&gt;false&lt;/table_reference&gt;&lt;text_index&gt;false&lt;/text_index&gt;&lt;unique&gt;false&lt;/unique&gt;&lt;use_dependent_field&gt;false&lt;/use_dependent_field&gt;&lt;use_dynamic_default&gt;false&lt;/use_dynamic_default&gt;&lt;virtual&gt;false&lt;/virtual&gt;&lt;widget/&gt;&lt;xml_view&gt;false&lt;/xml_view&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_dictionary&gt;&lt;sys_documentation action="INSERT_OR_UPDATE"&gt;&lt;element/&gt;&lt;help/&gt;&lt;hint&gt;Funding round record. Implements prompt 1.5.&lt;/hint&gt;&lt;label&gt;Funding round&lt;/label&gt;&lt;language&gt;en&lt;/language&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;plural&gt;Funding rounds&lt;/plural&gt;&lt;sys_id&gt;6a21f3d955261a90c4f6774696e04213&lt;/sys_id&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;url/&gt;&lt;url_target/&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_documentation&gt;&lt;sys_documentation action="INSERT_OR_UPDATE"&gt;&lt;element&gt;startup&lt;/element&gt;&lt;help/&gt;&lt;hint&gt;Owning startup. Implements prompt 1.0 field list.&lt;/hint&gt;&lt;label&gt;Startup&lt;/label&gt;&lt;language&gt;en&lt;/language&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;plural/&gt;&lt;sys_id&gt;4f607f65edfb3b839e0e5552f65a91ea&lt;/sys_id&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;url/&gt;&lt;url_target/&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_documentation&gt;&lt;sys_documentation action="INSERT_OR_UPDATE"&gt;&lt;element&gt;round_type&lt;/element&gt;&lt;help/&gt;&lt;hint&gt;Round type carrying the Startup funding stage values. Implements prompt 1.0 field list.&lt;/hint&gt;&lt;label&gt;Round type&lt;/label&gt;&lt;language&gt;en&lt;/language&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;plural/&gt;&lt;sys_id&gt;70d94294b9cc0a8b76c50f5cf09dea24&lt;/sys_id&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;url/&gt;&lt;url_target/&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_documentation&gt;&lt;sys_documentation action="INSERT_OR_UPDATE"&gt;&lt;element&gt;amount_usd&lt;/element&gt;&lt;help/&gt;&lt;hint&gt;Round amount. Premium-gated by prompt 2.0.&lt;/hint&gt;&lt;label&gt;Amount USD&lt;/label&gt;&lt;language&gt;en&lt;/language&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;plural/&gt;&lt;sys_id&gt;5ee80c4e20f2f227eab571d15097cb93&lt;/sys_id&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;url/&gt;&lt;url_target/&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_documentation&gt;&lt;sys_documentation action="INSERT_OR_UPDATE"&gt;&lt;element&gt;round_date&lt;/element&gt;&lt;help/&gt;&lt;hint&gt;Date the round closed. Implements prompt 1.0 field list.&lt;/hint&gt;&lt;label&gt;Round date&lt;/label&gt;&lt;language&gt;en&lt;/language&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;plural/&gt;&lt;sys_id&gt;1d86be66f30e13995be40632b50ccf44&lt;/sys_id&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;url/&gt;&lt;url_target/&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_documentation&gt;&lt;sys_documentation action="INSERT_OR_UPDATE"&gt;&lt;element&gt;lead_investor&lt;/element&gt;&lt;help/&gt;&lt;hint&gt;Lead investor on the round. Implements prompt 1.0 field list.&lt;/hint&gt;&lt;label&gt;Lead investor&lt;/label&gt;&lt;language&gt;en&lt;/language&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;plural/&gt;&lt;sys_id&gt;0b82a2ebd63cdfeefb6c029e98f1e552&lt;/sys_id&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;url/&gt;&lt;url_target/&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_documentation&gt;&lt;sys_documentation action="INSERT_OR_UPDATE"&gt;&lt;element&gt;participating_investors&lt;/element&gt;&lt;help/&gt;&lt;hint&gt;Participating investors, a read-only list projected from the authoritative m2m join table and maintained by the round investor link business rule. Implements prompt 1.5.&lt;/hint&gt;&lt;label&gt;Participating investors&lt;/label&gt;&lt;language&gt;en&lt;/language&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;plural/&gt;&lt;sys_id&gt;87be54839cf55f6c627e5040bd6302d4&lt;/sys_id&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;url/&gt;&lt;url_target/&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_documentation&gt;&lt;sys_documentation action="INSERT_OR_UPDATE"&gt;&lt;element&gt;valuation_usd&lt;/element&gt;&lt;help/&gt;&lt;hint&gt;Post-round valuation. Premium-gated by prompt 2.0.&lt;/hint&gt;&lt;label&gt;Valuation USD&lt;/label&gt;&lt;language&gt;en&lt;/language&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;plural/&gt;&lt;sys_id&gt;24ced45689357f85ac8566ada953ba29&lt;/sys_id&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;url/&gt;&lt;url_target/&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_documentation&gt;&lt;sys_documentation action="INSERT_OR_UPDATE"&gt;&lt;element&gt;source_url&lt;/element&gt;&lt;help/&gt;&lt;hint&gt;Source URL for the round. Implements prompt 1.0 field list.&lt;/hint&gt;&lt;label&gt;Source URL&lt;/label&gt;&lt;language&gt;en&lt;/language&gt;&lt;name&gt;x_bst_startuptrk_fundinground&lt;/name&gt;&lt;plural/&gt;&lt;sys_id&gt;732988a89f1599636202eed0c7a0c0e9&lt;/sys_id&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;url/&gt;&lt;url_target/&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_documentation&gt;&lt;/record_update&gt;</payload>
     <payload_hash/>
@@ -5039,6 +5039,9 @@ AppProperties.prototype = {
     initialize: function () {
         this.PREFIX = 'x_bst_startuptrk.';
         this.LOG = 'x_bst_startuptrk.AppProperties';
+        /* The suffix of the one property that carries the run state of every ingestion
+           source system. Its own record declares the marker format. Prompt 4.0. */
+        this.RUN_STATE = 'ingestion.last_run_provenance';
     },
 
     /* The LinkedIn API version the LinkedIn-Version request header carries, in the
@@ -5071,25 +5074,92 @@ AppProperties.prototype = {
     /* The default cap applied to a sanitised diagnostic string. */
     DETAIL_LIMIT: 200,
 
+    /* The largest page either page-size property can resolve to, whatever value it holds.
+       Prompt 3.0 fixes the page sizes at 20 and 50, so a property may narrow a page and may
+       not widen one beyond the contract. Implements prompt 3.0 pagination. */
+    PAGE_SIZE_CEILING: 50,
+
     /* The ordered pattern set every diagnostic string is passed through. Order is part of the
        contract. A web token is matched first because it is the most specific form. A
        credential-shaped assignment is matched next, and its value pattern deliberately swallows
        an authentication scheme word so that `Authorization: Bearer &amp;lt;token&amp;gt;` is redacted once
-       rather than twice. A scheme word standing on its own follows. The general high-entropy
-       rule is last of the credential rules, so a redacted credential is recognisable as a
-       credential rather than as an anonymous run of characters, and the locator rule runs
-       before it so a key carried in a query string is removed together with its URL.
+       rather than twice. **That rule accepts any delimiter between a credential label and its
+       value, a plain space or tab included**, because a labelled secret separated by a space is
+       the commonest shape a platform exception carries and the shortest to overlook: `user_key
+       abc123def456` and `password hunter2` are both far below any length-based floor. The rule
+       accepts a plain space only for a value that could be a credential rather than the next
+       word of a sentence: a quoted value, a scheme-qualified value, or a token carrying a digit
+       or mixing case, or simply longer than any word this application writes after such a label.
+       A short single-case word is kept, so `the natural key could not be resolved` survives as
+       written while `password hunter2` does not — the diagnostic keeps its meaning
+       and the credential still goes. An assignment introduced by a colon or an equals sign is
+       removed whatever it looks like, because the delimiter already says it is a value. A
+       scheme word
+       standing on its own follows. The general high-entropy rule is last of the credential
+       rules, so a redacted credential is recognisable as a credential rather than as an
+       anonymous run of characters, and the locator rule runs before it so a key carried in a
+       query string is removed together with its URL. That last rule keeps two shapes, because
+       both are diagnostics rather than secrets: a run carrying no digit in a single case, such
+       as a closed code, and a dotted run carrying no digit, such as an exception class name —
+       without which the one diagnostic an `internal` fault carries would itself be redacted.
        Implements prompt 8.0 error handling. */
     SANITISERS: [
         { find: /\beyJ[0-9A-Za-z_-]{4,}\.[0-9A-Za-z_-]{4,}\.[0-9A-Za-z_-]{4,}/g,
           put: '(redacted)' },
-        { find: /([A-Za-z0-9_-]*(?:key|token|secret|password|passwd|pwd|credential|authorization|auth|bearer|signature|cookie|session)["']?[ \t]*[:=][ \t]*)(?:"[^"]*"|'[^']*'|(?:Basic|Bearer|Digest|Negotiate|NTLM|OAuth|Token|APIKey|SSWS)[ \t]+[^\s"'&amp;lt;&amp;gt;]+|[^\s,;&amp;amp;}\])]+)/gi,
-          put: '$1(redacted)' },
+        { find: /([A-Za-z0-9_-]*(?:key|token|secret|password|passwd|pwd|credential|authorization|auth|bearer|signature|cookie|session)["']?)([ \t]*[:=][ \t]*|[ \t]+)("[^"]*"|'[^']*'|(?:Basic|Bearer|Digest|Negotiate|NTLM|OAuth|Token|APIKey|SSWS)[ \t]+[^\s"'&amp;lt;&amp;gt;]+|[^\s,;&amp;amp;}\])]+)/gi,
+          put: function (whole, label, delimiter, value) {
+            /* A colon or an equals sign says the value was assigned to the label, so it is
+               removed whatever it looks like. */
+            if (/[:=]/.test(delimiter)) {
+                return label + delimiter + '(redacted)';
+            }
+            /* A plain space or tab is the commonest separator a platform exception uses and
+               the easiest to overlook, so it is accepted too — but only for a value that
+               could be a credential rather than the next word of a sentence. A quoted value,
+               a scheme-qualified value, and a token carrying a digit or mixing case are all
+               removed; a plain lower-case or upper-case word is kept, so `the natural key
+               could not be resolved` survives as written while `password hunter2` does not. */
+            if (value.charAt(0) === '"' || value.charAt(0) === "'") {
+                return label + delimiter + '(redacted)';
+            }
+            if (/^(?:Basic|Bearer|Digest|Negotiate|NTLM|OAuth|Token|APIKey|SSWS)[ \t]/i.test(value)) {
+                return label + delimiter + '(redacted)';
+            }
+            if (/[0-9]/.test(value)) {
+                return label + delimiter + '(redacted)';
+            }
+            if (/[A-Z]/.test(value) &amp;amp;&amp;amp; /[a-z]/.test(value)) {
+                return label + delimiter + '(redacted)';
+            }
+            /* A single-case run carrying no digit reads as a word. The longest word this
+               application puts after a credential label in a diagnostic is ten characters, so a
+               run of twelve or more is treated as opaque and removed: it catches a secret drawn
+               only from the letters a to f, which carries no digit and mixes no case, without
+               touching a sentence. */
+            if (value.length &amp;gt;= 12) {
+                return label + delimiter + '(redacted)';
+            }
+            return whole;
+        } },
         { find: /\b(Basic|Bearer|Digest|Negotiate|NTLM|OAuth|Token|APIKey|SSWS|AWS4-HMAC-SHA256)([ \t]+)[^\s"'&amp;lt;&amp;gt;]+/gi,
           put: '$1$2(redacted)' },
         { find: /[^\s&amp;lt;&amp;gt;"']+@[^\s&amp;lt;&amp;gt;"']+/g, put: '(redacted)' },
         { find: /[a-zA-Z][a-zA-Z0-9+.-]*:\/\/[^\s"'&amp;lt;&amp;gt;]*/g, put: '(redacted)' },
-        { find: /[0-9A-Za-z_+\/=-]{28,}/g, put: '(redacted)' },
+        { find: /[0-9A-Za-z_+\/=.-]{20,}/g, put: function (run) {
+            /* A run of this length with no digit is a diagnostic rather than a secret when it
+               is dotted, such as com.glide.rest.SocketTimeoutException, or when it is written
+               in one case, such as a closed code. Everything else at this length is treated as
+               opaque and removed. */
+            if (!/[0-9]/.test(run)) {
+                if (run.indexOf('.') !== -1) {
+                    return run;
+                }
+                if (!(/[A-Z]/.test(run) &amp;amp;&amp;amp; /[a-z]/.test(run))) {
+                    return run;
+                }
+            }
+            return '(redacted)';
+        } },
         { find: /"[^"\r\n]{24,}"/g, put: '"(redacted)"' }
     ],
 
@@ -5209,6 +5279,14 @@ AppProperties.prototype = {
         return parsed;
     },
 
+    /* Returns a value at or below a ceiling. The comparison is _isBelow's, so the whole
+       clamp vocabulary of this class reads one way. */
+    _atMost: function (value, ceiling) {
+        if (this._isBelow(ceiling, value)) {
+            return ceiling;
+        }
+        return value;
+    },
     /* Returns the ingestion cadence in hours clamped to the 6 to 48 range. Prompt 4.0.
        Each bound is tested in the subtraction form _isBelow documents: the first guard is
        true when hours is at or below 6 and raises anything under it, and the second is
@@ -5456,21 +5534,39 @@ AppProperties.prototype = {
             return { ok: false, atomic: true,
                 reason: 'the run state changed between this run reading it and writing it' };
         }
-        gs.warn('[' + this.LOG + '] no run-state property record was readable; the property'
-            + ' API was used instead and this write was not atomic');
+        gs.warn('[' + this.LOG + '] no run-state property record matched the guard; the'
+            + ' record was written without it and this write was not atomic');
         return this._writeRunStateUnguarded(name, value);
     },
 
-    /* Writes the run-state value through the property API and reports the write as not
-       atomic, which is the one condition under which two runs can both hold one source. A
-       write the property API refuses as well is reported as not written at all, so the
-       caller's read-back refuses the claim. Prompt 4.0. */
+    /* Writes the run-state value to the property record without the compare-and-set guard and
+       reports the write as not atomic, which is the one condition under which two runs can
+       both hold one source. The record is written directly rather than through the property
+       API, which is not on the scoped GlideSystem surface. A write that does not apply is
+       reported as not written at all, so the caller's read-back refuses the claim.
+       Prompt 4.0. */
     _writeRunStateUnguarded: function (name, value) {
         try {
-            gs.setProperty(name, value);
+            var row = new GlideRecord('sys_properties');
+            row.addQuery('name', name);
+            row.setLimit(1);
+            row.query();
+            if (!row.next()) {
+                gs.error('[' + this.LOG + '] the run-state property record ' + name
+                    + ' does not exist, so no run state was recorded');
+                return { ok: false, atomic: false,
+                    reason: 'the run state could not be written' };
+            }
+            row.setValue('value', value);
+            if (!row.update()) {
+                gs.error('[' + this.LOG + '] the run state could not be written to ' + name
+                    + ' without the guard either');
+                return { ok: false, atomic: false,
+                    reason: 'the run state could not be written' };
+            }
         } catch (propertyFault) {
-            gs.error('[' + this.LOG + '] the run state could not be written through the'
-                + ' property API either ' + this._faultDetail(propertyFault));
+            gs.error('[' + this.LOG + '] the run state could not be written without the'
+                + ' guard either ' + this._faultDetail(propertyFault));
             return { ok: false, atomic: false,
                 reason: 'the run state could not be written' };
         }
@@ -5640,7 +5736,10 @@ AppProperties.prototype = {
        the age at which a claim left behind by an interrupted run may be taken over.
        Prompt 4.0. */
     _claimExpired: function (stamp) {
-        var age = gs.dateDiff(String(stamp), new GlideDateTime().getValue(), true);
+        /* gs.dateDiff is not on the scoped GlideSystem surface, so the age comes from the
+           epoch difference the scoped API does expose. Prompt 6.0. */
+        var age = Math.floor((new GlideDateTime().getNumericValue()
+            - new GlideDateTime(String(stamp)).getNumericValue()) / 1000);
         var seconds = parseInt(age, 10);
         if (isNaN(seconds)) {
             return true;
@@ -5700,20 +5799,20 @@ AppProperties.prototype = {
         return marker.provenance;
     },
 
-    /* Returns the default REST page size, at least 1. Prompt 3.0. */
+    /* Returns the default REST page size, at least 1 and never above PAGE_SIZE_CEILING.
+       Prompt 3.0. */
     getDefaultLimit: function () {
-        return this.getBoundedInt('rest.default_limit', 20, 1);
+        return this._atMost(this.getBoundedInt('rest.default_limit', 20, 1),
+            this.PAGE_SIZE_CEILING);
     },
 
-    /* Returns the maximum REST page size, at least 1 and never below the default page size.
-       Prompt 3.0. */
+    /* Returns the maximum REST page size, at least 1 and never above PAGE_SIZE_CEILING. It is
+       the ceiling unconditionally: a default above it does not widen a page, because
+       RestQueryHelper.getLimit clamps the default down to this value, so a misconfigured
+       default serves fewer rows rather than more. Prompt 3.0. */
     getMaxLimit: function () {
-        var maximum = this.getBoundedInt('rest.max_limit', 50, 1);
-        var minimum = this.getDefaultLimit();
-        if (this._isBelow(maximum, minimum)) {
-            return minimum;
-        }
-        return maximum;
+        return this._atMost(this.getBoundedInt('rest.max_limit', 50, 1),
+            this.PAGE_SIZE_CEILING);
     },
 
     /* Returns the request budget per window, at least 1. Prompt 8.0. */
@@ -5735,12 +5834,18 @@ AppProperties.prototype = {
         var i = 0;
         for (i = 0; i !== parts.length; i++) {
             var piece = parts[i].trim();
-            if (piece.length === 2) {
-                if (piece === piece.toUpperCase()) {
-                    if (buffer !== '') {
-                        tokens.push(buffer + ', ' + piece);
-                        buffer = '';
-                        continue;
+            /* A two-letter upper-case piece rejoins the token before it only when it was
+               written with whitespace after the comma, which is how the shipped default
+               writes "Cambridge, MA". Without that test "Boston,NY" would collapse into the
+               single token "Boston, NY", which matches nothing. Prompt 1.1. */
+            if (/^\s/.test(parts[i])) {
+                if (piece.length === 2) {
+                    if (piece === piece.toUpperCase()) {
+                        if (buffer !== '') {
+                            tokens.push(buffer + ', ' + piece);
+                            buffer = '';
+                            continue;
+                        }
                     }
                 }
             }
@@ -5944,6 +6049,36 @@ AppProperties.prototype = {
         return !this._isBelow(rank, this.LOG_LEVELS.indexOf(this.getLoggingLevel()));
     },
 
+    /* Writes one application log line at a severity, and only when the configured logging
+       level admits it. This is the ONE gate every caller uses, so a flow step and a Script
+       Include cannot disagree about what x_bst_startuptrk.logging.level governs: without it
+       a step's gs.info would be written at a level that suppresses the same line from a
+       Script Include. Returns whether the line was written, which is what lets a caller
+       report suppression rather than assume it. An unrecognised severity resolves through
+       normaliseSeverity rather than being refused, because a diagnostic must not be lost to
+       a typo in its own severity. Prompt 8.0. */
+    log: function (severity, text) {
+        var level = this.normaliseSeverity(severity);
+        if (!this.isLogLevelEnabled(level)) {
+            return false;
+        }
+        var line = String(text === null || text === undefined ? '' : text);
+        if (level === 'debug') {
+            gs.debug(line);
+            return true;
+        }
+        if (level === 'warn') {
+            gs.warn(line);
+            return true;
+        }
+        if (level === 'error') {
+            gs.error(line);
+            return true;
+        }
+        gs.info(line);
+        return true;
+    },
+
     type: 'AppProperties'
 };&lt;/script&gt;&lt;sys_class_name&gt;sys_script_include&lt;/sys_class_name&gt;&lt;sys_id&gt;c4f1621bf0621985f01e0746f7331fa6&lt;/sys_id&gt;&lt;sys_name&gt;AppProperties&lt;/sys_name&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;sys_policy/&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_script_include&gt;&lt;/record_update&gt;</payload>
     <payload_hash/>
@@ -5972,12 +6107,23 @@ RestQueryHelper.prototype = {
     initialize: function () {
         this.props = new AppProperties();
         this.LOG = 'x_bst_startuptrk.RestQueryHelper';
-        this.SYS_ID = /^[0-9a-f]{32}$/;
+        /* Matched case-insensitively; every member that returns one returns it lowercased,
+           which is the only form stored. Implements prompt 3.0 record addressing. */
+        this.SYS_ID = /^[0-9a-f]{32}$/i;
         this.WHOLE_NUMBER = /^[0-9]{1,9}$/;
         this.SIGNED_NUMBER = /^-?[0-9]{1,9}$/;
         this.AMOUNT = /^-?[0-9]{1,15}(\.[0-9]{1,2})?$/;
         this.ISO_DATE = /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/;
-        this.CONTROL = /[\u0000-\u001f\u007f\u200b-\u200f\u202a-\u202e\u2028\u2029\ufeff]/g;
+        /* Neutralised on input: the C0 controls U+0000 to U+001F, DEL, the zero-width
+           space, the two directional marks, the bidirectional overrides, the line and
+           paragraph separators and the byte order mark. The C1 range U+0080 to U+009F is
+           deliberately NOT a member: every character that could break out of a CONTAINS
+           operand or forge a log line is inside the set above. U+200C and U+200D are
+           deliberately NOT members either: they are letter-joining characters that carry
+           meaning in Persian and Indic scripts and bind the members of an emoji sequence.
+           Implements prompt 3.0
+           body validation. */
+        this.CONTROL = /[\u0000-\u001f\u007f\u200b\u200e\u200f\u202a-\u202e\u2028\u2029\ufeff]/g;
         this.HTTPS_URL = new RegExp('^[Hh][Tt][Tt][Pp][Ss]:\\/\\/'
             + '[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?'
             + '(?:\\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)+'
@@ -5994,13 +6140,18 @@ RestQueryHelper.prototype = {
         this.TEXT_LIMIT = 100;
         this.DEFAULT_LIMIT_FLOOR = 20;
         this.MAX_LIMIT_FLOOR = 50;
+        this.MAX_LIMIT_CEILING = 50;
         this.MAX_OFFSET = 10000;
     },
 
-    /* Returns sysparm_limit bounded by the default and maximum page size properties.
-       Implements prompt 3.0 pagination. */
+    /* Returns sysparm_limit bounded by the default and maximum page size properties, and by
+       MAX_LIMIT_CEILING whatever those properties hold. The ceiling is applied here as well as
+       in AppProperties so the page this resource serves is bounded by the resource, not only
+       by the accessor it reads. Implements prompt 3.0 pagination. */
     getLimit: function (request) {
-        var maximum = this._positive(this.props.getMaxLimit(), this.MAX_LIMIT_FLOOR);
+        var maximum = Math.min(
+            this._positive(this.props.getMaxLimit(), this.MAX_LIMIT_FLOOR),
+            this.MAX_LIMIT_CEILING);
         var fallback = Math.min(this._positive(this.props.getDefaultLimit(),
             this.DEFAULT_LIMIT_FLOOR), maximum);
         var raw = this._param(request, 'sysparm_limit');
@@ -6078,7 +6229,7 @@ RestQueryHelper.prototype = {
         if (!this.isSysId(raw)) {
             return { ok: false, value: '', error: name + ' must be a 32 character sys_id' };
         }
-        return { ok: true, value: raw, error: '' };
+        return { ok: true, value: this._sysId(raw), error: '' };
     },
 
     /* Returns a query parameter validated as a member of a choice list, resolved to the
@@ -6112,7 +6263,7 @@ RestQueryHelper.prototype = {
         if (!this.isSysId(raw)) {
             return { ok: false, value: '', error: name + ' must be a 32 character sys_id' };
         }
-        return { ok: true, value: raw, error: '' };
+        return { ok: true, value: this._sysId(raw), error: '' };
     },
 
     /* Returns true when a yyyy-MM-dd value names a day that exists in the Gregorian
@@ -6179,6 +6330,13 @@ RestQueryHelper.prototype = {
             return false;
         }
         return this.SYS_ID.test(String(value).trim());
+    },
+
+    /* Returns a record identifier in the one form the platform stores: trimmed and lower
+       case. Every member that answers an identifier answers it through here, so a caller's
+       casing never reaches a query or a written value. Implements prompt 3.0. */
+    _sysId: function (value) {
+        return String(value === null || value === undefined ? '' : value).trim().toLowerCase();
     },
 
     /* Validates a request body against a field specification and returns the values to
@@ -6270,7 +6428,7 @@ RestQueryHelper.prototype = {
             return false;
         }
         var target = new GlideRecordSecure(table);
-        return target.get(sysId);
+        return target.get(this._sysId(sysId));
     },
 
     /* Returns the length a value of one field may not exceed: the column's own declared
@@ -6298,6 +6456,16 @@ RestQueryHelper.prototype = {
         var type = rule.type;
         if (type === 'boolean') {
             return this._boolean(rule, raw);
+        }
+        if (type === 'string') {
+            /* Refused before any normalisation, because an object stringifies to
+               [object Object] and an array to its comma-joined members - and an empty array
+               stringifies to nothing at all, which would otherwise be reported as an absent
+               value rather than as the wrong type. Only a primitive is text.
+               Implements prompt 3.0 body validation. */
+            if (raw !== null &amp;amp;&amp;amp; typeof raw === 'object') {
+                return { ok: false, value: '', error: rule.field + ' must be text' };
+            }
         }
         var ceiling = this._ceiling(rule);
         if (this._normalise(raw).length &amp;gt; ceiling) {
@@ -6392,7 +6560,7 @@ RestQueryHelper.prototype = {
                     error: rule.field + ' does not name a readable record'
                 };
             }
-            return { ok: true, value: value, error: '' };
+            return { ok: true, value: this._sysId(value), error: '' };
         }
         return { ok: false, value: '', error: rule.field + ' has an unsupported type' };
     },
@@ -7048,7 +7216,13 @@ RateLimitService.prototype = {
     retryAfter: function (windowStart, windowSeconds) {
         var expiry = new GlideDateTime(windowStart.getValue());
         expiry.addSeconds(windowSeconds);
-        var remaining = gs.dateDiff(new GlideDateTime().getValue(), expiry.getValue(), true);
+        /* gs.dateDiff is not on the scoped GlideSystem surface, so the remaining seconds
+           come from the epoch difference the scoped API does expose. Rounded UP, because a
+           caller that obeys a rounded-down value arrives inside the same window and is
+           refused a second time. At a window start the value is the window length exactly.
+           Prompt 6.0 and 8.0. */
+        var remaining = Math.ceil((expiry.getNumericValue()
+            - new GlideDateTime().getNumericValue()) / 1000);
         var seconds = parseInt(remaining, 10);
         if (isNaN(seconds)) {
             return windowSeconds;
@@ -7126,22 +7300,43 @@ RateLimitService.prototype = {
         return total;
     },
 
-    /* Removes counter rows carrying no window key. Returns the number removed.
+    /* Removes counter rows carrying no window key, counted with one aggregate query and
+       removed with one bulk delete, then re-counted so any row the delete did not remove is
+       reported. This is the shape the closed-window path above uses, and it is used here for
+       the same reason: the work of one job run must not be a function of how many rows the
+       table happens to hold. Returns the number actually removed.
        Implements prompt 8.0 rate limiting. */
     _pruneUnkeyed: function () {
+        var before = this._countUnkeyed();
+        if (before === 0) {
+            return 0;
+        }
         var unkeyed = new GlideRecord(this.TABLE);
         unkeyed.addNullQuery('window_key');
-        unkeyed.query();
-        var removed = 0;
-        while (unkeyed.next()) {
-            if (unkeyed.deleteRecord()) {
-                removed = removed + 1;
-            } else {
-                gs.error('[' + this.LOG + '] unkeyed counter row '
-                    + unkeyed.getUniqueValue() + ' could not be deleted');
-            }
+        unkeyed.deleteMultiple();
+        var failed = this._countUnkeyed();
+        if (failed !== 0) {
+            gs.error('[' + this.LOG + '] ' + failed
+                + ' unkeyed counter row(s) could not be deleted');
         }
-        return removed;
+        return before - failed;
+    },
+
+    /* Counts the counter rows carrying no window key with one aggregate query.
+       Implements prompt 8.0. */
+    _countUnkeyed: function () {
+        var counted = new GlideAggregate(this.TABLE);
+        counted.addNullQuery('window_key');
+        counted.addAggregate('COUNT');
+        counted.query();
+        if (!counted.next()) {
+            return 0;
+        }
+        var total = parseInt(counted.getAggregate('COUNT'), 10);
+        if (isNaN(total)) {
+            return 0;
+        }
+        return total;
     },
 
     /* Returns whole seconds since the epoch for a date/time value or its string form. */
@@ -7161,7 +7356,10 @@ RateLimitService.prototype = {
         var epoch = Math.floor(now.getNumericValue() / 1000);
         var bucket = epoch - (epoch % windowSeconds);
         var start = new GlideDateTime();
-        start.setNumericValue(bucket * 1000);
+        /* setNumericValue is not on the scoped GlideDateTime surface, so the epoch is
+           reached by zeroing the object and adding the bucket. Prompt 6.0. */
+        start.subtract(start.getNumericValue());
+        start.add(bucket * 1000);
         return start;
     },
 
@@ -7700,9 +7898,16 @@ InvestorPortfolioService.prototype = {
         return derived;
     },
 
-    /* Links one investor to one funding round, returning the existing join row when the
-       pair is already present. Implements prompt 1.5. */
-    linkInvestorToRound: function (roundId, investorId) {
+    /* Links one investor to one funding round and returns the join row identifier,
+       answering the existing row when the pair is already present rather than attempting a
+       second insert the unique index would refuse. This is the single insert implementation
+       for x_bst_startuptrk_m2m_round_investor: an administrator linking one pair by hand
+       calls it directly, and IngestionMapper.linkParticipants delegates the insert step of
+       its set reconciliation to it. suppressRules true suppresses the join table's business
+       rule for that write, which is what lets the reconciler recalculate the portfolio count
+       once for the whole batch instead of once per row; an administrative call omits it so
+       the count is maintained as the row is written. Implements prompt 1.5. */
+    linkInvestorToRound: function (roundId, investorId, suppressRules) {
         if (!roundId) {
             return '';
         }
@@ -7721,6 +7926,9 @@ InvestorPortfolioService.prototype = {
         link.initialize();
         link.setValue('funding_round', roundId);
         link.setValue('investor', investorId);
+        if (suppressRules) {
+            link.setWorkflow(false);
+        }
         return link.insert();
     },
 
@@ -7841,6 +8049,7 @@ IngestionLogger.prototype = {
         this.processed = 0;
         this.rejected = 0;
         this.skipped = 0;
+        this.errors = 0;
         this.duplicates = 0;
         this.unmatched = 0;
         this.deviations = 0;
@@ -7875,13 +8084,17 @@ IngestionLogger.prototype = {
 
     /* Returns the run scoped counters. rule3_deviations counts the unmatched choice
        values that could not be stored as Other because their prompt 1.0 choice list
-       declares no Other member. Implements prompt 4.0 run summary. */
+       declares no Other member. errors counts the incoming rows whose own write failed and
+       is a subset of skipped, so processed plus rejected plus duplicates plus errors is the
+       number of rows the batch carried, whatever else failed alongside them.
+       Implements prompt 4.0 run summary. */
     counters: function () {
         return {
             run: this.runId,
             processed: this.processed,
             rejected: this.rejected,
             skipped: this.skipped,
+            errors: this.errors,
             duplicates: this.duplicates,
             unmatched: this.unmatched,
             rule3_deviations: this.deviations
@@ -7936,6 +8149,23 @@ IngestionLogger.prototype = {
     skipRecord: function (runId, recordType, identifier, reason) {
         this.skipped = this.skipped + 1;
         this._record(runId, 'error', 'record_skipped', {
+            record_type: recordType,
+            identifier: this._identifier(identifier),
+            reason: reason
+        });
+        return true;
+    },
+
+    /* Records one incoming row whose own write failed, counts it as both an operational
+       skip and an error, and lets the run continue. skipped keeps the meaning the run
+       evidence is read against, so no criterion 4 figure changes; errors additionally says
+       how many of those skips were rows that never reached their table, which a secondary
+       failure -- a join row, a staging state -- is not.
+       Implements prompt 8.0 skip the record and continue the run. */
+    failRecord: function (runId, recordType, identifier, reason) {
+        this.skipped = this.skipped + 1;
+        this.errors = this.errors + 1;
+        this._record(runId, 'error', 'record_failed', {
             record_type: recordType,
             identifier: this._identifier(identifier),
             reason: reason
@@ -8029,6 +8259,7 @@ IngestionLogger.prototype = {
             processed: this.processed,
             rejected: this.rejected,
             skipped: this.skipped,
+            errors: this.errors,
             duplicates: this.duplicates,
             unmatched: this.unmatched,
             rule3_deviations: this.deviations,
@@ -8316,6 +8547,12 @@ IngestionMapper.prototype = {
            size, so a pass that returns the ceiling is known to have been cut rather than
            exhausted. Implements prompt 4.0 reference resolution. */
         this.MATCH_SCAN_LIMIT = 201;
+        /* The row ceiling of one run's staging batch, applied to both staging reads. A run
+           takes at most this many pending rows of one source system and leaves the rest for
+           the next run; the pending-state filter is what advances the batch, so no row can be
+           stepped over. The same size InvestorPortfolioService pages its cursors at.
+           Implements prompt 4.0 fallback dataset. */
+        this.STAGING_BATCH_LIMIT = 200;
         /* The closed vocabulary x_bst_startuptrk_ingest_staging.error_message may carry.
            Every settled row records one of these codes and an opaque reference, and never
            upstream or exception text. run_abandoned is written by the flows' terminal
@@ -9135,10 +9372,13 @@ IngestionMapper.prototype = {
         return { matches: matches, truncated: false };
     },
 
-    /* Cleaning rule 2 helper: marks the Startup entries that repeat an earlier row of
-       the same batch and counts each one. Implements prompt 4.0 deduplication. */
+    /* Cleaning rule 2 helper: keeps one Startup entry per batch key and marks every other
+       entry carrying that key as a duplicate. Which entry is kept is decided from the
+       records themselves rather than from the order the rows were read in, so two runs over
+       the same data store the same values. Implements prompt 4.0 deduplication. */
     dedupeBatch: function (runId, entries) {
-        var seen = {};
+        var groups = {};
+        var keys = [];
         var i = 0;
         for (i = 0; i !== entries.length; i++) {
             var entry = entries[i];
@@ -9149,18 +9389,104 @@ IngestionMapper.prototype = {
                 continue;
             }
             var key = this.startupKey(entry.data.name, entry.data.headquarters_location);
-            if (seen[key]) {
-                entry.accepted = false;
-                entry.duplicate = true;
-                entry.state = 'rejected';
-                entry.code = 'duplicate_in_batch';
-                entry.reason = 'duplicate startup in the same batch';
-                this.log().duplicateRecord(runId, 'startup', entry.identifier);
+            if (!groups.hasOwnProperty(key)) {
+                groups[key] = [];
+                keys.push(key);
+            }
+            groups[key].push(entry);
+        }
+        var k = 0;
+        for (k = 0; k !== keys.length; k++) {
+            var group = groups[keys[k]];
+            if (group.length === 1) {
                 continue;
             }
-            seen[key] = true;
+            var kept = group[0];
+            var j = 0;
+            for (j = 1; j !== group.length; j++) {
+                kept = this._preferredDuplicate(group[j], kept);
+            }
+            for (j = 0; j !== group.length; j++) {
+                if (group[j] === kept) {
+                    continue;
+                }
+                group[j].accepted = false;
+                group[j].duplicate = true;
+                group[j].state = 'rejected';
+                group[j].code = 'duplicate_in_batch';
+                group[j].reason = 'duplicate startup in the same batch';
+                this.log().duplicateRecord(runId, 'startup', group[j].identifier);
+            }
         }
         return entries;
+    },
+
+    /* Returns whichever of two entries carrying the same batch key the batch keeps. The
+       entry populating more fields wins, so the batch keeps the fullest record rather than
+       whichever row was read first; an exact tie is settled on the canonical form of the
+       mapped values, and only two byte-identical records fall through to their staging
+       identifiers, where the choice cannot change what is stored. Every comparison is on the
+       data, so re-staging the same dataset under fresh row identifiers keeps the same record.
+       Implements prompt 4.0 deduplication. */
+    _preferredDuplicate: function (candidate, incumbent) {
+        var mine = this._populatedCount(candidate.data);
+        var theirs = this._populatedCount(incumbent.data);
+        if (mine !== theirs) {
+            return mine &amp;gt; theirs ? candidate : incumbent;
+        }
+        var a = this._canonicalData(candidate.data);
+        var b = this._canonicalData(incumbent.data);
+        if (a !== b) {
+            return a &amp;lt; b ? candidate : incumbent;
+        }
+        var x = this._string(candidate.staging_id);
+        var y = this._string(incumbent.staging_id);
+        if (x !== y) {
+            return x &amp;lt; y ? candidate : incumbent;
+        }
+        return incumbent;
+    },
+
+    /* Counts the mapped fields of one record that carry a value. */
+    _populatedCount: function (data) {
+        var count = 0;
+        var field = '';
+        if (!data) {
+            return 0;
+        }
+        for (field in data) {
+            if (!data.hasOwnProperty(field)) {
+                continue;
+            }
+            if (this._blank(data[field])) {
+                continue;
+            }
+            count = count + 1;
+        }
+        return count;
+    },
+
+    /* Returns one record's mapped values in a stable, comparable form: field names sorted,
+       each name and value joined, so two records comparing equal here carry the same values
+       whatever order their fields were assembled in. */
+    _canonicalData: function (data) {
+        var names = [];
+        var field = '';
+        if (!data) {
+            return '';
+        }
+        for (field in data) {
+            if (data.hasOwnProperty(field)) {
+                names.push(field);
+            }
+        }
+        names.sort();
+        var parts = [];
+        var i = 0;
+        for (i = 0; i !== names.length; i++) {
+            parts.push(names[i] + '=' + this._string(data[names[i]]));
+        }
+        return parts.join('\u0001');
     },
 
     /* Cleaning rule 4: reports the mandatory fields a record is missing.
@@ -9849,7 +10175,9 @@ IngestionMapper.prototype = {
        no participating_investors value leaves the stored rows alone. An incoming value
        carrying a name that did not resolve is applied additively: rows are inserted and
        none is deleted. Every rejected insert and every rejected delete is counted as a
-       failure and reported. Each join write suppresses the join table's business rule with
+       failure and reported. The insert step is delegated to
+       InvestorPortfolioService.linkInvestorToRound, so the join insert exists once in the
+       delivery. Each join write suppresses the join table's business rule with
        setWorkflow(false), so the portfolio count is not recalculated once per row; the
        batch closes with one explicit convergence step over every investor added, removed
        or leading, and a convergence that did not complete is reported on the outcome
@@ -9917,6 +10245,10 @@ IngestionMapper.prototype = {
                 + ' name, and ' + state.unresolved + ' name(s) did not resolve, so the'
                 + ' links were kept rather than deleted against an incomplete set');
         }
+        /* The insert itself lives once, on the portfolio service. suppressRules keeps the
+           join table's business rule off for each row so the portfolio count is not
+           recalculated per row; the batch converges once below. */
+        var links = new InvestorPortfolioService();
         for (i = 0; i !== ids.length; i++) {
             var investorId = String(ids[i]);
             if (investorId === '') {
@@ -9925,12 +10257,7 @@ IngestionMapper.prototype = {
             if (existing[investorId]) {
                 continue;
             }
-            var row = new GlideRecord(this.LINK);
-            row.initialize();
-            row.setValue('funding_round', roundId);
-            row.setValue('investor', investorId);
-            row.setWorkflow(false);
-            if (row.insert()) {
+            if (links.linkInvestorToRound(roundId, investorId, true)) {
                 existing[investorId] = true;
                 outcome.linked = outcome.linked + 1;
                 touched.push(investorId);
@@ -10150,7 +10477,11 @@ IngestionMapper.prototype = {
             return false;
         }
         if (entry.run) {
-            var owner = this._string(staging.getValue('import_run'));
+            /* `import_run` carries either this run's LEASE — the reserved prefix followed by
+               the run identifier — or a CSV batch token that is not a lease at all. The
+               comparison is therefore against the lease holder rather than against the raw
+               column, or a row this run claimed itself would never be settled. */
+            var owner = this.leaseHolder(staging.getValue('import_run'));
             if (owner !== '') {
                 if (owner !== this._string(entry.run)) {
                     this.log().skipRecord(entry.run, 'ingest_staging',
@@ -10321,7 +10652,7 @@ IngestionMapper.prototype = {
                             entry.reason = incomplete + ' on '
                                 + this.log().reference('record', applied.sys_id)
                                 + ', so the record is written but not cleanly processed';
-                            this.log().skipRecord(runId, entry.record_type,
+                            this.log().failRecord(runId, entry.record_type,
                                 entry.identifier, entry.reason);
                             outcome.partial = outcome.partial + 1;
                             outcome.errors = outcome.errors + 1;
@@ -10343,7 +10674,7 @@ IngestionMapper.prototype = {
                         entry.reason = applied.reason;
                         entry.state = 'error';
                         entry.code = 'write_failed';
-                        this.log().skipRecord(runId, entry.record_type, entry.identifier,
+                        this.log().failRecord(runId, entry.record_type, entry.identifier,
                             applied.reason);
                         outcome.rejected = outcome.rejected + 1;
                         outcome.errors = outcome.errors + 1;
@@ -10358,7 +10689,7 @@ IngestionMapper.prototype = {
             entry.code = 'unexpected_failure';
             entry.reason = 'the record could not be written: '
                 + this._fault('record_write_failed', error);
-            this.log().skipRecord(runId, entry.record_type, entry.identifier,
+            this.log().failRecord(runId, entry.record_type, entry.identifier,
                 entry.reason);
             outcome.rejected = outcome.rejected + 1;
             outcome.errors = outcome.errors + 1;
@@ -10405,9 +10736,10 @@ IngestionMapper.prototype = {
     /* Runs one ingestion batch over the pending rows of the fallback dataset for one
        source system. `importRun` narrows the batch to the rows carrying that exact
        `import_run` value, which is how a run reads back the rows it claimed under the run
-       lease of `claimStagingRows()`; an empty `importRun` takes every pending row of the
-       source system that no other run holds a lease on. Implements prompt 4.0 fallback
-       dataset. */
+       lease of `claimStagingRows()`; an empty `importRun` takes the pending rows of the
+       source system that no other run holds a lease on. Either way the read is bounded at
+       `STAGING_BATCH_LIMIT` rows, so one run's work is a function of the batch size and not
+       of how many rows happen to be pending. Implements prompt 4.0 fallback dataset. */
     ingestStaging: function (runId, sourceSystem, importRun, provenance) {
         var wanted = this._string(importRun);
         var rows = [];
@@ -10418,6 +10750,7 @@ IngestionMapper.prototype = {
             staging.addQuery('import_run', wanted);
         }
         staging.orderBy('sys_id');
+        staging.setLimit(this.STAGING_BATCH_LIMIT);
         staging.query();
         while (staging.next()) {
             if (wanted === '') {
@@ -10451,50 +10784,72 @@ IngestionMapper.prototype = {
         return this.RUN_LEASE + this._string(runId);
     },
 
-    /* Claims the pending rows of one source system for one run and returns each claimed
-       row as the `{ record_type, staging_id }` envelope the batch is ingested from. A row
-       is claimed by writing this run's lease into `import_run` and reading it back; a row
-       already carrying another run's lease is left alone and reported, and a row whose
-       read-back names another run is dropped from the batch. `import_state` stays
-       `pending` until the row is settled by `writeStagingState()`.
+    /* Claims the pending rows of one source system for one run. **This is the one
+       implementation of the claim-and-lease rule in the application**; step 4 of both
+       ingestion flows calls it rather than carrying a copy, so the two cannot drift apart.
+       A row is claimed by writing this run's lease into `import_run` and reading it back; a
+       row already carrying another run's lease is left alone, and a row whose read-back
+       names another run is dropped from the batch. `import_state` stays `pending` until the
+       row is settled by `writeStagingState()`.
+
+       The read is bounded at `STAGING_BATCH_LIMIT` rows: a run claims at most one batch and
+       the remainder stays pending for the next run, which is reported as a
+       `claim_batch_bounded` note carrying no staging row. The batch advances because the
+       query filters on `import_state` `pending` and every claimed row is settled by
+       `writeStagingState()`, so the next run's first row is the row after this run's last
+       without any cursor to carry between them.
+
+       Returns `claimed`, the `{ record_type, staging_id }` envelopes the batch is ingested
+       from, in the order the rows were read; `notes`, one closed diagnostic per row that was
+       not claimed, carrying an event token, the staging row it concerns and an outcome, plus
+       the batch-bound note when one applies; and `lease`, the value written. The diagnostics
+       are RETURNED rather than logged so the caller can render them as its own step lines:
+       `ingest()` resets the IngestionLogger at the start of the batch, so an event recorded
+       here would be discarded before the run evidence is assembled.
        Implements prompt 4.0 fallback dataset and prompt 8.0 skip the record and continue
        the run. */
     claimStagingRows: function (runId, sourceSystem) {
         var run = this._string(runId);
         var lease = this.leaseValue(run);
         var source = this._string(sourceSystem).toLowerCase();
-        var logger = this.log();
         var claimed = [];
+        var notes = [];
         var staging = new GlideRecord(this.STAGING);
         staging.addQuery('source_system', source);
         staging.addQuery('import_state', 'pending');
         staging.orderBy('sys_id');
+        staging.setLimit(this.STAGING_BATCH_LIMIT);
         staging.query();
+        var read = 0;
         while (staging.next()) {
+            read = read + 1;
             var stagingId = staging.getUniqueValue();
             var holder = this.leaseHolder(staging.getValue('import_run'));
             if (holder !== '') {
                 if (holder !== run) {
-                    logger.warn(run, 'staging row '
-                        + logger.reference('staging', stagingId)
-                        + ' is held by another run and was not claimed');
+                    notes.push({ event: 'claim_held_elsewhere', staging_id: stagingId,
+                        outcome: 'another run holds this row; left alone' });
                     continue;
                 }
             }
             staging.setValue('import_run', lease);
+            /* The staging table carries no business rule, so the suppression changes no
+               derived value; it exists so a claim cannot cascade. */
+            staging.setWorkflow(false);
             if (!staging.update()) {
-                logger.warn(run, 'the claim on staging row '
-                    + logger.reference('staging', stagingId) + ' was refused');
+                notes.push({ event: 'claim_refused', staging_id: stagingId,
+                    outcome: 'the claim was refused; skipped' });
                 continue;
             }
             var check = new GlideRecord(this.STAGING);
             if (!check.get(stagingId)) {
+                notes.push({ event: 'claim_unreadable', staging_id: stagingId,
+                    outcome: 'the row could not be read back; skipped' });
                 continue;
             }
             if (this.leaseHolder(check.getValue('import_run')) !== run) {
-                logger.warn(run, 'the claim on staging row '
-                    + logger.reference('staging', stagingId)
-                    + ' read back as another run and was dropped from the batch');
+                notes.push({ event: 'claim_lost', staging_id: stagingId,
+                    outcome: 'another run holds this row; skipped' });
                 continue;
             }
             claimed.push({
@@ -10502,7 +10857,13 @@ IngestionMapper.prototype = {
                 staging_id: stagingId
             });
         }
-        return claimed;
+        if (read === this.STAGING_BATCH_LIMIT) {
+            notes.push({ event: 'claim_batch_bounded', staging_id: '',
+                outcome: 'the run claimed the first ' + this.STAGING_BATCH_LIMIT
+                    + ' pending row(s) of this source; any remainder stays pending for the '
+                    + 'next run' });
+        }
+        return { claimed: claimed, notes: notes, lease: lease };
     },
 
     /* Returns the metadata of one field of a record type, whether it is a writable target
@@ -10776,7 +11137,10 @@ IngestionMapper.prototype = {
 
     _epochDate: function (millis) {
         var moment = new GlideDateTime();
-        moment.setNumericValue(millis);
+        /* setNumericValue is not on the scoped GlideDateTime surface, so the epoch is
+           reached by zeroing the object and adding the value. Prompt 6.0. */
+        moment.subtract(moment.getNumericValue());
+        moment.add(millis);
         return String(moment.getDate().getValue());
     },
 
@@ -11346,6 +11710,9 @@ IngestionMapper.prototype = {
         if (builder.rejectUnauthorisedWrite(response)) {
             return;
         }
+        if (builder.rejectNonJsonBody(request, response)) {
+            return;
+        }
         var helper = new RestQueryHelper();
         var recordId = helper.getPathSysId(request, 'id');
         if (!recordId.ok) {
@@ -11367,9 +11734,6 @@ IngestionMapper.prototype = {
             { field: 'institutional_funding_last_5yrs', type: 'boolean' },
             { field: 'employee_count_range', type: 'choice', choices: ['1-10', '11-50', '51-200', '201-500', '500+'] }
         ];
-        if (builder.rejectNonJsonBody(request, response)) {
-            return;
-        }
         var payload = null;
         try {
             if (request.body) {
@@ -11705,6 +12069,9 @@ IngestionMapper.prototype = {
         if (builder.rejectUnauthorisedWrite(response)) {
             return;
         }
+        if (builder.rejectNonJsonBody(request, response)) {
+            return;
+        }
         var helper = new RestQueryHelper();
         var recordId = helper.getPathSysId(request, 'id');
         if (!recordId.ok) {
@@ -11720,9 +12087,6 @@ IngestionMapper.prototype = {
             { field: 'linkedin_url', type: 'url', max: 255 },
             { field: 'contact_email', type: 'email', max: 100 }
         ];
-        if (builder.rejectNonJsonBody(request, response)) {
-            return;
-        }
         var payload = null;
         try {
             if (request.body) {
@@ -12057,6 +12421,9 @@ IngestionMapper.prototype = {
         if (builder.rejectUnauthorisedWrite(response)) {
             return;
         }
+        if (builder.rejectNonJsonBody(request, response)) {
+            return;
+        }
         var helper = new RestQueryHelper();
         var recordId = helper.getPathSysId(request, 'id');
         if (!recordId.ok) {
@@ -12071,9 +12438,6 @@ IngestionMapper.prototype = {
             { field: 'website', type: 'url', max: 255 },
             { field: 'aum_usd', type: 'currency' }
         ];
-        if (builder.rejectNonJsonBody(request, response)) {
-            return;
-        }
         var payload = null;
         try {
             if (request.body) {
@@ -12443,6 +12807,9 @@ IngestionMapper.prototype = {
         if (builder.rejectUnauthorisedWrite(response)) {
             return;
         }
+        if (builder.rejectNonJsonBody(request, response)) {
+            return;
+        }
         var helper = new RestQueryHelper();
         var recordId = helper.getPathSysId(request, 'id');
         if (!recordId.ok) {
@@ -12464,9 +12831,6 @@ IngestionMapper.prototype = {
                 .participantsForRounds([roundId])[roundId];
             return linked ? linked : [];
         };
-        if (builder.rejectNonJsonBody(request, response)) {
-            return;
-        }
         var payload = null;
         try {
             if (request.body) {
@@ -12810,6 +13174,9 @@ IngestionMapper.prototype = {
         if (builder.rejectUnauthorisedWrite(response)) {
             return;
         }
+        if (builder.rejectNonJsonBody(request, response)) {
+            return;
+        }
         var helper = new RestQueryHelper();
         var recordId = helper.getPathSysId(request, 'id');
         if (!recordId.ok) {
@@ -12828,9 +13195,6 @@ IngestionMapper.prototype = {
             { field: 'url', type: 'url', max: 255 },
             { field: 'active', type: 'boolean' }
         ];
-        if (builder.rejectNonJsonBody(request, response)) {
-            return;
-        }
         var payload = null;
         try {
             if (request.body) {
@@ -13166,6 +13530,9 @@ IngestionMapper.prototype = {
         if (builder.rejectUnauthorisedWrite(response)) {
             return;
         }
+        if (builder.rejectNonJsonBody(request, response)) {
+            return;
+        }
         var helper = new RestQueryHelper();
         var recordId = helper.getPathSysId(request, 'id');
         if (!recordId.ok) {
@@ -13181,9 +13548,6 @@ IngestionMapper.prototype = {
             { field: 'published_date', type: 'date' },
             { field: 'summary', type: 'string', max: 2000 }
         ];
-        if (builder.rejectNonJsonBody(request, response)) {
-            return;
-        }
         var payload = null;
         try {
             if (request.body) {
@@ -13962,7 +14326,7 @@ IngestionMapper.prototype = {
     <category>customer</category>
     <comments/>
     <name>sys_ui_section_33530d1598d691b0d65b0dba58ccbc10</name>
-    <payload>&lt;record_update table="sys_ui_section"&gt;&lt;sys_ui_section action="INSERT_OR_UPDATE"&gt;&lt;caption/&gt;&lt;header&gt;false&lt;/header&gt;&lt;name&gt;x_bst_startuptrk_rate_limit_counter&lt;/name&gt;&lt;position&gt;0&lt;/position&gt;&lt;sys_id&gt;33530d1598d691b0d65b0dba58ccbc10&lt;/sys_id&gt;&lt;sys_name&gt;x_bst_startuptrk_rate_limit_counter&lt;/sys_name&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;title/&gt;&lt;view/&gt;&lt;view_name&gt;Default view&lt;/view_name&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_ui_section&gt;&lt;sys_ui_element action="INSERT_OR_UPDATE"&gt;&lt;element&gt;caller&lt;/element&gt;&lt;position&gt;0&lt;/position&gt;&lt;sys_id&gt;ac24dc8ca77e048e465009fd450cb503&lt;/sys_id&gt;&lt;sys_ui_section display_value="x_bst_startuptrk_rate_limit_counter"&gt;33530d1598d691b0d65b0dba58ccbc10&lt;/sys_ui_section&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;type/&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_ui_element&gt;&lt;sys_ui_element action="INSERT_OR_UPDATE"&gt;&lt;element&gt;window_start&lt;/element&gt;&lt;position&gt;1&lt;/position&gt;&lt;sys_id&gt;cba0cd6bb35faa958d0c16d294c6114b&lt;/sys_id&gt;&lt;sys_ui_section display_value="x_bst_startuptrk_rate_limit_counter"&gt;33530d1598d691b0d65b0dba58ccbc10&lt;/sys_ui_section&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;type/&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_ui_element&gt;&lt;sys_ui_element action="INSERT_OR_UPDATE"&gt;&lt;element&gt;request_count&lt;/element&gt;&lt;position&gt;2&lt;/position&gt;&lt;sys_id&gt;69085b943e315b956c85c2dd6092b47a&lt;/sys_id&gt;&lt;sys_ui_section display_value="x_bst_startuptrk_rate_limit_counter"&gt;33530d1598d691b0d65b0dba58ccbc10&lt;/sys_ui_section&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;type/&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_ui_element&gt;&lt;sys_ui_element action="INSERT_OR_UPDATE"&gt;&lt;element&gt;api_resource&lt;/element&gt;&lt;position&gt;3&lt;/position&gt;&lt;sys_id&gt;c02ce156d1502ecdbf0cb40400dd02f1&lt;/sys_id&gt;&lt;sys_ui_section display_value="x_bst_startuptrk_rate_limit_counter"&gt;33530d1598d691b0d65b0dba58ccbc10&lt;/sys_ui_section&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;type/&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_ui_element&gt;&lt;/record_update&gt;</payload>
+    <payload>&lt;record_update table="sys_ui_section"&gt;&lt;sys_ui_section action="INSERT_OR_UPDATE"&gt;&lt;caption/&gt;&lt;header&gt;false&lt;/header&gt;&lt;name&gt;x_bst_startuptrk_rate_limit_counter&lt;/name&gt;&lt;position&gt;0&lt;/position&gt;&lt;sys_id&gt;33530d1598d691b0d65b0dba58ccbc10&lt;/sys_id&gt;&lt;sys_name&gt;x_bst_startuptrk_rate_limit_counter&lt;/sys_name&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;title/&gt;&lt;view/&gt;&lt;view_name&gt;Default view&lt;/view_name&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_ui_section&gt;&lt;sys_ui_element action="INSERT_OR_UPDATE"&gt;&lt;element&gt;window_key&lt;/element&gt;&lt;position&gt;0&lt;/position&gt;&lt;sys_id&gt;6888571d13ce7a44669a8b872f0a1b60&lt;/sys_id&gt;&lt;sys_ui_section display_value="x_bst_startuptrk_rate_limit_counter"&gt;33530d1598d691b0d65b0dba58ccbc10&lt;/sys_ui_section&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;type/&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_ui_element&gt;&lt;sys_ui_element action="INSERT_OR_UPDATE"&gt;&lt;element&gt;caller&lt;/element&gt;&lt;position&gt;1&lt;/position&gt;&lt;sys_id&gt;ac24dc8ca77e048e465009fd450cb503&lt;/sys_id&gt;&lt;sys_ui_section display_value="x_bst_startuptrk_rate_limit_counter"&gt;33530d1598d691b0d65b0dba58ccbc10&lt;/sys_ui_section&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;type/&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_ui_element&gt;&lt;sys_ui_element action="INSERT_OR_UPDATE"&gt;&lt;element&gt;window_start&lt;/element&gt;&lt;position&gt;2&lt;/position&gt;&lt;sys_id&gt;cba0cd6bb35faa958d0c16d294c6114b&lt;/sys_id&gt;&lt;sys_ui_section display_value="x_bst_startuptrk_rate_limit_counter"&gt;33530d1598d691b0d65b0dba58ccbc10&lt;/sys_ui_section&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;type/&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_ui_element&gt;&lt;sys_ui_element action="INSERT_OR_UPDATE"&gt;&lt;element&gt;request_count&lt;/element&gt;&lt;position&gt;3&lt;/position&gt;&lt;sys_id&gt;69085b943e315b956c85c2dd6092b47a&lt;/sys_id&gt;&lt;sys_ui_section display_value="x_bst_startuptrk_rate_limit_counter"&gt;33530d1598d691b0d65b0dba58ccbc10&lt;/sys_ui_section&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;type/&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_ui_element&gt;&lt;sys_ui_element action="INSERT_OR_UPDATE"&gt;&lt;element&gt;api_resource&lt;/element&gt;&lt;position&gt;4&lt;/position&gt;&lt;sys_id&gt;c02ce156d1502ecdbf0cb40400dd02f1&lt;/sys_id&gt;&lt;sys_ui_section display_value="x_bst_startuptrk_rate_limit_counter"&gt;33530d1598d691b0d65b0dba58ccbc10&lt;/sys_ui_section&gt;&lt;sys_package display_value="Boston Startup Tracker" source="x_bst_startuptrk"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_package&gt;&lt;sys_scope display_value="Boston Startup Tracker"&gt;1c16ba51b0975d36296c3fe303eb66d3&lt;/sys_scope&gt;&lt;type/&gt;&lt;sys_created_by&gt;admin&lt;/sys_created_by&gt;&lt;sys_created_on&gt;2026-01-01 00:00:00&lt;/sys_created_on&gt;&lt;sys_mod_count&gt;0&lt;/sys_mod_count&gt;&lt;sys_updated_by&gt;admin&lt;/sys_updated_by&gt;&lt;sys_updated_on&gt;2026-01-01 00:00:00&lt;/sys_updated_on&gt;&lt;/sys_ui_element&gt;&lt;/record_update&gt;</payload>
     <payload_hash/>
     <remote_update_set>0755eddb73d2d93cf6b029731ae5026e</remote_update_set>
     <replace_on_upgrade>false</replace_on_upgrade>

@@ -27,7 +27,7 @@ servicenow-startup-tracker-poc/
 | 5 | [`docs/access-control.md`](./docs/access-control.md) | The three roles, the five access-control layers and the role-by-field matrix over the seven premium-gated fields. |
 | 6 | [`docs/api-reference.md`](./docs/api-reference.md) | The REST contract — one definition, 31 operations, the pagination envelope, and every status code and error body. |
 | 7 | [`docs/deployment-runbook.md`](./docs/deployment-runbook.md) | The instance prerequisites, the pre-flight checks, the six-step import sequence, the two rollback branches and the failure-handling matrix. |
-| 8 | [`docs/validation-gates.md`](./docs/validation-gates.md) | The eleven required post-commit gates, each with its target, query, expected result and pass condition, plus the acceptance-required `GATE-COL-01`, the four non-normative diagnostics and the one external instance prerequisite. |
+| 8 | [`docs/validation-gates.md`](./docs/validation-gates.md) | The eleven required post-commit gates, each with its target, query, expected result and pass condition, plus the acceptance-required `GATE-COL-01` and `GATE-SEC-01` to `GATE-SEC-03`, the one non-normative diagnostic `GATE-SEC-04`, and the one external instance prerequisite. |
 | 9 | [`docs/validation-checklist.md`](./docs/validation-checklist.md) | The acceptance record, mapped one to one onto the five success criteria of prompt section 10.0. |
 | 10 | [`docs/gaps-and-flags.md`](./docs/gaps-and-flags.md) | The single collection point for prompt section 11.0's flag obligation — every requirement with no clean platform equivalent. |
 | 11 | [`docs/manual-build-instructions.md`](./docs/manual-build-instructions.md) | The index for the six manual-build guides, authoritative for their execution order and for the Update-Set-versus-manual split rule. |
@@ -55,14 +55,16 @@ Every figure below is the count carried by the delivered Update Set at [`update-
 
 **The record count has one source, and it is the file rather than this table.** [`scripts/validate_update_set_xml.py`](./scripts/validate_update_set_xml.py) reports it as it validates, at gate `G-1`. Where that output and any figure in this package disagree, **the validator is authoritative and the document is corrected to it** — the same rule the deployment runbook and [`docs/validation-gates.md`](./docs/validation-gates.md) apply to `{record_count}`. Run the validator before quoting the number anywhere.
 
+**The Update Set's own `<description>` counts as a citation, and it is the one most easily missed.** It sits inside the artifact rather than in a document, so a sweep that re-derives every figure across the `.md` files can leave it stale — which is exactly what happened once, when the count moved from `314` to `313` and the choice class from `78` to `77`. Its itemisation must sum to the record count the validator reports, and that sum is checkable without an instance: read the `<description>` on line 11 of the Update Set, add the class figures it names, and confirm the total equals gate `G-1`'s reported count.
+
 | Area | Inventory |
 | --- | --- |
 | Scoped application | 1 — `x_bst_startuptrk`, vendor prefix `x_bst`, version `1.0.0` |
 | Update Set records | **313** `sys_update_xml` records in one XML document — the count the two-level validator reports and the count `PRE-COMMIT-01` asserts attached to the header |
 | Tables | **10** physical — **7 entity** tables carrying **53 columns**, plus 3 supporting tables |
 | Entity tables | `x_bst_startuptrk_startup` (12), `_founder` (6), `_executive` (6), `_investor` (6), `_fundinground` (8), `_jobposting` (9), `_newsarticle` (6) |
-| Supporting tables | `x_bst_startuptrk_m2m_round_investor` (2), `_ingest_staging` (41), `_rate_limit_counter` (4) |
-| Dictionary and labels | 110 `sys_dictionary` records — 100 columns and 10 collections — with 110 `sys_documentation` labels, **77** `sys_choice` values and **13** declared indexes, one of them unique |
+| Supporting tables | `x_bst_startuptrk_m2m_round_investor` (2), `_ingest_staging` (41), `_rate_limit_counter` (5) |
+| Dictionary and labels | 111 `sys_dictionary` records — 101 columns and 10 collections — with 111 `sys_documentation` labels, **77** `sys_choice` values and **13** declared indexes, one of them unique |
 | Roles | **3** — `x_bst_startuptrk.admin`, `x_bst_startuptrk.user`, `x_bst_startuptrk.premium_user` |
 | Access control | **49** `sys_security_acl` records across **5 layers**, with **74** `sys_security_acl_role` joins, including **7 field-level read ACLs** |
 | Script Includes | **8** — `StartupSearchService`, `InvestorPortfolioService`, `IngestionMapper`, `IngestionLogger`, `RateLimitService`, `RestResponseBuilder`, `RestQueryHelper`, `AppProperties`. None is client-callable and none runs with elevated privilege. |
@@ -110,7 +112,7 @@ Ten steps. Each names the document that owns it.
 | --- | --- | --- |
 | 1 | Validate the Update Set XML. Both gate G-1 and gate G-2 must pass, and a non-zero exit blocks the deployment. | [`scripts/validate_update_set_xml.py`](./scripts/validate_update_set_xml.py) |
 | 2 | Run the pre-flight checks, then upload, poll for load, preview, require an empty error-type problem set, and commit. | [`docs/deployment-runbook.md`](./docs/deployment-runbook.md) |
-| 3 | Run the eleven required post-commit gates and `GATE-COL-01` — **twelve acceptance-blocking checks**; the rollback aggregate is `11 of 11`. A required-gate failure is reported and, under the guarded conditions the runbook states, triggers the rollback; a `GATE-COL-01` failure blocks acceptance without it. Run and record the four non-normative diagnostics alongside them; none of those decides acceptance. | [`docs/validation-gates.md`](./docs/validation-gates.md) |
+| 3 | Run the eleven required post-commit gates, `GATE-COL-01` and `GATE-SEC-01` to `GATE-SEC-03` — **fifteen acceptance-blocking checks**; the rollback aggregate is `11 of 11`. A required-gate failure is reported and, under the guarded conditions the runbook states, triggers the rollback; a class 2 failure blocks acceptance without it. Run and record the one non-normative diagnostic, `GATE-SEC-04`, alongside them; it decides nothing. | [`docs/validation-gates.md`](./docs/validation-gates.md) |
 | 4 | Establish the two alias and two connection definition records on whichever readiness path applies, confirm the credential records, record each connection-test outcome, and **record the route each source will be built on** — live-first, or forced fallback where the alias or the LinkedIn product contract is absent. | [`docs/manual-build/01-connection-credential-aliases.md`](./docs/manual-build/01-connection-credential-aliases.md) |
 | 5 | Build the Crunchbase ingestion flow, on the route step 4 recorded. | [`docs/manual-build/02-flow-crunchbase-ingestion.md`](./docs/manual-build/02-flow-crunchbase-ingestion.md) |
 | 6 | Build the LinkedIn ingestion flow, on the route step 4 recorded. | [`docs/manual-build/03-flow-linkedin-ingestion.md`](./docs/manual-build/03-flow-linkedin-ingestion.md) |

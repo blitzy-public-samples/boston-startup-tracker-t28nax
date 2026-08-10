@@ -388,7 +388,7 @@ source_system,record_type,import_run,import_state,run_provenance,error_message,r
 | 15 | `participating_investor_names` | `participating_investor_names` | `string` 1000 | no | **Multi-valued natural key.** A **JSON array of investor names** inside one quoted field, the inner double quotes doubled per RFC 4180. Becomes one `x_bst_startuptrk_m2m_round_investor` row per resolved member. Optional; an empty field means no participants, and the eleventh data row leaves it empty. Load the string **verbatim** — nothing may re-format, re-quote or re-delimit it in transit, and in particular nothing may convert it to a comma-separated list, because a member name may contain a comma. |
 | 16 | `source_url` | `source_url` | `string` 255 | no | Writes `x_bst_startuptrk_fundinground.source_url`. |
 
-`lead_investor_name` and `participating_investor_names` are **distinct columns with distinct destinations**, and both must be mapped. The lead investor is a single reference column on the funding round; each participating investor becomes one row of the join table. An investor may legitimately appear in both columns on the same row. Neither is ever written to `x_bst_startuptrk_fundinground.participating_investors`, which is a read-only projection maintained by the business rule on the join table.
+`lead_investor_name` and `participating_investor_names` are **distinct columns with distinct destinations**, and both must be mapped. The lead investor is a single reference column on the funding round; each participating investor becomes one row of the join table. An investor may legitimately appear in both columns on the same row. Neither is ever written to `x_bst_startuptrk_fundinground.participating_investors`, which is a calculated, virtual, read-only column derived from the join table on every read and is not a write target on any path.
 
 Two columns are mandatory for the `funding_round` record type at transform time: `startup_name` and `round_date`. Two of the twelve rows deliberately blank one each. **Ten** FundingRound records result, and **26** join rows across them. The largest single round links five participating investors.
 
@@ -693,7 +693,7 @@ This step is invoked from [step 7](#step-7--run-the-dependency-group-sequence), 
 
 Two ways to run it, and both are acceptable evidence:
 
-- **Through the flows.** Set the property `x_bst_startuptrk.ingestion.source_mode` to `fallback`, then run the Crunchbase flow of [`02-flow-crunchbase-ingestion.md`](02-flow-crunchbase-ingestion.md) and the LinkedIn flow of [`03-flow-linkedin-ingestion.md`](03-flow-linkedin-ingestion.md). Each claims the pending rows of its own `source_system`, applies the four cleaning rules, writes the entity records, records each row's outcome and publishes a run summary. A flow reads **every** unleased pending row of its source, so this route cannot scope a call to one `import_run` and is therefore usable only where a whole source system's groups are ready to settle together. **Leave the property at `fallback` afterwards unless the readiness rule of [Restoring `source_mode`](#restoring-source_mode-is-readiness-determined-not-a-return-to-live) requires `live`** — on the instance recorded for this delivery it requires `fallback`, so there is nothing to restore.
+- **Through the flows.** Set the property `x_bst_startuptrk.ingestion.source_mode` to `fallback`, then run the Crunchbase flow of [`02-flow-crunchbase-ingestion.md`](02-flow-crunchbase-ingestion.md) and the LinkedIn flow of [`03-flow-linkedin-ingestion.md`](03-flow-linkedin-ingestion.md). Each claims the pending rows of its own `source_system`, applies the four cleaning rules, writes the entity records, records each row's outcome and publishes a run summary. A flow reads the unleased pending rows of its source **up to one batch of `200`** — [One call settles at most two hundred rows](#one-call-settles-at-most-two-hundred-rows) below — so this route cannot scope a call to one `import_run` and is therefore usable only where a whole source system's groups are ready to settle together. **Leave the property at `fallback` afterwards unless the readiness rule of [Restoring `source_mode`](#restoring-source_mode-is-readiness-determined-not-a-return-to-live) requires `live`** — on the instance recorded for this delivery it requires `fallback`, so there is nothing to restore.
 - **Directly, from a background script inside the scope**, one call per dependency group. This is the route [step 7](#step-7--run-the-dependency-group-sequence) uses, because it takes the `import_run` scope the sequence depends on.
 
 #### The run identifier must begin with the source system
@@ -735,6 +735,7 @@ Run this from **System Definition > Scripts - Background** with the scope select
         + ' processed=' + summary.processed
         + ' rejected=' + summary.rejected
         + ' skipped=' + summary.skipped
+        + ' errors=' + summary.errors
         + ' duplicates=' + summary.duplicates
         + ' unmatched=' + summary.unmatched
         + ' rule3_deviations=' + summary.rule3_deviations
@@ -780,9 +781,21 @@ Run this from **System Definition > Scripts - Background** with the scope select
 | `skipped` not `0` | A write failed for a reason other than a cleaning rule. A cleaning-rule refusal counts as `rejected`, not `skipped`; `skipped` is always a defect. |
 | `processed` not equal to `accepted` | The logger's counter and the batch's counter disagree, which means an entry settled without being counted. |
 
-`ingestStaging()` selects rows on `source_system` and `import_state` `pending`, with `import_run` as an optional further filter — pass an empty string to take every pending row of that source system, or a specific token to transform one group's rows in isolation. It does **not** read a row that is `processed`, `rejected` or `error`, and it skips a `pending` row whose `import_run` carries **another run's `run:` lease**.
+`ingestStaging()` selects rows on `source_system` and `import_state` `pending`, with `import_run` as an optional further filter — pass an empty string to take the pending rows of that source system, or a specific token to transform one group's rows in isolation. It does **not** read a row that is `processed`, `rejected` or `error`, and it skips a `pending` row whose `import_run` carries **another run's `run:` lease**.
 
 Because the query is bounded to `import_state` `pending`, **a row that has already settled is never re-read**. Re-running the transform therefore cannot duplicate entity records from staging, whichever route is used.
+
+#### One call settles at most two hundred rows
+
+**Both of `IngestionMapper`'s staging reads are bounded at `STAGING_BATCH_LIMIT` — `200` rows** — so one call to `ingestStaging()` settles at most two hundred staging rows and leaves any remainder `pending` for the next call. [`../data-model.md`](../data-model.md#9-x_bst_startuptrk_ingest_staging) specifies the bound; the consequence for this procedure is the following, and it is a property of the queue rather than a limit an operator has to manage.
+
+| # | What the bound means for this load |
+| --- | --- |
+| 1 | **No group in [step 7](#step-7--run-the-dependency-group-sequence)'s sequence reaches it.** The largest single call is step 10, which settles all **thirty-two** LinkedIn rows in one pass; the three Crunchbase calls settle **thirteen**, **eight** and **twelve**. Every count this guide states is therefore exact as written, and no call of the delivered sequence is bounded. |
+| 2 | **A larger load drains across calls, not incorrectly.** Load more than two hundred rows for one `source_system` and the first call settles two hundred of them and reports a `claim_batch_bounded` note; call the transform again — or wait for the next guard-passing scheduled run — and it takes the next batch. The batch advances by itself, because the query filters on `import_state` `pending` and every settled row leaves that state, so no cursor is carried between calls and no row is read twice or skipped. |
+| 3 | **A bounded call is not a failed call.** `claim_batch_bounded` is a `warn`-level note carrying no staging row, and it is the only signal that a remainder exists. None of the six assertions in [the script](#the-script) fails because of it: `skipped` stays `0`, `processed` still equals `accepted`, and the summary still logs. |
+
+**Re-running a transform on a group that already settled is safe and does nothing.** Those rows are `processed` or `rejected`, so the `pending` filter excludes them, and the call returns zero accepted rows rather than duplicating anything.
 
 #### Returning an abandoned or rejected row to the queue
 
@@ -872,7 +885,7 @@ So **two mechanisms protect this procedure from duplicating records, and they op
 
 ### Participating investors become join rows
 
-**The transform materialises `x_bst_startuptrk_m2m_round_investor` rows from `participating_investor_names`.** For each accepted `funding_round` row it reads the quoted JSON array, trims each member, drops an empty member, resolves each remaining member to exactly one Investor record, keeps a repeated member once, and **reconciles the join rows to that set** through `IngestionMapper.linkParticipants()` — inserting the links the row declares and removing any link the round carries that the row does not. `InvestorPortfolioService.linkInvestorToRound()` is the administrative one-off for linking a single investor to a single round by hand; it is not on the ingestion path and this procedure never calls it. A member that resolves to no investor, or to more than one, is logged as a warning and contributes no join row; the members that do resolve still become join rows, and the round is recorded as partial. **A row whose `participating_investor_names` is empty declares nothing and removes nothing**, so an empty value never strips a round's existing participants.
+**The transform materialises `x_bst_startuptrk_m2m_round_investor` rows from `participating_investor_names`.** For each accepted `funding_round` row it reads the quoted JSON array, trims each member, drops an empty member, resolves each remaining member to exactly one Investor record, keeps a repeated member once, and **reconciles the join rows to that set** through `IngestionMapper.linkParticipants()` — inserting the links the row declares and removing any link the round carries that the row does not. `InvestorPortfolioService.linkInvestorToRound()` is the administrative one-off for linking a single investor to a single round by hand, and it is also the single insert implementation `linkParticipants()` delegates each of its inserts to; this procedure calls it only through the reconciler, never directly. A member that resolves to no investor, or to more than one, is logged as a warning and contributes no join row; the members that do resolve still become join rows, and the round is recorded as partial. **A row whose `participating_investor_names` is empty declares nothing and removes nothing**, so an empty value never strips a round's existing participants.
 
 **`linkParticipants()` reconciles rather than appends.** It reads the round's existing join rows, then makes the stored set equal the incoming set:
 

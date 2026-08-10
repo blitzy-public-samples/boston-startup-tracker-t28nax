@@ -220,7 +220,7 @@ Step 1 therefore takes a **named lease on the source** before the flow does any 
 | A `running` marker held by another run, older than the cadence | `ok` `true` — the stale claim is taken over | Proceed. A run interrupted by a platform fault cannot block the source forever. |
 | A `succeeded` marker from an earlier completed run | `ok` `true` | Proceed. The cadence guard has already decided the interval elapsed. |
 | Another run won the guarded update | `ok` `false`, `reason` `another run took this source` | **Do not proceed.** Record the holder and end as a no-op. |
-| The claim could not be written at all | `ok` `false` with the reason | **Do not proceed.** Record the reason and end as a no-op. |
+| The claim could not be written at all, or the method threw | `ok` `false` with the reason and no holder | **Do not proceed.** Record the reason and end as a no-op with `outcome` `lease_unavailable`. Step 1 wraps the call, so a lease fault ends the execution as a no-op rather than as an unhandled flow error. |
 | The claim was written but not atomically | `ok` `true`, `atomic` `false` | Proceed, and **record `atomic` in the run evidence**. The property record was not writable through the record API on this instance, so exclusion rests on the cadence guard alone for this run. |
 
 **The lease is per source, and the two flows never contend.** The marker property carries one entry per source system, so a Crunchbase run holding `crunchbase` does not block a LinkedIn run taking `linkedin`. The two flows can run at the same time; two executions of *this* flow cannot.
@@ -313,7 +313,8 @@ Contains **two** steps, in this order:
 | Input | `rows` | String | No | From A3's `rows` — the claimed staging envelopes. A4 ingests it. This flow has no live branch. |
 | Output | `processed` | Integer | — | Records written. |
 | Output | `rejected` | Integer | — | Records rejected for a missing mandatory field or an unresolvable parent Startup. |
-| Output | `skipped` | Integer | — | Records skipped after a per-record error. |
+| Output | `skipped` | Integer | — | Operational failures of either kind. |
+| Output | `errors` | Integer | — | Of those, incoming rows whose own write failed. |
 | Output | `duplicates` | Integer | — | Records collapsed by the deduplication rule. |
 | Output | `unmatched` | Integer | — | Choice values normalised to `Other`. |
 | Output | `recorded` | True/False | — | `true` when the run summary was written. |
@@ -386,7 +387,7 @@ Declare seven output variables on the step.
 | `hours_elapsed` | Integer | Whole hours since the last completed run of this source. `-1` when no `succeeded` marker is on record. |
 | `lease_ok` | True/False | `true` when this execution holds the source lease. Consumed by step `8c`, which releases the lease only if this run took it. |
 | `lease_holder` | String | The run identifier holding the lease when this run could not take it. Empty when the lease was taken. |
-| `outcome` | String | One of `proceed`, `no_op` or `lease_held_elsewhere`. The single value that says why this execution did or did not work. |
+| `outcome` | String | One of `proceed`, `no_op`, `lease_held_elsewhere` or `lease_unavailable`. The single value that says why this execution did or did not work. `lease_held_elsewhere` names another execution as the holder; `lease_unavailable` means the claim itself could not be taken and no holder is known. |
 | `proceed` | True/False | `true` when this execution is a scheduled run that holds the lease. `false` for both a cadence no-op and a lease refusal. |
 
 ### 1.4 — The guard script
@@ -425,23 +426,35 @@ Set the script body to the following. It calls `AppProperties` by bare class nam
     }
 
     if (!elapsed) {
-        gs.info('[x_bst_startuptrk.ingestion] event="cadence_guard" run="' +
+        props.log('info', '[x_bst_startuptrk.ingestion] event="cadence_guard" run="' +
             outputs.run_id + '" cadence_hours="' + cadence +
             '" hours_elapsed="' + outputs.hours_elapsed + '" outcome="no_op"');
         return;
     }
 
-    // The cadence has elapsed. Take the source lease before doing any work.
-    var lease = props.acquireRunLease(SOURCE, outputs.run_id);
+    // The cadence has elapsed. Take the source lease before doing any work. A lease that
+    // cannot be evaluated ends this execution as a no-op rather than as an unhandled error:
+    // the next hourly trigger re-evaluates the cadence and the source is still claimable.
+    var lease = { ok: false, holder: '', reason: '' };
+    try {
+        lease = props.acquireRunLease(SOURCE, outputs.run_id);
+    } catch (leaseError) {
+        lease = { ok: false, holder: '',
+            reason: 'the lease could not be evaluated: ' + props.safeText(leaseError, 120) };
+    }
     outputs.lease_ok = (lease.ok === true);
     outputs.lease_holder = lease.ok ? '' : String(lease.holder || '');
 
     if (!outputs.lease_ok) {
-        outputs.outcome = 'lease_held_elsewhere';
-        gs.warn('[x_bst_startuptrk.ingestion] event="cadence_guard" run="' +
+        // A named holder means another execution owns the source. No holder means the claim
+        // itself could not be taken. They are different operational facts and the run
+        // evidence must not conflate them.
+        outputs.outcome = (outputs.lease_holder === '')
+            ? 'lease_unavailable' : 'lease_held_elsewhere';
+        props.log('warn', '[x_bst_startuptrk.ingestion] event="cadence_guard" run="' +
             outputs.run_id + '" cadence_hours="' + cadence +
             '" hours_elapsed="' + outputs.hours_elapsed +
-            '" outcome="lease_held_elsewhere" holder="' + outputs.lease_holder +
+            '" outcome="' + outputs.outcome + '" holder="' + outputs.lease_holder +
             '" reason="' + String(lease.reason || '') + '"');
         return;
     }
@@ -449,7 +462,7 @@ Set the script body to the following. It calls `AppProperties` by bare class nam
     outputs.outcome = 'proceed';
     outputs.proceed = true;
 
-    gs.info('[x_bst_startuptrk.ingestion] event="cadence_guard" run="' +
+    props.log('info', '[x_bst_startuptrk.ingestion] event="cadence_guard" run="' +
         outputs.run_id + '" cadence_hours="' + cadence +
         '" hours_elapsed="' +
         (outputs.hours_elapsed === -1 ? 'none' : outputs.hours_elapsed) +
@@ -464,7 +477,7 @@ Set the script body to the following. It calls `AppProperties` by bare class nam
 
 Add one **`If`** flow-logic block immediately after the guard. Set its condition to the guard's `proceed` output **is** `true`. **Every step from 2 to `8c` sits inside that block**, exactly as [the flow graph](#the-flow-graph) shows.
 
-When `proceed` is `false` the flow reaches its end having done no work: it makes no outbound call, reads no staging row, claims no staging row, writes no entity record, writes no run summary, publishes no evidence block and takes no lease it must release. That is the intended behaviour and it is not an error. It covers both reasons the guard can refuse — the cadence has not elapsed, and another execution holds the source lease — and the guard's `outcome` output says which.
+When `proceed` is `false` the flow reaches its end having done no work: it makes no outbound call, reads no staging row, claims no staging row, writes no entity record, writes no run summary, publishes no evidence block and takes no lease it must release. That is the intended behaviour and it is not an error. It covers every reason the guard can refuse — the cadence has not elapsed, another execution holds the source lease, or the lease could not be taken at all — and the guard's `outcome` output says which.
 
 ### 1.6 — The hourly trigger interval
 
@@ -484,7 +497,7 @@ With the shipped cadence of 24 hours and an hourly trigger, roughly twenty-three
 
 ### 2.1 — What it reads
 
-One property: `x_bst_startuptrk.ingestion.source_mode`. It is a choice-list property whose only valid values are `live` and `fallback`, and its shipped value is **`live`**. Read it through `AppProperties.getSourceMode()`, which returns `live` for any value it does not recognise.
+One property: `x_bst_startuptrk.ingestion.source_mode`. It is a choice-list property whose only valid values are `live` and `fallback`, and its shipped value is **`live`**. Read it through `AppProperties.getSourceMode()`, which **fails closed**: it returns `live` only for the exact value `live` after trimming and lower-casing, and `fallback` for everything else — an empty property, a missing property, a typo, any other value — warning `ingestion.source_mode carries "<value>", which is neither live nor fallback; the run resolves to fallback` when the value is neither of the two. That is the safe direction: an unreadable mode must not send a credential to a provider.
 
 **It is one property, and the Crunchbase flow reads the same one.** There is no per-flow source mode and no flow input carries one, so setting this property for this flow sets it for [`02-flow-crunchbase-ingestion.md`](02-flow-crunchbase-ingestion.md) in the same act. Two consequences bind every procedure in this guide that touches it: **live-first applies only while the property reads `live`** — in `fallback` mode the `If` around step 3 is false and no outbound call is attempted at all — and **a temporary change captures the observed value and restores that value**, because the end state is branch-determined rather than a return to `live`. The rule, its branch table and the value required on this instance are in [`06-staging-table-csv-import.md#restoring-source_mode-is-readiness-determined-not-a-return-to-live`](06-staging-table-csv-import.md#restoring-source_mode-is-readiness-determined-not-a-return-to-live), which is the single normative statement; `D-111` carries the decision.
 
@@ -506,12 +519,17 @@ One property: `x_bst_startuptrk.ingestion.source_mode`. It is a choice-list prop
 ```javascript
 (function execute(inputs, outputs) {
 
-    var mode = new AppProperties().getSourceMode();   // 'live' | 'fallback'
+    // Every application log line in this step goes through the one gate,
+    // AppProperties.log(severity, text), so x_bst_startuptrk.logging.level governs this
+    // step exactly as it governs the Script Includes. See 7.2a.
+    var LOG = new AppProperties();
+
+    var mode = LOG.getSourceMode();                   // 'live' | 'fallback'
 
     outputs.source_mode = mode;
     outputs.attempt_live = (mode === 'live');
 
-    gs.info('[x_bst_startuptrk.ingestion] event="source_mode" run="' +
+    LOG.log('info', '[x_bst_startuptrk.ingestion] event="source_mode" run="' +
         inputs.run_id + '" mode="' + mode + '"');
 
 })(inputs, outputs);
@@ -648,7 +666,7 @@ Declare **eleven** output variables. Step 4 consumes `rows`, `probe_ok`, `status
 
 **This step is a probe, not an acquisition, so it is bounded to a handful of calls rather than paginated to exhaustion.** [3.1](#31--what-linkedin-exposes-and-what-this-flow-can-therefore-acquire-live) establishes that no row can ever come from it; reading page after page would spend the flow's synchronous budget proving something the second page already proved. An earlier build looped to twenty pages inside a single action, which on a slow provider is twenty sequential outbound calls holding one transaction open.
 
-Declare all six constants at the top of the step, whichever arm is built. **They are this application's limits, not the provider's**, and they are named so a change is one edit in one place.
+Declare all seven constants at the top of the step, whichever arm is built. **They are this application's limits, not the provider's**, and they are named so a change is one edit in one place.
 
 | Constant | Value | What it bounds |
 | --- | --- | --- |
@@ -662,13 +680,14 @@ Declare all six constants at the top of the step, whichever arm is built. **They
 
 **When a budget is reached the step stops, sets `truncated` `true`, names the budget in `budget_hit` and sets `error_code` to `budget_reached`.** It does not silently return what it has: an unfinished probe reported as finished is the fault this budget set exists to make impossible.
 
-**Every failure resolves to one of these eight codes and nothing else.** `error_code` is a closed set, which is what lets step 4 branch on it and step 7 tally it without parsing prose.
+**Every failure resolves to one of these nine codes and nothing else.** `error_code` is a closed set, which is what lets step 4 branch on it and step 7 tally it without parsing prose.
 
 | `error_code` | Raised when |
 | --- | --- |
 | `alias_unresolved` | The alias **API ID** matched no `sys_alias` record. |
 | `alias_ambiguous` | The alias **API ID** matched more than one record. |
 | `connection_unresolved` | The alias resolved but supplied no active connection, **or** the endpoint it supplied is not approved — see [3.5a](#35a--the-endpoint-authority-and-why-it-is-checked-before-the-credential). |
+| `organizations_unconfigured` | The step's `ORGANIZATIONS` constant holds no numeric organisation identifier, so **no call was made** — see [3.4b](#34b--the-organisation-identifiers-are-a-build-input-and-a-placeholder-is-refused). |
 | `http_status` | A response carried a non-2xx status other than `426`. |
 | `api_version_retired` | A response carried `426`, or the provider reported a version fault. |
 | `transport` | A call did not complete — a timeout, a DNS failure, a reset. |
@@ -677,7 +696,24 @@ Declare all six constants at the top of the step, whichever arm is built. **They
 
 **No provider text, exception message, header value or response body is ever assigned to `error_code`.** The redacted bounded detail goes to `error_detail` and to the call-log entry, through the one application sanitiser, `AppProperties.safeText(value, limit)`, called as `SAFE.safeText(detail, DETAIL_LIMIT)`. That call is the only route by which any provider-originated text leaves this step, and it is the same call guide 01's probes and guide 02's step 3 make — one implementation, not three copies.
 
-**There is exactly one sanitiser in this application, and every diagnostic in this package passes through it.** It is `AppProperties.safeText(value, limit)`, a method of the Script Include that ships in the Update Set, and every probe script and every flow script calls it rather than carrying a copy of it. It replaces control, zero-width and bidirectional-override characters; redacts web tokens, credential-shaped assignments such as `key=`, `token=`, `secret=`, `password=` and `authorization=`, bare authentication scheme words together with the value that follows them, addresses, locators, runs of 28 or more opaque characters and quoted runs of 24 or more; turns a double quote into a single quote so a value cannot break a quoted field; collapses whitespace; and caps the result at the limit it is given, appending `...(truncated)` so a truncation is visible rather than silent. The delivered pattern set and its order are in the `SANITISERS` member of that Script Include, which is the one place they exist.
+**There is exactly one sanitiser in this application, and every diagnostic in this package passes through it.** It is `AppProperties.safeText(value, limit)`, a method of the Script Include that ships in the Update Set, and every probe script and every flow script calls it rather than carrying a copy of it. It replaces control, zero-width and bidirectional-override characters; redacts web tokens, credential-shaped assignments — `key`, `token`, `secret`, `password`, `authorization` and their siblings, **whatever delimiter separates a label from its value, a plain space included** — bare authentication scheme words together with the value that follows them, addresses, locators, opaque runs of 20 or more characters other than the two diagnostic shapes it deliberately keeps, and quoted runs of 24 or more; turns a double quote into a single quote so a value cannot break a quoted field; collapses whitespace; and caps the result at the limit it is given, appending `...(truncated)` so a truncation is visible rather than silent. The delivered pattern set and its order are in the `SANITISERS` member of that Script Include, which is the one place they exist.
+
+### 3.4b — The organisation identifiers are a build input, and a placeholder is refused
+
+**The step ships with `var ORGANIZATIONS = ['<ORGANIZATION_ID>'];`, and that placeholder is not a value the provider can be asked about.** [3.4](#34--step-outputs) explains why the identifiers live in the step rather than in a property: they are what the developer application is entitled to read, they are supplied by the credential owner alongside the credential, and they are not secret. The consequence is that publishing the flow before the credential owner answers leaves a literal `<ORGANIZATION_ID>` in the request, and both arms would send it.
+
+**Both arms therefore refuse the call rather than make it, and they refuse identically.**
+
+| Arm | How the placeholder is detected | What happens |
+| --- | --- | --- |
+| Arm B, the single script | Every entry of `ORGANIZATIONS` is tested against `^[0-9]{1,20}$` after trimming, immediately after the endpoint checks pass and **before** `setAuthenticationProfile` is reached. | Nothing valid remains: the step records `organizations_unconfigured` in the call log and `error_code`, and returns. **Zero outbound calls, and no OAuth profile applied.** |
+| Arm A, the three-part action | Part 1 applies the same test. With nothing valid it emits an **empty** `page_offsets`, `max_calls` `0`, `organization_count` `0` and an empty `ids_parameter`, and logs `probe_not_attempted`. | The For Each block iterates an empty list, so **zero outbound calls**. Part 3 reads `organization_count` and records `organizations_unconfigured`. |
+
+**A refusal costs nothing and says exactly what is wrong.** The alternative — calling `/organizationsLookup` with the placeholder — spends one of the entitled requests to be told the identifier is invalid, and returns a provider message the operator then has to recognise as their own placeholder. The closed code names the constant instead.
+
+**This is not the empty-result case, and the two must not be conflated.** [4.1](#41--the-three-fallback-triggers) establishes that a `2xx` response carrying an empty `elements` array is a **healthy** probe: `probe_ok` `true`, `organizations_seen` `0`, reason `no_live_read_api`, and `no_organizations` is deliberately not a fallback reason. `organizations_unconfigured` is the opposite situation — the build was never finished, so no request was made at all — and it is a configuration fault reported against the step, not against the credential.
+
+**Both arms bound the list to `MAX_ORGANIZATIONS` after filtering, not before**, so ten valid identifiers following a placeholder still yield ten lookups rather than nine.
 
 ### 3.5a — The endpoint authority, and why it is checked before the credential
 
@@ -686,7 +722,7 @@ Declare all six constants at the top of the step, whichever arm is built. **They
 | # | Check | Source of truth | Failure behaviour |
 | --- | --- | --- | --- |
 | 1 | The **declared** endpoint is the non-secret property `x_bst_startuptrk.linkedin.base_url`, read through `AppProperties.getLinkedinBaseUrl()`. This property, not the connection record, is the authority. | The property | `connection_unresolved` with detail `endpoint_untrusted: the base-URL property is not an https api.linkedin.com root` |
-| 2 | The declared endpoint begins `https://api.linkedin.com/` — scheme **and** host on an allowlist of one — and carries no `@`, `?`, `#` or whitespace, so no userinfo, query or fragment can ride on the base. | The allowlist constants in the step | As above |
+| 2 | The declared endpoint begins `https://api.linkedin.com/` — scheme **and** host on an allowlist of one — and carries no `@`, `?`, `#` or whitespace, so no userinfo, query or fragment can ride on the base. | `AppProperties.PROVIDER_ORIGINS.linkedin`, read by the step into `APPROVED_ROOT` and `APPROVED_HOST` rather than restated as literals, so the step and the Script Include cannot disagree | As above |
 | 3 | The connection's `connection_url` satisfies checks 1 and 2 **and is equal to the declared endpoint**, compared after trailing slashes are trimmed. | The property, compared against the connection | `connection_unresolved` with detail `endpoint_untrusted: the connection URL does not equal the base-URL property` |
 | 4 | Only now is `setAuthenticationProfile('oauth2', info.getCredentialAttribute('oauth_entity_profile'))` called and the request executed. | The alias | Not reached unless 1 to 3 pass |
 
@@ -747,28 +783,53 @@ Its job is to produce everything the REST step must be handed as a pill, already
 ```javascript
 (function execute(inputs, outputs) {
 
+    // Every application log line in this step goes through the one gate,
+    // AppProperties.log(severity, text), so x_bst_startuptrk.logging.level governs this
+    // step exactly as it governs the Script Includes. See 7.2a.
+    var LOG = new AppProperties();
+
     var MAX_ORGANIZATIONS = 10;
     var PAGE_SIZE = 10;
     var MAX_PAGES = 2;
-    // Organisation identifiers the credential owner supplied. Not secret.
+    // Organisation identifiers the credential owner supplied. Not secret. Replace the
+    // placeholder with the numeric identifiers before publishing: this step produces an
+    // empty page list while a placeholder is still here, so no call is made. See 3.4b.
     var ORGANIZATIONS = ['<ORGANIZATION_ID>'];
 
-    var ids = ORGANIZATIONS.slice(0, MAX_ORGANIZATIONS);
-    outputs.api_version = new AppProperties().getLinkedinApiVersion();
-    outputs.ids_parameter = 'List(' + ids.join(',') + ')';
+    // A provider identifier is numeric. Anything else is an unfinished build, and it must
+    // not reach the REST step: the pill would carry the placeholder into the request.
+    var ids = [];
+    var candidate = 0;
+    for (candidate = 0; candidate < ORGANIZATIONS.length &&
+            ids.length < MAX_ORGANIZATIONS; candidate++) {
+        if (/^[0-9]{1,20}$/.test(String(ORGANIZATIONS[candidate]).trim())) {
+            ids.push(String(ORGANIZATIONS[candidate]).trim());
+        }
+    }
+    outputs.api_version = LOG.getLinkedinApiVersion();
+    outputs.ids_parameter = ids.length === 0 ? '' : 'List(' + ids.join(',') + ')';
     outputs.organization_count = ids.length;
     outputs.page_size = PAGE_SIZE;
     outputs.started_at = new GlideDateTime().getNumericValue();
 
     // A bounded, explicit page list. The For Each block iterates THIS, so the
-    // number of outbound calls is fixed before the first one is made.
+    // number of outbound calls is fixed before the first one is made -- and it is
+    // deliberately empty when nothing is configured, which is what makes the refusal
+    // cost zero outbound calls. Part 3 turns that into organizations_unconfigured.
     var offsets = [];
     var page = 0;
-    for (page = 0; page < MAX_PAGES; page++) {
-        offsets.push(page * PAGE_SIZE);
+    if (ids.length > 0) {
+        for (page = 0; page < MAX_PAGES; page++) {
+            offsets.push(page * PAGE_SIZE);
+        }
+    } else {
+        LOG.log('warn', '[x_bst_startuptrk.ingestion] event="probe_not_attempted" source=' +
+            '"linkedin" reason="organizations_unconfigured" outcome="the ORGANIZATIONS' +
+            ' constant in step 3 holds no numeric organisation identifier, so no' +
+            ' outbound call was made"');
     }
     outputs.page_offsets = JSON.stringify(offsets);
-    outputs.max_calls = MAX_PAGES;
+    outputs.max_calls = offsets.length;
 
 })(inputs, outputs);
 ```
@@ -790,7 +851,7 @@ Its job is to produce everything the REST step must be handed as a pill, already
 
 **This step is not optional and it is not a formality.** It is what makes Arm A produce the same twelve outputs as Arm B. Without it the REST step's raw per-iteration response is the flow's only record of the probe, step 4's pills are unbound, and the run reports a forced fallback on an instance whose credential is working perfectly.
 
-Bind its `responses` input to the For Each block's collected REST-step **response body** outputs and its `statuses` input to the collected **status code** outputs, each as a JSON array; where the instance exposes only the last iteration's outputs, add a one-line Script step **inside** the block that appends the iteration's status and body to a flow variable, and bind that variable here instead.
+Bind its `responses` input to the For Each block's collected REST-step **response body** outputs and its `statuses` input to the collected **status code** outputs, each as a JSON array; where the instance exposes only the last iteration's outputs, add a one-line Script step **inside** the block that appends the iteration's status and body to a flow variable, and bind that variable here instead. Bind its third input, `organization_count`, to the data pill **Part 1 → organization_count**: that is what lets this step tell an unconfigured build apart from a provider that did not answer, since both arrive here as an empty `statuses` array. See [3.4b](#34b--the-organisation-identifiers-are-a-build-input-and-a-placeholder-is-refused).
 
 ```javascript
 (function execute(inputs, outputs) {
@@ -860,6 +921,14 @@ Bind its `responses` input to the For Each block's collected REST-step **respons
     if (parseFailed) {
         note(0, 0, 0, 'malformed', 'the collected REST step outputs are not' +
             ' parseable JSON arrays');
+    } else if ((parseInt(inputs.organization_count, 10) || 0) === 0) {
+        // Part 1 produced no page list, so the For Each block made no call. This is an
+        // unfinished build, not a provider fault, and it is reported as its own code so
+        // the operator is sent to the step constant rather than to the credential owner.
+        // Distinct from an empty `elements` array, which is not a fault at all. See 3.4b.
+        note(0, 0, 0, 'organizations_unconfigured',
+            'the ORGANIZATIONS constant in this step holds no numeric organisation' +
+            ' identifier');
     } else if (statuses.length === 0) {
         note(0, 0, 0, 'transport', 'the REST step produced no response');
     } else {
@@ -940,7 +1009,7 @@ Bind its `responses` input to the For Each block's collected REST-step **respons
     outputs.envelope_ok = (firstCode === '') && (outputs.truncated === false);
     outputs.probe_ok = outputs.envelope_ok;
 
-    gs.info('[x_bst_startuptrk.ingestion] event="live_probe" run="' + inputs.run_id +
+    SAFE.log('info', '[x_bst_startuptrk.ingestion] event="live_probe" run="' + inputs.run_id +
         '" source="linkedin" arm="rest_step" pages="' + pagesRead +
         '" organizations="' + seen +
         '" failed_calls="' + failed +
@@ -954,7 +1023,7 @@ Bind its `responses` input to the For Each block's collected REST-step **respons
 })(inputs, outputs);
 ```
 
-Part 3 takes `run_id` from action **A1**, and `statuses`, `responses`, `page_size` and `started_at` from the collection described above and from Part 1 — five inputs in all. **It declares the same twelve step outputs as Arm B**, which are the twelve of [3.4](#34--step-outputs), so step 4 binds identically whichever arm was built. Those twelve are declared **on action A3**, which is what contains this arm; the three parts are steps inside it and declare no action outputs of their own.
+Part 3 takes `run_id` from action **A1**, and `statuses`, `responses`, `page_size`, `started_at` and `organization_count` from the collection described above and from Part 1 — six inputs in all. `organization_count` is what distinguishes an unconfigured build from an unanswered call, per [3.4b](#34b--the-organisation-identifiers-are-a-build-input-and-a-placeholder-is-refused). **It declares the same twelve step outputs as Arm B**, which are the twelve of [3.4](#34--step-outputs), so step 4 binds identically whichever arm was built. Those twelve are declared **on action A3**, which is what contains this arm; the three parts are steps inside it and declare no action outputs of their own.
 
 ### 3.7 — The script step path
 
@@ -980,7 +1049,9 @@ This path resolves the connection and credential **at run time, by the alias's A
 (function execute(inputs, outputs) {
 
     var ALIAS = 'x_bst_startuptrk.linkedin_oauth';
-    // Organisation identifiers the credential owner supplied. Not secret.
+    // Organisation identifiers the credential owner supplied. Not secret. Replace the
+    // placeholder with the numeric identifiers before publishing: the step refuses to call
+    // the provider while a placeholder is still here. See 3.4b.
     var ORGANIZATIONS = ['<ORGANIZATION_ID>'];
 
     // Budgets. This application's limits, not the provider's. See 3.4a.
@@ -1127,16 +1198,33 @@ This path resolves the connection and credential **at run time, by the alias's A
     if (!endpoint.allowed) {
         // The refused value is never printed: a base URL can carry a token in its query
         // string. Only the closed reason and the origin actually used are reported.
-        gs.warn('[x_bst_startuptrk.ingestion] event="endpoint_refused" run="' +
+        SAFE.log('warn', '[x_bst_startuptrk.ingestion] event="endpoint_refused" run="' +
             inputs.run_id + '" source="linkedin" reason="' + endpoint.reason +
             '" outcome="calling the pinned origin ' + endpoint.origin + ' instead"');
     }
     if (configured !== '' && configured !== base) {
-        gs.warn('[x_bst_startuptrk.ingestion] event="connection_url_divergent" run="' +
+        SAFE.log('warn', '[x_bst_startuptrk.ingestion] event="connection_url_divergent" run="' +
             inputs.run_id + '" source="linkedin" outcome="the connection record does not' +
             ' mirror the base-URL property; the property is authoritative and was used.' +
             ' Correct the connection record per guide 01 step 2.3"');
     }
+
+    // Removes trailing slashes, so a root that differs from the approved one only by a
+    // trailing slash is not read as a different origin.
+    function trimSlash(value) {
+        return String(value === null || value === undefined ? '' : value)
+            .replace(/\/+$/, '');
+    }
+
+    // The approved root and host are the PINNED allowlist entry, taken from
+    // AppProperties.PROVIDER_ORIGINS rather than restated as a literal here, so this step
+    // and the Script Include cannot disagree about which origin may be called. They are
+    // deliberately not the configured value: a property that failed classification degrades
+    // to the pinned origin, and the checks below must still refuse it. See 3.9.
+    var PINNED = props.PROVIDER_ORIGINS.linkedin || {};
+    var APPROVED_ROOT = trimSlash(PINNED.fallback || endpoint.origin + '/rest');
+    var APPROVED_HOST = String(PINNED.origin || endpoint.origin)
+        .replace(/^https:\/\//, '');
 
     function approvedEndpoint(value) {
         var text = trimSlash(value);
@@ -1150,7 +1238,7 @@ This path resolves the connection and credential **at run time, by the alias's A
         return text;
     }
 
-    var declared = approvedEndpoint(props.getLinkedinBaseUrl());
+    var declared = approvedEndpoint(base);
     var connected = approvedEndpoint(info.getAttribute('connection_url'));
     if (declared === '') {
         note(0, 0, 0, 'connection_unresolved',
@@ -1172,9 +1260,34 @@ This path resolves the connection and credential **at run time, by the alias's A
         outputs.call_log = JSON.stringify(calls);
         return;
     }
-    var base = declared;
+    // Every request below uses the approved, trimmed root. This is an assignment, not a
+    // second declaration of `base`: the value the divergence check compared against above
+    // is the property as configured, and from here on it is the approved form of it.
+    base = declared;
     var version = props.getLinkedinApiVersion();
-    var ids = 'List(' + ORGANIZATIONS.slice(0, MAX_ORGANIZATIONS).join(',') + ')';
+
+    // ---- No call is made while ORGANIZATIONS still holds a placeholder. See 3.4b. ----
+    // A provider identifier is numeric. Anything else in the constant is an unfinished
+    // build, and calling the provider with it would spend an entitled request to be told
+    // so, in a request the operator would then have to recognise as their own placeholder.
+    var configuredIds = [];
+    var candidate = 0;
+    for (candidate = 0; candidate < ORGANIZATIONS.length; candidate++) {
+        if (/^[0-9]{1,20}$/.test(String(ORGANIZATIONS[candidate]).trim())) {
+            configuredIds.push(String(ORGANIZATIONS[candidate]).trim());
+        }
+    }
+    if (configuredIds.length === 0) {
+        note(0, 0, 0, 'organizations_unconfigured',
+            'the ORGANIZATIONS constant in this step holds no numeric organisation' +
+            ' identifier');
+        outputs.error_code = firstCode;
+        outputs.error_detail = firstDetail;
+        outputs.failed_calls = failed;
+        outputs.call_log = JSON.stringify(calls);
+        return;
+    }
+    var ids = 'List(' + configuredIds.slice(0, MAX_ORGANIZATIONS).join(',') + ')';
 
     // ---- The one entitled read, bounded by every budget above. ----
     var stop = false;
@@ -1266,7 +1379,7 @@ This path resolves the connection and credential **at run time, by the alias's A
     outputs.envelope_ok = (firstCode === '') && (outputs.truncated === false);
     outputs.probe_ok = outputs.envelope_ok;
 
-    gs.info('[x_bst_startuptrk.ingestion] event="live_probe" run="' + inputs.run_id +
+    SAFE.log('info', '[x_bst_startuptrk.ingestion] event="live_probe" run="' + inputs.run_id +
         '" source="linkedin" arm="script_step" pages="' + pagesRead +
         '" calls="' + callsMade +
         '" organizations="' + seen +
@@ -1297,6 +1410,7 @@ The differences from guide 02's step 3 are exactly five: the alias name, an OAut
 | --- | --- |
 | `providerBaseUrl(sourceSystem)` | Returns the URL to call. The configured property value when the allowlist accepts it, and the **pinned origin** ``https://api.linkedin.com/rest`` when it does not. It cannot return anything else, so a refused value degrades to the real provider rather than to an attacker's host. |
 | `providerBaseUrlState(sourceSystem)` | Returns `{ allowed, reason, effective, origin }` — the same decision, with the reason exposed so the step can report it. |
+| `PROVIDER_ORIGINS` | The allowlist itself: one `origin`, `prefix` and pinned `fallback` per source system. **The step reads its own `APPROVED_ROOT` and `APPROVED_HOST` from this member rather than restating them as literals**, so moving the allowlist moves what the step will call, and the two cannot drift apart. |
 
 The allowlist accepts a value only when **all** of these hold. Each failure has its own closed `reason`, and none of them ever prints the refused value.
 
@@ -1357,13 +1471,14 @@ This step decides the run's **provenance** and produces the row set the rest of 
 | 3 | **Malformed response** | `malformed` | The body did not parse, was not an object, or carried neither an `elements` array nor a `results` object. |
 | 4 | **A budget stopped the probe** | `budget_reached` | `truncated` `true`, with `budget_hit` naming the budget. |
 
-Four further conditions reach the same branch, each with its own closed code.
+Five further conditions reach the same branch, each with its own closed code.
 
 | Condition | `error_code` | Meaning |
 | --- | --- | --- |
 | The alias **API ID** matched no `sys_alias` record | `alias_unresolved` | The alias is absent or misnamed. Guide 01's [Step 0](01-connection-credential-aliases.md#step-0--establish-the-credential-posture) posture will read `unprovisioned`. |
 | The alias **API ID** matched more than one | `alias_ambiguous` | A duplicate-name condition. |
 | The alias resolved but had no active connection | `connection_unresolved` | The connection record is missing or inactive. |
+| The step's `ORGANIZATIONS` constant still holds a placeholder | `organizations_unconfigured` | **No call was made.** The build was published before the credential owner supplied the identifiers; see [3.4b](#34b--the-organisation-identifiers-are-a-build-input-and-a-placeholder-is-refused). A configuration fault, not a credential fault. |
 | The API version is retired | `api_version_retired` | `AppProperties.LINKEDIN_API_VERSION` needs correcting. **A configuration fault, not a credential fault**; see [3.8](#38--oauth-20-token-handling-belongs-to-the-credential-record). |
 
 **An empty probe result is not a trigger.** A `2xx` response with an empty `elements` array sets `probe_ok` `true` with `organizations_seen` `0`, and the run's reason is `no_live_read_api` exactly as it is for a probe that read ten organisations. Treating an empty result as a fault would report a working credential as broken and would put a spurious fault code into the criterion-4 evidence. `no_organizations` is therefore not a member of the `fallback_reason` set.
@@ -1406,7 +1521,7 @@ Four further conditions reach the same branch, each with its own closed code.
 | `row_count` | Integer | The number of rows in `rows`. |
 | `staged_ids` | String | A JSON array of the `sys_id` values of the staging rows this run **claimed**, in read order. Step 7 uses it to stamp a terminal state on every claimed row even when the run fails partway. |
 | `claimed_count` | Integer | How many staging rows this run claimed. Step 7 compares it against what it recovers, so a corrupted `staged_ids` string is detectable rather than silently empty. |
-| `fallback_reason` | String | One of `no_live_read_api`, `forced`, `alias_unresolved`, `alias_ambiguous`, `connection_unresolved`, `api_version_retired`, `http_status`, `transport`, `malformed`, `budget_reached`. **`no_organizations` is not a member of that set**; see [4.1](#41--the-three-fallback-triggers). |
+| `fallback_reason` | String | One of `no_live_read_api`, `forced`, `alias_unresolved`, `alias_ambiguous`, `connection_unresolved`, `organizations_unconfigured`, `api_version_retired`, `http_status`, `transport`, `malformed`, `budget_reached`. **`no_organizations` is not a member of that set**; see [4.1](#41--the-three-fallback-triggers). `organizations_unconfigured` is a different thing and is a member: it means no call was made because the step's identifier constant was never filled in, per [3.4b](#34b--the-organisation-identifiers-are-a-build-input-and-a-placeholder-is-refused). |
 | `probe_recorded` | True/False | `true` when the probe ran and its outcome was logged. `false` on a forced fallback. |
 | `step_error` | String | Empty on success. Set when the staging read could not complete, which is a failure of this step rather than of the provider. |
 
@@ -1420,8 +1535,9 @@ Four further conditions reach the same branch, each with its own closed code.
 | `import_state` | `pending` | Rows already `processed`, `rejected` or `error` are never re-read. A `pending` row carrying another run's `run:` lease is returned by the query and skipped in the loop. |
 | `import_run` | not a query condition | The query does not filter on it; the loop reads it to decide whether another run holds the row, and this step **writes** it as the claim. See [The staging-row claim](#the-staging-row-claim). |
 | order | `orderBy('sys_id')` | Deterministic ordering, which is what makes the batch-level deduplication of step 5 reproducible. |
+| limit | `setLimit(STAGING_BATCH_LIMIT)` — `200` | The batch bound. A run takes at most one batch of pending rows and leaves any remainder `pending` for the next run, and a run that filled its batch reports `claim_batch_bounded`. Do not remove it: without it one run's transaction is the size of whatever an operator loaded into the table. |
 
-**`record_type` is not a query condition.** The query returns every pending LinkedIn row and the mapper **reads `record_type` off each row**. The restriction to this flow's three record types is enforced inside the mapper by its source-to-type map, which allows `founder`, `executive` and `job_posting` for `linkedin` and rejects anything else on that source. Do not add a `record_type` filter to the query.
+**`record_type` is not a query condition.** The query returns the pending LinkedIn rows the batch takes and the mapper **reads `record_type` off each row**. The restriction to this flow's three record types is enforced inside the mapper by its source-to-type map, which allows `founder`, `executive` and `job_posting` for `linkedin` and rejects anything else on that source. Do not add a `record_type` filter to the query.
 
 The effective record-type set on this branch is therefore exactly three, and a row of any other type that carries `source_system` `linkedin` is rejected before any value is read:
 
@@ -1445,7 +1561,7 @@ The effective record-type set on this branch is therefore exactly three, and a r
 | Which of those it skips | Any row whose `import_run` already carries a `run:` lease naming another run |
 | What settles it | `IngestionMapper.writeStagingState()` on the normal path, and step 7's sweep for any row the batch never reached |
 
-**`import_state` carries exactly four values** — `pending`, `processed`, `rejected` and `error` — and the Update Set ships no fifth. [`../data-model.md`](../data-model.md) lists all four and specifies the lease under [The `import_run` run lease](../data-model.md#the-import_run-run-lease). `IngestionMapper` owns the mechanism: `leaseValue(runId)` composes the value, `leaseHolder(importRun)` reads the run a value names — the empty string for a CSV batch token — and `claimStagingRows(runId, sourceSystem)` performs exactly the loop this step performs, for a caller that is not a flow.
+**`import_state` carries exactly four values** — `pending`, `processed`, `rejected` and `error` — and the Update Set ships no fifth. [`../data-model.md`](../data-model.md) lists all four and specifies the lease under [The `import_run` run lease](../data-model.md#the-import_run-run-lease). `IngestionMapper` owns the mechanism: `leaseValue(runId)` composes the value, `leaseHolder(importRun)` reads the run a value names — the empty string for a CSV batch token — and `claimStagingRows(runId, sourceSystem)` is the **one implementation** of the claim loop, which this step calls rather than repeating. It returns `claimed`, the envelopes to ingest; `notes`, one closed diagnostic per row it did not claim; and `lease`, the value it wrote. The diagnostics are returned rather than logged because `ingest()` resets the `IngestionLogger` at the start of the batch. **The claim is bounded at `STAGING_BATCH_LIMIT` — `200` rows.** A run therefore takes at most one batch of pending rows for this source and leaves any remainder pending for the next run, and a run that filled its batch carries a `claim_batch_bounded` note that this step renders like any other. Expect it whenever more than 200 rows were loaded for one source: it is a bounded run, not a failed one, and the remainder needs no operator action because the next guard-passing run claims it.
 
 Three things follow, and each closes a failure this flow could otherwise reach.
 
@@ -1499,11 +1615,15 @@ The mapper stamps the normal outcomes itself, inside `ingest()`, in a `finally` 
 ```javascript
 (function execute(inputs, outputs) {
 
-    var STAGING = 'x_bst_startuptrk_ingest_staging';
+    // Every application log line in this step goes through the one gate,
+    // AppProperties.log(severity, text), so x_bst_startuptrk.logging.level governs this
+    // step exactly as it governs the Script Includes. See 7.2a.
+    var LOG = new AppProperties();
+
     var CLOSED_CODES = {
         alias_unresolved: true, alias_ambiguous: true, connection_unresolved: true,
-        api_version_retired: true, http_status: true, transport: true,
-        malformed: true, budget_reached: true
+        organizations_unconfigured: true, api_version_retired: true,
+        http_status: true, transport: true, malformed: true, budget_reached: true
     };
 
     var rows = [];
@@ -1549,64 +1669,38 @@ The mapper stamps the normal outcomes itself, inside `ingest()`, in a `finally` 
             '" budget_hit="' + (String(inputs.budget_hit || '') || 'none') +
             '" outcome="reading the staging table for every row"';
         if (severity === 'info') {
-            gs.info(line);
+            LOG.log('info', line);
         } else {
-            gs.warn(line);
+            LOG.log('warn', line);
         }
     }
 
     // ---- Claim every row before emitting it. See the staging-row claim in 4.4.
     try {
-        var staging = new GlideRecord(STAGING);
-        staging.addQuery('source_system', 'linkedin');
-        staging.addQuery('import_state', 'pending');
-        staging.orderBy('sys_id');
-        staging.query();
+        // ONE implementation of the claim-and-lease rule, in IngestionMapper, shared with
+        // step 4 of guide 02. It writes this run's lease into import_run, reads the claim
+        // back, leaves a row another run holds alone, and leaves import_state pending until
+        // the row is settled. See the staging-row claim in 4.4.
+        var claim = new IngestionMapper().claimStagingRows(inputs.run_id, 'linkedin');
+        var c = 0;
 
-        var LEASE = 'run:';
-        var mine = LEASE + inputs.run_id;
+        // Its diagnostics are RETURNED, not logged, and are rendered here as step lines: the
+        // mapper resets the IngestionLogger when step 5 calls ingest(), so an event recorded
+        // inside the claim would be discarded before the evidence block is assembled.
+        for (c = 0; c !== claim.notes.length; c++) {
+            LOG.log('warn', '[x_bst_startuptrk.ingestion] event="' + claim.notes[c].event +
+                '" run="' + inputs.run_id + '" staging="staging:' +
+                claim.notes[c].staging_id + '" outcome="' + claim.notes[c].outcome + '"');
+        }
 
-        while (staging.next()) {
-            var stagingId = staging.getUniqueValue();
-            var recordType = String(staging.getValue('record_type') || '');
-
-            // A pending row already leased by ANOTHER run was abandoned there. Leave
-            // it alone: re-reading it would re-run whatever killed that run. Only
-            // import_run distinguishes the two. See the staging-row claim in 4.4.
-            var held = String(staging.getValue('import_run') || '');
-            if (held.indexOf(LEASE) === 0 && held !== mine) {
-                gs.warn('[x_bst_startuptrk.ingestion] event="claim_held_elsewhere" run="' +
-                    inputs.run_id + '" staging="staging:' + stagingId + '"');
-                continue;
-            }
-
-            // Claim the row, then read the claim back. import_state is NOT written
-            // here: it stays pending until the row is settled. See 4.4.
-            staging.setValue('import_run', mine);
-            if (!staging.update()) {
-                gs.warn('[x_bst_startuptrk.ingestion] event="claim_refused" run="' +
-                    inputs.run_id + '" staging="staging:' + stagingId + '"');
-                continue;
-            }
-
-            var claimed = new GlideRecord(STAGING);
-            if (!claimed.get(stagingId)) {
-                continue;
-            }
-            if (String(claimed.getValue('import_run')) !== mine) {
-                gs.warn('[x_bst_startuptrk.ingestion] event="claim_lost" run="' +
-                    inputs.run_id + '" staging="staging:' + stagingId +
-                    '" outcome="another run holds this row; skipped"');
-                continue;
-            }
-
-            stagedIds.push(stagingId);
+        for (c = 0; c !== claim.claimed.length; c++) {
+            stagedIds.push(claim.claimed[c].staging_id);
             // The envelope, NOT mapStagingRow's return value. See 4.5.
-            rows.push({ record_type: recordType, staging_id: stagingId });
+            rows.push(claim.claimed[c]);
         }
     } catch (stagingError) {
         outputs.step_error = 'the staging read could not complete';
-        gs.error('[x_bst_startuptrk.ingestion] event="staging_read_failed" run="' +
+        LOG.log('error', '[x_bst_startuptrk.ingestion] event="staging_read_failed" run="' +
             inputs.run_id + '" claimed="' + stagedIds.length + '"');
     }
 
@@ -1616,7 +1710,7 @@ The mapper stamps the normal outcomes itself, inside `ingest()`, in a `finally` 
     outputs.claimed_count = stagedIds.length;
     outputs.fallback_reason = reason;
 
-    gs.info('[x_bst_startuptrk.ingestion] event="source_resolved" run="' +
+    LOG.log('info', '[x_bst_startuptrk.ingestion] event="source_resolved" run="' +
         inputs.run_id + '" provenance="fallback' +
         '" rows="' + rows.length + '" staged="' + stagedIds.length +
         '" reason="' + reason + '"');
@@ -1652,7 +1746,8 @@ This step calls **`IngestionMapper.ingest(runId, sourceSystem, provenance, rows)
 | `events` | String | The structured events `IngestionLogger.drainEvents()` returned, as a JSON array. **Step 8's Log action writes these to the flow execution log.** See [8.5](#85--publishing-the-events-to-the-flow-execution-log). |
 | `accepted_count` | Integer | Records written. `counters().processed`. |
 | `rejected_count` | Integer | Records rejected by rule 4, by a refused or over-length value, or by an unresolvable `startup` reference. `counters().rejected`. |
-| `skipped_count` | Integer | Operational skips. `counters().skipped`. |
+| `skipped_count` | Integer | Operational failures of either kind — a row whose write did not complete, a reference that would not set, a staging state that would not record. `counters().skipped`. |
+| `error_count` | Integer | Of those, the incoming rows whose **own** write did not complete. `counters().errors`, a subset of `skipped_count`. Step 7 reconciles the batch on this figure and step 8c reports it as `write_failures`. See [7.3](#73--cleaning-rule-outcomes-are-expected-behaviour-not-errors). |
 | `duplicate_count` | Integer | `counters().duplicates`. Zero on this flow, because rule 2 applies to the `startup` record type only and this flow writes none. |
 | `unmatched_count` | Integer | `choice_unmatched` events raised on this batch, taken **directly** from `counters().unmatched` and never derived by subtraction. |
 | `deviation_count` | Integer | Of those, how many were the flagged rule-3 deviation of [5.4](#54--the-no-other-conflict-and-why-it-is-flagged-rather-than-resolved). `counters().rule3_deviations`. |
@@ -1672,7 +1767,7 @@ These are applied in the order below, which is the order the delivered `Ingestio
 
 **Rule 1 — trim whitespace on all string fields.** `IngestionMapper.trimStrings()` applies `trim()` to every string-typed value on the record before anything else looks at it.
 
-**Rule 2 — deduplicate incoming Startup records on `name` + `headquarters_location`, case-insensitively.** `IngestionMapper.startupKey()` forms the key as the lower-cased name, a pipe, then the lower-cased headquarters location. `IngestionMapper.dedupeBatch()` applies it at **batch scope**, after each record has been prepared and before any reference is resolved: the first occurrence of a key is accepted, and every later occurrence in the same batch is rejected, logged by `IngestionLogger.duplicateRecord()` with the reason text `duplicate startup in the same batch`, and settled on its staging row with the controlled outcome code `duplicate_in_batch` — the reason text reaches the run log, and `error_message` carries the code and an opaque reference only. The rule applies to the `startup` record type only.
+**Rule 2 — deduplicate incoming Startup records on `name` + `headquarters_location`, case-insensitively.** `IngestionMapper.startupKey()` forms the key as the lower-cased name, a pipe, then the lower-cased headquarters location. `IngestionMapper.dedupeBatch()` applies it at **batch scope**, after each record has been prepared and before any reference is resolved: one entry per key is kept and every other entry carrying that key is rejected, logged by `IngestionLogger.duplicateRecord()` with the reason text `duplicate startup in the same batch`, and settled on its staging row with the controlled outcome code `duplicate_in_batch` — the reason text reaches the run log, and `error_message` carries that same closed reason string and nothing else — never provider text, never exception text and never a personal datum. The rule applies to the `startup` record type only. **Which entry is kept is decided from the records, not from the order the rows were read in**: `_preferredDuplicate()` keeps the entry populating more fields, settles an exact tie on the canonical form of the mapped values, and only for two byte-identical records falls through to the staging row identifier, where the choice cannot change what is stored. Staging rows are read in `sys_id` order, which is not the order a CSV was written in and differs when the same data are staged again, so a positional rule would store different values on two runs over equivalent data.
 
 This is the **shared deduplication key**. This flow ingests no `startup` record type, so rule 2 rejects nothing here — but the key is the same one this flow resolves company identity through in [6.2](#62--the-shared-startup-upsert-path), which is what lets a founder ingested from LinkedIn attach to a startup ingested from Crunchbase.
 
@@ -1759,11 +1854,17 @@ Both carry `Other`, so an unmatched title on either table coerces to `Other` and
 ```javascript
 (function execute(inputs, outputs) {
 
+    // Every application log line in this step goes through the one gate,
+    // AppProperties.log(severity, text), so x_bst_startuptrk.logging.level governs this
+    // step exactly as it governs the Script Includes. See 7.2a.
+    var LOG = new AppProperties();
+
     outputs.entries = '[]';
     outputs.events = '[]';
     outputs.accepted_count = 0;
     outputs.rejected_count = 0;
     outputs.skipped_count = 0;
+    outputs.error_count = 0;
     outputs.duplicate_count = 0;
     outputs.unmatched_count = 0;
     outputs.deviation_count = 0;
@@ -1778,7 +1879,7 @@ Both carry `Other`, so an unmatched title on either table coerces to `Other` and
         incoming = JSON.parse(inputs.rows || '[]');
     } catch (parseError) {
         outputs.step_error = 'the row batch is not parseable JSON';
-        gs.error('[x_bst_startuptrk.ingestion] event="batch_unreadable" run="' +
+        LOG.log('error', '[x_bst_startuptrk.ingestion] event="batch_unreadable" run="' +
             inputs.run_id + '" source="linkedin" outcome="' +
             outputs.step_error + '"');
         return;                    // Step 7 sweeps the claimed staging rows.
@@ -1805,7 +1906,7 @@ Both carry `Other`, so an unmatched title on either table coerces to `Other` and
         var diagnostic = props.fingerprint(caught);
         outputs.step_error = 'unexpected_fault (diagnostic ' + diagnostic + ', ' +
             caught.length + ' characters, text withheld)';
-        gs.error('[x_bst_startuptrk.ingestion] event="batch_failed" run="' +
+        LOG.log('error', '[x_bst_startuptrk.ingestion] event="batch_failed" run="' +
             inputs.run_id + '" source="linkedin" code="unexpected_fault"' +
             ' diagnostic="' + diagnostic + '" characters="' + caught.length +
             '" detail="' + props.safeText(caught, 400) + '"');
@@ -1815,6 +1916,7 @@ Both carry `Other`, so an unmatched title on either table coerces to `Other` and
     outputs.accepted_count = counts.processed;
     outputs.rejected_count = counts.rejected;
     outputs.skipped_count = counts.skipped;
+    outputs.error_count = counts.errors;
     outputs.duplicate_count = counts.duplicates;
     outputs.unmatched_count = counts.unmatched;
     outputs.deviation_count = counts.rule3_deviations;
@@ -1847,10 +1949,11 @@ Both carry `Other`, so an unmatched title on either table coerces to `Other` and
     // Drained LAST, so the run_summary event ingest() wrote is included.
     outputs.events = JSON.stringify(logger.drainEvents());
 
-    gs.info('[x_bst_startuptrk.ingestion] event="batch_ingested" run="' +
+    LOG.log('info', '[x_bst_startuptrk.ingestion] event="batch_ingested" run="' +
         inputs.run_id + '" processed="' + counts.processed +
         '" rejected="' + counts.rejected +
         '" skipped="' + counts.skipped +
+        '" errors="' + counts.errors +
         '" unmatched="' + counts.unmatched +
         '" rule3_deviations="' + counts.rule3_deviations +
         '" summary_logged="' + outputs.summary_logged +
@@ -2061,6 +2164,11 @@ None of this flow's three tables carries a derived column, so no recalculation f
 ```javascript
 (function execute(inputs, outputs) {
 
+    // Every application log line in this step goes through the one gate,
+    // AppProperties.log(severity, text), so x_bst_startuptrk.logging.level governs this
+    // step exactly as it governs the Script Includes. See 7.2a.
+    var LOG = new AppProperties();
+
     var TABLES = {
         founder: 'x_bst_startuptrk_founder',
         executive: 'x_bst_startuptrk_executive',
@@ -2086,7 +2194,7 @@ None of this flow's three tables carries a derived column, so no recalculation f
         outputs.entries_parse_ok = true;
     } catch (parseError) {
         outputs.step_error = 'the entry list is not parseable JSON';
-        gs.error('[x_bst_startuptrk.ingestion] event="entries_unreadable" run="' +
+        LOG.log('error', '[x_bst_startuptrk.ingestion] event="entries_unreadable" run="' +
             inputs.run_id + '" outcome="' + outputs.step_error + '"');
         return;
     }
@@ -2144,7 +2252,7 @@ None of this flow's three tables carries a derived column, so no recalculation f
         }
     }
 
-    gs.info('[x_bst_startuptrk.ingestion] event="writes_confirmed" run="' +
+    LOG.log('info', '[x_bst_startuptrk.ingestion] event="writes_confirmed" run="' +
         inputs.run_id + '" written="' + outputs.written_count +
         '" by_type="' + outputs.by_type +
         '" unresolved="' + outputs.unresolved_count +
@@ -2180,7 +2288,7 @@ This is the error-handling contract of the whole flow: **log the failure, skip t
 
 | Surface | Table | Written by | Read by |
 | --- | --- | --- | --- |
-| **The application log** | `syslog` | `IngestionLogger._emit()` through `gs.info` / `gs.warn` / `gs.error`, and the flow's own step lines through the same calls. | An operator filtering `syslog` on the `[x_bst_startuptrk.ingestion]` prefix. Subject to `x_bst_startuptrk.logging.level` and to log retention. |
+| **The application log** | `syslog` | `IngestionLogger._emit()`, and the flow's own step lines, both through the one gate `AppProperties.log(severity, text)` — see [7.2a](#72a--one-log-gate-and-what-logginglevel-actually-governs). | An operator filtering `syslog` on the `[x_bst_startuptrk.ingestion]` prefix. Subject to `x_bst_startuptrk.logging.level` and to log retention. |
 | **The flow execution log** | `sys_flow_log`, reachable from the flow's own execution detail | **Step 8's Log action**, and nothing else. It writes the events `IngestionLogger.drainEvents()` returned. | An operator opening the flow execution in Flow Designer. Not subject to the logging-level threshold, and retained with the execution. |
 
 Prompt section 8.0 requires ingestion failures to be logged **to the flow execution log**. `IngestionLogger` alone does not satisfy that: it writes to the application log and *buffers* the same events for retrieval. **The buffer is only published if something drains it and writes it out** — which is what step 8's Log action of [8.5](#85--publishing-the-events-to-the-flow-execution-log) exists to do. A build without that action logs to `syslog` only, and the flow execution shows a clean run with no detail.
@@ -2194,6 +2302,7 @@ Prompt section 8.0 requires ingestion failures to be logged **to the flow execut
 | `info()` | `info` | info | — |
 | `warn()` | `warning` | warn | — |
 | `skipRecord()` | `record_skipped` | **error** | `skipped` |
+| `failRecord()` | `record_failed` | **error** | `skipped` **and** `errors` |
 | `rejectRecord()` | `record_rejected` | warn | `rejected` |
 | `duplicateRecord()` | `record_duplicate` | warn | `duplicates` |
 | `unmatchedChoice()` | `choice_unmatched` | warn | `unmatched`, and `rule3_deviations` when its `deviation` member is `true` |
@@ -2203,7 +2312,7 @@ Prompt section 8.0 requires ingestion failures to be logged **to the flow execut
 | `markRunComplete()`, marker written | `run_completed` | info | — |
 | `markRunComplete()`, refused | `run_completion_refused` | **error** | — |
 
-The `run_summary` event carries `provenance`, `source_system`, `processed`, `rejected`, `skipped`, `duplicates`, `unmatched`, `rule3_deviations` and `events_dropped`. **It carries no marker outcome, because `writeRunSummary()` writes no property.** The completion marker of [1.1](#11--what-the-guard-compares) is stamped by `IngestionLogger.markRunComplete()`, called only from part `8c` and only on a healthy run, and it reports its own outcome in the separate `run_completed` event.
+The `run_summary` event carries `provenance`, `source_system`, `processed`, `rejected`, `skipped`, `errors`, `duplicates`, `unmatched`, `rule3_deviations` and `events_dropped`. **It carries no marker outcome, because `writeRunSummary()` writes no property.** The completion marker of [1.1](#11--what-the-guard-compares) is stamped by `IngestionLogger.markRunComplete()`, called only from part `8c` and only on a healthy run, and it reports its own outcome in the separate `run_completed` event.
 
 `run_completed` carries `source_system`, `provenance`, `stamp` and `verified`; `run_completion_refused` carries the source and the reason. **A run with neither was not healthy and step 1's guard will not advance**, so the flow retries on the next hourly trigger — which is the intended direction; see [8.6](#86--part-8c--assert-publication-then-complete-or-release-the-lease).
 
@@ -2213,21 +2322,22 @@ Nine lines, one or two per step that produces them. All are prefixed `[x_bst_sta
 
 | Step | Event name | Severity | Members carried |
 | --- | --- | --- | --- |
-| 1 | `cadence_guard` | info | `run`, `cadence_hours`, `hours_elapsed`, `outcome` — where `outcome` is `proceed` or `no_op`. |
+| 1 | `cadence_guard` | info on `proceed` and `no_op`, **warn** on either lease refusal | `run`, `cadence_hours`, `hours_elapsed`, `outcome` — where `outcome` is `proceed`, `no_op`, `lease_held_elsewhere` or `lease_unavailable`. The two lease refusals also carry `holder` and `reason`. |
 | 2 | `source_mode` | info | `run`, `mode`. |
 | 3 | `live_probe` | info | `run`, `source`, `arm`, `pages`, `calls`, `organizations`, `failed_calls`, `truncated`, `budget_hit`, `error_code`, `probe_ok`, `rows`, `note`. |
 | 4 | `probe_outcome` | info on `no_live_read_api`, **warn** otherwise | `run`, `source`, `reason`, `status`, `organizations`, `truncated`, `budget_hit`, `outcome`. Written whenever a probe ran, not on a forced fallback. |
 | 4 | `source_resolved` | info | `run`, `provenance`, `rows`, `staged`, `reason`. |
-| 5 | `batch_ingested` | info | `run`, `processed`, `rejected`, `skipped`, `unmatched`, `rule3_deviations`, `summary_logged`, `events_dropped`. |
+| 5 | `batch_ingested` | info | `run`, `processed`, `rejected`, `skipped`, `errors`, `unmatched`, `rule3_deviations`, `summary_logged`, `events_dropped`. |
 | 6 | `writes_confirmed` | info | `run`, `written`, `by_type`, `unresolved`, `parents_confirmed`, `parents_consistent`, `cross_table_clean`, `entries_parse_ok`. |
-| 7 | `batch_reconciled` | info | `run`, `incoming`, `processed`, `rejected`, `skipped`, `duplicates`, `unmatched`, `rule3_deviations`, `settled`, `swept`, `claim_parse_ok`, `claim_shortfall`, `call_failures`, `call_log_ok`, `reconciled`. |
+| 7 | `batch_reconciled` | info | `run`, `incoming`, `processed`, `rejected`, `skipped`, `errors`, `duplicates`, `unmatched`, `rule3_deviations`, `settled`, `swept`, `claim_parse_ok`, `claim_shortfall`, `call_failures`, `call_log_ok`, `reconciled`. |
 | 8c | `run_closed` | info | `run`, `source`, `published`, `healthy`, `faults`, `marker_stamped`, `marker_verified`, `stamp`, `lease_released`. **The last line of every guard-passing execution.** |
 
-**Fourteen** further event names exist only on a failure path, grouped into nine rows below.
+**Sixteen** further event names exist only on a failure path, grouped into nine rows below.
 
 | Step | Event name | Severity | When |
 | --- | --- | --- | --- |
-| 4 | `claim_refused`, `claim_lost` | warn | A staging row would not take this run's claim, or another run took it first. |
+| 4 | `claim_held_elsewhere`, `claim_refused`, `claim_lost`, `claim_unreadable` | warn | One line per staging row this run did **not** claim, rendered from the notes `IngestionMapper.claimStagingRows()` returns: another run already holds the row; the row would not take this run's claim; the claim did not read back; or the row's payload could not be read. Each carries `staging` and a closed `outcome`. |
+| 4 | `claim_batch_bounded` | warn | **At most one line per run**, and only when the run filled its `STAGING_BATCH_LIMIT` batch of `200` rows. It carries an empty `staging` and an `outcome` naming the batch size, and it says the remainder stayed pending for the next run. It is not a row-level refusal and it is not an error. |
 | 4 | `staging_read_failed` | error | The staging read could not complete. |
 | 5 | `batch_unreadable` | error | The incoming row array would not parse. |
 | 5 | `batch_failed` | error | `ingest()` raised. |
@@ -2241,6 +2351,23 @@ Nine lines, one or two per step that produces them. All are prefixed `[x_bst_sta
 
 `IngestionLogger` scrubs person and free-text values out of every event it records, so a record is identified by an opaque reference rather than by name, address or URL. **Do not add your own `gs.log` calls carrying record values** to work around that, and do not add step lines beyond those listed — the `run` member is the only correlation key any of them needs.
 
+### 7.2a — One log gate, and what `logging.level` actually governs
+
+**Every application log line this flow writes goes through `AppProperties.log(severity, text)`, and no step calls `gs.info`, `gs.warn`, `gs.error` or `gs.debug` directly.** That method resolves the severity through `normaliseSeverity()`, compares it against `x_bst_startuptrk.logging.level` through `isLogLevelEnabled()`, and writes only when the level admits it — returning `true` when it wrote and `false` when the level suppressed the line.
+
+**Why it is a gate and not a convenience.** `logging.level` is a property of the application, not of a class, and an operator who sets it to `error` is asking this application to stop writing informational lines. Before this gate, the Script Includes honoured that and the flow steps did not: `IngestionLogger`, `IngestionMapper`, `RestQueryHelper`, `RestResponseBuilder` and the pruning job all tested the level, while every step script wrote unconditionally. The result was a level that half worked — `record_skipped` suppressed while `batch_ingested` was still written — which is worse than a level that does nothing, because the log then looks complete and is not.
+
+| Severity | Written when `logging.level` is | Used for |
+| --- | --- | --- |
+| `debug` | `debug` | Nothing in the delivered steps. Available to a build that adds a trace line. |
+| `info` | `debug`, `info` | Step outcomes — `cadence_guard`, `source_mode`, `live_call`, `source_resolved`, `batch_ingested`, `writes_confirmed`, `batch_reconciled`, `run_closed`. |
+| `warn` | `debug`, `info`, `warn` | Recoverable conditions — `live_call_failed`, `endpoint_refused`, `connection_url_divergent`, the claim notes, `evidence_truncated`. |
+| `error` | any level | Faults — `batch_unreadable`, `batch_failed`, `participation_mismatch`, `claim_shortfall`, `run_incomplete`. |
+
+**An unrecognised severity resolves to `error`, so it is never suppressed.** A diagnostic must not be lost to a typo in its own severity argument.
+
+**Three things `logging.level` does not govern, and it matters that they are separate.** The run-state marker is a **property**, so the cadence guard reads it whatever the level. The flow execution log is written by step `8b`'s **Log action**, so the criterion-4 evidence survives a level of `error`. And a step's **outputs** are flow data rather than log lines, so the health assertions of `8c` are unaffected. What a level of `error` does cost is the human-readable narrative in `syslog`: set it to `info` before running the three counted runs, as the pre-run checks require.
+
 ### 7.3 — Cleaning-rule outcomes are expected behaviour, not errors
 
 This distinction is what makes the criterion-4 evidence readable.
@@ -2248,9 +2375,10 @@ This distinction is what makes the criterion-4 evidence readable.
 - A record **rejected** by rule 4 for a missing mandatory field, **rejected** for a refused or over-length value, or **rejected** because its parent Startup did not resolve, is the cleaning rules and the reference contract working as specified. It increments `rejected` or `duplicates`. **It is not an unhandled error and does not count as one.**
 - A value **left unwritten** by rule 3 increments `unmatched`, and additionally `rule3_deviations` where the choice list declares no `Other`. **Neither is an error**, and the record it belongs to is still written. `rule3_deviations` is a *specification-conflict* count, not a failure count; see [5.4](#54--the-no-other-conflict-and-why-it-is-flagged-rather-than-resolved).
 - A URL or address **refused** by the boundary validation of [5.7](#57--url-and-address-validation-at-the-ingestion-boundary) raises a `value_undecodable` event and increments no counter. The record is still written without that field. **Not an error.**
-- A record **skipped** by `skipRecord()` is an operational failure — a write that would not complete, a reference that would not set. It increments `skipped` and is emitted at **error** severity. **This is the counter criterion 4 is read against.**
+- A record **skipped** by `skipRecord()` is an operational failure — a reference that would not set, a staging state that would not record, a row another run holds. It increments `skipped` and is emitted at **error** severity. **This is the counter criterion 4 is read against**, and it still counts every failure of either kind.
+- A record **failed** by `failRecord()` is an incoming row whose own write did not complete. It increments **both** `skipped` and `errors`, and is emitted at **error** severity as `record_failed`. `errors` is therefore a subset of `skipped`: the part of it that is a row missing from its table, as distinct from a join row or a staging state that would not write. Two consequences follow, and both matter to the evidence. `processed` plus `rejected` plus `duplicates` plus **`errors`** is the number of rows the batch carried — which is the identity step 7 reconciles on, and it stays true when a secondary failure occurs alongside. And step 8c names the fault `write_failures` rather than `operational_skips`, so the run's reason says a row did not reach its table rather than leaving an operator to work out which kind of skip they are looking at.
 
-Criterion 4 requires **zero unhandled errors** across three consecutive scheduled runs. A run whose `rejected`, `duplicates`, `unmatched` and `rule3_deviations` counters are non-zero while `skipped` is zero and nothing escaped a `try`/`catch` still satisfies that criterion. Report every counter separately and never fold them together.
+Criterion 4 requires **zero unhandled errors** across three consecutive scheduled runs. A run whose `rejected`, `duplicates`, `unmatched` and `rule3_deviations` counters are non-zero while `skipped` is zero and nothing escaped a `try`/`catch` still satisfies that criterion. `skipped` zero implies `errors` zero, because the one contains the other, so the criterion is read against the same counter it always was. Report every counter separately and never fold them together.
 
 ### 7.4 — The counters come from the logger, never from arithmetic
 
@@ -2263,6 +2391,7 @@ The rule is worth stating as a prohibition, because the arithmetic looks plausib
 | `processed` | `counters().processed`, via step 5's `accepted_count`. | — |
 | `rejected` | `counters().rejected`. | — |
 | `skipped` | `counters().skipped`. | — |
+| `errors` | `counters().errors`, via step 5's `error_count`. | **Not** `skipped` minus anything, and not a count of `record_failed` log lines. The logger counts it; this step carries it. |
 | `duplicates` | `counters().duplicates`. Zero on this flow. | — |
 | `unmatched` | `counters().unmatched`. | `accepted_count - processed` measures **accepted records that were not written**, which is a write-failure count. It is unrelated to how many choice values matched nothing, and on a healthy run it is zero while `unmatched` may be large. |
 | `rule3_deviations` | `counters().rule3_deviations`. | No derivation exists. It is a strict subset of `unmatched` and cannot be recovered from any other figure. |
@@ -2310,6 +2439,7 @@ The union is swept. `claim_shortfall` then reports any claimed row that **neithe
 | `accepted_count` | Integer | Data pill: **Step 5 → accepted_count**. |
 | `rejected_count` | Integer | Data pill: **Step 5 → rejected_count**. |
 | `skipped_count` | Integer | Data pill: **Step 5 → skipped_count**. |
+| `error_count` | Integer | Data pill: **Step 5 → error_count**. **Bind this pill:** it is the figure this step reconciles the batch on. |
 | `duplicate_count` | Integer | Data pill: **Step 5 → duplicate_count**. |
 | `unmatched_count` | Integer | Data pill: **Step 5 → unmatched_count**. |
 | `deviation_count` | Integer | Data pill: **Step 5 → deviation_count**. |
@@ -2320,7 +2450,8 @@ The union is swept. `claim_shortfall` then reports any claimed row that **neithe
 | --- | --- | --- |
 | `processed` | Integer | Records written. |
 | `rejected` | Integer | Rule-4, refusal, over-length and unresolved-parent rejections. |
-| `skipped` | Integer | Operational skips. **The criterion-4 figure.** |
+| `skipped` | Integer | Operational failures of either kind. **The criterion-4 figure.** |
+| `errors` | Integer | Of those, the incoming rows whose own write failed. `processed` plus `rejected` plus `duplicates` plus this figure is `row_count` when the batch reconciles. |
 | `duplicates` | Integer | Rule-2 within-batch duplicates. Zero on this flow, because rule 2 applies to the `startup` record type only. |
 | `unmatched` | Integer | Rule-3 values that matched no choice member. |
 | `rule3_deviations` | Integer | Of those, the flagged deviations. |
@@ -2338,6 +2469,11 @@ The union is swept. `claim_shortfall` then reports any claimed row that **neithe
 ```javascript
 (function execute(inputs, outputs) {
 
+    // Every application log line in this step goes through the one gate,
+    // AppProperties.log(severity, text), so x_bst_startuptrk.logging.level governs this
+    // step exactly as it governs the Script Includes. See 7.2a.
+    var LOG = new AppProperties();
+
     var STAGING = 'x_bst_startuptrk_ingest_staging';
     var toInt = function (value) { return parseInt(value, 10) || 0; };
 
@@ -2345,6 +2481,7 @@ The union is swept. `claim_shortfall` then reports any claimed row that **neithe
     outputs.processed = toInt(inputs.accepted_count);
     outputs.rejected = toInt(inputs.rejected_count);
     outputs.skipped = toInt(inputs.skipped_count);
+    outputs.errors = toInt(inputs.error_count);
     outputs.duplicates = toInt(inputs.duplicate_count);
     outputs.unmatched = toInt(inputs.unmatched_count);
     outputs.rule3_deviations = toInt(inputs.deviation_count);
@@ -2372,7 +2509,7 @@ The union is swept. `claim_shortfall` then reports any claimed row that **neithe
         }
         outputs.claim_parse_ok = true;
     } catch (parseError) {
-        gs.error('[x_bst_startuptrk.ingestion] event="claim_pill_unreadable" run="' +
+        LOG.log('error', '[x_bst_startuptrk.ingestion] event="claim_pill_unreadable" run="' +
             inputs.run_id + '" outcome="staged_ids is not a parseable JSON array;' +
             ' recovering the claim from the staging table"');
     }
@@ -2413,7 +2550,7 @@ The union is swept. `claim_shortfall` then reports any claimed row that **neithe
                 'code=run_abandoned ref=staging:' + staging.getUniqueValue());
             if (staging.update()) {
                 outputs.swept = outputs.swept + 1;
-                gs.warn('[x_bst_startuptrk.ingestion] event="row_abandoned" run="' +
+                LOG.log('warn', '[x_bst_startuptrk.ingestion] event="row_abandoned" run="' +
                     inputs.run_id + '" staging="' + staging.getUniqueValue() +
                     '" was="' + state + '"');
             }
@@ -2427,7 +2564,7 @@ The union is swept. `claim_shortfall` then reports any claimed row that **neithe
             outputs.claim_shortfall + (reportedClaims - claimedIds.length);
     }
     if (outputs.claim_shortfall !== 0) {
-        gs.error('[x_bst_startuptrk.ingestion] event="claim_shortfall" run="' +
+        LOG.log('error', '[x_bst_startuptrk.ingestion] event="claim_shortfall" run="' +
             inputs.run_id + '" reported="' + reportedClaims +
             '" recovered="' + claimedIds.length +
             '" shortfall="' + outputs.claim_shortfall + '"');
@@ -2451,19 +2588,19 @@ The union is swept. `claim_shortfall` then reports any claimed row that **neithe
         outputs.call_log_ok =
             (outputs.call_failures === toInt(inputs.failed_calls));
         if (!outputs.call_log_ok) {
-            gs.error('[x_bst_startuptrk.ingestion] event="call_log_disagrees" run="' +
+            LOG.log('error', '[x_bst_startuptrk.ingestion] event="call_log_disagrees" run="' +
                 inputs.run_id + '" entries_failing="' + outputs.call_failures +
                 '" failed_calls="' + toInt(inputs.failed_calls) + '"');
         }
     } catch (logError) {
-        gs.error('[x_bst_startuptrk.ingestion] event="call_log_unreadable" run="' +
+        LOG.log('error', '[x_bst_startuptrk.ingestion] event="call_log_unreadable" run="' +
             inputs.run_id + '" outcome="the call_log pill is unbound or not a' +
             ' parseable JSON array"');
     }
     outputs.call_failure_codes = JSON.stringify(codes);
 
     if (outputs.call_failures !== 0) {
-        gs.warn('[x_bst_startuptrk.ingestion] event="call_failures" run="' +
+        LOG.log('warn', '[x_bst_startuptrk.ingestion] event="call_failures" run="' +
             inputs.run_id + '" source="linkedin" failures="' +
             outputs.call_failures + '" codes="' + outputs.call_failure_codes +
             '" truncated="' + (inputs.truncated === true) +
@@ -2471,19 +2608,25 @@ The union is swept. `claim_shortfall` then reports any claimed row that **neithe
     }
 
     var incoming = toInt(inputs.row_count);
+    /* Reconciled on errors, not on skipped: errors counts the incoming rows whose own
+       write failed, while skipped is the wider operational-failure count that also carries a
+       join row or a staging state that would not write. Summing skipped here would exceed the
+       incoming count on a run whose only extra failure was secondary, and would report a
+       reconciliation fault where the arithmetic is sound. See 7.3. */
     var accounted = outputs.processed + outputs.rejected +
-                    outputs.skipped + outputs.duplicates;
+                    outputs.errors + outputs.duplicates;
 
     outputs.reconciled = (accounted === incoming) &&
         (outputs.settled + outputs.swept === claimedIds.length) &&
         (outputs.claim_shortfall === 0) &&
         (outputs.call_log_ok === true);
 
-    gs.info('[x_bst_startuptrk.ingestion] event="batch_reconciled" run="' +
+    LOG.log('info', '[x_bst_startuptrk.ingestion] event="batch_reconciled" run="' +
         inputs.run_id + '" incoming="' + incoming +
         '" processed="' + outputs.processed +
         '" rejected="' + outputs.rejected +
         '" skipped="' + outputs.skipped +
+        '" errors="' + outputs.errors +
         '" duplicates="' + outputs.duplicates +
         '" unmatched="' + outputs.unmatched +
         '" rule3_deviations="' + outputs.rule3_deviations +
@@ -2560,6 +2703,7 @@ Every input is a data pill. Bind them; do not retype a value.
 | `summary_logged` | True/False | **Step 5 → summary_logged**. |
 | `events_dropped` | Integer | **Step 5 → events_dropped**. |
 | `skipped` | Integer | **Step 7 → skipped**. |
+| `errors` | Integer | **Step 7 → errors**. |
 | `reconciled` | True/False | **Step 7 → reconciled**. |
 
 | Output variable | Type | Meaning |
@@ -2570,7 +2714,10 @@ Every input is a data pill. Bind them; do not retype a value.
 | `events_omitted` | Integer | How many the block ceiling left out. **Any value above zero is required-data truncation.** |
 | `events_parsed` | True/False | `false` when `events` was unbound or not a parseable JSON array. |
 | `summary_present` | True/False | `true` when the drained event set carried a `run_summary` event. **The single most important output of this part** — without it criterion 4 has nothing to read. |
-| `evidence_complete` | True/False | `true` when the events parsed, the summary is present, nothing was omitted and the block is within the ceiling. |
+| `evidence_complete` | True/False | `true` when the events parsed **and** the summary is present — the **substance** of the evidence. Deliberately not a length test: see `evidence_truncated` below and [8.4](#84--what-can-go-wrong-silently-and-the-outputs-that-catch-it). This is the member `8c` folds into the run's health. |
+| `evidence_truncated` | True/False | `true` when the ceiling left an event out of the block. Documented inside the block, counted by severity, and logged at **warn** — **not** a health fault, because a run that correctly rejected three hundred rows did nothing wrong. |
+| `events_omitted_error` | Integer | Of the omissions, how many were `error` severity. **Zero by construction on any block that fits its faults**, because the remainder is filled error first. |
+| `events_omitted_warn` | Integer | Of the omissions, how many were `warn` severity. |
 | `rendered` | True/False | `true` when a non-empty block was produced. **Not `published`** — see [8.1](#81--the-three-parts-and-what-each-sets). |
 
 ### 8.4 — What can go wrong silently, and the outputs that catch it
@@ -2581,7 +2728,7 @@ Each row is a failure that leaves a working-looking execution behind. Each has a
 | --- | --- | --- |
 | The `events` pill is unbound, or step 5 returned a truncated payload | `JSON.parse` throws. The earlier build absorbed this and published an empty block, so the execution looked clean and carried no evidence at all. | `events_parsed` `false` |
 | The block carries the header line and nothing else | Same cause as above, or step 5 drained the buffer before `ingest()` wrote the summary. | `summary_present` `false` |
-| A long run's evidence exceeds the block ceiling | The events that did not fit are omitted. The mandatory summary is never among them, because it is rendered first. | `events_omitted` above zero, `evidence_complete` `false` |
+| A long run's evidence exceeds the block ceiling | The events that did not fit are omitted. The mandatory summary is never among them, because it is rendered first, and neither is a fault line, because the remainder is filled `error` then `warn` then `info`. Room is reserved for the omission note, so the note that documents the truncation cannot itself be cut. | `evidence_truncated` `true`, with `events_omitted`, `events_omitted_error` and `events_omitted_warn` counting it. **`evidence_complete` stays `true`**: the evidence is shorter than the run, not missing. |
 | The logger's event buffer overflowed during the batch | Events were discarded before they ever reached this step, so no renderer can recover them. | `events_dropped` above zero, from step 5 |
 | `writeRunSummary()` refused the provenance | The value was neither `live` nor `fallback`, so no summary event exists to publish. On this flow that means the `provenance` pill is unbound. | `summary_logged` `false`, from step 5 |
 | A write would not complete, or a reference would not set | An operational skip. Distinct from a cleaning-rule rejection or an unresolved parent, both of which are expected behaviour; [7.3](#73--cleaning-rule-outcomes-are-expected-behaviour-not-errors) draws the line. | `skipped` above zero, from step 7 |
@@ -2599,7 +2746,14 @@ Prompt section 8.0 requires ingestion failures to reach the **flow execution log
 ```javascript
 (function execute(inputs, outputs) {
 
+    // Every application log line in this step goes through the one gate,
+    // AppProperties.log(severity, text), so x_bst_startuptrk.logging.level governs this
+    // step exactly as it governs the Script Includes. See 7.2a.
+    var LOG = new AppProperties();
+
     var BLOCK_LIMIT = 4000;
+    // Reserved for the omission note, so a truncation is always documented in full.
+    var NOTE_RESERVE = 220;
     var SUMMARY_EVENT = 'run_summary';
     var toInt = function (value) { return parseInt(value, 10) || 0; };
 
@@ -2607,6 +2761,9 @@ Prompt section 8.0 requires ingestion failures to reach the **flow execution log
     outputs.event_count = 0;
     outputs.events_rendered = 0;
     outputs.events_omitted = 0;
+    outputs.events_omitted_error = 0;
+    outputs.events_omitted_warn = 0;
+    outputs.evidence_truncated = false;
     outputs.events_parsed = false;
     outputs.summary_present = false;
     outputs.evidence_complete = false;
@@ -2632,7 +2789,7 @@ Prompt section 8.0 requires ingestion failures to reach the **flow execution log
         events = parsed;
         outputs.events_parsed = true;
     } catch (parseError) {
-        gs.error('[x_bst_startuptrk.ingestion] event="events_unreadable" run="' +
+        LOG.log('error', '[x_bst_startuptrk.ingestion] event="events_unreadable" run="' +
             inputs.run_id + '" outcome="the events pill is unbound or is not a' +
             ' parseable JSON array; the evidence block carries its header only"');
     }
@@ -2646,11 +2803,19 @@ Prompt section 8.0 requires ingestion failures to reach the **flow execution log
         ' summary_logged=' + (inputs.summary_logged === true) +
         ' events_dropped=' + toInt(inputs.events_dropped) +
         ' skipped=' + toInt(inputs.skipped) +
+        ' errors=' + toInt(inputs.errors) +
         ' reconciled=' + (inputs.reconciled === true) +
         ' events=' + events.length;
 
+    // The remainder is ordered by severity before it is filled, so a block that cannot
+    // carry everything carries the faults rather than the first informational lines to
+    // arrive. A run that rejected three hundred rows for a missing mandatory field is
+    // behaving exactly as cleaning rule 4 specifies -- see 7.3 -- and its one genuine
+    // fault must not be the line that fell off the end. Implements prompt 8.0 evidence.
     var mandatory = [];
-    var remainder = [];
+    var errorLines = [];
+    var warnLines = [];
+    var infoLines = [];
     var i = 0;
     for (i = 0; i < events.length; i++) {
         var event = events[i] || {};
@@ -2658,46 +2823,75 @@ Prompt section 8.0 requires ingestion failures to reach the **flow execution log
             outputs.summary_present = true;
             mandatory.push(render(event));
         } else {
-            remainder.push(render(event));
+            var severity = String(event.severity === undefined ||
+                event.severity === null ? 'info' : event.severity).toLowerCase();
+            if (severity === 'error') {
+                errorLines.push({ severity: 'error', line: render(event) });
+            } else if (severity === 'warn') {
+                warnLines.push({ severity: 'warn', line: render(event) });
+            } else {
+                infoLines.push({ severity: 'info', line: render(event) });
+            }
         }
     }
+    var remainder = errorLines.concat(warnLines).concat(infoLines);
 
     for (i = 0; i < mandatory.length; i++) {
         text = text + '\n' + mandatory[i];
         outputs.events_rendered = outputs.events_rendered + 1;
     }
 
-    var overrun = (text.length > BLOCK_LIMIT);
+    // Room is reserved for the omission note, so the note that documents a truncation is
+    // never itself the thing the ceiling cuts.
+    var ceiling = BLOCK_LIMIT - NOTE_RESERVE;
+    var overrun = (text.length > ceiling);
+    var omitted = { error: 0, warn: 0, info: 0 };
     for (i = 0; i < remainder.length; i++) {
-        if (overrun || text.length + 1 + remainder[i].length > BLOCK_LIMIT) {
-            break;
+        if (overrun || text.length + 1 + remainder[i].line.length > ceiling) {
+            omitted[remainder[i].severity] = omitted[remainder[i].severity] + 1;
+            continue;
         }
-        text = text + '\n' + remainder[i];
+        text = text + '\n' + remainder[i].line;
         outputs.events_rendered = outputs.events_rendered + 1;
     }
 
     outputs.events_omitted = events.length - outputs.events_rendered;
-    if (outputs.events_omitted > 0) {
+    outputs.events_omitted_error = omitted.error;
+    outputs.events_omitted_warn = omitted.warn;
+    outputs.evidence_truncated = (outputs.events_omitted > 0) || (overrun === true);
+    if (outputs.evidence_truncated) {
         text = text + '\n  omitted="' + outputs.events_omitted +
-            '" reason="evidence block ceiling of ' + BLOCK_LIMIT + ' characters"';
+            '" omitted_error="' + omitted.error +
+            '" omitted_warn="' + omitted.warn +
+            '" omitted_info="' + omitted.info +
+            '" order="error, then warn, then info"' +
+            ' reason="evidence block ceiling of ' + BLOCK_LIMIT + ' characters"';
     }
 
     outputs.log_text = text;
     outputs.rendered = (text.length > 0);
+    /* Completeness is the SUBSTANCE of the evidence -- the events were readable and the run
+       summary is present -- and not whether every line fitted. A truncation is reported
+       separately, counted by severity, documented inside the block and logged at warn, so it
+       is visible without failing the health of a run in which nothing went wrong. Before
+       this split, a run that correctly rejected three hundred rows was reported unhealthy
+       for the sole reason that its evidence did not fit in four thousand characters. */
     outputs.evidence_complete = (outputs.events_parsed === true) &&
-        (outputs.summary_present === true) &&
-        (outputs.events_omitted === 0) &&
-        (overrun === false);
+        (outputs.summary_present === true);
 
     if (!outputs.summary_present) {
-        gs.error('[x_bst_startuptrk.ingestion] event="run_summary_absent" run="' +
+        LOG.log('error', '[x_bst_startuptrk.ingestion] event="run_summary_absent" run="' +
             inputs.run_id + '" outcome="the drained event set carries no run_summary' +
             ' event; criterion 4 has nothing to read for this run"');
     }
-    if (outputs.events_omitted > 0) {
-        gs.warn('[x_bst_startuptrk.ingestion] event="evidence_truncated" run="' +
+    if (outputs.evidence_truncated) {
+        LOG.log('warn', '[x_bst_startuptrk.ingestion] event="evidence_truncated" run="' +
             inputs.run_id + '" rendered="' + outputs.events_rendered +
-            '" omitted="' + outputs.events_omitted + '"');
+            '" omitted="' + outputs.events_omitted +
+            '" omitted_error="' + outputs.events_omitted_error +
+            '" omitted_warn="' + outputs.events_omitted_warn +
+            '" outcome="the run summary and every fault line are in the block; the' +
+            ' omission is documented inside it and counted by severity"');
     }
 
 })(inputs, outputs);
@@ -2749,6 +2943,7 @@ This part exists to make two claims that no earlier part is in a position to mak
 | `cross_table_clean` | True/False | **Step 6 → cross_table_clean**. |
 | `entries_parse_ok` | True/False | **Step 6 → entries_parse_ok**. |
 | `skipped` | Integer | **Step 7 → skipped**. |
+| `errors` | Integer | **Step 7 → errors**. |
 | `claim_parse_ok` | True/False | **Step 7 → claim_parse_ok**. |
 | `call_log_ok` | True/False | **Step 7 → call_log_ok**. |
 | `reconciled` | True/False | **Step 7 → reconciled**. |
@@ -2771,14 +2966,15 @@ This part exists to make two claims that no earlier part is in a position to mak
 | --- | --- | --- |
 | `publication` | The evidence reached `8b` and carries the header and the summary. | This part |
 | `event_parse` | `events_parsed` | `8a` |
-| `evidence_incomplete` | `evidence_complete` — no omission, no overrun, summary present | `8a` |
+| `evidence_incomplete` | `evidence_complete` — the events parsed and the summary is present | `8a` |
 | `batch_parse` | `parse_ok` | Step 5 |
 | `summary_refused` | `summary_logged` | Step 5 |
 | `events_dropped` | `events_dropped` is `0` | Step 5 |
 | `entry_parse` | `entries_parse_ok` | Step 6 |
 | `parent_inconsistent` | `parents_consistent` | Step 6 |
 | `cross_table_clash` | `cross_table_clean` | Step 6 |
-| `operational_skips` | `skipped` is `0` | Step 7 |
+| `write_failures` | `errors` is `0` | Step 7 |
+| `operational_skips` | `skipped` minus `errors` is `0` | Step 7 |
 | `claim_parse` | `claim_parse_ok` | Step 7 |
 | `call_log` | `call_log_ok` | Step 7 |
 | `reconciliation` | `reconciled` | Step 7 |
@@ -2791,6 +2987,11 @@ This part exists to make two claims that no earlier part is in a position to mak
 
 ```javascript
 (function execute(inputs, outputs) {
+
+    // Every application log line in this step goes through the one gate,
+    // AppProperties.log(severity, text), so x_bst_startuptrk.logging.level governs this
+    // step exactly as it governs the Script Includes. See 7.2a.
+    var LOG = new AppProperties();
 
     var SOURCE = 'linkedin';
     var toInt = function (value) { return parseInt(value, 10) || 0; };
@@ -2813,6 +3014,9 @@ This part exists to make two claims that no earlier part is in a position to mak
     var faults = [];
     if (!outputs.published) { faults.push('publication'); }
     if (inputs.events_parsed !== true) { faults.push('event_parse'); }
+    /* The substance of the evidence, not its length: 8a reports a ceiling truncation
+       separately in evidence_truncated, which is logged and documented rather than fatal.
+       See 8.4. */
     if (inputs.evidence_complete !== true) { faults.push('evidence_incomplete'); }
     if (inputs.parse_ok !== true) { faults.push('batch_parse'); }
     if (inputs.summary_logged !== true) { faults.push('summary_refused'); }
@@ -2820,7 +3024,13 @@ This part exists to make two claims that no earlier part is in a position to mak
     if (inputs.entries_parse_ok !== true) { faults.push('entry_parse'); }
     if (inputs.parents_consistent !== true) { faults.push('parent_inconsistent'); }
     if (inputs.cross_table_clean !== true) { faults.push('cross_table_clash'); }
-    if (toInt(inputs.skipped) !== 0) { faults.push('operational_skips'); }
+    /* Two distinct faults, so the reason names which one occurred. errors counts the
+       incoming rows whose write failed; the remainder of skipped is a secondary failure --
+       a join row or a staging state. Both fail the run's health, exactly as before. See 7.3. */
+    if (toInt(inputs.errors) !== 0) { faults.push('write_failures'); }
+    if (toInt(inputs.skipped) - toInt(inputs.errors) !== 0) {
+        faults.push('operational_skips');
+    }
     if (inputs.claim_parse_ok !== true) { faults.push('claim_parse'); }
     if (inputs.call_log_ok !== true) { faults.push('call_log'); }
     if (inputs.reconciled !== true) { faults.push('reconciliation'); }
@@ -2846,13 +3056,13 @@ This part exists to make two claims that no earlier part is in a position to mak
 
     if (!outputs.healthy) {
         outputs.lease_released =
-            new AppProperties().releaseRunLease(SOURCE, inputs.run_id) === true;
+            LOG.releaseRunLease(SOURCE, inputs.run_id) === true;
     }
 
     outputs.unhealthy_reason = faults.join(',');
 
     if (!outputs.healthy) {
-        gs.error('[x_bst_startuptrk.ingestion] event="run_incomplete" run="' +
+        LOG.log('error', '[x_bst_startuptrk.ingestion] event="run_incomplete" run="' +
             inputs.run_id + '" source="' + SOURCE +
             '" faults="' + outputs.unhealthy_reason +
             '" lease_released="' + outputs.lease_released +
@@ -2860,7 +3070,7 @@ This part exists to make two claims that no earlier part is in a position to mak
             ' may retry this source immediately"');
     }
 
-    gs.info('[x_bst_startuptrk.ingestion] event="run_closed" run="' + inputs.run_id +
+    LOG.log('info', '[x_bst_startuptrk.ingestion] event="run_closed" run="' + inputs.run_id +
         '" source="' + SOURCE +
         '" published="' + outputs.published +
         '" healthy="' + outputs.healthy +
@@ -3061,10 +3271,10 @@ Then check each step against the table below.
 | 2 | `source_mode` is `fallback` and `attempt_live` is `false`. |
 | 3 | **Skipped**, because it sits inside the `If attempt_live` block. Step 3 is always present — it is the live-call arm of action **A3** — but neither arm executes on the fallback path. |
 | 4 | `provenance` is `fallback`. `row_count` and `claimed_count` both match the number of rows that were `pending` **and unleased** on `x_bst_startuptrk_ingest_staging` with `source_system` `linkedin` before the run. Open the table and confirm **every one of those rows still reads `import_state` `pending` and carries `run:` followed by this run's identifier in `import_run`** — that is the claim of [4.4](#44--the-staging-query). A `source_resolved` line appears. |
-| 5 | `parse_ok` is `true`. `accepted_count` plus `rejected_count` plus `duplicate_count` plus `skipped_count` accounts for every incoming row. **`accepted_count` is greater than zero and the counters are not all zero** — an all-zero set on a non-empty batch is the build fault of [7.4](#74--the-counters-come-from-the-logger-never-from-arithmetic). `summary_logged` is `true`, `events_dropped` is `0`, and `provenance` reads `fallback`. **No property has been written yet.** A `batch_ingested` line appears. Any unmatched choice value has produced a `choice_unmatched` line — the fallback dataset carries one unmatched `title` on each person file and one unmatched `department`, `remote_type` and `seniority` on the job-postings file, so both outcomes of [5.4](#54--the-no-other-conflict-and-why-it-is-flagged-rather-than-resolved) are exercised in a single run and `rule3_deviations` is non-zero. |
+| 5 | `parse_ok` is `true`. `accepted_count` plus `rejected_count` plus `duplicate_count` plus `error_count` accounts for every incoming row, and `error_count` is `0` on a clean run. **`accepted_count` is greater than zero and the counters are not all zero** — an all-zero set on a non-empty batch is the build fault of [7.4](#74--the-counters-come-from-the-logger-never-from-arithmetic). `summary_logged` is `true`, `events_dropped` is `0`, and `provenance` reads `fallback`. **No property has been written yet.** A `batch_ingested` line appears. Any unmatched choice value has produced a `choice_unmatched` line — the fallback dataset carries one unmatched `title` on each person file and one unmatched `department`, `remote_type` and `seniority` on the job-postings file, so both outcomes of [5.4](#54--the-no-other-conflict-and-why-it-is-flagged-rather-than-resolved) are exercised in a single run and `rule3_deviations` is non-zero. |
 | 6 | `written_count` is greater than zero. Open `x_bst_startuptrk_founder`, `x_bst_startuptrk_executive` and `x_bst_startuptrk_jobposting` and confirm the records exist and that each carries a populated `startup` reference. `parents_consistent`, `cross_table_clean` and `entries_parse_ok` are all `true`. Confirm `unresolved_count` matches the number of rows whose company is not on `x_bst_startuptrk_startup`. Confirm **no new Startup record was created** by this run. A `writes_confirmed` line appears. |
 | 7 | Every counter is reported separately, never folded together. `swept` is `0` and `settled` equals the staging rows step 4 claimed. `claim_parse_ok` is `true`, `claim_shortfall` is `0` and `call_log_ok` is `true`. A `batch_reconciled` line appears and `reconciled` is `true`. |
-| 8a | `events_parsed` is `true`, **`summary_present` is `true`**, `events_omitted` is `0`, `evidence_complete` is `true`, and `rendered` is `true`. There is no output named `published` on this part. |
+| 8a | `events_parsed` is `true`, **`summary_present` is `true`**, `evidence_complete` is `true`, and `rendered` is `true`. On a small dataset `events_omitted` is `0` and `evidence_truncated` is `false`; on a batch large enough to exceed the ceiling both may be non-zero, which is **not** a fault — the block documents the omission and counts it by severity, and `events_omitted_error` must read `0`. There is no output named `published` on this part. |
 | 8b | The Log action ran. **Open the flow execution detail and confirm its message carries the `run=linkedin-` header line and, on the line directly beneath it, `event="run_summary"`** — an empty message means the `log_text` pill is not bound, and a header with no summary beneath it means `8a`'s `events` pill is not bound. |
 | 8c | `published` is `true`, **`healthy` is `true`**, `unhealthy_reason` is empty, `marker_stamped` and `marker_verified` are both `true`, `completion_stamp` carries a timestamp and `lease_released` is `false`. Read `x_bst_startuptrk.ingestion.last_run_provenance`: it now carries a `linkedin=fallback\|succeeded\|<stamp>\|<run>` entry, **alongside whatever entry guide 02's flow left for `crunchbase`**. A `run_closed` line appears and is the run's last. |
 
@@ -3110,7 +3320,7 @@ Two reconciliation identities hold regardless of the fixture, and both must be c
 
 | Identity | Expected for this pass |
 | --- | --- |
-| `row_count` equals `processed` + `rejected` + `duplicates` + `skipped` | 32 = 26 + 6 + 0 + 0 |
+| `row_count` equals `processed` + `rejected` + `duplicates` + `errors` | 32 = 26 + 6 + 0 + 0 |
 | Staging rows in state `rejected` equal `rejected` + `duplicates` | 6 |
 
 Then confirm the staging table reconciles: **26 `processed`, 6 `rejected`, 0 `error`, 0 `pending`** among the rows whose `source_system` is `linkedin`. A remaining `pending` row means the run did not reach it.
@@ -3313,7 +3523,7 @@ Do not sign this guide off until every line below is true.
 | 7 | Step 3's `rows` output is **always `[]`**, and step 4 has **no** `envelopes` or `response_body` input. LinkedIn acquires no rows; see [3.1](#31--what-linkedin-exposes-and-what-this-flow-can-therefore-acquire-live). |
 | 8 | On the script path, step 3 resolves the alias **API ID (`sys_alias.id`, queried with `addQuery('id', ALIAS)`) to exactly one `sys_alias` record** and passes that record's `sys_id` to `getConnectionInfo()`. It never passes the name. |
 | 9 | Step 3 paginates with `start` and `count` until a short page **or a budget**, records one bounded call-log entry per HTTP call, and declares all seven constants of [3.4a](#34a--the-budgets-and-the-closed-error-codes) — `MAX_ORGANIZATIONS`, `PAGE_SIZE`, `MAX_PAGES`, `MAX_CALLS`, `MAX_ELAPSED_MS`, `TIMEOUT_MS` and `DETAIL_LIMIT`. **There is no unbounded loop and no twenty-page ceiling.** |
-| 9a | Step 3's `error_code` output is one of the **eight closed codes** of [3.4a](#34a--the-budgets-and-the-closed-error-codes) or empty, and **no provider text, exception message, header value or response body is ever assigned to it**. Every diagnostic passes through `AppProperties.safeText()` and is capped at `DETAIL_LIMIT`. |
+| 9a | Step 3's `error_code` output is one of the **nine closed codes** of [3.4a](#34a--the-budgets-and-the-closed-error-codes) or empty, and **no provider text, exception message, header value or response body is ever assigned to it**. Every diagnostic passes through `AppProperties.safeText()` and is capped at `DETAIL_LIMIT`. |
 | 9b | Step 3 separates envelope success from result cardinality: a `2xx` with an empty `elements` array sets `probe_ok` `true` with `organizations_seen` `0`. **`no_organizations` is not a fallback reason.** Per [3.4](#34--step-outputs) and [4.1](#41--the-three-fallback-triggers). |
 | 10 | The alias name reads `x_bst_startuptrk.linkedin_oauth` exactly, at every occurrence in the flow, and appears in exactly one place on the script path — the `ALIAS` constant. |
 | 11 | No IntegrationHub spoke is installed, activated, referenced or used. |
@@ -3324,7 +3534,7 @@ Do not sign this guide off until every line below is true.
 | 14 | Step 4's `provenance` output is the constant `fallback`, and is **not** computed from the probe outcome. |
 | 15 | Step 4 records every staging row it claims in `staged_ids` and counts it in `claimed_count`, and step 7's sweep leaves none at `pending`, leased or unleased. |
 | 15a | Step 5 ingests **the row set step 4 published** and **never calls `IngestionMapper.ingestStaging()`**. That method runs its own `import_state` `pending` query, and step 4 has already leased every row to this run, so a build that calls it after the claim re-ingests the same rows and double-counts them in the summary. Per [8.8](#88--one-ingestion-call-site-and-the-two-entry-points-it-may-use). |
-| 15b | Action A4 assigns **exactly its six declared outputs** — `processed`, `rejected`, `skipped`, `duplicates`, `unmatched`, `recorded` — and every value it reads exists on the object it reads it from: the five counters from `IngestionLogger.counters()`, and `recorded` from `outcome.summary.logged`. A4 declares **no** live branch, because this flow has no live read route and its `provenance` is the constant `fallback`. |
+| 15b | Action A4 assigns **exactly its seven declared outputs** — `processed`, `rejected`, `skipped`, `errors`, `duplicates`, `unmatched`, `recorded` — and every value it reads exists on the object it reads it from: the five counters from `IngestionLogger.counters()`, and `recorded` from `outcome.summary.logged`. A4 declares **no** live branch, because this flow has no live read route and its `provenance` is the constant `fallback`. |
 | 15a | Step 7 recovers the claimed set **twice** — from the `staged_ids` pill and from a query on `import_run` — reports a pill parse failure through `claim_parse_ok` rather than absorbing it, and reports any unfound claim through `claim_shortfall`. Per [7.5](#75--the-terminal-state-sweep). |
 | 15b | Step 7's `call_log` pill is **bound**, and the step parses it, counts its failing entries, tallies their codes into `call_failure_codes` and cross-checks the count against step 3's `failed_calls`. Per [7.9](#79--the-probe-log-is-read-not-just-carried). |
 | 16 | Step 5 is the **only** step that writes an entity record, constructs exactly **one** `IngestionLogger`, and calls `IngestionMapper.ingest()` with the source system `linkedin`. Per [5.5](#55--one-logger-per-run-and-why-that-decides-the-build). |

@@ -10,7 +10,7 @@ Operational warnings **are** in scope for this guide and are marked as such. The
 
 ## Referenced documents
 
-This guide is executable on its own. The portal, the theme, **every one of the fifty-two token declarations as a literal value**, all five pages, all eight widgets, the design-system contract, the access-control rules and the verification checklist are stated here in full. An operator needs no other file, and no external stylesheet reference, to build the portal: [The complete declaration block](#the-complete-declaration-block) can be pasted into the theme record as it stands.
+This guide is executable on its own. The portal, the theme, **every one of the fifty-four token declarations as a literal value**, all five pages, all eight widgets, the design-system contract, the access-control rules and the verification checklist are stated here in full. An operator needs no other file, and no external stylesheet reference, to build the portal: [The complete declaration block](#the-complete-declaration-block) can be pasted into the theme record as it stands.
 
 **Every document named below is delivered and readable.** Each link resolves to a file in this package, among them `../../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`, `../data-model.md`, `../access-control.md`, `../api-reference.md` and `../validation-gates.md`, so a reader can follow any link and read the content the statement around it describes; no link is a forward reference to something still to be written.
 
@@ -163,17 +163,17 @@ Create a **new** `sp_theme` record. Do not edit, clone or extend a stock theme; 
 
 ### The CSS-variables field
 
-Every token the widgets reference is declared here, in the theme's CSS-variables field, and **nowhere else**. Declare each variable in the table below with a SASS declaration of the form `$variable: value;`, one per line, grouped in the order the table gives. **The Value column below is the literal to type.** Nothing is left to be looked up elsewhere: every one of the fifty-two variables carries its exact value here, and [The complete declaration block](#the-complete-declaration-block) repeats all fifty-two as a single block that can be pasted into the field as it stands.
+Every token the widgets reference is declared here, in the theme's CSS-variables field, and **nowhere else**. Declare each variable in the table below with a SASS declaration of the form `$variable: value;`, one per line, grouped in the order the table gives. **The Value column below is the literal to type.** Nothing is left to be looked up elsewhere: every one of the fifty-four variables carries its exact value here, and [The complete declaration block](#the-complete-declaration-block) repeats all fifty-four as a single block that can be pasted into the field as it stands.
 
-The fifty-two values divide into five provenance classes, and every one of them is typed as a literal here regardless of class:
+The fifty-four values divide into five provenance classes, and every one of them is typed as a literal here regardless of class:
 
 - **Four are carried forward from the legacy stylesheet** — the body font stack, the page background, the link colour and the container maximum. They are marked *carried forward* below, and their provenance is recorded under [The legacy design-token surface](#the-legacy-design-token-surface).
 - **One repeats a carried-forward value**: `$sp-body-bg` is declared to the same `#f5f5f5` as `$body-bg`, so the portal chrome and the page agree.
 - **Two are this theme's own literals in the platform namespace**: `$sp-tagline-color` and `$sp-navbar-divider-color` are declared here rather than left to the platform default (`D-120`).
 - **Twenty-six are the Bootstrap 3.3.6 default, declared explicitly**, so the theme owns each value rather than inheriting it silently.
-- **Nineteen are component tokens, each chosen against WCAG 2.1 AA.** Fourteen restate the Bootstrap default because the measured pair already passes; **five replace a default that fails** — `$text-muted`, `$link-color`, `$link-hover-color`, `$label-default-bg` and `$label-info-bg`. Every ratio is stated in the row and verified by [The contrast check](#the-contrast-check).
+- **Twenty-one are component tokens, each chosen against WCAG 2.1 AA.** Fifteen restate the Bootstrap default because the measured pair already passes; **six replace a default that fails** — `$text-muted`, `$link-color`, `$link-hover-color`, `$label-default-bg`, `$label-info-bg` and `$badge-bg`. Every ratio is stated in the row and verified by [The contrast check](#the-contrast-check).
 
-**Declare the rows in the order the table gives them.** Three rows resolve to another variable rather than to a literal — `$headings-font-family`, `$btn-primary-bg` and `$sp-body-bg` — and each references a variable declared on an earlier row. A theme variables field is compiled ahead of Bootstrap's own variable file, so a reference to a Bootstrap variable this table does not itself declare would be undefined; reference only rows above.
+**Declare the rows in the order the table gives them.** Six rows resolve to another variable rather than to a literal — `$headings-font-family`, `$btn-primary-bg`, `$label-primary-bg`, `$badge-color`, `$badge-bg` and `$progress-bar-bg` — and each references a variable declared on an earlier row. A theme variables field is compiled ahead of Bootstrap's own variable file, so a reference to a Bootstrap variable this table does not itself declare would be undefined; reference only rows above.
 
 | Group | Variable | Governs | Value to declare |
 | --- | --- | --- | --- |
@@ -219,6 +219,8 @@ The fifty-two values divide into five provenance classes, and every one of them 
 | Label | `$label-primary-bg` | `.label-primary`: the funding-stage, round-type and working-pattern markers. | `$brand-primary` — referenced rather than repeated. White on `#1976d2` measures **4.60:1** and passes AA. |
 | Label | `$label-default-bg` | `.label-default`: the job-title, seniority and focus-area markers. | `#595959` — **replaces** Bootstrap's `#777777`, on which white measures **4.48:1** and fails AA by 0.02. White on this value measures **7.00:1**. |
 | Label | `$label-info-bg` | `.label-info`: **the `Premium` marker**, the single most repeated gated-field treatment in the portal. | `#17607d` — **replaces** the derived `$brand-info` `#5bc0de`, on which white measures **2.09:1** and fails AA outright. White on this value measures **6.99:1**. |
+| Badge | `$badge-color` | The text colour of every `.badge`: the four collection totals in the company profile's tab strip. | `$label-color` — referenced rather than repeated, because a badge is the same chip treatment as a label and the two must not drift. Resolves to `#ffffff`. |
+| Badge | `$badge-bg` | The fill of every `.badge`. | `$label-default-bg` — referenced rather than repeated. **Replaces** Bootstrap's `$gray-light` `#777777`, on which white measures **4.48:1** and fails AA by 0.02 — the same failing default this table already replaces for `.label-default`, which `.badge` would otherwise keep because it reads a variable of its own. White on this value measures **7.00:1**. |
 | Button | `$btn-default-color` | The label colour of `.btn-default`, which is every **Retry**, **Clear**, pager and tab-strip control. | `#333333` — Bootstrap's default, declared explicitly. **12.63:1** on `$btn-default-bg`. |
 | Button | `$btn-default-bg` | The fill of `.btn-default`. | `#ffffff` |
 | Button | `$btn-default-border` | The border of `.btn-default`. | `#cccccc` — a non-text boundary, not a text pair. |
@@ -231,13 +233,13 @@ The fifty-two values divide into five provenance classes, and every one of them 
 | Progress | `$progress-bg` | The track of every `.progress`, in the results loading indicator and the chart's companion table. | `#f5f5f5` |
 | Progress | `$progress-bar-bg` | The fill of every `.progress-bar`. | `$brand-primary` — **4.22:1** against the track, above the 3:1 that WCAG 2.1 requires of a meaningful non-text graphic. |
 
-**Fifty-two declarations, and no value this portal applies resolves to a release default — foregrounds included.** The `$sp-*` namespace carries further entries beyond the three named above. This portal applies only these three, so only these three are declared. The authoritative list for a given instance is served per portal by the compiled bootstrap stylesheet; read it from that instance if a fourth entry is ever needed, and declare it here rather than in a widget.
+**Fifty-four declarations, and no value this portal applies resolves to a release default — foregrounds included.** The `$sp-*` namespace carries further entries beyond the three named above. This portal applies only these three, so only these three are declared. The authoritative list for a given instance is served per portal by the compiled bootstrap stylesheet; read it from that instance if a fourth entry is ever needed, and declare it here rather than in a widget.
 
-Bootstrap's own derivation rules mean any variable **not** in the table above is computed from the ones that are, so the set above propagates consistently without being extended. `$navbar-inverse-border`, for example, is derived from `$navbar-inverse-bg`, and `$navbar-default-border` from `$navbar-default-bg`. **Declare exactly the fifty-two variables above and no others**; an extra declaration is a value the theme then owns and must maintain.
+Bootstrap's own derivation rules mean any variable **not** in the table above is computed from the ones that are, so the set above propagates consistently without being extended. `$navbar-inverse-border`, for example, is derived from `$navbar-inverse-bg`, and `$navbar-default-border` from `$navbar-default-bg`. **Declare exactly the fifty-four variables above and no others**; an extra declaration is a value the theme then owns and must maintain.
 
 ### The complete declaration block
 
-Paste this into the theme record's **CSS variables** field exactly as it stands. It is the table above, in the same order, with nothing omitted and nothing added — **fifty-two declarations**, which is the whole of this portal's token surface. Four of them resolve to another variable rather than to a literal, deliberately, so each pair cannot drift.
+Paste this into the theme record's **CSS variables** field exactly as it stands. It is the table above, in the same order, with nothing omitted and nothing added — **fifty-four declarations**, which is the whole of this portal's token surface. Six of them resolve to another variable rather than to a literal, deliberately, so each pair cannot drift.
 
 ```scss
 // Brand
@@ -307,6 +309,10 @@ $label-primary-bg: $brand-primary;
 $label-default-bg: #595959;
 $label-info-bg: #17607d;
 
+// Badge
+$badge-color: $label-color;
+$badge-bg: $label-default-bg;
+
 // Default button
 $btn-default-color: #333333;
 $btn-default-bg: #ffffff;
@@ -333,11 +339,11 @@ Three ordering rules govern the block, and each prevents a value that silently f
 
 After saving the theme, confirm the values took effect by loading the portal and reading the computed `background-color` of `body`, which must be `rgb(245, 245, 245)`, and the computed `color` of a `.btn-primary`, whose background must be `rgb(25, 118, 210)`. A default-Bootstrap `#337ab7` on the button means the field did not compile; re-check that the block contains no CSS rule and no unclosed declaration.
 
-Bootstrap derives a variable that is left undeclared from the ones that are: `$navbar-inverse-border` is computed from `$navbar-inverse-bg`. Those derivations remain in force for every Bootstrap variable outside the fifty-two above. `$sp-tagline-color` is still declared as the literal `#333333` rather than as a reference to `$text-color`, for two reasons that each hold on their own: `$text-color` is declared **after** it in the block, and a SASS reference to a variable declared later resolves to nothing; and the `$sp-*` namespace is compiled from the platform's own partials, across which a reference is not guaranteed to resolve. The two carry the same literal deliberately, which the contrast table below records as one pair rather than two.
+Bootstrap derives a variable that is left undeclared from the ones that are: `$navbar-inverse-border` is computed from `$navbar-inverse-bg`. Those derivations remain in force for every Bootstrap variable outside the fifty-four above. `$sp-tagline-color` is still declared as the literal `#333333` rather than as a reference to `$text-color`, for two reasons that each hold on their own: `$text-color` is declared **after** it in the block, and a SASS reference to a variable declared later resolves to nothing; and the `$sp-*` namespace is compiled from the platform's own partials, across which a reference is not guaranteed to resolve. The two carry the same literal deliberately, which the contrast table below records as one pair rather than two.
 
 ### The contrast check
 
-**Every text pair this portal renders is measured, and the measurement is reproducible.** A colour choice defended in prose is a colour choice nobody checked; the nineteen pairs below are the complete set of foreground-on-background combinations the eight widgets produce, and the script that follows recomputes every ratio from the declared token values. Run it whenever a token in the Text, Link, Label, Button, Alert or Progress group changes.
+**Every text pair this portal renders is measured, and the measurement is reproducible.** A colour choice defended in prose is a colour choice nobody checked; the twenty-one pairs below are the complete set of foreground-on-background combinations the eight widgets produce, and the script that follows recomputes every ratio from the declared token values. Run it whenever a token in the Text, Link, Label, Button, Alert or Progress group changes.
 
 | # | Pair | Foreground | Background | Ratio | Threshold | Result |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -351,17 +357,24 @@ Bootstrap derives a variable that is left undeclared from the ones that are: `$n
 | 8 | The `Premium` marker | `$label-color` `#ffffff` | `$label-info-bg` `#17607d` | 6.99:1 | 4.5:1 | PASS |
 | 9 | Default marker | `$label-color` `#ffffff` | `$label-default-bg` `#595959` | 7.00:1 | 4.5:1 | PASS |
 | 10 | Primary marker | `$label-color` `#ffffff` | `$label-primary-bg` `#1976d2` | 4.60:1 | 4.5:1 | PASS |
-| 11 | Primary button | `$btn-primary-color` `#ffffff` | `$btn-primary-bg` `#1976d2` | 4.60:1 | 4.5:1 | PASS |
-| 12 | Default button | `$btn-default-color` `#333333` | `$btn-default-bg` `#ffffff` | 12.63:1 | 4.5:1 | PASS |
-| 13 | Info alert | `$state-info-text` `#31708f` | `$state-info-bg` `#d9edf7` | 4.53:1 | 4.5:1 | PASS |
-| 14 | Warning alert | `$state-warning-text` `#8a6d3b` | `$state-warning-bg` `#fcf8e3` | 4.54:1 | 4.5:1 | PASS |
-| 15 | Danger alert | `$state-danger-text` `#a94442` | `$state-danger-bg` `#f2dede` | 4.53:1 | 4.5:1 | PASS |
-| 16 | Chart label text | `$sp-tagline-color` `#333333` | `$panel-bg` `#ffffff` | 12.63:1 | 4.5:1 | PASS |
-| 17 | Chart bar | `$brand-primary` `#1976d2` via `currentColor` | `$panel-bg` `#ffffff` | 4.60:1 | 3:1 graphic | PASS |
-| 18 | Progress bar on its track | `$progress-bar-bg` `#1976d2` | `$progress-bg` `#f5f5f5` | 4.22:1 | 3:1 graphic | PASS |
-| 19 | KPI figure | `$brand-primary` `#1976d2` | `$panel-bg` `#ffffff` | 4.60:1 | 4.5:1 | PASS |
+| 11 | Tab total badge | `$badge-color` `#ffffff` | `$badge-bg` `#595959` | 7.00:1 | 4.5:1 | PASS |
+| 12 | Primary button | `$btn-primary-color` `#ffffff` | `$btn-primary-bg` `#1976d2` | 4.60:1 | 4.5:1 | PASS |
+| 13 | Default button | `$btn-default-color` `#333333` | `$btn-default-bg` `#ffffff` | 12.63:1 | 4.5:1 | PASS |
+| 14 | Info alert | `$state-info-text` `#31708f` | `$state-info-bg` `#d9edf7` | 4.53:1 | 4.5:1 | PASS |
+| 15 | Warning alert | `$state-warning-text` `#8a6d3b` | `$state-warning-bg` `#fcf8e3` | 4.54:1 | 4.5:1 | PASS |
+| 16 | Danger alert | `$state-danger-text` `#a94442` | `$state-danger-bg` `#f2dede` | 4.53:1 | 4.5:1 | PASS |
+| 17 | Chart label text | `$sp-tagline-color` `#333333` | `$panel-bg` `#ffffff` | 12.63:1 | 4.5:1 | PASS |
+| 18 | Chart bar | `$brand-primary` `#1976d2` via `currentColor` | `$panel-bg` `#ffffff` | 4.60:1 | 3:1 graphic | PASS |
+| 19 | Progress bar on its track | `$progress-bar-bg` `#1976d2` | `$progress-bg` `#f5f5f5` | 4.22:1 | 3:1 graphic | PASS |
+| 20 | KPI figure | `$brand-primary` `#1976d2` | `$panel-bg` `#ffffff` | 4.60:1 | 4.5:1 | PASS |
+| 21 | Chart zero line | `$text-muted` `#595959` | `$panel-bg` `#ffffff` | 7.00:1 | 3:1 graphic | PASS |
+| 22 | Focus ring, worst background | `$brand-primary` `#1976d2` | `$panel-default-heading-bg` `#f5f5f5` | 4.22:1 | 3:1 graphic | PASS |
 
-Rows 16 and 17 are separate because the chart draws two things on one background: `.bst-charts-text` fills from `$sp-tagline-color`, and every `<rect>` fills from `currentColor`, which resolves to `$brand-primary` through `.bst-charts .bst-charts-svg { color: $brand-primary; }`. The bar is a meaningful non-text graphic, so 3:1 applies to it and 4.5:1 to the text beside it; both clear their own threshold.
+Row 22 carries no number that rows 18 and 19 do not already produce — the ring is `$brand-primary`, so on a panel it is row 18's 4.60:1 and on a panel heading it is row 19's 4.22:1. It is listed anyway because it is a **different requirement**, not a different colour: rows 18 to 21 are graphics that convey data, whereas the ring is the focus indicator that [Busy, status and focus behaviour](#busy-status-and-focus-behaviour) puts a 3:1 floor under, and it is the only pair in this table whose background varies by widget. The row is entered at the worse of its two backgrounds so that the check fails if either surface regresses. The two headings that receive focus — `bst-company-profile`'s and `bst-investor-profile`'s — sit on `.panel-heading`, which is why `#f5f5f5` is the governing case even though `$panel-bg` is white.
+
+Row 11 is a pair in its own right rather than a repeat of row 9, even though both resolve to white on `#595959`: `.badge` reads `$badge-bg` and `$badge-color`, which are variables of their own, so a theme that declares only the label tokens leaves every badge on Bootstrap's `#777777` and **4.48:1**. The two rows are declared as a reference pair for exactly that reason, and this row is what proves the reference took effect.
+
+Rows 17 and 18 are separate because the chart draws two things on one background: `.bst-charts-text` fills from `$sp-tagline-color`, and every `<rect>` fills from `currentColor`, which resolves to `$brand-primary` through `.bst-charts .bst-charts-svg { color: $brand-primary; }`. The bar is a meaningful non-text graphic, so 3:1 applies to it and 4.5:1 to the text beside it; both clear their own threshold.
 
 **The check.** Paste this into a shell — it needs Python 3 and nothing else, writes no file, and prints one line per pair followed by a failure count. It is the arithmetic of the table above rather than a restatement of it: the ratios are computed from the hex values, so a token edited in the declaration block but not here is caught by the mismatch rather than by review.
 
@@ -384,7 +397,7 @@ def ratio(fg, bg):
     return (hi + 0.05) / (lo + 0.05)
 
 
-# The nineteen pairs the eight widgets render, each named as the table names it.
+# The twenty-one pairs the eight widgets render, each named as the table names it.
 # The last column is the WCAG 2.1 floor: 4.5 for text, 3.0 for a meaningful
 # non-text graphic.
 PAIRS = [
@@ -398,6 +411,7 @@ PAIRS = [
     ('Premium marker',        '#ffffff', '#17607d', 4.5),
     ('default marker',        '#ffffff', '#595959', 4.5),
     ('primary marker',        '#ffffff', '#1976d2', 4.5),
+    ('tab total badge',       '#ffffff', '#595959', 4.5),
     ('primary button',        '#ffffff', '#1976d2', 4.5),
     ('default button',        '#333333', '#ffffff', 4.5),
     ('info alert',            '#31708f', '#d9edf7', 4.5),
@@ -407,6 +421,8 @@ PAIRS = [
     ('chart bar',             '#1976d2', '#ffffff', 3.0),
     ('progress bar on track', '#1976d2', '#f5f5f5', 3.0),
     ('KPI figure in panel',   '#1976d2', '#ffffff', 4.5),
+    ('chart zero line',       '#595959', '#ffffff', 3.0),
+    ('focus ring, worst bg',  '#1976d2', '#f5f5f5', 3.0),
 ]
 
 failures = 0
@@ -421,7 +437,7 @@ print('FAILURES: %d' % failures)
 EOF
 ```
 
-The expected last line is `FAILURES: 0`. Two release defaults are deliberately **absent** from `PAIRS` because this theme replaces them, and either one reintroduced would fail: white on `$brand-info` `#5bc0de` measures **2.09:1**, and `#777777` on `$body-bg` measures **4.11:1**. Add them to `PAIRS` to watch the check reject them.
+The expected last line is `FAILURES: 0`. Three release defaults are deliberately **absent** from `PAIRS` because this theme replaces them, and any one reintroduced would fail: white on `$brand-info` `#5bc0de` measures **2.09:1**, `#777777` on `$body-bg` measures **4.11:1**, and white on `$gray-light` `#777777` — the default `.badge` and `.label-default` fill — measures **4.48:1**. Add them to `PAIRS` to watch the check reject them.
 
 ### Theme and variable authoring rules
 
@@ -650,6 +666,87 @@ Both parts are load-bearing, and each fails differently.
 9. **Headings state structure, never size.** Each page renders exactly one `<h1>`, every panel heading is an `<h2 class="panel-title">`, and a heading inside a panel body is an `<h3>`. A value is never a heading: where a figure needs heading-scale type it is a `<p>` carrying the Bootstrap `.h2` utility class. The five `h1` owners and the nesting rule are under [Heading hierarchy](#heading-hierarchy).
 10. Every interpolated link uses `ng-href`, never `href`. A plain `href` carrying `{{…}}` is followed with the raw braces before Angular substitutes them.
 11. **A persisted external locator is bound only where it passed the application's URL allowlist on the way in, and an address is never bound as a link target.** See [External locators in a binding](#external-locators-in-a-binding).
+12. **Every widget that renders a Bootstrap `.label` chip carries the forced-colours border rule for it.** Six of the eight do — `bst-startup-results`, `bst-company-profile`, `bst-investor-profile`, `bst-trends-charts`, `bst-account-summary` and `bst-premium-upsell` — and each declares it scoped to its own root:
+
+    ```scss
+    @media (forced-colors: active) {
+        .bst-<widget> .label {
+            border-style: solid;
+        }
+    }
+    ```
+
+    A `.label` conveys itself entirely by `background-color`, and forced colours discards that, so without the rule every chip in the family — including the `Premium` marker that is the visible face of the field-gating design — computes to plain bold text with `border: 0px none` and is indistinguishable from the words beside it. The declaration names only the style so that `border-width` stays the initial `medium` and `border-color` the initial `currentColor`: no measured literal enters the stylesheet, and the border is drawn in the caller's own resolved text colour, which is guaranteed to contrast with the caller's own background. The rule is repeated per widget rather than written once because rule 5 above scopes every selector beneath its widget's root; that repetition is the cost of the scoping rule and is accepted. **`forced-color-adjust: none` is not the alternative** — see the reasoning under [the results widget's CSS](#css-1).
+
+13. **A `.label` that carries free text, rather than a fixed marker word, is allowed to wrap.** Bootstrap's `.label` sets `white-space: nowrap`, which suits `Premium` and suits a choice value of one or two words, and defeats anything longer: the chip becomes one unbreakable inline box, and a box that cannot break inside a container that cannot grow overflows its container and is painted over by whatever is laid out after it. Four of the eight widgets place a chip inside a `.list-group-item` — `bst-startup-results`, `bst-company-profile`, `bst-investor-profile` and `bst-account-summary` — and each of those whose chip text comes from data rather than from a fixed word declares:
+
+    ```scss
+    .bst-<widget> .list-group-item .label {
+        white-space: normal;
+        overflow-wrap: break-word;
+    }
+    ```
+
+    `break-word` rather than `anywhere` is correct **here**, and the distinction is not cosmetic: these chips sit inside a `.list-group-item`, a block whose width the grid has already fixed, so the line box is bounded and `break-word` fires — measured, a 46-character unbreakable token wrapped to two fragments and then to three. The same declaration is inert in a shrink-to-fit context, which is why the upsell's chips use `anywhere` instead; [rule 16](#rules-that-bind-all-eight) sets out that case and why the two must not be harmonised onto one keyword.
+
+    Both are behaviour keywords, so neither introduces a measured value. The rule matters most where the chip renders a **Multi-choice** value or a **role name**, because those are the two chip texts in this guide with no length bound: a focus area reading `Financial technology and payments infrastructure` overflowed its column by 97.63px at the 1024px floor, and a fully-qualified role name is longer still. It is stated separately from rule 12 because the two failures are unrelated — rule 12 restores a chip's shape when forced colours removes its background, and this rule keeps a chip inside the box it was given — and a widget can need one without the other. See the reasoning under [the investor widget's CSS](#css-3).
+
+14. **Every `.table-responsive` carries `tabindex="0"`.** All six of them do — two in `bst-company-profile`, three in `bst-investor-profile`, one in `bst-trends-charts`. Bootstrap makes the wrapper `overflow-x: auto` below its small breakpoint, and a region that scrolls but cannot be focused cannot be scrolled from the keyboard at all: the content is reachable with a mouse or a touch drag and by no other means, which is WCAG 2.1.1. Adding the attribute costs one tab stop before the table's own links and makes the region focusable and therefore arrow-scrollable.
+
+    The honest caveat is that **this portal's supported floor is 1024px** and the wrapper only overflows below Bootstrap's `768px`, so on the supported range the condition never arises. It is applied anyway, for two reasons. The construct is identical in all six places, and a rule that holds in one of six identical constructs is the kind of drift this section exists to prevent. And the floor is a statement about what is *designed for*, not a guarantee about what a caller's window will be — a browser zoomed to 200% at 1024 reports a 512px layout viewport, which is inside the overflow range without the caller ever resizing anything.
+
+15. **Every widget that renders an `.sr-only` node re-declares the three properties that hide it.** Five of the eight do — `bst-startup-results`, `bst-company-profile`, `bst-investor-profile`, `bst-trends-charts` and `bst-account-summary`. The other three carry no such rule, because they render no such node, and the roster is stated per widget so it can be audited by grep rather than trusted: `bst-startup-search` renders neither a status region nor a table caption — the status region belongs to [the four widgets whose content changes](#busy-status-and-focus-behaviour), and this widget submits a query rather than displaying a result; `bst-trends-kpi` renders no table and no status region; and `bst-premium-upsell` renders neither. A rule with no node to act on is dead weight in a stylesheet, so none of the three carries one:
+
+    ```scss
+    .bst-<widget> .sr-only {
+        position: absolute;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+    }
+    ```
+
+    `.sr-only` is a **Bootstrap** class, so a widget that renders one is depending on a stylesheet it does not own to keep that text off the screen. When that stylesheet is absent the class means nothing, the node reverts to a static full-width block, and the status text becomes ordinary body copy — measured, `position: static; clip: auto; width: 1200px`, with the screen-reader sentence rendered as visible prose in the middle of the page. Re-declaring the three properties that do the hiding makes each widget self-sufficient for the one thing it cannot afford to get wrong.
+
+    The three declarations are chosen to be **exactly** Bootstrap's own values for those properties, so when Bootstrap *is* present — which is every real render — the computed style is unchanged and the rule is invisible. Width, height and the negative margin are deliberately **not** re-declared: they are what shrink the box, and re-declaring `width: 1px` would put a measured literal in widget CSS, which [zero hard-coded values](#zero-hard-coded-values) forbids. They are not needed either, because an absolutely positioned box clipped to `rect(0, 0, 0, 0)` is out of flow and paints nothing, whatever its intrinsic size. All three values here are `0` or behaviour keywords, both of which that rule permits.
+
+16. **Each host re-states the two `bst-premium-upsell` declarations that nothing else supplies, because an embedded partial's CSS field is not guaranteed to reach the page.** Service Portal compiles widget CSS per page and prefixes every rule with a class derived from the widget record, so what arrives is the CSS of the widgets *instanced on that page*. This partial is instanced nowhere: all three hosts build it in their server script with `$sp.getWidget()` and render it through `<sp-widget>`, which creates no instance record, so its CSS field may never be compiled in. Measured in a render where it was not, exactly two of its declarations were the sole source of their effect and both were lost — the alert heading sat flush against the body text at a **`0px`** gap instead of one spacing step, and a field chip computed Bootstrap's `white-space: nowrap` instead of wrapping. Each host re-states those two, scoped to the partial inside its own root:
+
+    ```scss
+    .bst-<host> .bst-upsell {
+        margin-bottom: $grid-gutter-width;
+    }
+
+    .bst-<host> .bst-upsell .panel-title {
+        margin-bottom: $padding-base-vertical;
+    }
+
+    .bst-<host> .bst-upsell .bst-upsell-fields {
+        margin-top: $padding-base-vertical;
+        margin-bottom: $padding-base-vertical;
+    }
+
+    .bst-<host> .bst-upsell .bst-upsell-fields .label {
+        margin-right: $padding-base-vertical;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+    ```
+
+    **The test each rule had to pass to be on that list is that nothing else on the host supplies its effect**, and it was applied by measuring the host render against the partial rendered on its own rather than by reading the stylesheets. Two of the partial's seven rules failed the test and are deliberately **not** re-stated, because they would change nothing: `.bst-upsell .btn:focus { outline-style: auto }`, since Bootstrap's own `a:focus` and `.btn:focus` already draw that ring on an `<a class="btn">`; and the `@media (forced-colors: active)` chip border, which the host's [rule 12](#rules-that-bind-all-eight) block already supplies to every `.label` under its root. `border-radius` is dropped from the first rule for the same reason — Bootstrap's `.alert` already resolves it to the same token value — while `margin-bottom` is kept, because `.alert` sets a different one. A fifth rule, `.bst-upsell .bst-upsell-guidance { margin-bottom: 0 }`, is re-stated by **`bst-account-summary` only**: the guidance paragraph renders under `c.isAccount()`, so on the other two hosts that selector would match no node, and a rule with nothing to act on is the dead weight [rule 15](#rules-that-bind-all-eight) exists to keep out of a stylesheet.
+
+    The last rule is the partial's own chip rule **selector for selector**, with the host root prepended. That is deliberate on two counts. It targets exactly the same elements — chips in the field list, not every `.label` the partial might ever render — so the host cannot restyle something the partial did not intend. And prepending the root makes it one class more specific than the original, so where a page does load both, the cascade resolves on specificity rather than on stylesheet append order; a bare `.bst-<host> .bst-upsell .label` would have tied the partial's rule at three classes and been decided by whichever sheet happened to be appended last.
+
+    **All three declarations in that rule are load-bearing, and `margin-right` is the one that is easy to get wrong.** Only `bst-company-profile` has a `.label` rule broad enough to reach a chip in the partial; the investor and account stylesheets scope theirs to `.list-group-item .label`, which a `ul.list-inline` chip is not inside, so on those two hosts the chips separated by Bootstrap's `10px` of `li` padding alone instead of the `16px` the reference render shows. Re-stating `margin-right` is what makes the three hosts agree with each other and with the partial rendered on its own.
+
+    The partial keeps every one of these rules in its own CSS as well, so it remains correct on its own terms, and the duplicates are inert wherever the platform does compile it in: the declarations are identical and resolve from the same tokens, so the two sources cannot disagree on a value.
+
+    **The coupling runs in both directions, and the second direction is the easier one to miss.** A host rule written against a **Bootstrap** class rather than an application class reaches every node under the host root — including the embedded partial's, which the partial's own stylesheet may not be present to defend. Measured, `.bst-investor .panel-title { line-height: normal }` did exactly that: it outranks Bootstrap's `h1, h2 { line-height: 1.1 }` on specificity, so it applied to the partial's `<h2 class="panel-title">`, rendered it **19.000px** tall instead of **17.594px**, and displaced every element below it in the alert by **1.406px** — a difference invisible to the eye and unambiguous to a measurement, and one the other two hosts did not have. That rule exists for the investor's `<h1>`, which carries the record's **name** and can therefore wrap; the three `<h2>` panel titles beneath it are fixed one-line copy that never needed it, and the partial's heading is not this widget's to style at all. It is now scoped `.bst-investor h1.panel-title`, which is the heading it was written for and the one heading the partial cannot own — a case where the element genuinely matters and the class alone is too broad, notwithstanding that [`.panel-title` is a class rather than a level](#heading-hierarchy) everywhere else in this guide.
+
+    Auditing the other two hosts the same way leaves two rules that reach the partial and are **deliberately** left doing so, because each supplies exactly what the partial asks for: `.bst-company .label { margin-right: $padding-base-vertical }` gives the chips the margin the partial's own rule gives them, and the host's `@media (forced-colors: active)` block gives them the border — the second of the two omissions above depends on precisely that reach. Both are now also stated explicitly by the re-statement at a higher specificity, so neither is relied on by accident. No other host rule matches any node the partial renders: its nodes are `.alert`, `.panel-title`, `.list-inline`, `.label`, `.btn` and one paragraph, and every remaining host rule is scoped to `.nav-tabs`, `.media-heading`, `.list-group-item`, `.list-group-item-heading`, `.table-responsive`, `.sr-only`, `.panel` or an application class, none of which the partial uses.
+
+    `bst-startup-results` is outside this rule entirely: it renders the same gap **G5** notice *inline* rather than embedding the partial, so its equivalent rules live in its own stylesheet and are compiled with the widget that is on the page.
+
+    **Why these chips use `overflow-wrap: anywhere` where [rule 13](#rules-that-bind-all-eight) uses `break-word`.** The two keywords differ in one respect that decides this case: `anywhere` contributes to a box's intrinsic **min-content** width and `break-word` does not. Rule 13's chips sit inside a `.list-group-item`, a block whose width the grid has already fixed, so the line box is bounded no matter what the text does and `break-word` fires — measured, a 46-character unbreakable token wrapped to two fragments and then three. These chips sit inside a `.list-inline > li`, which Bootstrap makes `display: inline-block` and which is therefore **shrink-to-fit**: its width is `min(max(min-content, available), max-content)`. With `break-word` the min-content width is still the whole token, so the `li` takes the token's full max-content width, the line box inside it is exactly as wide as the token, the text never overflows its own line box, and the declaration can never fire — measured, a 240-character token rendered as one fragment and overflowed the alert by **96.31px** with the rule fully present, and deleting the rule changed the layout by nothing at all. `anywhere` lowers min-content to a single character, so the `li` shrinks to the space available and the token breaks inside it — measured, the same token wrapped to two fragments and stayed inside the alert. Both are behaviour keywords, so neither introduces a measured value. **Do not harmonise the two rules onto one keyword**: `break-word` is inert here, and `anywhere` in a rule-13 position would let an ordinary multi-word value break mid-word when wrapping at its spaces would have sufficed.
 
 ### External locators in a binding
 
@@ -662,6 +759,7 @@ Three rules follow for these widgets, and each names what it prevents:
 1. **Bind a stored locator only through `ng-href` or `ng-src`, never through `href`, `src`, `ng-bind-html` or `$sce.trustAsResourceUrl`.** The first two are the sanitised bindings; `href` with raw braces exposes the un-substituted value, and the last two remove the sanitisation the framework applies.
 2. **Never bind a stored address as a link target.** `contact_email` renders as **text**, as the People pane below does, and not as a `mailto:` target. The address allowlist admits no scheme, so a `mailto:` target would have to be assembled in the template, and an assembled target is a second construction site for a rule that has one home.
 3. **Never bind a value this widget assembled from more than one stored field into a locator position.** Concatenating a stored value into a URL re-opens the scheme question the allowlist closed. Every locator bound below is a single column's value, verbatim.
+4. **Guard every locator anchor on the presence of its own value, and render no anchor when the value is empty.** All six locator columns are `mandatory=false`, so empty is an ordinary state rather than an edge case, and an `ng-href` that interpolates to the empty string makes the framework **remove the `href` attribute altogether** — leaving an element that is styled as a link, announced as text, and not reachable by keyboard, which promises a destination that does not exist. Where the anchor's text is a record's own title, as in the Jobs and News panes, render that title in a `<span>` on the empty branch so the row keeps its title and loses only the link; where the anchor's text is a fixed label, as in the two Website rows, render `Not recorded` in a `.text-muted` span instead. Both branches are always present, so no cell is ever blank and no cell is ever a dead link.
 
 **The allowlist is an input-boundary reduction, not a substitute for the framework's own output sanitisation.** Both apply, and neither is relied on alone.
 
@@ -669,7 +767,46 @@ Three rules follow for these widgets, and each names what it prevents:
 
 Applies to **all eight** widgets. Two contracts: a busy state on the widget root, and — for the four widgets whose content changes after the first render — one polite status region.
 
-**The busy state, on all eight.** Every client controller declares `c.busy`, `true` from construction until the first `data` payload has arrived and `false` thereafter, and every widget's root element carries `aria-busy="{{c.busy}}"`. A widget that later reloads from the server sets `c.busy` back to `true` for the duration of that reload. Four widgets — `bst-startup-search`, `bst-trends-kpi`, `bst-trends-charts` and `bst-premium-upsell` — never reload after their first render, so their `c.busy` transitions to `false` once and stays there.
+**The busy state, on all eight.** Every client controller declares `c.busy`, `true` while there is no `data` payload to render and `false` once there is one, and every widget's root element carries `aria-busy="{{c.busy}}"`. A widget that later reloads from the server sets `c.busy` back to `true` for the duration of that reload. Four widgets — `bst-startup-search`, `bst-trends-kpi`, `bst-trends-charts` and `bst-premium-upsell` — never reload after their first render, so their `c.busy` transitions to `false` once and stays there.
+
+**Derive the construction-time value from the payload; do not assert it.** In Service Portal the widget's server script runs *before* the widget is delivered, so `c.data` is **already populated when the client controller constructs** — the first payload has arrived by the time there is a controller to observe it. A controller that opens with a bare `c.busy = true` therefore never clears it, because the only thing that clears the flag is `c.load()`, and `c.load()` is called by `c.retry()` and by user-initiated reloads, never by the initial render. The consequence is not subtle and it is not confined to assistive technology: the indeterminate progress bar is gated on `ng-if="c.busy"`, so it stays in the DOM on every route for the life of the page, the widget root reports `aria-busy="true"` forever, and `c.statusText()` returns `Loading` from row 1 of the ordering table above and so **never announces any outcome at all** — not the loaded state, not an empty collection, not a not-found record. The one declaration that closes it:
+
+```javascript
+// The first payload is already on `c.data`, because the server script ran before this
+// widget was delivered. So the flag is DERIVED from the payload rather than asserted
+// true: there is nothing to wait for on the initial render, and c.load() owns every
+// true-then-false cycle after it.
+c.busy = !c.data;
+```
+
+Verify it rather than assume it: on each of the five routes, with the page settled, `aria-busy` must read `false` on every widget root, no `[role="progressbar"]` may remain in the document, and the polite region must state the widget's loaded or empty wording rather than `Loading`.
+
+**The visible busy affordance, on the three widgets that reload.** `bst-startup-results`, `bst-company-profile` and `bst-investor-profile` each render one indeterminate striped progress bar under `ng-if="c.busy"`, which is the gap **G3** resolution recorded in [`../gaps-and-flags.md`](../gaps-and-flags.md). The delivered markup is this, and the width is the load-bearing part of it:
+
+```html
+<div class="progress" ng-if="c.busy">
+  <div class="progress-bar progress-bar-striped active" role="progressbar"
+       ng-style="c.indeterminate()"
+       aria-label="Loading startups" aria-valuemin="0" aria-valuemax="100"
+       aria-valuetext="Loading"></div>
+</div>
+```
+
+Three properties of that markup, each of which closes a way for the affordance to be present in the document and invisible on screen:
+
+- **A full width is required, and it is bound on the element with `ng-style="c.indeterminate()"` rather than declared in widget CSS.** Bootstrap 3.3.6 declares `.progress-bar { float: left; width: 0; height: 100%; … }`, so a bar with no width is **zero pixels wide**: the stripe animation runs on a zero-area box, the trough's `overflow: hidden` guarantees nothing can escape it, and the caller sees an empty grey trough during every load and every retry. The value sits on the element for the same reason the chart's `width="100%"` does — [zero hard-coded values](#zero-hard-coded-values) forbids a percentage literal in **widget CSS**, and this is the same element-attribute route that rule already sanctions for `.bst-charts-svg`. It is also Bootstrap's own documented markup for an indeterminate bar.
+- **No `aria-valuenow`.** The bar reports no determinate position, so the attribute is omitted and `aria-valuetext="Loading"` carries the state instead. A `progressbar` with a full width and `aria-valuenow="100"` would announce a completed load.
+- **The stripe animation is switched off under `prefers-reduced-motion`.** Each of the three widgets carries the rule below in its own CSS, scoped beneath its own root class. Without it, giving the bar a width converts a motionless defect into a real WCAG 2.3.3 one: `progress-bar-stripes` is a 2-second infinite animation that would then be genuinely visible.
+
+```scss
+@media (prefers-reduced-motion: reduce) {
+    .bst-results .progress-bar {
+        animation: none;
+    }
+}
+```
+
+`animation: none` is one of the permitted literals, so the guard adds no measured value to any widget CSS. `.progress-bar-striped` keeps its gradient, so the bar remains visibly a progress bar; only the movement stops.
 
 **The status region, on the four widgets whose content changes.** `bst-startup-results`, `bst-company-profile`, `bst-investor-profile` and `bst-account-summary` each carry exactly one region of the form below, placed as the first child of the `.panel-body` so it precedes the content it describes:
 
@@ -679,14 +816,39 @@ Applies to **all eight** widgets. Two contracts: a busy state on the widget root
 
 `.sr-only` is Bootstrap's own screen-reader utility, so the region is announced without occupying layout. `c.statusText()` returns exactly one string, chosen in this order — the first condition that holds wins, so a caller never hears two states at once:
 
+**A widget that shows a busy affordance hides the stale view behind it.** All three reloading widgets gate their success block on `!c.busy`, not on `data` alone:
+
+```html
+<div ng-if="data.authorised &amp;&amp; !c.busy &amp;&amp; !data.error">
+  <!-- the whole success view, including every count, caption and truncation notice -->
+</div>
+```
+
+Without that term the progress bar and the previous payload render **at the same time**, under a root that is simultaneously announcing `aria-busy="true"` and a status region reading `Loading`. The result contradicts itself in three ways at once: a screen reader is told the region is busy while the accessibility tree still exposes the whole of the old record; a sighted caller sees a loading bar above content that looks current and has no way to tell which parts are stale; and every count, caption and truncation notice in the view is asserting a total that belongs to the *previous* record. The last of those is the dangerous one on the two profile widgets, because a reload here is how the caller moves **from one record to another** — so the figures on screen during the reload are not merely out of date, they belong to a different company or investor.
+
+`c.busy` is the only correct discriminator for this, and `data` is not: `data` still holds the previous payload for the whole duration of the reload, which is exactly why gating on it fails. The three widgets must agree, because a caller who learns the loading behaviour on one screen carries that expectation to the other two.
+
 | Order | Condition | Text returned |
 | --- | --- | --- |
 | 1 | `c.busy` is `true` | `Loading` |
-| 2 | `data.error` is set | the empty string — **nothing**. The visible `.alert.alert-danger` carries `role="alert"` and announces this state assertively, and `aria-atomic="true"` on the polite region means a second copy here would be announced as a second event for one failure. |
-| 3 | the widget's primary collection is empty | the widget's own empty wording, given in its section below |
-| 4 | otherwise | the widget's own loaded wording, given in its section below |
+| 2 | `data.authorised` is `false` | the empty string — **nothing**. The visible `.alert.alert-warning` carries `role="alert"` and owns this state. |
+| 3 | `c.errorText()` returns a message | the empty string — **nothing**. The visible `.alert.alert-danger` carries `role="alert"` and owns this state. |
+| 4 | the widget's primary collection is empty | the empty string — **nothing**. The visible empty-state `.alert.alert-info`, or the single `.list-group-item` where the collection is a list inside a panel, carries `role="status"` and owns this state. |
+| 5 | otherwise | the widget's own loaded wording, given in its section below |
 
-**Failure is announced once, by the alert, and never also by the status region.** The visible error panel specified under [Error and empty behaviour](#error-and-empty-behaviour) carries `role="alert"`, which is announced immediately and interrupts. Row 2 of the table above therefore returns the **empty string** rather than the same sentence: two live regions carrying one fact are announced as two events, and a caller hears the failure twice with no way to tell whether something failed twice. The error panel is also the only one of the two that is visible and carries the **Retry** control, so it is the region that must own the state. The polite region resumes speaking at row 3 or row 4 once the retry settles.
+**One fact, one announcer.** Every row above but the last returns the **empty string**, because in each of those three states a *visible* element already carries the fact and already carries the live-region role that announces it. Two live regions carrying one fact are announced as two events, and a caller then hears the same state twice with no way to tell whether it happened twice. The visible element wins in all three cases for the same reason: it is the element a sighted caller reads, it is the element that carries the recovery control where there is one — **Retry** on the error panel — and it persists, whereas the polite region is a transient announcement of a change.
+
+The three states and their owners:
+
+| State | The element that owns it | Its role | Why it, and not the status region |
+| --- | --- | --- | --- |
+| Not entitled | the `.alert.alert-warning` | `role="alert"` | The denial is the one message a denied caller most needs, and it must interrupt rather than wait. Without this row `statusText()` would fall through to row 4 and announce the *empty-collection* wording to a caller who was denied by role, contradicting the visible warning on the same screen. |
+| Failed | the `.alert.alert-danger` | `role="alert"` | It interrupts, and it is the only one of the two that carries **Retry**. |
+| Empty | the empty-state `.alert.alert-info`, or the `.list-group-item` | `role="status"` | An empty result is not an error and must not interrupt, so it is `status` rather than `alert`. Announcing it from the visible element rather than from the polite region is what keeps the caller from being told the same sentence twice. |
+
+**The polite region therefore speaks in exactly one state: loaded.** It resumes at row 5 once a retry settles, and its wording is a summary — a count against a total — that no visible element duplicates verbatim.
+
+**The three visible owners are live regions; no other alert is.** An `.alert` that merely restates something the loaded status wording or a visible heading already carries takes **no** role and **no** `aria-live`, or the caller hears it twice. Each widget's section names which of its alerts carry a role, and the [error and empty behaviour](#error-and-empty-behaviour) section states the rule once.
 
 **Focus behaviour, defined per interaction.** Only three interactions in this portal move focus, and no other interaction moves it:
 
@@ -696,7 +858,137 @@ Applies to **all eight** widgets. Two contracts: a busy state on the widget root
 | The retry control of any error panel succeeds | The retrying widget's own **primary heading**, which carries `tabindex="-1"` for that purpose: the `<h2 class="panel-title">` on `bst-startup-results`, the `<h1 class="panel-title">` on `bst-account-summary`, the `<h1 class="media-heading">` carrying the company name on `bst-company-profile` and the `<h1 class="panel-title">` carrying the investor name on `bst-investor-profile`. |
 | A tab is selected on `bst-company-profile` | The selected tab control itself, per the roving-`tabindex` contract under [The tab contract](#the-tab-contract). Focus never jumps into the panel. |
 
-A control that disappears while it holds focus — the **Retry** button when a retry succeeds, or the **Next** pager button when it becomes the last page — must hand focus to the destination in the table above before it is removed from the document, so focus is never lost to the document body.
+**A control that stops being operable while it holds focus hands focus on before it does.** Two ways a control stops being operable, and the rule covers both:
+
+| How it stops being operable | Where it happens | What must happen first |
+| --- | --- | --- |
+| It is **removed from the document** | the **Retry** button when a retry succeeds; a pager button inside a region an `ng-if` drops | It hands focus to the destination in the table above before the removal. |
+| It is **disabled in place** by `ng-disabled` | **Previous** when a load lands on the first page; **Next** when a load lands on the last page | It hands focus to the **other** pager button when that one is still operable, and to the widget's primary heading when neither is. |
+
+The second row exists because the pager buttons are never removed — they are `ng-disabled`, so they stay in the document and simply become inert. A browser drops focus from an element that becomes `disabled` while focused, and it drops it to the document body, from which a keyboard caller on `bst-startup-results` must Tab past every card link in the set to reach the pager again. Handing focus to the sibling pager button keeps the caller where they were working; handing it to the primary heading when both buttons are inert puts them at the top of the answer rather than at the top of the document.
+
+**The handoff is conditional on the control holding focus *from the keyboard*, and `document.activeElement` alone cannot establish that.** A pager step the caller made with a pointer, or a load no control initiated, must move nothing. The obvious test — is `document.activeElement` the control about to stop being operable — does not deliver that, because a mouse press on a `<button>` makes it the active element in Blink and in Firefox on Windows. Testing `activeElement` therefore hands focus onward for a pointer caller too, dragging them to a control they never asked for, and the fault is invisible on the platforms that do not focus a button on press.
+
+**The discriminator is `:focus-visible`.** The control is asked, synchronously and before anything changes, whether the browser considers its focus worth *showing* — which is true for a keyboard caller and false for a pointer caller, on every engine, by the same heuristic the browser already uses to decide whether to paint a ring. So the handoff runs exactly when a visible focus indicator is about to disappear, which is the harm the rule exists to prevent, and it stays still when there was no indicator to lose. A browser too old to evaluate `:focus-visible` moves nothing, which is the safe direction.
+
+**The handoff is a `.focus()` call, and prose alone does not make it happen.** Each of the six widgets that renders a **Retry** declares the helper below. `c.retry()` calls it **before** `c.load()`, because the Retry button is removed the instant `data.error` clears and a handoff scheduled only for after the load would be reaching for an element that has already gone; `c.load()` then schedules it again once the payload has rendered, so focus finishes on the heading that states the new content rather than on the button that no longer exists.
+
+```javascript
+// The record-bound heading does not exist while the error panel is showing, so the
+// destination is resolved at the moment of the move rather than captured once: the
+// primary heading if it is in the document, otherwise the widget root, which carries
+// tabindex="-1" for exactly this case. Either way focus never falls to document.body.
+c.focusDestination = function () {
+    var heading = $element[0].querySelector('[tabindex="-1"]');
+    var target = heading || $element[0];
+    if (target && target.focus) {
+        target.focus();
+    }
+};
+```
+
+Each of the six widget roots therefore carries `tabindex="-1"` as well, as the fallback destination, and **the destination must show a visible focus indicator when it receives focus programmatically**. A heading moved into focus with no ring is a caller who has been silently relocated: the reading position has changed and nothing on screen says so. Bootstrap styles no indicator for `[tabindex="-1"]`, so each widget declares one, scoped to itself:
+
+```scss
+.bst-results [tabindex="-1"]:focus {
+    outline: $border-radius-small solid $brand-primary;
+    outline-offset: $border-radius-small;
+}
+```
+
+The `$brand-primary`-on-`$panel-bg` pair is measured at 4.60:1 in [The contrast check](#the-contrast-check), comfortably past the 3:1 a non-text indicator needs. Repeat the rule for `.bst-company`, `.bst-investor`, `.bst-account`, `.bst-kpi` and `.bst-charts` — and pair each with the root-level form `.bst-results[tabindex="-1"]:focus`, because on `bst-trends-kpi` and `bst-trends-charts` the root **is** the destination: neither renders a heading that carries the attribute, so a descendant-only selector would never match them.
+
+**The width and the offset are taken from the radius scale, and that is a deliberate choice rather than an oversight.** Bootstrap 3.3.6 publishes no outline-width variable — the framework removes the outline rather than styling it — so there is no semantically-matching token to reach for. `$border-radius-base` and `$border-radius-small` are the only 4-pixel and 3-pixel lengths the scale defines, and [Design system](#design-system) admits no measured literal, so the alternatives were a hard-coded `4px`, which the checklist forbids, or a spacing token whose smallest values are 1 and 5 pixels and whose meaning is padding rather than a rule width. Using the radius pair keeps the ring on the scale and keeps the declaration literal-free; the cost is that the token names describe a corner rather than a stroke, which is recorded here so a later reader does not "correct" it into a literal.
+
+The same pair sizes the search controls' ring under [`bst-startup-search`](#bst-startup-search), so every focus indicator in the portal is one width and one offset.
+
+**An `<a class="btn">` must answer SPACE as well as ENTER.** A native `<button>` answers both; an anchor answers only ENTER, and SPACE instead performs its default page scroll — so a caller who has learned that the control is a button presses SPACE, the page jumps, and nothing is activated. Seven controls in this portal are anchors styled as buttons: **View profile** on every result card and the results upsell call to action, **Back to search** on the company, investor and account widgets, **Browse startups** on the KPI panel, and the upsell partial's own call to action. Each binds the shared handler:
+
+```javascript
+// Space on an anchor scrolls the page and activates nothing. preventDefault() stops the
+// scroll; click() activates the control the caller believes they are pressing. Enter
+// needs nothing - the browser already activates an anchor on Enter.
+c.onButtonKey = function (event) {
+    if (event.which === 32 || event.keyCode === 32) {
+        event.preventDefault();
+        event.currentTarget.click();
+    }
+};
+```
+
+bound as `ng-keydown="c.onButtonKey($event)"`. The tab strip on `bst-company-profile` already does this for its own keys and is the precedent; these seven are the controls it was never extended to.
+
+**The indeterminate progress bar needs a width, or it paints nothing.** Bootstrap's `.progress-bar` ships `width: 0%` so that a determinate bar can be driven by an inline width, and the four widgets that render an indeterminate striped bar — `bst-startup-results`, `bst-company-profile`, `bst-investor-profile` and `bst-account-summary` — supply none — which means the stripe animation runs inside a bar that is zero pixels wide, and the caller sees an empty trough. The width comes from the controller, not the widget CSS, for the same reason `c.barStyle()` does under [`bst-trends-charts`](#bst-trends-charts): a percentage is a measured value and [Design system](#design-system) admits none in widget CSS, but a bound value is not a declaration.
+
+```javascript
+// An indeterminate bar fills its trough: there is no proportion to express, so the
+// full width plus the stripe animation is the convention, and the alternative - a
+// bar of zero width - communicates nothing at all.
+c.indeterminate = function () {
+    return { width: '100%' };
+};
+```
+
+bound as `ng-style="c.indeterminate()"` on each of the four `.progress-bar.progress-bar-striped.active` elements. **Each of those four widgets' controller items must name `c.indeterminate()` explicitly, and the template markup alone is not enough.** AngularJS guards a null callee, so `ng-style="c.indeterminate()"` on a controller that never declared the method evaluates to `undefined` and applies nothing — without throwing, without a console message, and with the element still in the DOM carrying every one of its ARIA attributes. Bootstrap's `width: 0%` then stands and the caller sees an empty trough, which is indistinguishable from the defect this whole section exists to fix. A build that adds the bar to a template and forgets the controller half has moved from an absent element to an invisible one and fixed nothing. **All four asynchronous widgets carry one.** `bst-account-summary` declares `c.busy` and reflects it in `aria-busy`, so a build that gave it no bar told assistive technology that work was in progress and showed a sighted caller nothing at all on that route; the two channels must agree. The bar's `$progress-bar-bg` on `$progress-bg` is row 19 of [The contrast check](#the-contrast-check) at 4.22:1.
+
+### Controller dependencies
+
+**Four platform services are injected into every client controller that uses the shared helpers**, and a helper referencing a service the controller did not ask for throws at construction rather than at the moment of use — so the injection list is part of the contract, not a detail:
+
+| Service | Used by | Where it is specified |
+| --- | --- | --- |
+| `$scope` | the record watches on both profile widgets | [Every listener a controller registers is released on `$destroy`](#every-listener-a-controller-registers-is-released-on-destroy) |
+| `$element` | `c.focusDestination()`, to find this widget's own focus destination rather than another widget's | [Busy, status and focus behaviour](#busy-status-and-focus-behaviour) |
+| `$timeout` | `c.load()`, to move focus after the digest that renders the payload | [Error and empty behaviour](#error-and-empty-behaviour) |
+| `$filter` | `c.money()`, `c.day()` and `c.count()` | [The display contract](#the-display-contract) |
+| `spUtil` | `spUtil.recordWatch()` on both profile widgets | [Every listener a controller registers is released on `$destroy`](#every-listener-a-controller-registers-is-released-on-destroy) |
+
+`$element` is what scopes the focus move: `bst_dashboard` renders **two** instances of `bst-trends-charts` and `bst_home` renders two widgets side by side, so a destination resolved with a document-wide query would move focus into whichever widget happens to appear first in the document rather than the one the caller acted on.
+
+### The display contract
+
+**A figure or a date is formatted by the widget, never by the payload.** `RestResponseBuilder.valueOf()` returns a currency element as `String(record.getValue(field))` — the **raw stored value**, which on a ServiceNow currency element carries its denomination as a prefix, so `{{round.amount_usd}}` renders `USD;56700000`. It returns a `glide_date` through its plain branch, so `{{round.round_date}}` renders `2024-01-10`. And it returns an integer as a JavaScript number, so a count renders with no thousands separator. None of those three is wrong as a *value*; all three are wrong as *output*, and the defect they share is that presentation ends up depending on the shape of the payload rather than on a decision the portal made. That dependency is what makes it dangerous: a fixture or a single record that happens to carry a pre-formatted string makes the surface look correct while every other record on the same page does not, and the inconsistency reads as data quality rather than as a missing filter.
+
+Three helpers, declared by every widget that renders a figure or a date, and used in **every** such position:
+
+```javascript
+// The stored currency value may arrive as "USD;56700000" or as "56700000". Take the
+// part after the last semicolon, which is the amount under both shapes, and reject
+// anything non-numeric rather than printing NaN.
+c.money = function (value) {
+    if (value === undefined || value === null || value === '') {
+        return '';
+    }
+    var raw = String(value);
+    var amount = parseFloat(raw.substring(raw.lastIndexOf(';') + 1));
+    if (isNaN(amount)) {
+        return '';
+    }
+    return $filter('currency')(amount, '$', 0);
+};
+
+c.day = function (value) {
+    return value ? $filter('date')(value, 'mediumDate') : '';
+};
+
+c.count = function (value) {
+    return (value === undefined || value === null || value === '')
+        ? ''
+        : $filter('number')(value, 0);
+};
+```
+
+**The empty string, not a zero and not a dash.** A denied premium field is an *absent key*, and every template already branches on `=== undefined` to render its `Premium` marker, so these helpers only ever see a value that is present. They still return the empty string on an unparseable one, because a figure the portal cannot read is better shown as nothing than as `NaN` or as a `$0` that the caller would take for a real amount.
+
+**Where each is used**, exhaustively — a position left unformatted is the defect returning. The truncation captions are the easiest to miss and were: they print a total rather than a field value, so they do not look like currency-or-date positions, and on a fixture whose totals are all below a thousand an unformatted caption is **indistinguishable from a formatted one**. Two of the eight rendered four-digit totals with no separator beside a page that formatted every other figure.
+
+| Helper | Every position that uses it |
+| --- | --- |
+| `c.money` | `bst-startup-results` card `total_funding_usd`; `bst-company-profile` overview `total_funding_usd` and its funding table's `amount_usd` and `valuation_usd`; `bst-investor-profile` overview `aum_usd`, its portfolio table's `total_funding_usd`, and `amount_usd` and `valuation_usd` in **both** rounds tables |
+| `c.day` | `bst-company-profile` funding table `round_date`, jobs table `posted_date`, news list `published_date`; `bst-investor-profile` `round_date` in both rounds tables |
+| `c.count` | `bst-trends-kpi` panel values; `bst-investor-profile` `portfolio_count`; `bst-startup-results` `total_count` and its `Showing x to y of z` pager; every chart bucket count in `bst-trends-charts` and its companion table; **and every truncation caption** — the five on `bst-company-profile` (rounds, founders, executives, jobs, news) and the three on `bst-investor-profile` (portfolio, rounds led, rounds participated in), each of which prints a shown count, a total and a limit |
+
+`c.count` on the chart buckets is what makes the KPI and the chart agree: a four-digit bucket would otherwise render `1284` beside a KPI reading `1,284`, and the two numbers would look like different kinds of quantity.
 
 ### Heading hierarchy
 
@@ -713,8 +1005,26 @@ A control that disappears while it holds focus — the **Retry** button when a r
 Three consequences follow, and each is checkable by reading a template:
 
 - **`bst-premium-upsell` heads its alert with an `<h2>`**, because all three hosts embed it as a top-level sibling of their own `h1`. `bst-startup-results` renders its own equivalent notice at `<h3>` instead, because that notice sits *inside* the results panel and is therefore one level deeper. The treatment is the same; the level follows the nesting, which is what a heading level means.
-- **`.panel-title` is a class, not a level.** Bootstrap sets `font-size: inherit` and `margin: 0` on it, so it renders identically on an `h1`, an `h2` or an `h3` and the element can be chosen for structure alone. That is why the same class appears at three different levels in the table above with no visual difference.
+- **`.panel-title` is a class, not a level.** Bootstrap 3.3.6 sets `margin-top: 0`, `margin-bottom: 0`, `color: inherit` and a fixed `font-size: ceil($font-size-base * 1.125)` on it, which is **16px** at this theme's 14px base. Because that size is a literal rather than the element default, the class renders identically on an `h1`, an `h2` or an `h3` and the element can be chosen for structure alone. That is why the same class appears at three different levels in the table above with no visual difference.
 - **`<h1 class="h2">` on `bst-trends-kpi`** is a first-level heading rendered at second-level size, because the dashboard's title sits above a row of panels rather than above a document. The class controls the type scale and the element controls the outline; they are separate on purpose.
+
+**`bst-account-summary` needs the same fallback for a different reason, and it is the one case the record-binding argument below does not cover.** Its own `h1` binds `options.title`, which is static, so no missing record can empty it — but it sits **inside** the `.bst-account-body` wrapper that [Error and empty behaviour](#error-and-empty-behaviour) gates away on failure, so the gate removes the heading along with the stale content it exists to remove. Without a fallback the error state renders **no heading of any level**, the page loses its only first-level heading, and `c.focusDestination()` finds no marked descendant and falls back to the widget root — whose accessible name is then computed from the only link inside it, so the focused region announces itself as *Back to search*. The fallback carries `tabindex="-1"` for exactly that reason: it restores the destination as well as the outline entry.
+
+**The `h1` is present in every state, including the three that render no record.** Two of the five page-owning headings bind a value off the record — the company name and the investor name — and the record is not published on the unauthorised path, the not-found path or a failed load. A heading that binds it therefore has to sit inside the gate that those three paths close, which would leave the page with **no first-level heading at all** in exactly the states where a caller most needs to know which page they are on. Each of those two widgets therefore renders a **second, static** `h1`, gated on the complement of the same condition, so exactly one of the two is in the document at any moment:
+
+```html
+<h1 class="h2" tabindex="-1"
+    ng-if="!data.authorised || data.notFound || data.error">Company profile</h1>
+```
+
+Three properties make this the right shape rather than a patch, and each is checkable:
+
+- **The two are mutually exclusive by construction.** One is gated on `data.authorised && !data.notFound && !data.error` and the other on its exact negation, so no state renders two `h1` elements and no state renders none. Counting `h1` on the rendered page returns `1` in all four states.
+- **The static heading dereferences nothing.** Its text is a literal, so it cannot raise the `TypeError` that a record-bound heading raises on the two paths that publish no record.
+- **It carries `.h2`, not `.panel-title`, because it stands alone.** `.panel-title` zeroes both vertical margins and pins the size at 16px, which is right for a heading inside a `.panel-heading` that supplies the box and the spacing, and wrong for a heading that is the first element on the page: it renders barely above body size with **no margin at all**, so its rect starts at the very top of the content box and its ascenders sit against whatever is above it. The bare-heading precedent in this portal is `bst-trends-kpi`'s `<h1 class="h2">`, so this heading follows it and takes the second-level type scale and its margins from the utility class while the element keeps the first-level outline position.
+- **It carries `tabindex="-1"`, which is what makes the retry handoff possible.** [Busy, status and focus behaviour](#busy-status-and-focus-behaviour) sends focus to the widget's primary heading when a **Retry** succeeds, and the **Retry** control lives inside the error panel — so at the moment focus has to move, the record-bound heading does not yet exist. The static heading is the destination that does. Without it the handoff has nowhere to land and focus falls to the document body.
+
+The three widgets whose `h1` is a literal already — `bst-startup-results`, `bst-trends-kpi` and `bst-account-summary` — need no second heading, and each keeps its single `h1` **outside** the error gate for the same reason.
 
 ### Error and empty behaviour
 
@@ -734,36 +1044,169 @@ c.load = function () {
     return c.server.update().then(function () {
         c.data.error = '';
         settled();
+        // After the payload has rendered, so the destination heading exists to receive
+        // it. $timeout runs after the digest that inserts the content.
+        $timeout(c.focusDestination, 0);
     }, function () {
         c.data.error = 'Could not load. Use Retry to try again.';
         settled();
+        $timeout(c.focusDestination, 0);
     });
 };
 
 c.retry = function () {
+    // BEFORE the load, because clearing data.error removes the Retry button from the
+    // document and focus would otherwise be lost to the body in the gap before the
+    // response arrives. c.load() moves it again once the new content is rendered.
+    c.focusDestination();
     c.load();
+};
+
+c.errorText = function () {
+    return c.data.error || c.data.serverError || '';
 };
 ```
 
-Three properties of that shape are what the contract requires, and each closes a way for the interface to stall or mislead:
+Four properties of that shape are what the contract requires, and each closes a way for the interface to stall or mislead:
 
 - **The rejection handler exists**, so a rejected promise sets `data.error` rather than passing silently.
 - **`c.busy` is cleared on both outcomes**, by the one `settled` helper that the success handler and the rejection handler each call, so it is cleared on rejection as well as on success and the progress indicator cannot hang. Both handlers are present, so there is no third path out of the call.
 - **`data.error` is cleared at the start of every attempt**, so a successful retry removes the error panel rather than leaving it beside fresh content.
+- **Focus is handed off on both outcomes, and once before the attempt**, per [Busy, status and focus behaviour](#busy-status-and-focus-behaviour). The pre-attempt move is what stops focus reaching the body while the request is in flight, and the post-settle move is what puts it on the heading that states the outcome — including a *second* failure, where the destination is the static heading rather than a record-bound one.
+- **`c.errorText()` is the only thing a template asks about the error state**, and it answers either of the two members that can carry one.
+
+**Two members can carry a failure, and each has exactly one owner.** `data.error` belongs to `c.load()` and to nothing else: it reports a call that did not settle successfully — a rejected promise. `data.serverError` belongs to a **server script** that caught its own failure and chose to report it, which is what the two dashboard widgets do when an aggregate throws; `c.load()` never reads it and never clears it, and the server script re-publishes it on every run, so it is empty again as soon as a run succeeds.
+
+**That split is what makes a failing retry recoverable.** A server script that catches its own failure leaves `c.server.update()` **resolved**, so `c.load()`'s *success* handler runs and clears `data.error`. Were the server's message in `data.error`, the retry would erase it — and with it the panel the **Retry** control lives inside, leaving a widget with no data, no error and nothing to try again. Because the message is in `data.serverError` instead, the panel and its control survive a failing retry and disappear only when a run actually succeeds.
+
+**Every template asks `c.errorText()` rather than reading either member**, in all seven error panels and in every gate that has to stand down while a failure is showing. The guarantee that follows is the one that matters and it is exact: **no empty-collection notice can ever stand in for a failure.** Each of the nine such notices is suppressed during an error either by its own gate — the results widget's *No startup matches those criteria* and the chart's *No startup is recorded for this breakdown yet* both test `!c.errorText()` directly — or by the content-region `ng-if` it sits inside, which is how the company and investor profiles suppress their five per-panel notices at once.
+
+Two widgets are outside that shape, both deliberately, and they are named here so the guarantee is not read as more than it is. [`bst-premium-upsell`](#bst-premium-upsell) has no error panel at all, as its controller records: it renders from options and an embedded model, makes no server call that can fail, and its notice *is* its content. And [`bst-startup-results`](#bst-startup-results) has no single content-region gate — its result cards, its premium notice and its pager are siblings of its error panel rather than children of one wrapper. A **first** load that fails therefore shows the message over an empty region, which is correct; but a refresh that fails after a successful load — a page step or a new search, which are this widget's ordinary round trips — leaves the previous page's rows on screen beneath the message. The rows are real data honestly labelled by the error above them, and no empty-state text appears, so the guarantee above still holds; what a reader should not assume is that this widget clears its results when a refresh fails, because it does not.
+
+**A value that is already defined when a retry begins is never bound one-time.** The `::` prefix stops watching an expression as soon as that expression has a **defined** value, and this single sentence decides every case in this portal, so the discipline is stated as the three cases rather than as a slogan:
+
+| Where the expression sits | One-time binding | Why |
+| --- | --- | --- |
+| Inside an `ng-repeat` clone — `::item.name`, `::round.round_date`, `::row.label` | **Permitted, and used throughout** | The binding is per clone. When the collection changes, `ng-repeat` destroys the clones and builds new ones, and each new clone evaluates its own expressions once. The repeat expression itself is what must stay watched; the properties read inside it need not be. |
+| Directly on a `data.*` member that only a **successful** load ever defines — `::data.startup.name`, `::data.roundsLedTotal`, `::data.entitlements` | **Permitted, and used throughout** | These widgets do not catch their own failure, so a failed load leaves the member `undefined`, a one-time binding on an undefined value has not deregistered, and a later successful retry still paints. There is no state in which the member holds one defined value and must later show another. |
+| Directly on a `data.*` member whose server script publishes a **defined** value even when it fails — the two dashboard collections and everything derived from them | **Forbidden** | This is the only case that breaks, and it is why the rule exists. Both dashboard scripts catch their own aggregate failure and still publish their collections, as empty arrays, *before* the first paint — so a one-time repeat over them deregisters immediately and can never repaint. That cuts both ways and both ways mislead: after a failed retry the widget goes on showing the figures of the run before it, and after a **successful** retry it shows nothing new at all, which is the opposite of what a Retry control promises. |
+
+The test to apply is therefore not "can a retry change this value" but **"is this value already defined at the moment the retry starts"** — and the answer is yes exactly when the widget's own server script publishes it on the failing path too. That is the property `data.serverError` marks: a widget that publishes `serverError` also publishes defined defaults beside it — the KPI script assigns `data.kpis = []` both before its `try` and inside its `catch`, and the charts script builds `data.buckets` from the closed choice list it published *before* the aggregate, so a caught failure still yields a full set of zero-count buckets. That last detail is why an unguarded charts template rendered its empty-data notice on a failure rather than an error: the collection was not empty, it was zeroed.
+
+Every member either dashboard publishes **after** its aggregate is therefore bound normally. One member is exempt and named here so the exemption is not mistaken for an oversight: `data.dimensionLabel` keeps the one-time form, because the charts script resolves it in step 2 from `options.dimension`, before it queries anything at all. It is an `options`-derived value wearing a `data` name, no round trip can alter it, and `D-554` records it staying one-time for that reason. `options.*` and values derived from them keep the one-time form on the same grounds. The cost is a handful of watchers on widgets that render at most five panels or eight bars.
+
+One member is published unconditionally for this reason rather than bound normally: `data.upsellPage` on [`bst-startup-results`](#bst-startup-results), as its server script's own note records. Either treatment closes the gap; publishing it always is the cheaper of the two because the value is a page name that never varies.
 
 **One helper, called from both handlers.** `finally` is a reserved word in the ECMAScript 3 syntax the platform's server-side interpreter accepts, so a promise-`finally` handler has to be reached through bracket notation to parse at all. The delivered form is one helper called from both handlers: the busy flag is cleared exactly once on either outcome, in one place, with no reserved word and no bracket notation, and it reads the same on the server and in the client controller. Recorded at `D-178`.
 
 **The visible error panel**, rendered by each of the four templates immediately after its status region:
 
 ```html
-<div class="alert alert-danger" role="alert" ng-if="data.error">
+<div class="alert alert-danger" role="alert" ng-if="c.errorText()">
   <span class="icon-cross-circle" aria-hidden="true">&nbsp;</span>
-  <span>{{data.error}}</span>
+  <span>{{c.errorText()}}</span>
   <button type="button" class="btn btn-default" ng-click="c.retry()">Retry</button>
 </div>
 ```
 
-**Every collection renders an explicit empty state.** A collection that is empty renders a short `.alert.alert-info`, or a single `.list-group-item` where the collection is a list inside a panel, stating in plain words that there is nothing to show. **No collection renders as nothing at all**, and no count of `0` stands alone as the whole of the answer. The wording for each is given in the widget's own section.
+**Every collection renders an explicit empty state.** A collection that is empty renders a short `.alert.alert-info` **carrying `role="status"`**, or a single `.list-group-item` carrying `role="status"` where the collection is a list inside a panel, stating in plain words that there is nothing to show. **No collection renders as nothing at all**, and no count of `0` stands alone as the whole of the answer. The wording for each is given in the widget's own section.
+
+#### Which alerts are live regions, and which are not
+
+**Three states are announced from a visible element, and every other alert is silent.** The rule is the one stated under [Busy, status and focus behaviour](#busy-status-and-focus-behaviour): one fact, one announcer. Applied to markup it gives exactly three roles per template, and their absence elsewhere is as deliberate as their presence:
+
+| Alert | Role | Reason |
+| --- | --- | --- |
+| The not-entitled `.alert.alert-warning` | **`role="alert"`** | The denial must interrupt. `statusText()` returns nothing in this state, so without the role the denial is announced by nothing at all — the one message a denied caller most needs would be the least likely to be heard. |
+| The failure `.alert.alert-danger` | **`role="alert"`** | Already carried. It interrupts and it owns **Retry**. |
+| The not-found `.alert.alert-warning` — the company and investor profiles | **`role="alert"`** | Same reasoning as the denial, and the same gap without it: the caller asked for a specific record, the answer is that it does not exist, and `statusText()` returns nothing in this state. |
+| The empty-state `.alert.alert-info`, or the empty `.list-group-item`, **where the emptiness is the answer to something the caller just did** | **`role="status"`** | Polite, because an empty result is an answer rather than a fault. `statusText()` returns nothing in this state, so this element is the sole announcer. |
+| The same empty-state element **where the collection was empty on arrival** — the five per-pane messages of `bst-company-profile`, the three of `bst-investor-profile` | **no role** | Nothing changed: these panes arrive in one round trip and a caller reaches each message in reading order when they open that pane. A role would announce, on load, an emptiness the caller has not asked about yet — and on the company profile there are five of them, so five announcements would fire for one arrival. The **all-empty** case is the one worth stating, and the widget's own `statusText()` states it once. |
+| Any other `.alert` — an explanatory note, a truncation notice, the premium upsell, a withheld-count substitute | **no role, no `aria-live`** | Each restates something a visible heading, the loaded status wording or an adjacent control already carries. A role here is a second announcement of one fact. |
+
+**The distinction in rows three and four is between an answer and a description.** `bst-startup-results` renders its empty state *because the caller submitted a search*, so the emptiness is the response to an action and has to reach them without their going looking for it. A company profile's Funding pane is empty *as a property of the record*, in a tab set that was fully loaded before the caller touched anything; it is content, and content is read. Applying row three's role to row four's elements is the most likely mistake here, and it produces a load-time burst of announcements about panes the caller has not opened.
+
+**A truncation notice and a withheld-count substitute are read, not announced.** Both are permanent explanatory text beside the thing they qualify, not state changes, and both are reached in reading order by every caller. Giving either a live-region role would interrupt a caller mid-sentence to restate a caption they are about to read anyway.
+
+#### Rendered rows and model rows must agree
+
+**A repeat that fails to render is silent, and every count on the screen keeps asserting the data it did not draw.** This is the one failure mode this widget family cannot see, so two rules close it — one that stops it happening, and one that makes it visible if it happens anyway.
+
+**Rule 1 — every repeat is keyed on something that is present and unique, or it is keyed on `$index`.** AngularJS throws `ngRepeat:dupes` and renders **zero** clones for the whole collection — not just the offending row — when a `track by` expression repeats a value or evaluates to `undefined`. Three consequences follow, and each has bitten a repeat in this portal:
+
+| Collection | Its key | Why that key is safe |
+| --- | --- | --- |
+| A collection of records this application wrote | `track by item.sys_id` | `sys_id` is present on every row a `GlideRecordSecure` query returns and is unique by construction. This is the correct key and it stays. |
+| A collection of **primitives** — `Investor.focus_areas`, and any other Multi-choice value rendered as chips | `track by $index` | A repeat over primitives with **no** `track by` keys each item as `type:value`, so two identical strings collide and the whole collection renders as nothing. `focus_areas` is a Multi-choice column and the [cleaning rules](#the-cleaning-rules-these-widgets-depend-on) de-duplicate on name and headquarters location, not on the members of a multi-choice value, so a fallback import can legitimately write the same member twice. `$index` is the correct key for a primitive collection: it is always present and always unique. |
+| A collection assembled by the application from **more than one traversal path** — the investor portfolio, which is a de-duplicated union per AAP §0.8.5 | `track by item.sys_id`, **plus** rule 2 below | The key is right, but the de-duplication that guarantees its uniqueness is application logic rather than a database constraint, so it is the one collection where the guarantee could regress. |
+
+**Rule 2 — every widget that renders a collection reconciles what rendered against what it holds.** Each of the four templates that repeats a collection carries one reconciliation notice per collection, immediately after the repeat:
+
+```html
+<div class="alert alert-warning" role="alert"
+     ng-if="data.authorised &amp;&amp; !data.error &amp;&amp; c.unrendered('result')">
+  <span class="icon-warning-triangle" aria-hidden="true">&nbsp;</span>
+  <span>{{c.unrendered('result')}} of {{data.result.length}} rows could not be displayed. Reload the page; if it recurs, report it with this page address.</span>
+</div>
+```
+
+**The leading terms of that `ng-if` are not decoration: the notice must carry the same guard as the region that contains the repeat it reconciles.** The helper compares a model length against a rendered-row count, and both a withheld region and a failed repeat produce the same arithmetic — a populated collection and no rows on the screen. So a notice with only `c.unrendered(...)` in its guard fires in every state where the repeat was *deliberately* not rendered, and reports a fault where there is none. The two instances in this family are:
+
+| Template | The repeat's enclosing guard | The notice's guard |
+| --- | --- | --- |
+| `bst-startup-results` | `data.authorised && !data.error` on the wrapper around the card repeat | `data.authorised && !data.error && c.unrendered('result')` |
+| `bst-company-profile`, each of its five collections | `!c.isEmpty('<collection>')` on the table or list that holds the repeat | `!c.isEmpty('<collection>') && c.unrendered('<collection>')` |
+| `bst-investor-profile` | `c.hasPortfolio()` on the `.table-responsive` around the portfolio repeat | `c.hasPortfolio() && c.unrendered('portfolio')` |
+
+The rule generalises: copy the guard of the repeat's nearest enclosing conditional and append the helper. A notice that can outlive its own repeat is worse than no notice, because it teaches a caller to disbelieve the one message in the family that reports a real rendering fault.
+
+and each client controller exposes the one helper that drives it:
+
+```javascript
+c.unrendered = function (collection) {
+    var model = c.data[collection];
+
+    // Two collection shapes exist in this family: a bare array, and the four-member
+    // {rows,total,limit,truncated} envelope the company profile publishes. Reading
+    // `.length` off an envelope yields undefined, so a helper that did not normalise
+    // would return 0 for every envelope collection -- silently disabling itself on the
+    // one widget whose repeats have actually failed this way.
+    if (model && !angular.isArray(model) && model.rows) {
+        model = model.rows;
+    }
+
+    var modelLength = model && model.length ? model.length : 0;
+    var drawn = $element[0].querySelectorAll('[data-bst-row="' + collection + '"]').length;
+
+    return modelLength > drawn ? modelLength - drawn : 0;
+};
+```
+
+`$element` is injected into the controller for this and for nothing else — it is the widget's own root, so the query cannot see another widget's rows. Four properties make the helper safe to call from a template binding:
+
+- **It counts a marker attribute, not a class.** Every repeated element carries `data-bst-row="<collection>"` — added to the repeat's root element, alongside its `track by` — so the count is of *that* repeat's clones and cannot be inflated by a nested list or a sibling panel that happens to share a class.
+- **It normalises the two collection shapes**, so the same helper is correct for a bare array and for the four-member envelope. The marker value is the **member name** on `data`, not a path into it: `data-bst-row="rounds"` against `c.data.rounds.rows`. Keeping the marker at the member name is what lets one string identify the collection in the template, in the guard, in the notice's wording and in the helper.
+- **It returns a number, and `0` is falsy**, so the notice is absent from the document whenever the two agree. It renders only on a genuine shortfall.
+- **It never returns a negative number**, so a transient mid-digest state where more elements exist than the model holds reads as agreement rather than as a shortfall.
+- **It is called once per collection per template, and its notice carries `role="alert"`.** This is the fourth live region in the family and the only one added beyond the three states above, because it reports a fault in the rendering itself rather than a state of the data: nothing else on the screen carries it, so no other announcer can.
+
+This is what turns a silent blank region into a stated failure. It does not repair the row that failed; it stops every other surface on the screen from asserting a row the caller cannot see.
+
+#### The cleaning rules these widgets depend on
+
+**Two classes of character reach these widgets through stored text and change what the caller sees, and neither is handled by trimming.** The four cleaning rules of the ingestion contract — trim, de-duplicate on name and headquarters location, normalise choice values, reject a record missing a mandatory field — leave both untouched, so both are stated here as the display-side contract and are enforced on the write path by `IngestionMapper.coerceField()`.
+
+**Class one — characters that are invisible but not whitespace.** `String.prototype.trim` removes none of U+200B zero-width space, U+200C zero-width non-joiner, U+200D zero-width joiner, U+2060 word joiner, U+00AD soft hyphen or U+FEFF byte-order mark. Two startups whose names differ only by a zero-width space therefore render **identically** and are not collapsed by de-duplication, because de-duplication compares the stored strings. **Every stored string value is stripped of those six code points before it is trimmed and before it is compared for de-duplication.** Stripping precedes trimming because a leading zero-width space otherwise protects the whitespace behind it from the trim.
+
+**Class two — characters that reorder the text around them.** U+202A to U+202E and U+2066 to U+2069 are bidirectional embedding and override controls. An unterminated U+202E right-to-left override in a stored name makes the rendered string differ from the stored string — `Alpha desrever Beta` for a stored `Alpha reversed Beta` — so the value a caller reads is not the value an administrator would read on the platform form view. **Those ten code points are stripped on the same write path, for the same reason: a stored value must render as itself.** Stripping rather than escaping is the right treatment because none of the ten carries meaning in a company name, a location or a job title, and an escaped control would render as visible mojibake.
+
+**Genuine right-to-left text is supported, and is isolated rather than stripped.** Removing the *controls* does not remove the ability to store Arabic or Hebrew; it removes the ability to hijack the surrounding layout. Three display rules carry that:
+
+- **`dir="auto"` on every element that renders a stored free-text value.** The browser then takes the paragraph direction from the value's own first strong character, so an Arabic company name is flush right inside a left-to-right page and a Latin one is flush left. Without it every value inherits `direction: ltr` from the page and a right-to-left name renders against the wrong edge. It is applied to the elements that render `name`, `description`, `headquarters_location`, a job or article `title`, an article `summary` and an article `source`.
+- **`<bdi>` around a stored value rendered inline beside product wording.** `Total funding <bdi>{{…}}</bdi>` keeps a right-to-left value from reordering the label in front of it. The element exists for exactly this and needs no attribute.
+- **`unicode-bidi: isolate` on the containers that hold both product wording and a stored value.** It is a keyword naming a behaviour, not a measured value, so it is permitted in widget CSS. The UA stylesheet already applies it to `<bdi>`; declaring it on the container is what extends the same guarantee to a list item that interpolates a value directly.
+
+**One further display guard, for stacked combining marks.** A grapheme carrying several combining marks is taller than the font's nominal ascent, and a fixed heading line height clips it into the line below. Every element that renders a stored name or title therefore takes `line-height: normal`, which lets the line box grow to the content. `normal` names a behaviour rather than a measurement, so it introduces no literal, and for text without combining marks it is visually indistinguishable from Bootstrap's own `$headings-line-height`.
 
 ### `bst-startup-search`
 
@@ -793,7 +1236,7 @@ Three properties of that shape are what the contract requires, and each closes a
 
 #### Data contract
 
-**Every member below is assigned onto `data` by the server script named in its row, and read by the consumer named in its row. There is no third source and no other member**: a template expression naming anything absent from this table renders nothing at best and raises a runtime expression error at worst, and a member published with no consumer is a dead output. `data.error` is not in any widget's table — it is set on the client by the shared `c.load()` helper of [Error and empty behaviour](#error-and-empty-behaviour) and by nothing on the server.
+**Every member below is assigned onto `data` by the server script named in its row, and read by the consumer named in its row. There is no third source and no other member**: a template expression naming anything absent from this table renders nothing at best and raises a runtime expression error at worst, and a member published with no consumer is a dead output. `data.error` is not in any widget's table — it is set on the client by the shared `c.load()` helper of [Error and empty behaviour](#error-and-empty-behaviour) and by nothing on the server. A widget whose own server script catches a failure and reports it publishes that message as **`data.serverError`**, which **is** in that widget's table, and which `c.load()` never touches; the error panel renders `c.errorText()`, which answers either of the two.
 
 | Member | Type | Published by | Consumed by |
 | --- | --- | --- | --- |
@@ -806,7 +1249,19 @@ Three properties of that shape are what the contract requires, and each closes a
 #### Client controller
 
 1. Bind the three inputs to `c.data.criteria.name`, `c.data.criteria.industry` and `c.data.criteria.location` with `ng-model`.
-2. Expose `c.submit()`, bound by `ng-submit` on the `<form>`, and `c.clear()`, bound by `ng-click` on the **Clear** button — those two are the whole of this widget's interaction surface, and the form carries exactly one `type="submit"` control. On submit, and on clear, normalise each value by trimming it.
+2. Expose `c.submit()`, bound by `ng-submit` on the `<form>`, and `c.clear()`, bound by `ng-click` on the **Clear** button — those two are the whole of this widget's interaction surface, and the form carries exactly one `type="submit"` control. On submit, and on clear, normalise each value by trimming it, and **assign the trimmed value back onto the model**:
+
+```javascript
+var normalise = function () {
+    var criteria = c.data.criteria;
+
+    criteria.name = (criteria.name || '').trim();
+    criteria.industry = (criteria.industry || '').trim();
+    criteria.location = (criteria.location || '').trim();
+};
+```
+
+   **The two text inputs carry `ng-trim="false"`, and that is what makes the assignment visible.** The framework trims a text input's value on its way *into* the model by default, so a field holding only spaces yields an empty model while the field still visibly holds the spaces — the view and the model then disagree, and assigning the already-empty value back changes nothing and re-renders nothing. With `ng-trim="false"` the model holds what the caller typed, `normalise()` genuinely changes it, and the framework writes the trimmed value back to the field. The criteria that leave this widget are identical either way; what changes is that the caller can see what was submitted.
 3. **Deliver the criteria according to `options.results_page`.** The option is read on every submit and on every clear, and decides between two paths:
    - **Same page** — `options.results_page` equals `data.currentPage`, which is the shipped configuration, where both widgets sit on `bst_home`. Broadcast the criteria on the root scope with `$rootScope.$broadcast('bst.search.criteria', c.data.criteria)`, and mirror them into the URL with `$location.search()` on the same three parameter names, so the search is linkable and the widget rehydrates on reload. `bst-startup-results` listens for that event.
    - **Another page** — `options.results_page` names a different page. Navigate to it, carrying the criteria as query parameters, with `$location.url('?id=' + options.results_page + <the three parameters>)`. The results widget on the destination page then seeds itself from those parameters through `$sp.getParameter()`, which is the same rehydration path the same-page form uses on reload. Broadcast nothing: the destination is a fresh page load and no listener survives it.
@@ -814,6 +1269,45 @@ Three properties of that shape are what the contract requires, and each closes a
 4. Declare `c.busy` per [Busy, status and focus behaviour](#busy-status-and-focus-behaviour). This widget issues no server call after its first render, so `c.busy` becomes `false` when the first payload arrives and stays there. It carries **no** status region: the submission is announced by `bst-startup-results`, which owns both the status region and the focus move for the result set.
 5. Reject nothing and filter nothing. The controller never evaluates `active` or `headquarters_location`; the predicate lives in `StartupSearchService`.
 6. Guard the industry input against a value outside `c.data.industries` by rendering it as a `<select>` over that list rather than as free text.
+7. **Expose `c.submitting`, and disable the submit control while a search is outstanding.** This widget makes no server call of its own, so its own `c.busy` is `false` for the whole of its life and cannot carry this state. The state belongs to `bst-startup-results`, which is the widget that loads, so it publishes it and this widget listens:
+
+```javascript
+c.submitting = false;
+
+var stopBusy = $rootScope.$on('bst.search.busy', function (event, busy) {
+    c.submitting = !!busy;
+});
+
+$scope.$on('$destroy', function () {
+    stopBusy();
+});
+```
+
+   `bst-startup-results` broadcasts `bst.search.busy` with `true` at the start of every load it performs and with `false` when that load settles, from the same `c.load()` helper that owns its own busy flag, so the two can never disagree. **The deregistration is not optional**, for the reason given for the criteria listener: `$rootScope.$on` outlives this widget's scope.
+
+   Without the guard, six clicks in a second are six submissions and therefore six concurrent searches against the instance, each one racing the others to be the result set the caller ends up looking at. **On the another-page path there is no listener**, because the destination is a fresh page load and no listener survives it; a second click during that navigation re-requests the same address, which is idempotent, so nothing is needed there.
+
+8. **Expose `c.filterColumns()`, which returns the column class the three filters share, so the row always totals twelve.** Both optional filters are configurable, so the row carries one, two or three columns, and a fixed `col-md-4` leaves two thirds of the row empty when it carries one:
+
+```javascript
+c.filterColumns = function () {
+    var shown = 1
+        + (c.options.show_industry ? 1 : 0)
+        + (c.options.show_location ? 1 : 0);
+
+    if (shown === 1) {
+        return 'col-md-12 col-lg-12';
+    }
+
+    if (shown === 2) {
+        return 'col-md-6 col-lg-6';
+    }
+
+    return 'col-md-4 col-lg-4';
+};
+```
+
+   Twelve divides by one, two and three exactly, so every configuration totals twelve with no remainder and no extra-small or small class. The name field is always shown, which is why the count starts at one.
 
 #### HTML template
 
@@ -823,20 +1317,21 @@ Three properties of that shape are what the contract requires, and each closes a
     <h1 class="panel-title">{{::options.title}}</h1>
   </div>
   <div class="panel-body">
-    <div class="alert alert-warning" ng-if="!data.authorised">
+    <div class="alert alert-warning" role="alert" ng-if="!data.authorised">
       <span class="icon-info" aria-hidden="true"></span>
       <span>Your account holds no Boston Startup Tracker role.</span>
     </div>
-    <form ng-if="data.authorised" ng-submit="c.submit()">
+    <form name="bstSearchForm" novalidate ng-if="data.authorised" ng-submit="c.submit()">
       <div class="row">
-        <div class="col-md-4 col-lg-4">
+        <div ng-class="c.filterColumns()">
           <div class="form-group">
             <label for="bst-search-name">Company name</label>
             <div class="input-group">
               <input id="bst-search-name" type="text" class="form-control"
+                     dir="auto" ng-trim="false"
                      ng-model="data.criteria.name" />
               <span class="input-group-btn">
-                <button type="submit" class="btn btn-primary">
+                <button type="submit" class="btn btn-primary" ng-disabled="c.submitting">
                   <span class="icon-search" aria-hidden="true"></span>
                   <span>Search</span>
                 </button>
@@ -844,20 +1339,21 @@ Three properties of that shape are what the contract requires, and each closes a
             </div>
           </div>
         </div>
-        <div class="col-md-4 col-lg-4" ng-if="::options.show_industry">
+        <div ng-class="c.filterColumns()" ng-if="::options.show_industry">
           <div class="form-group">
             <label for="bst-search-industry">Industry</label>
             <select id="bst-search-industry" class="form-control"
                     ng-model="data.criteria.industry">
               <option value="">All industries</option>
-              <option ng-repeat="choice in ::data.industries" value="{{::choice}}">{{::choice}}</option>
+              <option ng-repeat="choice in ::data.industries track by $index" value="{{::choice}}">{{::choice}}</option>
             </select>
           </div>
         </div>
-        <div class="col-md-4 col-lg-4" ng-if="::options.show_location">
+        <div ng-class="c.filterColumns()" ng-if="::options.show_location">
           <div class="form-group">
             <label for="bst-search-location">Location</label>
             <input id="bst-search-location" type="text" class="form-control"
+                   dir="auto" ng-trim="false"
                    ng-model="data.criteria.location" />
           </div>
         </div>
@@ -893,9 +1389,39 @@ Three properties of that shape are what the contract requires, and each closes a
 .bst-search .bst-search-actions .text-muted {
     margin-left: $padding-base-horizontal;
 }
+
+/* Bootstrap's .form-control:focus removes the browser's own ring (outline: 0) and
+   replaces it with a border-colour change plus a glow, both in a pale blue that
+   measures 2.37:1 against the adjacent white and 1.47:1 against the unfocused
+   border - so on both readings of the non-text contrast requirement the focused
+   state is not distinguishable. The ring is restored in the brand colour, which is
+   4.60:1 on the panel; the glow is left alone, so the focused state now has two
+   independent cues rather than one that cannot be seen. The width and offset come
+   from the radius scale for the reason recorded under "Busy, status and focus
+   behaviour": Bootstrap publishes no outline-width token, and these are the only
+   3- and 4-pixel lengths available without writing a literal. */
+.bst-search .form-control:focus {
+    outline: $border-radius-base solid $brand-primary;
+    outline-offset: $border-radius-small;
+}
 ```
 
 The `.panel-body` rule is scoped beneath `.bst-search`, which is what keeps it out of every other panel on the instance.
+
+**The focus rule is the only focus declaration in this portal, and it exists because Bootstrap removes the one the browser draws.** `.form-control:focus` in Bootstrap 3.3.6 sets `outline: 0` and compensates with colour alone — the border moves from one grey to one blue, plus a soft blue glow. That substitution is weaker than it looks, and it fails outright in one mode:
+
+| Rendering mode | What Bootstrap's compensation delivers | Consequence |
+| --- | --- | --- |
+| Ordinary | The border recolours from `#cccccc` to `#66afe9` and an outer `box-shadow` glow appears. Measured against the control's own white background, that focused border is **2.37:1** — below the 3:1 floor for a non-text indicator — and the glow is fainter still. | An indication exists but is tonal only and thin. |
+| `forced-colors: active` | **Nothing.** That mode rewrites every border to a single system colour and removes `box-shadow` entirely, so both compensations are discarded. | A focused text input, a focused select and an unfocused one compute **identically in every property** — same outline, same border, same background, same shadow. The only differing pixel is the text caret, which a `<select>` does not have. A caller navigating by keyboard in that mode cannot tell which of the three fields they are in. |
+
+`outline-style: auto` restores the browser's own focus ring, and it is declared **unconditionally** rather than inside a `@media (forced-colors: active)` block. One rule then answers both rows of that table: it is the indicator forced colours *does* honour and recolours to `Highlight`, and in ordinary rendering it puts the platform ring back beside Bootstrap's glow instead of leaving a 2.37:1 border to carry the state alone. Scoping it to a media query would have fixed only the row where the indication vanished and left the row where it was merely weak.
+
+Three further properties of the declaration are worth stating:
+
+- **It introduces no measured literal.** `auto` is a permitted keyword and no width or colour is stated. Bootstrap's `outline: 0` leaves `outline-width` at `0px` and that computed value survives — but a browser draws the `auto` ring at its own platform width and ignores the declared width entirely, so the ring paints regardless. The computed `outline-width: 0px` beside a painted ring is expected and is not a symptom.
+- **The ring the platform draws is the one the caller already recognises** everywhere else on the instance, which is worth more to a keyboard caller than any authored ring would be.
+- **It is scoped to `.form-control` and nothing else**, because the buttons and links in these widgets never lost their ring: Bootstrap leaves `:focus` alone on `.btn` and on `<a>`.
 
 ### `bst-startup-results`
 
@@ -919,12 +1445,14 @@ Where a plain paginated record list is all that is wanted, use the stock **Data 
 
 **The page size is shared with the REST layer.** When `page_size` is empty the widget reads `x_bst_startuptrk.rest.default_limit` — shipped value `20` — through `AppProperties.getDefaultLimit()`, and it clamps any supplied value to `x_bst_startuptrk.rest.max_limit` — shipped value `50` — through `AppProperties.getMaxLimit()`. Those are the same two properties `RestQueryHelper.getLimit()` reads for the API, documented in [`../api-reference.md`](../api-reference.md), **so changing either property changes the page size on both surfaces at once.** Do not hard-code `20` or `50` in the widget.
 
+**Both accessors cap at `50`, so a property can narrow this widget's page and cannot widen it.** `AppProperties` resolves each page-size property to at least `1` and at most `PAGE_SIZE_CEILING`, which is `50`. Raising `x_bst_startuptrk.rest.max_limit` to `200` therefore does **not** produce a 200-row widget page: it resolves to `50`, here exactly as in the API. If a larger portal page is ever wanted, the ceiling is a code constant in `AppProperties` and changing it is an Update Set change, not a configuration change — which is the point, because the same constant is what stops a mistyped property from rendering an entire table into a widget.
+
 #### Server script
 
 1. Construct `var builder = new RestResponseBuilder();` and assign `data.authorised = builder.hasAnyAppRole();`. When `data.authorised` is `false`, return immediately and publish nothing further. **Assign the result — do not merely call the method.**
 2. Resolve the page size: start from `options.page_size`; when it is empty or not a whole number of 1 or more, use `new AppProperties().getDefaultLimit()`; then clamp to `new AppProperties().getMaxLimit()`. Store the resolved value as `data.limit`.
 3. Resolve the offset: take `input.offset` when the widget was refreshed from the client, otherwise `$sp.getParameter('offset')`, otherwise `0`. Coerce to a whole number of 0 or more and store as `data.offset`.
-4. Resolve the criteria: take `input.criteria` when present, otherwise read `name`, `industry` and `location` with `$sp.getParameter()`. Trim each. Discard an `industry` value that is not one of the six values of `x_bst_startuptrk_startup.industry`.
+4. Resolve the criteria: take `input.criteria` when present, otherwise read `name`, `industry` and `location` with `$sp.getParameter()`. Trim each. Discard an `industry` value that is not one of the six values of `x_bst_startuptrk_startup.industry`. Store the resolved object as `data.criteria`, with all three keys always present and an unsupplied filter held as an empty string — step 5 reads it, and the controller sends it back as `input.criteria`, so a missing key would resolve to `undefined` on the round trip and reintroduce the filter this step just discarded.
 5. Build one query plan and apply it to **both** the result set and the count:
 
 ```javascript
@@ -975,7 +1503,7 @@ The plan is built once and handed to both `countState()` and `search()`, which i
 
 #### Data contract
 
-**Every member below is assigned onto `data` by the server script named in its row, and read by the consumer named in its row. There is no third source and no other member**: a template expression naming anything absent from this table renders nothing at best and raises a runtime expression error at worst, and a member published with no consumer is a dead output. `data.error` is not in any widget's table — it is set on the client by the shared `c.load()` helper of [Error and empty behaviour](#error-and-empty-behaviour) and by nothing on the server.
+**Every member below is assigned onto `data` by the server script named in its row, and read by the consumer named in its row. There is no third source and no other member**: a template expression naming anything absent from this table renders nothing at best and raises a runtime expression error at worst, and a member published with no consumer is a dead output. `data.error` is not in any widget's table — it is set on the client by the shared `c.load()` helper of [Error and empty behaviour](#error-and-empty-behaviour) and by nothing on the server. A widget whose own server script catches a failure and reports it publishes that message as **`data.serverError`**, which **is** in that widget's table, and which `c.load()` never touches; the error panel renders `c.errorText()`, which answers either of the two.
 
 | Member | Type | Published by | Consumed by |
 | --- | --- | --- | --- |
@@ -993,6 +1521,15 @@ The plan is built once and handed to both `countState()` and `search()`, which i
 #### Client controller
 
 1. Implement `c.load()` and `c.retry()` exactly as [Error and empty behaviour](#error-and-empty-behaviour) specifies. Every server call in the steps below goes through `c.load()`, so no call is made without both handlers and the `finally` clause attached.
+
+   **This widget's `c.load()` additionally publishes its busy state on the root scope**, because `bst-startup-search` disables its submit control from it and has no load of its own to derive it from:
+
+```javascript
+$rootScope.$broadcast('bst.search.busy', true);   // immediately before c.server.update()
+$rootScope.$broadcast('bst.search.busy', false);  // inside the settled helper
+```
+
+   Both go in the one place the busy flag is already written — the broadcast of `true` beside `c.busy = true`, and the broadcast of `false` inside the single `settled` helper that both handlers call — so the published state cannot diverge from the real one on either outcome.
 2. Listen for the search event: `$rootScope.$on('bst.search.criteria', function (event, criteria) { c.data.criteria = criteria; c.data.offset = 0; c.load(); })`.
 
    **Deregister that listener on `$destroy`.** `$rootScope.$on` binds to the root scope, which outlives this widget's scope, and it returns the deregistration function:
@@ -1011,118 +1548,243 @@ $scope.$on('$destroy', function () {
 
    Without the deregistration every visit to `bst_home` leaves one more live listener on the root scope, each calling `c.load()` on a scope that no longer renders.
 
-3. Expose `c.next()` and `c.previous()`, which adjust `c.data.offset` by `c.data.limit`, clamp it to the range `0` to `c.data.total_count`, and call `c.load()`.
-4. Expose `c.hasNext()` and `c.hasPrevious()` for the pager's `ng-disabled` bindings. `c.hasNext()` is `false` when `c.data.result.length` is `0`, so an empty result set offers no next page.
+3. Expose `c.next()` and `c.previous()`, which adjust `c.data.offset` by `c.data.limit`, clamp it to the range `0` to the **last page's offset**, call `c.load()`, and **carry the `ng-disabled` half of the [focus handoff](#busy-status-and-focus-behaviour)**. Both go through one private stepper, because the handoff is identical in both directions and a rule written twice is a rule that drifts:
+
+```javascript
+// The pager buttons are ng-disabled, never removed, so they stay in the document and
+// simply become inert — and a browser drops focus from an element it disables, to the
+// document body. The handoff therefore runs AFTER the digest that applies `disabled`
+// (which is what $timeout waits for), and only for a caller who actually held focus
+// on the button that just stopped being operable.
+function step(delta) {
+    // Both questions are asked NOW, before anything changes: which control the caller
+    // was on, and whether the browser was showing that focus. After the digest the
+    // answer to the second is unrecoverable, because focus has already left.
+    var source = document.activeElement;
+    var wasKeyboardFocused = !!source
+        && typeof source.matches === 'function'
+        && (function () { try { return source.matches(':focus-visible'); } catch (e) { return false; } }());
+
+    c.data.offset = clampOffset(c.data.offset + delta);
+    c.load();
+
+    $timeout(function () {
+        if (!wasKeyboardFocused || !source.disabled) {
+            return;                       // pointer caller, or still operable: move nothing
+        }
+        var pager = $element[0].querySelectorAll('.bst-results-pager button');
+        for (var i = 0; i < pager.length; i++) {
+            if (pager[i] !== source && !pager[i].disabled) {
+                pager[i].focus();         // the other pager button, per the rule's first destination
+                return;
+            }
+        }
+        var heading = $element[0].querySelector('h2.panel-title');
+        if (heading) {
+            heading.focus();              // neither button is operable: the widget's primary heading
+        }
+    });
+}
+
+c.previous = function () { step(-c.data.limit); };
+c.next = function () { step(c.data.limit); };
+```
+
+   `$timeout` and `$element` are injected for this; `$element` is already injected for item 11.
+
+   **Why the two questions are asked at different times.** `source.disabled` is read *inside* the callback because that is the only place it is known: the whole point is that the digest may have disabled the button. `:focus-visible` is read *outside* it because by then the answer is gone — the browser has already dropped focus to the document body, so `activeElement` reads `<body>` in the pointer case and the keyboard case alike and can no longer tell them apart. One question belongs after the digest and the other before it, and swapping either is a defect.
+
+   **`clampOffset` is the offset arithmetic, and its ceiling is the last page rather than the count.** `Math.min(offset, total_count)` looks equivalent and is not: with a count of 1 and a limit of 20 it yields an offset of `1`, and `c.rangeStart()` — `offset + 1` — then prints the impossible `Showing 2 to 2 of 1`. The ceiling has to be page-aligned, and it has to stand down entirely when the count was withheld, because a withheld count is `0` and would otherwise pin every caller to the first page:
+
+```javascript
+function clampOffset(offset) {
+    var floored = Math.max(0, offset);
+    if (c.data.count_denied) {
+        return floored;               // no ceiling is knowable; c.hasNext()'s full-page test governs
+    }
+    var lastPage = Math.max(0, Math.floor((c.data.total_count - 1) / c.data.limit) * c.data.limit);
+    return Math.min(floored, lastPage);
+}
+```
+
+   Neither button can overshoot while the count is known, because each is disabled at its own end of the range — so this arithmetic is reached only when the data changed under the caller between loads, which is exactly the case a clamp is for.
+4. Expose `c.hasNext()` and `c.hasPrevious()` for the pager's `ng-disabled` bindings. `c.hasNext()` is `false` when `c.data.result.length` is `0`, so an empty result set offers no next page. **When the count was withheld it must not be derived from the total**:
+
+```javascript
+c.hasNext = function () {
+    var page = c.data.result ? c.data.result.length : 0;
+
+    if (page === 0) {
+        return false;
+    }
+
+    // The total is unreadable, so a full page is the only evidence that more
+    // may exist. A short page is the last page.
+    if (c.data.count_denied) {
+        return page === c.data.limit;
+    }
+
+    return c.data.offset + c.data.limit < c.data.total_count;
+};
+```
+
+   `c.data.total_count` is `0` whenever the count could not be read, so the arithmetic form evaluates `offset + limit < 0` — always `false` — and **Next stays disabled on every page**, locking a count-denied caller inside the first page of a set that may be arbitrarily long. The full-page test is the standard substitute: a page holding exactly `limit` rows may have more behind it, and a page holding fewer cannot.
+
 5. Expose the **zero-safe pager range**. The pager must never read "1 to 0 of 0":
    - `c.rangeStart()` returns `c.data.offset + 1` when `c.data.result.length` is greater than `0`, and `0` otherwise.
    - `c.rangeEnd()` returns `c.data.offset + c.data.result.length`.
    - `c.hasRange()` returns `true` only when `c.data.result.length` is greater than `0`. The template renders the range sentence only under `c.hasRange()` and renders `No results to show` otherwise.
+   - **The total is part of the sentence only when it is readable.** The template selects between two range sentences on `data.count_denied`, so `data.total_count` is never interpolated when the server could not read it. A range with no total is a complete sentence; a range against a total of `0` is a false one.
 6. Expose `c.isGated(item, field)`, `true` when `item[field] === undefined` **and** `c.data.gated[field]` is `true`. This is the single test the template uses to decide between a value and the `Premium` marker; it is specified under [The premium treatment in the result list](#the-premium-treatment-in-the-result-list).
-7. Declare `c.busy` and `c.statusText()` per [Busy, status and focus behaviour](#busy-status-and-focus-behaviour). This widget's status wording is:
-   - empty — `No startup matches those criteria.`
-   - loaded — `{{c.data.result.length}} of {{c.data.total_count}} startups shown.` The total is exact, so it is rendered as written; there is no capped variant to present.
+7. Declare `c.busy` and `c.statusText()` per [Busy, status and focus behaviour](#busy-status-and-focus-behaviour), and also declare `c.focusDestination()` and `c.onButtonKey($event)` per that same section, `c.indeterminate()` for the striped bar, and `c.money()` and `c.count()` per [The display contract](#the-display-contract). Only the **loaded** state produces a string here; the other three return the empty string because a visible element owns each of them:
+   - not entitled — the empty string. The `.alert-warning` carries `role="alert"`.
+   - failed — the empty string. The `.alert-danger` carries `role="alert"`.
+   - empty — the empty string. The `.alert-info` reading `No startup matches those criteria.` carries `role="status"`.
+   - loaded, count readable — `{{c.data.result.length}} of {{c.data.total_count}} startups shown.`, both figures grouped with the `number` filter.
+   - loaded, count withheld — `{{c.data.result.length}} startups shown. The total is not available to your account.` The total is **never** stated as `0` in this state.
+
+   Returning the empty string in the first three states is what stops the region announcing the empty wording to a caller who was **denied by role**: without the not-entitled row the function falls through to the empty-collection row and tells that caller `No startup matches those criteria.`, contradicting the warning on the same screen. It is also what stops the empty wording being announced twice, once from here and once from the visible alert.
+
+10. Expose `c.uid`, a value unique to this widget instance, used to suffix the id of the premium notice's heading. `$scope.$id` is the framework's own per-scope identifier and is already unique on the page, so `c.uid = $scope.$id;` is the whole of it. Nothing else on this widget needs an id.
+
+11. Expose `c.unrendered(collection)` exactly as [rendered rows and model rows must agree](#rendered-rows-and-model-rows-must-agree) specifies, and inject `$element` into the controller so it can count the rendered rows of its own widget. The card repeat carries `data-bst-row="result"`, which is what the helper counts.
 8. After a load that began with a search event or a retry, move focus to the `.panel-title` of this widget, per the focus table in [Busy, status and focus behaviour](#busy-status-and-focus-behaviour). Do not move focus after a pager step: the caller's focus is already on the pager button they activated, and it survives the reload.
 9. Never filter, sort or re-order `c.data.result` in the client. Ordering is `name` then `sys_id`, applied by `StartupSearchService.search()`.
 
 #### HTML template
 
 ```html
-<div class="bst-results panel panel-default" aria-busy="{{c.busy}}">
+<div class="bst-results panel panel-default" tabindex="-1" aria-busy="{{c.busy}}">
   <div class="panel-heading">
     <h2 class="panel-title" tabindex="-1">
       {{::options.title}}
-      <span class="text-muted" ng-if="data.authorised &amp;&amp; !data.count_denied">
-        {{data.total_count}} matching
+      <span class="text-muted"
+            ng-if="data.authorised &amp;&amp; !c.busy &amp;&amp; !data.error &amp;&amp; !data.count_denied">
+        {{c.count(data.total_count)}} matching
       </span>
     </h2>
   </div>
   <div class="panel-body">
     <div class="sr-only" role="status" aria-live="polite" aria-atomic="true">{{c.statusText()}}</div>
 
-    <div class="alert alert-warning" ng-if="!data.authorised">
+    <div class="alert alert-warning" role="alert" ng-if="!data.authorised">
       <span>Your account holds no Boston Startup Tracker role.</span>
     </div>
 
-    <div class="alert alert-danger" role="alert" ng-if="data.error">
+    <div class="alert alert-danger" role="alert" ng-if="c.errorText()">
       <span class="icon-cross-circle" aria-hidden="true">&nbsp;</span>
-      <span>{{data.error}}</span>
+      <span>{{c.errorText()}}</span>
       <button type="button" class="btn btn-default" ng-click="c.retry()">Retry</button>
     </div>
 
     <div class="progress" ng-if="c.busy">
       <div class="progress-bar progress-bar-striped active" role="progressbar"
+           ng-style="c.indeterminate()"
            aria-label="Loading startups" aria-valuemin="0" aria-valuemax="100"
            aria-valuetext="Loading"></div>
     </div>
 
-    <div class="alert alert-info"
-         ng-if="data.authorised &amp;&amp; !c.busy &amp;&amp; !data.error &amp;&amp; data.result.length === 0">
+    <div class="alert alert-info" role="status"
+         ng-if="data.authorised &amp;&amp; !c.busy &amp;&amp; !c.errorText() &amp;&amp; data.result.length === 0">
       <span>No startup matches those criteria.</span>
     </div>
 
-    <div class="panel panel-default bst-results-card"
-         ng-repeat="item in data.result track by item.sys_id">
-      <div class="panel-body">
-        <div class="media">
-          <div class="media-left" ng-if="::options.show_logo &amp;&amp; item.logo_url">
-            <img class="media-object" ng-src="{{::item.logo_url}}" alt="" />
-          </div>
-          <div class="media-body">
-            <h3 class="media-heading">
-              <a ng-href="?id={{::options.detail_page}}&amp;sys_id={{::item.sys_id}}">{{::item.name}}</a>
-            </h3>
-            <p>{{::item.description}}</p>
-            <p>
-              <span class="label label-primary" ng-if="::item.funding_stage">{{::item.funding_stage}}</span>
-              <span class="label label-default" ng-if="::item.industry">{{::item.industry}}</span>
-              <span class="label label-default" ng-if="::item.employee_count_range">{{::item.employee_count_range}}</span>
-            </p>
-            <ul class="list-group">
-              <li class="list-group-item">
-                <span class="icon-map" aria-hidden="true">&nbsp;</span>{{::item.headquarters_location}}
-              </li>
-              <li class="list-group-item" ng-if="item.total_funding_usd !== undefined">
-                Total funding {{item.total_funding_usd}}
-              </li>
-              <li class="list-group-item" ng-if="c.isGated(item, 'total_funding_usd')">
-                Total funding
-                <span class="label label-info">Premium</span>
-              </li>
-              <li class="list-group-item" ng-if="item.institutional_funding_last_5yrs !== undefined">
-                Institutional funding in the last five years
-                <span class="label label-default">{{item.institutional_funding_last_5yrs ? 'Yes' : 'No'}}</span>
-              </li>
-              <li class="list-group-item" ng-if="c.isGated(item, 'institutional_funding_last_5yrs')">
-                Institutional funding in the last five years
-                <span class="label label-info">Premium</span>
-              </li>
-            </ul>
-            <a class="btn btn-default"
-               ng-href="?id={{::options.detail_page}}&amp;sys_id={{::item.sys_id}}">View profile</a>
+    <div class="alert alert-info"
+         ng-if="data.authorised &amp;&amp; !c.busy &amp;&amp; !data.error &amp;&amp; data.count_denied">
+      <span class="icon-locked" aria-hidden="true">&nbsp;</span>
+      <span>The total number of matches is not available to your account, so this page states
+        the range it is showing rather than a total. Paging continues while a full page arrives.</span>
+    </div>
+
+    <div class="bst-results-list" ng-if="data.authorised &amp;&amp; !data.error">
+      <div class="panel panel-default bst-results-card" data-bst-row="result"
+           ng-repeat="item in data.result track by item.sys_id">
+        <div class="panel-body">
+          <div class="media">
+            <div class="media-left" ng-if="::options.show_logo">
+              <img class="media-object" ng-if="::item.logo_url"
+                   ng-src="{{::item.logo_url}}" alt="{{::item.name}} logo" />
+              <span class="icon-image bst-results-logo-placeholder" ng-if="::!item.logo_url"
+                    aria-hidden="true">&nbsp;</span>
+            </div>
+            <div class="media-body">
+              <h3 class="media-heading">
+                <a dir="auto"
+                   ng-href="?id={{::options.detail_page}}&amp;sys_id={{::item.sys_id}}">{{::item.name}}</a>
+              </h3>
+              <p dir="auto">{{::item.description}}</p>
+              <p>
+                <span class="label label-primary" ng-if="::item.funding_stage">{{::item.funding_stage}}</span>
+                <span class="label label-default" ng-if="::item.industry">{{::item.industry}}</span>
+                <span class="label label-default" ng-if="::item.employee_count_range">{{::item.employee_count_range}}</span>
+              </p>
+              <ul class="list-group">
+                <li class="list-group-item">
+                  <span class="icon-map" aria-hidden="true">&nbsp;</span><bdi dir="auto">{{::item.headquarters_location}}</bdi>
+                </li>
+                <li class="list-group-item" ng-if="item.total_funding_usd !== undefined">
+                  Total funding
+                  <bdi ng-if="item.total_funding_usd !== null">{{c.money(item.total_funding_usd)}}</bdi>
+                  <span class="text-muted" ng-if="item.total_funding_usd === null">Not recorded</span>
+                </li>
+                <li class="list-group-item" ng-if="c.isGated(item, 'total_funding_usd')">
+                  Total funding
+                  <span class="label label-info">Premium</span>
+                </li>
+                <li class="list-group-item" ng-if="item.institutional_funding_last_5yrs !== undefined">
+                  Institutional funding in the last five years
+                  <span class="label label-default"
+                        ng-if="item.institutional_funding_last_5yrs !== null">{{item.institutional_funding_last_5yrs ? 'Yes' : 'No'}}</span>
+                  <span class="text-muted"
+                        ng-if="item.institutional_funding_last_5yrs === null">Not recorded</span>
+                </li>
+                <li class="list-group-item" ng-if="c.isGated(item, 'institutional_funding_last_5yrs')">
+                  Institutional funding in the last five years
+                  <span class="label label-info">Premium</span>
+                </li>
+              </ul>
+              <a class="btn btn-default" aria-label="View the {{::item.name}} profile" ng-keydown="c.onButtonKey($event)"
+                 ng-href="?id={{::options.detail_page}}&amp;sys_id={{::item.sys_id}}">View profile</a>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="alert alert-info bst-results-upsell" role="region" aria-labelledby="bst-results-upsell-title"
-         ng-if="data.authorised &amp;&amp; data.gatedAny">
-      <h3 id="bst-results-upsell-title">
+    <div class="alert alert-warning" role="alert"
+         ng-if="data.authorised &amp;&amp; !data.error &amp;&amp; c.unrendered('result')">
+      <span class="icon-warning-triangle" aria-hidden="true">&nbsp;</span>
+      <span>{{c.unrendered('result')}} of {{data.result.length}} rows could not be displayed.
+        Reload the page; if it recurs, report it with this page address.</span>
+    </div>
+
+    <div class="alert alert-info bst-results-upsell" role="region"
+         aria-labelledby="bst-results-upsell-title-{{::c.uid}}"
+         ng-if="data.authorised &amp;&amp; !data.error &amp;&amp; data.gatedAny &amp;&amp; data.result.length &gt; 0">
+      <h3 class="panel-title" id="bst-results-upsell-title-{{::c.uid}}">
         <span class="icon-locked" aria-hidden="true">&nbsp;</span>Premium fields are hidden in these results
       </h3>
       <p>
         Total funding and the institutional-funding marker are reserved for the premium tier.
         Your account reads every other column on this page.
       </p>
-      <a class="btn btn-primary" ng-href="?id={{::data.upsellPage}}">See your entitlements</a>
+      <a class="btn btn-primary" ng-keydown="c.onButtonKey($event)"
+         ng-href="?id={{::data.upsellPage}}">Go to account management</a>
     </div>
 
-    <div class="bst-results-pager" ng-if="data.authorised">
+    <hr ng-if="data.authorised &amp;&amp; !c.busy &amp;&amp; !data.error" />
+
+    <div class="bst-results-pager"
+         ng-if="data.authorised &amp;&amp; !c.busy &amp;&amp; !data.error">
       <button type="button" class="btn btn-default" ng-click="c.previous()"
               ng-disabled="!c.hasPrevious()">Previous</button>
       <button type="button" class="btn btn-default" ng-click="c.next()"
               ng-disabled="!c.hasNext()">Next</button>
-      <span class="text-muted" ng-if="c.hasRange()">
-        Showing {{c.rangeStart()}} to {{c.rangeEnd()}} of {{data.total_count}}
+      <span class="text-muted" ng-if="c.hasRange() &amp;&amp; !data.count_denied">
+        Showing {{c.count(c.rangeStart())}} to {{c.count(c.rangeEnd())}} of {{c.count(data.total_count)}}
+      </span>
+      <span class="text-muted" ng-if="c.hasRange() &amp;&amp; data.count_denied">
+        Showing {{c.count(c.rangeStart())}} to {{c.count(c.rangeEnd())}}
       </span>
       <span class="text-muted" ng-if="!c.hasRange()">No results to show</span>
     </div>
@@ -1131,6 +1793,49 @@ $scope.$on('$destroy', function () {
 ```
 
 `ng-if="item.total_funding_usd !== undefined"` is the omission test. A denied premium field has **no key** on the serialised object, so `undefined` is the correct comparison; do not test for an empty string and do not test for `null`, because a readable-but-empty currency column legitimately serialises as `null`.
+
+##### Three states per gated column, and each renders words
+
+The omission test splits the field into two branches; a readable column then splits again on whether it holds a value. **All three branches render something a caller can read** — the state a value is in is never conveyed by an empty row:
+
+| State | Serialised as | What renders |
+| --- | --- | --- |
+| Withheld by the field-level access control | the key is **absent** | the column label beside a `.label.label-info` reading `Premium` |
+| Readable and populated | a value | the column label beside the value, wrapped in `<bdi>` |
+| Readable and empty | `null` | the column label beside `Not recorded` in `.text-muted` |
+
+**The third row is the one an empty interpolation loses.** `{{item.total_funding_usd}}` on a `null` interpolates to the empty string, so the row renders as a fully bordered `.list-group-item` carrying a label and nothing else — indistinguishable from a rendering fault, and easy to read as "zero". `Not recorded` states which of the three it is. The same three-way split applies to `institutional_funding_last_5yrs`, where the trap is sharper still: a bare `{{value ? 'Yes' : 'No'}}` renders a `null` as **`No`**, asserting a fact the record does not carry.
+
+##### What every surface must agree about
+
+**A count, a range and a card set are three assertions about one query, and they are guarded together or they contradict each other.** Four states break the naive template, and the guards below are what the template carries:
+
+| State | Without the guards | The guard, and where |
+| --- | --- | --- |
+| **Loading** | the heading asserts `0 matching` and the pager asserts `No results to show`, both derived from a `data` payload that has not arrived | `!c.busy` on the heading count span, on the pager region and on the `<hr>` above it. The empty-state alert already carried it. |
+| **Failed, with a previous result set still in `data`** | a small banner sits above twenty detailed cards, a fresh total, a live pager and a blanked status region: past the first screenful the page is indistinguishable from a successful load, while premium figures are on screen and the caller has been told nothing was retracted | `!data.error` on the card repeat's wrapper, on the heading count span, on the upsell, on the pager region and on the `<hr>`. Only the failure alert, the not-entitled alert and the status region render. **A stale set is not shown at all** — showing it under a caption would still leave the caller deciding which parts of the screen to trust. |
+| **Count withheld** (`count_denied`) | the heading count is correctly suppressed, but the pager still interpolates the raw total and reads `Showing 1 to 20 of 0`, and `c.hasNext()` compares `offset + limit < total_count` — `20 < 0` — so **Next is disabled and the caller can never page past the first page** | `!data.count_denied` selects between two range sentences, so the withheld total is never printed; `c.hasNext()` falls back to a full-page test, which is what restores paging; and one `.alert-info` states that the total is unavailable. |
+| **Empty, with fields gated** | the upsell asserts *"Premium fields are hidden in these results"* and *"Your account reads every other column on this page"* over zero results, zero columns and no page content, three times the height of the actual answer and carrying the only saturated call to action on screen — inviting the caller to read it as the reason the search returned nothing | `data.result.length > 0` on the upsell. A statement about the fields in a result set is rendered only when there is a result set. |
+
+**A withheld count is stated, not implied.** Suppressing the total and leaving everything else unchanged tells a caller nothing about *why* the number is missing, and when the page is also empty it reads as a definite "there are none". The `.alert-info` says which it is. It carries **no** live-region role, per [which alerts are live regions](#which-alerts-are-live-regions-and-which-are-not): it is permanent explanatory text beside the range it qualifies, and the range is announced by the loaded status wording.
+
+**Large numbers are grouped.** `{{c.count(data.total_count)}}` in the heading, both range sentences and the loaded status wording. Without the filter a seven-digit total prints as `1234567` in three places on a page whose currency values on the same card carry separators — the inconsistency reads as two different kinds of number.
+
+##### The logo cell, and what a broken image renders
+
+**`.media-left` renders whenever `options.show_logo` is true, whether or not the record has a `logo_url`.** A cell that is present for some cards and absent for others moves the text of every card it is absent from left by the cell's width plus its gutter, so a mixed set renders a ragged left edge down the whole list. Rendering the cell unconditionally keeps one text edge; a record with no logo fills it with a platform glyph.
+
+**The image's `alt` is the company name and the word `logo`, not the empty string.** A decorative `alt=""` is the correct choice for an image that duplicates adjacent text — but it also means a `logo_url` whose target has gone renders as **nothing at all**: no box, no text, no node in the accessibility tree, and a caller has no way to tell a missing logo from a broken one. A meaningful `alt` makes the browser's own broken-image fallback the fallback, which is why no `onerror` handler is needed: the alternative text is what paints when the fetch fails. `ng-src` is still the only binding used, so the [external locator rules](#external-locators-in-a-binding) are unchanged.
+
+##### Two links per card, distinguished
+
+Every card carries two targets to the same profile: the heading link, whose accessible name is the company name, and a `.btn` reading `View profile`. **The second carries `aria-label="View the {{::item.name}} profile"`**, because twenty cards otherwise contribute twenty links named `View profile` to a links list with nothing to choose between them. The pair is deliberate — the heading is the reading-order target and the button is the scanning target — and naming them differently is what makes both usable rather than one being noise.
+
+**The `View profile` control is an `<a>`, not a `<button>`, because it navigates.** It therefore activates on Enter and not on Space, which differs from the pager's real `<button>` elements. That difference is correct rather than an inconsistency to paper over: a control that changes the address is a link and a control that acts on this page is a button, and swapping either would misreport what the control does.
+
+##### The upsell heading's id is unique per instance
+
+`aria-labelledby` resolves by id against the whole document, so a fixed `id="bst-results-upsell-title"` breaks the moment a page carries two instances of this widget — two identical ids, and the attribute resolves to whichever the parser saw first. The id is therefore suffixed with `c.uid`, the controller's own per-instance value, exactly as `bst-company-profile` suffixes its ids with the record's `sys_id`.
 
 ##### The premium treatment in the result list
 
@@ -1162,8 +1867,23 @@ This widget renders that treatment **inline rather than embedding `bst-premium-u
     height: auto;
 }
 
+.bst-results .media-left {
+    min-width: $navbar-height;
+    padding-right: 0;
+    overflow: hidden;
+}
+
 .bst-results .media-body {
     overflow-wrap: break-word;
+    padding-left: $padding-base-horizontal;
+}
+
+.bst-results .media-heading {
+    line-height: normal;
+}
+
+.bst-results .list-group-item {
+    unicode-bidi: isolate;
 }
 
 .bst-results .media-body .label {
@@ -1172,7 +1892,6 @@ This widget renders that treatment **inline rather than embedding `bst-premium-u
 
 .bst-results .bst-results-pager {
     margin-top: $grid-gutter-width;
-    border-top-color: $panel-default-border;
 }
 
 .bst-results .bst-results-upsell {
@@ -1180,10 +1899,52 @@ This widget renders that treatment **inline rather than embedding `bst-premium-u
     border-radius: $border-radius-base;
 }
 
+.bst-results .bst-results-upsell .panel-title {
+    margin-bottom: $padding-base-vertical;
+}
+
+.bst-results .sr-only {
+    position: absolute;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+}
+
 .bst-results .bst-results-upsell .btn {
     margin-top: $padding-base-vertical;
 }
+
+/* A heading moved into focus programmatically with no ring is a caller who has
+   been silently relocated: the reading position changed and nothing on screen
+   says so. Bootstrap styles no indicator for [tabindex="-1"], so each widget
+   declares its own, scoped to itself. The widget root carries the attribute too,
+   as the fallback destination for a retry whose heading does not yet exist.
+   See "Busy, status and focus behaviour". */
+.bst-results [tabindex="-1"]:focus,
+.bst-results[tabindex="-1"]:focus {
+    outline: $border-radius-base solid $brand-primary;
+    outline-offset: $border-radius-small;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .bst-results .progress-bar {
+        animation: none;
+    }
+}
+
+@media (forced-colors: active) {
+    .bst-results .label {
+        border-style: solid;
+    }
+}
 ```
+
+Five of those rules exist for a reason that is not visible in the declaration, so each is stated:
+
+- **`.media-left { min-width: $navbar-height; padding-right: 0; overflow: hidden }` with the gutter moved to `.media-body { padding-left: $padding-base-horizontal }`.** The purpose is one text edge down the whole list: a card whose logo is a narrow glyph placeholder, a card whose logo is a wide wordmark and a card whose `logo_url` is dead must all start their text at the same x. `min-width` alone does not achieve that, and the reason is arithmetic worth stating because it is invisible in the declaration. Bootstrap gives `.media-left` `padding-right: 10px`, and the framework sets `box-sizing: border-box` globally, so a `min-width` of `$navbar-height` leaves a **content box narrower than the token** — 40px, not 50px. The image cap above is the full `$navbar-height`, so a logo that fills its cap needs 50px of content and forces the cell to 60px, moving that one card's text 10px right of every other card's. A dead `logo_url` does exactly that: the browser's own fallback renders the `alt` text in the replaced box, which wants more room than the cap allows, so the box settles at precisely `max-width` and the cell grows. Taking the padding out of the cell makes the content box equal to the token, so all three cases resolve to the same 50px, and the gutter is re-established on the other cell where it cannot compete with the cap. `overflow: hidden` then bounds the fallback text to the slot it was given rather than letting it bleed into the row beneath; the accessible name is carried by `alt` and is unaffected by the clip.
+- **`.media-heading { line-height: normal }`** lets the line box grow to a grapheme carrying stacked combining marks instead of clipping it into the description below. See [the cleaning rules these widgets depend on](#the-cleaning-rules-these-widgets-depend-on).
+- **`.list-group-item { unicode-bidi: isolate }`** stops a right-to-left value interpolated beside product wording — `Total funding`, `Institutional funding in the last five years` — from reordering the label in front of it. The `<bdi>` elements in the template carry the same guarantee for the values themselves; the rule extends it to a row that interpolates directly.
+- **The pager carries no border declaration.** The separator above it is an `<hr>`, which Bootstrap already draws with a width, a style and a colour. The rule this replaces set `border-top-color` with no `border-top-width` and no `border-top-style`, so the computed width stayed `0` and the separator was **never drawn** — a colour with nothing to colour. Reaching for the framework's own separator element is both the [library-components](#library-components-over-raw-html) answer and the one that adds no measured literal, because a border width would have had to be one.
+- **`border-style: solid` on `.label` under forced colours** restores the chip's shape. Bootstrap's `.label` carries no border and conveys itself entirely by `background-color`, which that mode discards — so without this rule the `Premium` marker computes to black-on-white bold text with `border: 0px none` and becomes indistinguishable from the words around it. That marker is the visible face of the whole field-gating design, so it has to survive. Two properties of the declaration are deliberate. It names only the **style**: `border-width` is then the initial `medium` and `border-color` the initial `currentColor`, so the rule introduces no measured literal and the border is drawn in whatever colour the caller's own palette resolves `color` to — guaranteed to contrast with their own background, which is the entire point of the mode. And it does **not** use `forced-color-adjust: none` to hold the authored fills instead. That was the first approach and it was wrong twice over: it opts the chips out of the palette the caller deliberately chose, and it hands them Bootstrap's white-on-`.label-info` pairing, which measures **2.09:1** — below every WCAG threshold — precisely in the mode a caller reaches for because they need contrast. A border costs the grouping cue that colour gave and keeps the information, because **no chip conveys its meaning by colour alone**: each carries its own text.
 
 ### `bst-company-profile`
 
@@ -1282,6 +2043,8 @@ function childCollection(table, fields, orderBy, descending, limit) {
 
 **Each collection publishes four members**, and the template must use all four: `rows` to render, `total` for the "showing N of M" caption, `limit` for the caption's ceiling, and `truncated` to decide whether the caption and the "open the full list" link appear at all. A pane that renders `rows` without stating `total` tells the reader that a company has twenty-five job postings when it has two hundred, which is a wrong answer rather than a truncated one.
 
+**Every `ng-repeat` over one of these five collections iterates `<collection>.rows`, never the collection itself.** The published value is the four-member object, so `ng-repeat="round in data.rounds"` would iterate that object's own keys — `rows`, `limit`, `total`, `truncated` — and `track by round.sys_id` would evaluate to `undefined` on each of them, which raises `[ngRepeat:dupes]` on the second key and **abandons the whole repeater**: the pane renders no rows at all while its caption still advertises the total. All five repeats therefore name `.rows`, and every caption in the same pane reads the sibling members off the same object.
+
 **The cost is two queries per collection** — one bounded read and one `COUNT` aggregate — so ten queries for the five panes, whatever the size of the company. With the record read and the batched join read that is the twelve of [The query budget of each page](#the-query-budget-of-each-page). Before the limits, one profile could read every child row of the largest company in the table on every render.
 
 5. Assemble `participating_investors` for each funding round **from the join table**, `x_bst_startuptrk_m2m_round_investor`, and never from the derived `x_bst_startuptrk_fundinground.participating_investors` column. Call `new InvestorPortfolioService().participantsForRounds(roundIds)` with the identifiers of the rounds on the page — one batched read for the whole page, not one read per round — and attach the result to each round as `round.participating_investors`. **The identifiers come from `data.rounds.rows`**, and the attachment is onto those same row objects, so the template's `ng-repeat` over `round.participating_investors` reads what this item wrote:
@@ -1351,7 +2114,7 @@ Each of the five therefore carries `rows`, `total`, `limit` and `truncated`. A t
 
 #### Data contract
 
-**Every member below is assigned onto `data` by the server script named in its row, and read by the consumer named in its row. There is no third source and no other member**: a template expression naming anything absent from this table renders nothing at best and raises a runtime expression error at worst, and a member published with no consumer is a dead output. `data.error` is not in any widget's table — it is set on the client by the shared `c.load()` helper of [Error and empty behaviour](#error-and-empty-behaviour) and by nothing on the server.
+**Every member below is assigned onto `data` by the server script named in its row, and read by the consumer named in its row. There is no third source and no other member**: a template expression naming anything absent from this table renders nothing at best and raises a runtime expression error at worst, and a member published with no consumer is a dead output. `data.error` is not in any widget's table — it is set on the client by the shared `c.load()` helper of [Error and empty behaviour](#error-and-empty-behaviour) and by nothing on the server. A widget whose own server script catches a failure and reports it publishes that message as **`data.serverError`**, which **is** in that widget's table, and which `c.load()` never touches; the error panel renders `c.errorText()`, which answers either of the two.
 
 | Member | Type | Published by | Consumed by |
 | --- | --- | --- | --- |
@@ -1364,16 +2127,16 @@ Each of the five therefore carries `rows`, `total`, `limit` and `truncated`. A t
 | `jobs` | `{rows,total,limit,truncated}` | server items 4 and 9 | Template — the Jobs pane's table, caption and full-list link |
 | `news` | `{rows,total,limit,truncated}` | server items 4 and 9 | Template — the News pane's list and caption |
 | `fullListPage` | String | server item 9 | Template — the `ng-if` and `href` of every pane's full-list link |
-| `gated` | Object of six booleans | server item 6 | **Server-side only** — item 6 reduces it into `anyGated`. The template tests each serialised object for the absent key directly, so no expression reads this member |
-| `anyGated` | True/False | server item 6 | **Server-side only** — item 7's embed decision |
+| `gated` | Object of six booleans | server item 6 | **Server-side only** — item 6 reduces it into `gatedAny`. The template tests each serialised object for the absent key directly, so no expression reads this member |
+| `gatedAny` | True/False | server item 6 | **Server-side only** — item 7's embed decision |
 | `upsell` | Widget model | server item 7 | Template — `<sp-widget widget="data.upsell">` |
 | `tabs` | Array of `{id,label,total}` | server item 8 | Template — the tab strip and its `.badge` totals |
 
 #### Client controller
 
 1. Implement `c.load()` and `c.retry()` exactly as [Error and empty behaviour](#error-and-empty-behaviour) specifies. Every server call below goes through `c.load()`.
-2. Initialise `c.activeTab` from `options.default_tab`, falling back to `overview` when the option names no pane.
-3. Implement the whole of [The tab contract](#the-tab-contract) — `c.select(tabId)`, `c.isActive(tabId)`, `c.tabIndex(tabId)`, `c.tabId(tabId)`, `c.panelId(tabId)` and `c.onTabKey($event, tabId)`.
+2. **Initialise `c.activeTab` from `$location.search().tab`**, falling back to `options.default_tab`, and then to `overview`. The URL wins over the option because a caller who was given a link to a specific pane asked for that pane; the option is the default for a caller who arrived without one. An unrecognised value in either falls through to `overview` rather than leaving the widget with no active pane — the five identifiers are fixed by the route specification and are validated against that list, not against `data.tabs`, which has not arrived yet when this runs.
+3. Implement the whole of [The tab contract](#the-tab-contract) — `c.select(tabId, replaceHistory)`, `c.isActive(tabId)`, `c.tabIndex(tabId)`, `c.tabId(tabId)`, `c.panelId(tabId)` and `c.onTabKey($event, tabId)`, **including the URL mirroring under [the selected pane is in the URL](#the-selected-pane-is-in-the-url)**.
 4. Read the record identifier from `$location.search().sys_id` when a client-side refresh is needed, and call `c.load()`.
 5. Do not fetch data per tab. All five panes arrive in one server round trip.
 6. **Watch the record only when there is a record to watch, and let scope destruction release the watch.** `data.startup` is absent on both expected non-render paths — the unauthorised path of server-script item 1 and the not-found path of item 2 — so an unguarded `c.data.startup.sys_id` raises a `TypeError` on exactly the two paths the template handles. Guard the object and its identifier, register the watch against a child scope this controller owns, and destroy that child scope to release it:
@@ -1417,10 +2180,32 @@ $scope.$on('$destroy', releaseWatch);
 ```
 
    `startWatch()` runs at controller initialisation and again from the promise callback of every `c.load()`, and it is **idempotent**: a load that yields the same `sys_id` returns without touching the subscription, so a refresh leaves exactly one live watch rather than one more. Only a change of record identity, or a load that publishes no record, destroys the child scope — which is what releases the subscription, because `spUtil.recordWatch()` answers a promise and there is no handle to unsubscribe.
-7. Declare `c.busy` and `c.statusText()` per [Busy, status and focus behaviour](#busy-status-and-focus-behaviour). This widget's status wording is:
-   - empty — `No related records are recorded for this company.`, used when all five collections are empty.
-   - loaded — `{{c.data.startup.name}} loaded. {{c.data.rounds.total}} funding rounds, {{c.data.founders.total + c.data.executives.total}} people, {{c.data.jobs.total}} open roles, {{c.data.news.total}} articles.` **The status line states the collection `total`, not `rows.length`**, so a screen-reader user is told the size of the record rather than the size of the window; each pane's caption then states how much of it is rendered.
-8. Expose `c.isEmpty(collection)`, returning `true` when the named collection's `rows` array has no entries, used by the five empty states in the template. It reads the four-member object, so it is defensive about a collection that never arrived:
+7. Declare `c.busy` and `c.statusText()` per [Busy, status and focus behaviour](#busy-status-and-focus-behaviour), and also declare `c.focusDestination()` and `c.onButtonKey($event)` per that same section, `c.indeterminate()` for the striped bar, and `c.money()` and `c.day()` per [The display contract](#the-display-contract). **Six states, tested in this order, and every one of them answered** — an order that stops before the end returns whichever branch it last matched, which is how a caller who was denied the record, or told it does not exist, ends up hearing a sentence about related records instead:
+
+   | # | Condition | Returns | Who announces this state instead |
+   | --- | --- | --- | --- |
+   | 1 | `c.busy` | `Loading` | — |
+   | 2 | `!c.data.authorised` | **the empty string** | the not-entitled `.alert-warning`, which carries `role="alert"` |
+   | 3 | `c.data.error` | **the empty string** | the failure `.alert-danger`, which carries `role="alert"` and owns **Retry** |
+   | 4 | `c.data.notFound` | **the empty string** | the not-found `.alert-warning`, which carries `role="alert"` |
+   | 5 | all five collections empty | `No related records are recorded for this company.` | this region — the five per-pane messages carry no role, per [which alerts are live regions](#which-alerts-are-live-regions-and-which-are-not) |
+   | 6 | otherwise | `{{c.data.startup.name}} loaded. {{c.data.rounds.total}} funding rounds, {{c.data.founders.total + c.data.executives.total}} people, {{c.data.jobs.total}} open roles, {{c.data.news.total}} articles.` | this region |
+
+   Rows 2, 3 and 4 return nothing **because a visible element with a live-region role already owns each of those states**; a sentence here would be a second announcement of one fact. Row 6 states the collection **`total`, not `rows.length`**, so a screen-reader caller is told the size of the record rather than the size of the window; each pane's caption then states how much of it is rendered.
+8. **Expose `c.stateHeading()`, which names the page on the three paths that render no record.** The success path's `<h1>` is the company name inside the profile header, and that element is inside the `ng-if` that the unauthorised, not-found and failed paths all exclude — so on each of those three the document previously had **no heading at all**, and a caller navigating by heading landed on a page with nothing to land on. The helper returns a string on exactly those three paths and the empty string on the success path, so the `<h1 ng-if="c.stateHeading()">` and the profile header's `<h1>` are mutually exclusive and the page always renders **exactly one** `<h1>`, as [rule 9](#rules-that-bind-all-eight) requires:
+
+```javascript
+c.stateHeading = function () {
+    if (!c.data.authorised) { return 'Company profile'; }
+    if (c.data.error)       { return 'Company profile'; }
+    if (c.data.notFound)    { return 'Company not found'; }
+    return '';                        // the profile header's own h1 is the heading
+};
+```
+
+   The not-found wording differs because that state is the answer to a specific request rather than a condition of the caller's account, and a heading that says so saves them reading the alert to find out. The other two return the page's own name: the reason the record is absent is the alert's job to state, not the heading's.
+9. Expose `c.unrendered(collection)` exactly as [rendered rows and model rows must agree](#rendered-rows-and-model-rows-must-agree) specifies, and inject `$element` into the controller so it can count the rendered rows of its own widget. **All five collections are reconciled here, and this is the widget that proves why the rule exists**: its three table-and-list repeats once iterated the four-member envelope instead of its `rows` array, which raises `ngRepeat:dupes` and abandons the repeat, and because `c.isEmpty()` reads `rows` correctly the empty state stayed hidden while every caption above the blank region kept asserting the rows it had. Each repeat's root element carries `data-bst-row="<collection>"` — `rounds`, `founders`, `executives`, `jobs`, `news` — and each notice carries its own region's guard as that section's table specifies.
+10. Expose `c.isEmpty(collection)`, returning `true` when the named collection's `rows` array has no entries, used by the five empty states in the template. It reads the four-member object, so it is defensive about a collection that never arrived:
 
 ```javascript
 c.isEmpty = function (collection) {
@@ -1450,40 +2235,88 @@ The five panes are a WAI-ARIA tab set, built on Bootstrap's `.nav.nav-tabs` and 
 | `ArrowLeft` | Select the previous pane; wrap from `overview` to `news`. |
 | `Home` | Select `overview`. |
 | `End` | Select `news`. |
-| `Enter`, `Space` | Select the focused pane. The control is an anchor, so `Enter` already activates it; handle `Space` explicitly. |
+| `Enter`, `Space` | Select the focused pane, **as an explicit activation** — `c.select(pane)` with no second argument, so it adds a history entry. The control is an anchor, so `Enter` already activates it; handle `Space` explicitly. |
+
+The four movement keys call `c.select(pane, true)`, which amends the current history entry instead of adding one; `ng-click` and the two activation keys call `c.select(pane)`. See [the selected pane is in the URL](#the-selected-pane-is-in-the-url).
 
 Every one of those keys calls `$event.preventDefault()`, so `ArrowLeft` and `ArrowRight` do not also scroll the page and `Space` does not page down. No other key is handled: `ArrowUp`, `ArrowDown` and `Tab` keep their default behaviour, because this strip is horizontal and automatic activation is what the pattern prescribes for a tab set whose panes are already loaded.
 
 **Selection follows focus.** All five panes arrive in one server round trip, so selecting a pane costs nothing and the arrow keys select as they move. Focus stays on the strip; it never jumps into the pane.
 
+##### The selected pane is in the URL
+
+**A tab set that writes nothing to the address bar breaks the browser's own back button, and the failure is worse than it sounds.** With the selection held only in `c.activeTab`, opening a pane changes neither the URL nor `history.length` — so **Back leaves the record entirely**, and a caller four panes deep loses their place with one keystroke. Forward can appear to restore the pane, but only because the browser served the same document from its back-forward cache; anything that evicts the document lands the caller on `overview` with nothing in the URL, in storage or in the DOM able to rebuild what they had chosen. A pane is also then unlinkable: there is no address that opens a profile at its Funding tab. This portal already mirrors search criteria into `$location.search()` for exactly that reason, and applying the value to one widget and not another is the inconsistency being closed.
+
+**`c.select(tabId, replaceHistory)` mirrors the selection into `$location.search('tab', tabId)`.** The second argument decides whether the step is a history entry, and the distinction matters because this strip activates automatically:
+
+```javascript
+var PANES = ['overview', 'funding', 'people', 'jobs', 'news'];
+
+function resolvePane(candidate) {
+    return PANES.indexOf('' + candidate) === -1 ? '' : '' + candidate;
+}
+
+c.select = function (tabId, replaceHistory) {
+    var pane = resolvePane(tabId);
+    if (!pane || pane === c.activeTab) {
+        return;                       // unknown pane, or already there: write nothing
+    }
+    c.activeTab = pane;
+    if (replaceHistory) {
+        $location.replace();          // arrow traversal: amend the entry, do not add one
+    }
+    $location.search('tab', pane);
+};
+
+// Back and Forward change the URL without passing through c.select(), so the pane has
+// to follow the URL as well as lead it. Registered on $scope, and released with it.
+var stopLocationWatch = $scope.$on('$locationChangeSuccess', function () {
+    var pane = resolvePane($location.search().tab) || 'overview';
+    if (pane !== c.activeTab) {
+        c.activeTab = pane;
+    }
+});
+$scope.$on('$destroy', stopLocationWatch);
+```
+
+**Why arrow keys replace and a click pushes.** `ArrowRight` four times is one traversal of the strip, not four destinations; pushing an entry per press would mean four Back presses to leave the record, which trades the reported fault for its mirror image. An explicit activation — a pointer click, or `Enter` or `Space` — is a destination the caller chose, so it earns an entry and Back returns them to the pane they were on. `Home` and `End` replace for the same reason as the arrows: they are movements within the strip.
+
+**The early return on `pane === c.activeTab` is load-bearing**, not an optimisation. Automatic activation fires `c.select()` on every arrow press, and `Enter` on an already-selected pane fires it again; without the guard, re-selecting the current pane would write a duplicate entry that Back would appear to ignore.
+
+**One parameter serves the page, because the page renders one profile.** The pane identifiers are namespaced per record in `c.tabId()` and `c.panelId()` so two profiles in one document cannot collide on their element ids, but `tab` is a page-level parameter and the route specification gives `bst_company` exactly one profile.
+
 #### HTML template
 
 ```html
-<div class="bst-company" aria-busy="{{c.busy}}">
+<div class="bst-company" tabindex="-1" aria-busy="{{c.busy}}">
   <div class="sr-only" role="status" aria-live="polite" aria-atomic="true">{{c.statusText()}}</div>
 
-  <div class="alert alert-warning" ng-if="!data.authorised">
+  <h1 class="bst-company-state-heading" tabindex="-1" ng-if="c.stateHeading()">{{c.stateHeading()}}</h1>
+
+  <div class="alert alert-warning" role="alert" ng-if="!data.authorised">
     <span>Your account holds no Boston Startup Tracker role.</span>
   </div>
 
-  <div class="alert alert-warning" ng-if="data.notFound">
+  <div class="alert alert-warning" role="alert" ng-if="data.notFound">
     <span>That company could not be found.</span>
-    <a class="btn btn-default" ng-href="?id=bst_home">Back to search</a>
+    <a class="btn btn-default" ng-keydown="c.onButtonKey($event)"
+       ng-href="?id=bst_home">Back to search</a>
   </div>
 
-  <div class="alert alert-danger" role="alert" ng-if="data.error">
+  <div class="alert alert-danger" role="alert" ng-if="c.errorText()">
     <span class="icon-cross-circle" aria-hidden="true">&nbsp;</span>
-    <span>{{data.error}}</span>
+    <span>{{c.errorText()}}</span>
     <button type="button" class="btn btn-default" ng-click="c.retry()">Retry</button>
   </div>
 
   <div class="progress" ng-if="c.busy">
     <div class="progress-bar progress-bar-striped active" role="progressbar"
+         ng-style="c.indeterminate()"
          aria-label="Loading company profile" aria-valuemin="0" aria-valuemax="100"
          aria-valuetext="Loading"></div>
   </div>
 
-  <div ng-if="data.authorised &amp;&amp; !data.notFound &amp;&amp; !data.error">
+  <div ng-if="data.authorised &amp;&amp; !c.busy &amp;&amp; !data.notFound &amp;&amp; !c.errorText()">
     <div class="panel panel-default">
       <div class="panel-body">
         <div class="media">
@@ -1491,7 +2324,7 @@ Every one of those keys calls `$event.preventDefault()`, so `ArrowLeft` and `Arr
             <img class="media-object bst-company-logo" ng-src="{{::data.startup.logo_url}}" alt="" />
           </div>
           <div class="media-body">
-            <h1 class="media-heading" tabindex="-1">{{::data.startup.name}}</h1>
+            <h1 class="media-heading" dir="auto" tabindex="-1">{{::data.startup.name}}</h1>
             <p>
               <span class="label label-primary" ng-if="::data.startup.funding_stage">{{::data.startup.funding_stage}}</span>
               <span class="label label-default" ng-if="::data.startup.industry">{{::data.startup.industry}}</span>
@@ -1504,7 +2337,7 @@ Every one of those keys calls `$event.preventDefault()`, so `ArrowLeft` and `Arr
     <sp-widget widget="data.upsell" ng-if="data.upsell"></sp-widget>
 
     <ul class="nav nav-tabs" role="tablist">
-      <li ng-repeat="tab in ::data.tabs" ng-class="{active: c.isActive(tab.id)}" role="presentation">
+      <li ng-repeat="tab in ::data.tabs track by tab.id" ng-class="{active: c.isActive(tab.id)}" role="presentation">
         <a href
            role="tab"
            id="{{c.tabId(tab.id)}}"
@@ -1524,19 +2357,22 @@ Every one of those keys calls `$event.preventDefault()`, so `ArrowLeft` and `Arr
            id="{{c.panelId('overview')}}" aria-labelledby="{{c.tabId('overview')}}"
            ng-class="{active: c.isActive('overview')}">
         <ul class="list-group">
-          <li class="list-group-item">Headquarters <span class="pull-right">{{::data.startup.headquarters_location}}</span></li>
+          <li class="list-group-item">Headquarters <span class="pull-right"><bdi dir="auto">{{::data.startup.headquarters_location}}</bdi></span></li>
           <li class="list-group-item">Founded <span class="pull-right">{{::data.startup.founded_year}}</span></li>
           <li class="list-group-item">Employees <span class="pull-right">{{::data.startup.employee_count_range}}</span></li>
-          <li class="list-group-item">Website <span class="pull-right"><a ng-href="{{::data.startup.website}}">Visit the company website</a></span></li>
+          <li class="list-group-item">Website <span class="pull-right">
+            <a ng-href="{{::data.startup.website}}" ng-if="::data.startup.website">Visit the company website</a>
+            <span class="text-muted" ng-if="::!data.startup.website">Not recorded</span>
+          </span></li>
           <li class="list-group-item" ng-if="data.startup.total_funding_usd !== undefined">
-            Total funding <span class="pull-right">{{data.startup.total_funding_usd}}</span>
+            Total funding <span class="pull-right">{{c.money(data.startup.total_funding_usd)}}</span>
           </li>
           <li class="list-group-item" ng-if="data.startup.institutional_funding_last_5yrs !== undefined">
             Institutional funding in the last five years
-            <span class="pull-right">{{data.startup.institutional_funding_last_5yrs}}</span>
+            <span class="pull-right"><span class="label label-default">{{data.startup.institutional_funding_last_5yrs ? 'Yes' : 'No'}}</span></span>
           </li>
         </ul>
-        <p>{{::data.startup.description}}</p>
+        <p dir="auto">{{::data.startup.description}}</p>
       </div>
 
       <div class="tab-pane" role="tabpanel"
@@ -1545,7 +2381,7 @@ Every one of those keys calls `$event.preventDefault()`, so `ArrowLeft` and `Arr
         <div class="alert alert-info" ng-if="c.isEmpty('rounds')">
           <span>No funding round is recorded for this company.</span>
         </div>
-        <div class="table-responsive" ng-if="!c.isEmpty('rounds')">
+        <div class="table-responsive" tabindex="0" ng-if="!c.isEmpty('rounds')">
           <table class="table table-striped table-hover">
             <caption class="sr-only">Funding rounds for this company, most recent first, one row per round</caption>
             <thead>
@@ -1555,19 +2391,20 @@ Every one of those keys calls `$event.preventDefault()`, so `ArrowLeft` and `Arr
               </tr>
             </thead>
             <tbody>
-              <tr ng-repeat="round in data.rounds track by round.sys_id">
-                <th scope="row">{{::round.round_date}}</th>
+              <tr data-bst-row="rounds"
+                  ng-repeat="round in data.rounds.rows track by round.sys_id">
+                <th scope="row">{{c.day(round.round_date)}}</th>
                 <td><span class="label label-primary" ng-if="::round.round_type">{{::round.round_type}}</span></td>
-                <td ng-if="round.amount_usd !== undefined">{{round.amount_usd}}</td>
+                <td ng-if="round.amount_usd !== undefined">{{c.money(round.amount_usd)}}</td>
                 <td ng-if="round.amount_usd === undefined"><span class="label label-info">Premium</span></td>
-                <td ng-if="round.valuation_usd !== undefined">{{round.valuation_usd}}</td>
+                <td ng-if="round.valuation_usd !== undefined">{{c.money(round.valuation_usd)}}</td>
                 <td ng-if="round.valuation_usd === undefined"><span class="label label-info">Premium</span></td>
                 <td>
-                  <a ng-if="::round.lead_investor"
+                  <a dir="auto" ng-if="::round.lead_investor"
                      ng-href="?id={{::options.investor_page}}&amp;sys_id={{::round.lead_investor.value}}">{{::round.lead_investor.display_value}}</a>
                 </td>
                 <td>
-                  <a class="label label-default" ng-repeat="investor in ::round.participating_investors"
+                  <a class="label label-default" ng-repeat="investor in ::round.participating_investors track by $index"
                      ng-href="?id={{::options.investor_page}}&amp;sys_id={{::investor.value}}">{{::investor.display_value}}</a>
                 </td>
                 <td><a ng-href="{{::round.source_url}}" ng-if="::round.source_url">Source</a></td>
@@ -1575,8 +2412,14 @@ Every one of those keys calls `$event.preventDefault()`, so `ArrowLeft` and `Arr
             </tbody>
           </table>
         </div>
+        <div class="alert alert-warning" role="alert"
+             ng-if="!c.isEmpty('rounds') &amp;&amp; c.unrendered('rounds')">
+          <span class="icon-warning-triangle" aria-hidden="true">&nbsp;</span>
+          <span>{{c.unrendered('rounds')}} of {{data.rounds.rows.length}} funding rounds could not be displayed.
+            Reload the page; if it recurs, report it with this page address.</span>
+        </div>
           <p class="text-muted bst-collection-caption" ng-if="data.rounds.truncated">
-            <span>Showing {{data.rounds.rows.length}} of {{data.rounds.total}}, the {{data.rounds.limit}} most recent.</span>
+            <span>Showing {{c.count(data.rounds.rows.length)}} of {{c.count(data.rounds.total)}}, the {{c.count(data.rounds.limit)}} most recent.</span>
             <a ng-if="::data.fullListPage"
                ng-href="?id={{::data.fullListPage}}&amp;table=x_bst_startuptrk_fundinground&amp;startup={{::data.startup.sys_id}}">Open the full list</a>
           </p>
@@ -1593,19 +2436,26 @@ Every one of those keys calls `$event.preventDefault()`, so `ArrowLeft` and `Arr
                 <li class="list-group-item" ng-if="c.isEmpty('founders')">
                   No founder is recorded for this company.
                 </li>
-                <li class="list-group-item" ng-repeat="person in data.founders.rows track by person.sys_id">
-                  <strong>{{::person.name}}</strong>
+                <li class="list-group-item" data-bst-row="founders"
+                    ng-repeat="person in data.founders.rows track by person.sys_id">
+                  <strong dir="auto">{{::person.name}}</strong>
                   <span class="label label-default" ng-if="::person.title">{{::person.title}}</span>
-                  <p>{{::person.bio}}</p>
+                  <p dir="auto">{{::person.bio}}</p>
                   <a ng-href="{{::person.linkedin_url}}" ng-if="::person.linkedin_url">
                     <span class="icon-user" aria-hidden="true">&nbsp;</span>LinkedIn
                   </a>
-                  <span ng-if="person.contact_email !== undefined">{{person.contact_email}}</span>
+                  <span ng-if="person.contact_email !== undefined"><bdi dir="auto">{{person.contact_email}}</bdi></span>
                   <span class="label label-info" ng-if="person.contact_email === undefined">Premium</span>
                 </li>
               </ul>
+              <div class="alert alert-warning" role="alert"
+                   ng-if="!c.isEmpty('founders') &amp;&amp; c.unrendered('founders')">
+                <span class="icon-warning-triangle" aria-hidden="true">&nbsp;</span>
+                <span>{{c.unrendered('founders')}} of {{data.founders.rows.length}} founders could not be displayed.
+                  Reload the page; if it recurs, report it with this page address.</span>
+              </div>
           <p class="text-muted bst-collection-caption" ng-if="data.founders.truncated">
-            <span>Showing {{data.founders.rows.length}} of {{data.founders.total}}, the {{data.founders.limit}} most recent.</span>
+            <span>Showing {{c.count(data.founders.rows.length)}} of {{c.count(data.founders.total)}}, the {{c.count(data.founders.limit)}} most recent.</span>
             <a ng-if="::data.fullListPage"
                ng-href="?id={{::data.fullListPage}}&amp;table=x_bst_startuptrk_founder&amp;startup={{::data.startup.sys_id}}">Open the full list</a>
           </p>
@@ -1618,19 +2468,26 @@ Every one of those keys calls `$event.preventDefault()`, so `ArrowLeft` and `Arr
                 <li class="list-group-item" ng-if="c.isEmpty('executives')">
                   No executive is recorded for this company.
                 </li>
-                <li class="list-group-item" ng-repeat="person in data.executives.rows track by person.sys_id">
-                  <strong>{{::person.name}}</strong>
+                <li class="list-group-item" data-bst-row="executives"
+                    ng-repeat="person in data.executives.rows track by person.sys_id">
+                  <strong dir="auto">{{::person.name}}</strong>
                   <span class="label label-default" ng-if="::person.title">{{::person.title}}</span>
-                  <p>{{::person.bio}}</p>
+                  <p dir="auto">{{::person.bio}}</p>
                   <a ng-href="{{::person.linkedin_url}}" ng-if="::person.linkedin_url">
                     <span class="icon-user" aria-hidden="true">&nbsp;</span>LinkedIn
                   </a>
-                  <span ng-if="person.contact_email !== undefined">{{person.contact_email}}</span>
+                  <span ng-if="person.contact_email !== undefined"><bdi dir="auto">{{person.contact_email}}</bdi></span>
                   <span class="label label-info" ng-if="person.contact_email === undefined">Premium</span>
                 </li>
               </ul>
+              <div class="alert alert-warning" role="alert"
+                   ng-if="!c.isEmpty('executives') &amp;&amp; c.unrendered('executives')">
+                <span class="icon-warning-triangle" aria-hidden="true">&nbsp;</span>
+                <span>{{c.unrendered('executives')}} of {{data.executives.rows.length}} executives could not be displayed.
+                  Reload the page; if it recurs, report it with this page address.</span>
+              </div>
           <p class="text-muted bst-collection-caption" ng-if="data.executives.truncated">
-            <span>Showing {{data.executives.rows.length}} of {{data.executives.total}}, the {{data.executives.limit}} most recent.</span>
+            <span>Showing {{c.count(data.executives.rows.length)}} of {{c.count(data.executives.total)}}, the {{c.count(data.executives.limit)}} most recent.</span>
             <a ng-if="::data.fullListPage"
                ng-href="?id={{::data.fullListPage}}&amp;table=x_bst_startuptrk_executive&amp;startup={{::data.startup.sys_id}}">Open the full list</a>
           </p>
@@ -1645,7 +2502,7 @@ Every one of those keys calls `$event.preventDefault()`, so `ArrowLeft` and `Arr
         <div class="alert alert-info" ng-if="c.isEmpty('jobs')">
           <span>No open role is recorded for this company.</span>
         </div>
-        <div class="table-responsive" ng-if="!c.isEmpty('jobs')">
+        <div class="table-responsive" tabindex="0" ng-if="!c.isEmpty('jobs')">
           <table class="table table-striped table-hover">
             <caption class="sr-only">Open roles at this company, one row per posting</caption>
             <thead>
@@ -1653,20 +2510,33 @@ Every one of those keys calls `$event.preventDefault()`, so `ArrowLeft` and `Arr
                   <th scope="col">Seniority</th><th scope="col">Posted</th><th scope="col">Open</th></tr>
             </thead>
             <tbody>
-              <tr ng-repeat="job in data.jobs track by job.sys_id">
-                <th scope="row"><a ng-href="{{::job.url}}">{{::job.title}}</a></th>
+                <tr data-bst-row="jobs"
+                    ng-repeat="job in data.jobs.rows track by job.sys_id">
+                  <th scope="row">
+                    <a dir="auto" ng-href="{{::job.url}}" ng-if="::job.url">{{::job.title}}</a>
+                    <span dir="auto" ng-if="::!job.url">{{::job.title}}</span>
+                  </th>
                 <td>{{::job.department}}</td>
-                <td>{{::job.location}}</td>
+                <td dir="auto">{{::job.location}}</td>
                 <td><span class="label label-default" ng-if="::job.remote_type">{{::job.remote_type}}</span></td>
                 <td>{{::job.seniority}}</td>
-                <td>{{::job.posted_date}}</td>
-                <td><span class="label label-primary" ng-if="::job.active">Open</span></td>
+                  <td>{{c.day(job.posted_date)}}</td>
+                  <td>
+                    <span class="label label-primary" ng-if="::job.active">Open</span>
+                    <span class="label label-default" ng-if="::!job.active">Closed</span>
+                  </td>
               </tr>
             </tbody>
           </table>
         </div>
+        <div class="alert alert-warning" role="alert"
+             ng-if="!c.isEmpty('jobs') &amp;&amp; c.unrendered('jobs')">
+          <span class="icon-warning-triangle" aria-hidden="true">&nbsp;</span>
+          <span>{{c.unrendered('jobs')}} of {{data.jobs.rows.length}} open roles could not be displayed.
+            Reload the page; if it recurs, report it with this page address.</span>
+        </div>
           <p class="text-muted bst-collection-caption" ng-if="data.jobs.truncated">
-            <span>Showing {{data.jobs.rows.length}} of {{data.jobs.total}}, the {{data.jobs.limit}} most recent.</span>
+            <span>Showing {{c.count(data.jobs.rows.length)}} of {{c.count(data.jobs.total)}}, the {{c.count(data.jobs.limit)}} most recent.</span>
             <a ng-if="::data.fullListPage"
                ng-href="?id={{::data.fullListPage}}&amp;table=x_bst_startuptrk_jobposting&amp;startup={{::data.startup.sys_id}}">Open the full list</a>
           </p>
@@ -1679,16 +2549,24 @@ Every one of those keys calls `$event.preventDefault()`, so `ArrowLeft` and `Arr
           <li class="list-group-item" ng-if="c.isEmpty('news')">
             No news article is recorded for this company.
           </li>
-          <li class="list-group-item" ng-repeat="article in data.news track by article.sys_id">
+          <li class="list-group-item" data-bst-row="news"
+              ng-repeat="article in data.news.rows track by article.sys_id">
             <h3 class="list-group-item-heading">
-              <a ng-href="{{::article.url}}">{{::article.title}}</a>
+                <a dir="auto" ng-href="{{::article.url}}" ng-if="::article.url">{{::article.title}}</a>
+                <span dir="auto" ng-if="::!article.url">{{::article.title}}</span>
             </h3>
-            <p class="list-group-item-text">{{::article.summary}}</p>
-            <span class="text-muted">{{::article.source}} &middot; {{::article.published_date}}</span>
+            <p class="list-group-item-text" dir="auto">{{::article.summary}}</p>
+            <span class="text-muted"><bdi dir="auto">{{::article.source}}</bdi> &middot; {{c.day(article.published_date)}}</span>
           </li>
         </ul>
+        <div class="alert alert-warning" role="alert"
+             ng-if="!c.isEmpty('news') &amp;&amp; c.unrendered('news')">
+          <span class="icon-warning-triangle" aria-hidden="true">&nbsp;</span>
+          <span>{{c.unrendered('news')}} of {{data.news.rows.length}} news articles could not be displayed.
+            Reload the page; if it recurs, report it with this page address.</span>
+        </div>
           <p class="text-muted bst-collection-caption" ng-if="data.news.truncated">
-            <span>Showing {{data.news.rows.length}} of {{data.news.total}}, the {{data.news.limit}} most recent.</span>
+            <span>Showing {{c.count(data.news.rows.length)}} of {{c.count(data.news.total)}}, the {{c.count(data.news.limit)}} most recent.</span>
             <a ng-if="::data.fullListPage"
                ng-href="?id={{::data.fullListPage}}&amp;table=x_bst_startuptrk_newsarticle&amp;startup={{::data.startup.sys_id}}">Open the full list</a>
           </p>
@@ -1716,8 +2594,15 @@ Every one of those keys calls `$event.preventDefault()`, so `ArrowLeft` and `Arr
     height: auto;
 }
 
-.bst-company .list-group-item,
 .bst-company .media-heading {
+    overflow-wrap: break-word;
+}
+
+/* Same float containment as the investor overview, for the same reason: four of
+   these items carry a .pull-right, and Employees, Founded and Headquarters can
+   each arrive wide enough to wrap. */
+.bst-company .list-group-item {
+    display: flow-root;
     overflow-wrap: break-word;
 }
 
@@ -1727,9 +2612,72 @@ Every one of those keys calls `$event.preventDefault()`, so `ArrowLeft` and `Arr
 
 .bst-company .table-responsive {
     margin-bottom: 0;
-    border-color: $table-border-color;
+}
+
+.bst-company .sr-only {
+    position: absolute;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+}
+
+.bst-company .list-group-item {
+    unicode-bidi: isolate;
+}
+
+.bst-company .media-heading,
+.bst-company .list-group-item-heading {
+    line-height: normal;
+}
+
+.bst-company .bst-company-state-heading {
+    margin-bottom: $grid-gutter-width;
+}
+
+.bst-company .bst-upsell {
+    margin-bottom: $grid-gutter-width;
+}
+
+.bst-company .bst-upsell .panel-title {
+    margin-bottom: $padding-base-vertical;
+}
+
+.bst-company .bst-upsell .bst-upsell-fields {
+    margin-top: $padding-base-vertical;
+    margin-bottom: $padding-base-vertical;
+}
+
+.bst-company .bst-upsell .bst-upsell-fields .label {
+    margin-right: $padding-base-vertical;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+    .bst-company .progress-bar {
+        animation: none;
+    }
+}
+
+@media (forced-colors: active) {
+    .bst-company .label {
+        border-style: solid;
+    }
+}
+
+.bst-company [tabindex="-1"]:focus,
+.bst-company[tabindex="-1"]:focus {
+    outline: $border-radius-base solid $brand-primary;
+    outline-offset: $border-radius-small;
 }
 ```
+
+Four of those rules exist for a reason that is not visible in the declaration:
+
+- **`.list-group-item { unicode-bidi: isolate }` and `.media-heading, .list-group-item-heading { line-height: normal }`** are this template's share of [the cleaning rules these widgets depend on](#the-cleaning-rules-these-widgets-depend-on) — the first stops a right-to-left value reordering the product wording beside it in the Overview list, the second lets a line box grow to a grapheme carrying stacked combining marks instead of clipping it into the text below.
+- **The reduced-motion guard** exists because the busy bar now has a rendered width. Before it did, the striped animation ran on a zero-width element and no caller could perceive it, so the omission was latent rather than real; giving the bar its width is what turns the omission into a defect, and the two changes therefore belong together.
+- **The `.bst-upsell` rules** are [rule 16](#rules-that-bind-all-eight): this widget embeds `bst-premium-upsell` with `$sp.getWidget()`, which creates no instance, so the partial's own CSS field may never be compiled into this page and these declarations would otherwise have no source at all. They are exactly the partial's rules that nothing else on this page supplies — measured against the partial rendered on its own, not inferred — and the chip rule is the partial's own selector with this widget's root prepended, so the cascade resolves on specificity rather than on sheet order.
+- **The forced-colours chip border** is [rule 12](#rules-that-bind-all-eight). This template renders twelve `.label` chips, including the `Premium` marker on four People rows and on the Funding pane's Amount and Valuation cells.
 
 ### `bst-investor-profile`
 
@@ -1791,15 +2739,15 @@ if (roundIds.length !== 0) {
     }
 }
 
-// (d) publish the window, so the template can state that it IS a window. Without
-//     these three members the two rounds tables render a capped list as though it
-//     were the whole set, which is a wrong figure rather than a short one.
-data.roundsLimit = roundsCap;
-data.participatedTotal = participatedTotal;
-data.participatedTruncated = participatedTotal > participated.length;
+// (d) keep the total. It is published onto `data` by item 7's block below,
+//     together with the five other window members, so that all six names are
+//     assigned in one place under one scheme.
+var participatedCount = participatedTotal;
 ```
 
-**The join read must carry the limit, not just the round read.** An investor that has participated in three thousand rounds would otherwise produce a three-thousand-element identifier array and an `IN` condition of that length — the read of the rounds is bounded by the array, so an unbounded array is an unbounded read wearing a bound. Capping the join read caps everything downstream of it. `participatedTotal` is what tells the reader the list is a window onto something larger, and it comes from a `COUNT` aggregate rather than from the array's length.
+**Every window member is published once, from item 7, under one naming scheme.** An earlier revision assigned `data.roundsLimit`, `data.participatedTotal` and `data.participatedTruncated` here *as well as* the six `roundsLed*` and `roundsParticipated*` members below, which is two schemes for the same three concepts and three names the [Data contract](#data-contract) does not declare. That is precisely the state the contract's own preamble warns about, and it had already cost a caption: the Rounds-led note was written against `data.ledTruncated` and `data.ledTotal`, which no step ever assigned, so `ng-if` evaluated `undefined`, the `<p>` was never inserted, and an investor whose led-rounds set was capped rendered a capped table **stating no total at all** — a wrong figure rather than a short one, which is the failure the window members exist to prevent. Its structurally identical sibling twenty-seven lines later worked, which is what makes the asymmetry an oversight rather than a design. The rule that prevents a recurrence is mechanical: **the only place a member is assigned onto `data` is item 7's publication block, and the only names that appear there are the names the contract table declares.** Check it by searching the template for every `data.` expression and confirming each one appears in that table.
+
+**The join read must carry the limit, not just the round read.** An investor that has participated in three thousand rounds would otherwise produce a three-thousand-element identifier array and an `IN` condition of that length — the read of the rounds is bounded by the array, so an unbounded array is an unbounded read wearing a bound. Capping the join read caps everything downstream of it. `participatedCount` is what tells the reader the list is a window onto something larger, and it comes from a `COUNT` aggregate rather than from the array's length. Item 7 publishes it as `data.roundsParticipatedTotal`.
 
 7. Build the **portfolio** set from the two round sets already read, bounded, and never by widening the query:
 
@@ -1860,16 +2808,18 @@ data.roundsLedTotal      = ledTotal;              // item 5's COUNT aggregate
 data.roundsLedLimit      = roundsCap;
 data.roundsLedTruncated  = ledTotal > led.length;
 data.roundsParticipated          = participated;  // item 6(c)
-data.roundsParticipatedTotal     = participatedTotal;   // item 6(b)
+data.roundsParticipatedTotal     = participatedCount;   // item 6(b)
 data.roundsParticipatedLimit     = roundsCap;
-data.roundsParticipatedTruncated = participatedTotal > participated.length;
+data.roundsParticipatedTruncated = participatedCount > participated.length;
 data.portfolio           = portfolio;             // item 7
 ```
 
-   **The two rounds tables carry the same four-member shape the company profile's child collections carry** — a bounded set, its exact total, the limit that bounded it, and a truncation flag — and for the same reason: a table that renders fifty of three thousand rounds without stating the total answers the reader's question wrongly rather than partially. `data.portfolio` is deliberately **not** given a total of its own: the authoritative figure is `data.investor.portfolio_count`, and `data.portfolioTruncated` with `data.portfolioLimit` says how much of it this page read.
+   **This block is the only place any of those members is assigned.** Item 6(d) establishes the window and publishes nothing, so each fact reaches the client under exactly one name — the names the template binds and the Data Contract table below documents. Two names for one fact is how a caption comes to read a member nobody publishes, which renders as no caption at all.
 
-8. Compute the gate flags by absence of key: `aum_usd` on `data.investor`, and `amount_usd` and `valuation_usd` across `data.roundsLed` and `data.roundsParticipated`. Set `data.anyGated` accordingly. **It is read by item 9 and by the template's premium note**, so it is a published member rather than a local.
-9. When `data.anyGated` is true, embed the partial:
+   **The two rounds tables carry the same shape the company profile's child collections carry** — a bounded set, its exact total, the limit that bounded it, and a truncation flag — and for the same reason: a table that renders fifty of three thousand rounds without stating the total answers the reader's question wrongly rather than partially. The **limit is one member, shared by both tables**, because item 6(a)'s single `roundsCap` bounds both reads; two members carrying the same value would be two places for one figure to disagree. Each table keeps its own total and its own truncation flag, because those differ. `data.portfolio` is deliberately **not** given a total of its own: the authoritative figure is `data.investor.portfolio_count`, and `data.portfolioTruncated` with `data.portfolioLimit` says how much of it this page read.
+
+8. Compute the gate flags by absence of key: `aum_usd` on `data.investor`, and `amount_usd` and `valuation_usd` across `data.roundsLed` and `data.roundsParticipated`. Set `data.gatedAny` accordingly — the same spelling the results and company widgets publish, so one flag has one name across all three. **It is read by item 9 and by the template's premium note**, so it is a published member rather than a local.
+9. When `data.gatedAny` is true, embed the partial:
 
 ```javascript
 data.upsell = $sp.getWidget('bst-premium-upsell', {
@@ -1882,7 +2832,7 @@ data.upsell = $sp.getWidget('bst-premium-upsell', {
 
 #### Data contract
 
-**Every member below is assigned onto `data` by the server script named in its row, and read by the consumer named in its row. There is no third source and no other member**: a template expression naming anything absent from this table renders nothing at best and raises a runtime expression error at worst, and a member published with no consumer is a dead output. `data.error` is not in any widget's table — it is set on the client by the shared `c.load()` helper of [Error and empty behaviour](#error-and-empty-behaviour) and by nothing on the server.
+**Every member below is assigned onto `data` by the server script named in its row, and read by the consumer named in its row. There is no third source and no other member**: a template expression naming anything absent from this table renders nothing at best and raises a runtime expression error at worst, and a member published with no consumer is a dead output. `data.error` is not in any widget's table — it is set on the client by the shared `c.load()` helper of [Error and empty behaviour](#error-and-empty-behaviour) and by nothing on the server. A widget whose own server script catches a failure and reports it publishes that message as **`data.serverError`**, which **is** in that widget's table, and which `c.load()` never touches; the error panel renders `c.errorText()`, which answers either of the two.
 
 | Member | Type | Published by | Consumed by |
 | --- | --- | --- | --- |
@@ -1891,23 +2841,22 @@ data.upsell = $sp.getWidget('bst-premium-upsell', {
 | `investor` | Serialised record | server item 7's publication block | Template — the overview panel, including `portfolio_count`; controller item 3's record watch |
 | `focusAreas` | Array of string | server item 7's publication block | Template — the focus-area `.label` chips |
 | `roundsLed` | Array of serialised rounds | server item 7's publication block | Template — the Rounds led table; controller `c.hasLed()` |
-| `roundsLedTotal` | Integer | server item 7's publication block | Template — the Rounds led caption |
-| `roundsLedLimit` | Integer | server item 7's publication block | Template — the Rounds led caption |
-| `roundsLedTruncated` | True/False | server item 7's publication block | Template — whether that caption renders |
+| `ledTotal` | Integer | server item 7's publication block | Template — the Rounds led caption |
+| `ledTruncated` | True/False | server item 7's publication block | Template — whether the Rounds led caption renders |
 | `roundsParticipated` | Array of serialised rounds | server item 7's publication block | Template — the Rounds participated table; controller `c.hasParticipated()` |
-| `roundsParticipatedTotal` | Integer | server item 7's publication block | Template — the Rounds participated caption |
-| `roundsParticipatedLimit` | Integer | server item 7's publication block | Template — the Rounds participated caption |
-| `roundsParticipatedTruncated` | True/False | server item 7's publication block | Template — whether that caption renders |
+| `participatedTotal` | Integer | server item 7's publication block | Template — the Rounds participated caption |
+| `participatedTruncated` | True/False | server item 7's publication block | Template — whether the Rounds participated caption renders |
+| `roundsLimit` | Integer | server item 7's publication block | Template — the ceiling stated in **both** rounds captions; one member, because one bound governs both reads |
 | `portfolio` | Array of serialised startups | server item 7's publication block | Template — the Portfolio table; controller `c.hasPortfolio()` |
 | `portfolioTruncated` | True/False | server item 7 | Template — whether the portfolio cap note renders |
 | `portfolioLimit` | Integer | server item 7 | Template — that note's figure |
-| `anyGated` | True/False | server item 8 | Template — the premium note beside the upsell; server item 9's embed decision |
+| `gatedAny` | True/False | server item 8 | Template — the premium note beside the upsell; server item 9's embed decision |
 | `upsell` | Widget model | server item 9 | Template — `<sp-widget widget="data.upsell">` |
 
 #### Client controller
 
 1. Implement `c.load()` and `c.retry()` exactly as [Error and empty behaviour](#error-and-empty-behaviour) specifies. Every server call below goes through `c.load()`.
-2. Expose `c.hasParticipated()`, `c.hasLed()` and `c.hasPortfolio()`, each `true` when the matching array holds at least one entry, so an empty collection renders its own empty state rather than an empty `<tbody>`.
+2. Expose `c.hasParticipated()`, `c.hasLed()` and `c.hasPortfolio()`, each `true` when the matching array holds at least one entry, so an empty collection renders its own empty state rather than an empty `<tbody>`. **`focusAreas` is the fourth collection on this widget and it needs no helper**, because it is rendered inline rather than in a table: its empty state is the `ng-if="!data.focusAreas.length"` beside its repeat, which renders a muted `Not recorded` in the same cell the chips would have occupied. Before it existed that cell rendered blank at full row height, which reads as a deliberately empty value rather than as an absent one — and the rule that every collection states its own emptiness applies to a cell as much as to a table.
 3. **Watch the record only when there is a record to watch, and release the watch on `$destroy`.** `data.investor` is absent on the unauthorised path of server-script item 1 and on the not-found path of item 2, so an unguarded `c.data.investor.sys_id` raises a `TypeError` on both. The shape is identical to the company profile's, with the investor table and the investor object:
 
 ```javascript
@@ -1949,63 +2898,115 @@ $scope.$on('$destroy', releaseWatch);
 ```
 
    A recalculated `portfolio_count` then appears without a reload when the record is on the page, and nothing is subscribed when it is not. `startWatch()` is called at controller initialisation and again from the promise callback of every `c.load()`, and it is **idempotent**: a load that yields the same `sys_id` returns without touching the subscription, and only a change of record identity destroys the child scope and registers again. The rule is stated once under [Every listener a controller registers is released on `$destroy`](#every-listener-a-controller-registers-is-released-on-destroy).
-4. Declare `c.busy` and `c.statusText()` per [Busy, status and focus behaviour](#busy-status-and-focus-behaviour). This widget's status wording is:
-   - empty — `No portfolio company and no funding round are recorded for this investor.`
-   - loaded — `{{c.data.investor.name}} loaded. {{c.data.portfolio.length}} portfolio companies shown, {{c.data.roundsLed.length}} rounds led, {{c.data.roundsParticipated.length}} rounds joined.`
-5. Recompute nothing. `portfolio_count` is read, not derived, in the client.
+4. Declare `c.busy` and `c.statusText()` per [Busy, status and focus behaviour](#busy-status-and-focus-behaviour), and also declare `c.focusDestination()` and `c.onButtonKey($event)` per that same section, `c.indeterminate()` for the striped bar, and `c.money()`, `c.day()` and `c.count()` per [The display contract](#the-display-contract). **Six states, tested in this order, and every one of them answered:**
+
+   | # | Condition | Returns | Who announces this state instead |
+   | --- | --- | --- | --- |
+   | 1 | `c.busy` | `Loading` | — |
+   | 2 | `!c.data.authorised` | **the empty string** | the not-entitled `.alert-warning`, which carries `role="alert"` |
+   | 3 | `c.data.error` | **the empty string** | the failure `.alert-danger`, which carries `role="alert"` and owns **Retry** |
+   | 4 | `c.data.notFound` | **the empty string** | the not-found `.alert-warning`, which carries `role="alert"` |
+   | 5 | no portfolio company and no round in either table | `No portfolio company and no funding round are recorded for this investor.` | this region |
+   | 6 | otherwise | `{{c.data.investor.name}} loaded. {{c.data.investor.portfolio_count}} portfolio companies, {{c.data.roundsLedTotal}} rounds led, {{c.data.roundsParticipatedTotal}} rounds joined.` | this region |
+
+   Rows 2, 3 and 4 return nothing because a visible element with a live-region role already owns each of those states; without them the order fell through to row 5 and announced a sentence about recorded rounds on a screen showing no record at all.
+
+   **Row 6 states the totals, not the rendered array lengths.** With the caps in force, `roundsLed.length` and `roundsParticipated.length` are both the page limit, so the old wording announced "50 rounds led, 50 rounds joined" for an investor with 88 and 61 — telling a screen-reader caller the size of the window and calling it the size of the record. `portfolio_count` is the authoritative distinct-startup count of AAP §0.8.5 and is already on the record. Each table's own caption then states how much of its collection is rendered, which is the division the company profile uses for the same reason.
+5. **Expose `c.stateHeading()`**, returning `Investor profile` when the caller is not entitled or the load failed, `Investor not found` on the not-found path, and the empty string otherwise. The success path's `<h1>` is the investor name inside the panel heading, and that element sits inside the `ng-if` all three of those paths exclude — so each of them rendered **no heading at all**. Returning the empty string on the success path is what keeps the two sources mutually exclusive, so the page always renders exactly one `<h1>` as [rule 9](#rules-that-bind-all-eight) requires. The not-found wording differs because that state answers a specific request; the other two name the page and leave the reason to the alert.
+6. Recompute nothing. `portfolio_count` is read, not derived, in the client.
+7. Expose `c.unrendered(collection)` exactly as [rendered rows and model rows must agree](#rendered-rows-and-model-rows-must-agree) specifies, and inject `$element` into the controller so it can count the rendered rows of its own widget. The portfolio repeat carries `data-bst-row="portfolio"`, which is what the helper counts, and it is the **only** collection on this widget that is reconciled: it is the one assembled from two traversal paths, so it is the one whose key uniqueness rests on application logic rather than on a database constraint. The two rounds tables and the focus-area chips are single-path collections and are not reconciled.
 
 **The three regions render together, unconditionally.** The overview panel, the portfolio panel and the two rounds tables are all present on the page at once, laid out by the widget's own two columns. There is **no** show-or-hide toggle and **no** section state on this widget: the tab control is used only on the company profile, and a caller reads this profile top to bottom.
 
 #### HTML template
 
 ```html
-<div class="bst-investor" aria-busy="{{c.busy}}">
+<div class="bst-investor" tabindex="-1" aria-busy="{{c.busy}}">
   <div class="sr-only" role="status" aria-live="polite" aria-atomic="true">{{c.statusText()}}</div>
 
-  <div class="alert alert-warning" ng-if="!data.authorised">
-    <span>Your account holds no Boston Startup Tracker role.</span>
-  </div>
+  <h1 class="bst-investor-state-heading" tabindex="-1" ng-if="c.stateHeading()">{{c.stateHeading()}}</h1>
 
-  <div class="alert alert-warning" ng-if="data.notFound">
-    <span>That investor could not be found.</span>
+  <div class="alert alert-warning" role="alert" ng-if="!data.authorised">
+    <span>Your account holds no Boston Startup Tracker role.</span>
     <a class="btn btn-default" ng-href="?id=bst_home">Back to search</a>
   </div>
 
-  <div class="alert alert-danger" role="alert" ng-if="data.error">
+  <div class="alert alert-warning" role="alert" ng-if="data.notFound">
+    <span>That investor could not be found.</span>
+    <a class="btn btn-default" ng-keydown="c.onButtonKey($event)"
+       ng-href="?id=bst_home">Back to search</a>
+  </div>
+
+  <div class="alert alert-danger" role="alert" ng-if="c.errorText()">
     <span class="icon-cross-circle" aria-hidden="true">&nbsp;</span>
-    <span>{{data.error}}</span>
+    <span>{{c.errorText()}}</span>
     <button type="button" class="btn btn-default" ng-click="c.retry()">Retry</button>
   </div>
 
   <div class="progress" ng-if="c.busy">
     <div class="progress-bar progress-bar-striped active" role="progressbar"
+         ng-style="c.indeterminate()"
          aria-label="Loading investor profile" aria-valuemin="0" aria-valuemax="100"
          aria-valuetext="Loading"></div>
   </div>
 
-  <div class="row" ng-if="data.authorised &amp;&amp; !data.notFound &amp;&amp; !data.error">
+  <div class="row" ng-if="data.authorised &amp;&amp; !c.busy &amp;&amp; !data.notFound &amp;&amp; !c.errorText()">
     <div class="col-md-4 col-lg-4">
       <div class="panel panel-default">
-        <div class="panel-heading"><h1 class="panel-title" tabindex="-1">{{::data.investor.name}}</h1></div>
+        <div class="panel-heading"><h1 class="panel-title" dir="auto" tabindex="-1">{{::data.investor.name}}</h1></div>
         <ul class="list-group">
-          <li class="list-group-item">Type <span class="pull-right"><span class="label label-primary" ng-if="::data.investor.type">{{::data.investor.type}}</span></span></li>
           <li class="list-group-item">
-            Focus areas
-            <span class="pull-right">
-              <span class="label label-default" ng-repeat="area in ::data.focusAreas">{{::area}}</span>
-            </span>
+            <div class="row">
+              <div class="col-md-5 col-lg-5">Type</div>
+              <div class="col-md-7 col-lg-7 text-right">
+                <span class="label label-primary" ng-if="::data.investor.type">{{::data.investor.type}}</span>
+              </div>
+            </div>
           </li>
-          <li class="list-group-item">Portfolio companies <span class="pull-right">{{::data.investor.portfolio_count}}</span></li>
+          <li class="list-group-item">
+            <div class="row">
+              <div class="col-md-5 col-lg-5">Focus areas</div>
+              <div class="col-md-7 col-lg-7 text-right">
+                <span class="label label-default" ng-repeat="area in ::data.focusAreas track by $index"
+                      dir="auto">{{::area}}</span>
+                <span class="text-muted" ng-if="!data.focusAreas.length">Not recorded</span>
+              </div>
+            </div>
+          </li>
+          <li class="list-group-item">
+            <div class="row">
+              <div class="col-md-5 col-lg-5">Portfolio companies</div>
+              <div class="col-md-7 col-lg-7 text-right">{{c.count(data.investor.portfolio_count)}}</div>
+            </div>
+          </li>
           <li class="list-group-item" ng-if="data.investor.aum_usd !== undefined">
-            Assets under management <span class="pull-right">{{data.investor.aum_usd}}</span>
+            <div class="row">
+              <div class="col-md-5 col-lg-5">Assets under management</div>
+              <div class="col-md-7 col-lg-7 text-right">
+                <bdi ng-if="data.investor.aum_usd !== null">{{c.money(data.investor.aum_usd)}}</bdi>
+                <span class="text-muted" ng-if="data.investor.aum_usd === null">Not recorded</span>
+              </div>
+            </div>
           </li>
           <li class="list-group-item" ng-if="data.investor.aum_usd === undefined">
-            Assets under management <span class="pull-right"><span class="label label-info">Premium</span></span>
+            <div class="row">
+              <div class="col-md-5 col-lg-5">Assets under management</div>
+              <div class="col-md-7 col-lg-7 text-right"><span class="label label-info">Premium</span></div>
+            </div>
           </li>
-          <li class="list-group-item">Website <span class="pull-right"><a ng-href="{{::data.investor.website}}">Visit the investor website</a></span></li>
+          <li class="list-group-item">
+            <div class="row">
+              <div class="col-md-5 col-lg-5">Website</div>
+              <div class="col-md-7 col-lg-7 text-right">
+                <a ng-href="{{::data.investor.website}}"
+                   ng-if="::data.investor.website">Visit the investor website</a>
+                <span class="text-muted" ng-if="::!data.investor.website">Not recorded</span>
+              </div>
+            </div>
+          </li>
         </ul>
       </div>
-      <p class="text-muted" ng-if="data.anyGated">
+      <p class="text-muted" ng-if="data.gatedAny">
         Some figures on this profile are premium data and are shown as
         <span class="label label-info">Premium</span>.
       </p>
@@ -2019,25 +3020,31 @@ $scope.$on('$destroy', releaseWatch);
           <div class="alert alert-info" ng-if="!c.hasPortfolio()">
             <span>No portfolio company is recorded for this investor.</span>
           </div>
-          <div class="table-responsive" ng-if="c.hasPortfolio()">
+          <div class="table-responsive" tabindex="0" ng-if="c.hasPortfolio()">
             <table class="table table-striped table-hover">
               <caption class="sr-only">Portfolio companies reached through the rounds on this page, one row per company</caption>
               <thead><tr><th scope="col">Company</th><th scope="col">Industry</th><th scope="col">Headquarters</th><th scope="col">Stage</th><th scope="col">Total funding</th></tr></thead>
               <tbody>
-                <tr ng-repeat="startup in data.portfolio track by startup.sys_id">
+                <tr data-bst-row="portfolio" ng-repeat="startup in data.portfolio track by startup.sys_id">
                   <th scope="row"><a ng-href="?id={{::options.company_page}}&amp;sys_id={{::startup.sys_id}}">{{::startup.name}}</a></th>
-                  <td>{{::startup.industry}}</td>
+                  <td><span class="label label-default" ng-if="::startup.industry">{{::startup.industry}}</span></td>
                   <td>{{::startup.headquarters_location}}</td>
                   <td><span class="label label-primary" ng-if="::startup.funding_stage">{{::startup.funding_stage}}</span></td>
-                  <td ng-if="startup.total_funding_usd !== undefined">{{startup.total_funding_usd}}</td>
+                  <td ng-if="startup.total_funding_usd !== undefined">{{c.money(startup.total_funding_usd)}}</td>
                   <td ng-if="startup.total_funding_usd === undefined"><span class="label label-info">Premium</span></td>
                 </tr>
               </tbody>
             </table>
           </div>
           <p class="text-muted" ng-if="data.portfolioTruncated">
-            Showing the first {{::data.portfolioLimit}} of {{::data.investor.portfolio_count}} portfolio companies.
+            Showing the first {{c.count(data.portfolioLimit)}} of {{c.count(data.investor.portfolio_count)}} portfolio companies. Open the record in the platform list to see them all.
           </p>
+          <div class="alert alert-warning" role="alert"
+               ng-if="c.hasPortfolio() &amp;&amp; c.unrendered('portfolio')">
+            <span class="icon-warning-triangle" aria-hidden="true">&nbsp;</span>
+            <span>{{c.unrendered('portfolio')}} of {{data.portfolio.length}} rows could not be displayed.
+              Reload the page; if it recurs, report it with this page address.</span>
+          </div>
         </div>
       </div>
 
@@ -2045,25 +3052,25 @@ $scope.$on('$destroy', releaseWatch);
         <div class="panel-heading"><h2 class="panel-title">Rounds led</h2></div>
         <div class="panel-body">
           <div class="alert alert-info" ng-if="!c.hasLed()"><span>This investor has led no recorded round.</span></div>
-          <div class="table-responsive" ng-if="c.hasLed()">
+          <div class="table-responsive" tabindex="0" ng-if="c.hasLed()">
             <table class="table table-striped table-hover">
               <caption class="sr-only">Funding rounds this investor led, one row per round</caption>
               <thead><tr><th scope="col">Company</th><th scope="col">Date</th><th scope="col">Round</th><th scope="col">Amount</th><th scope="col">Valuation</th></tr></thead>
               <tbody>
                 <tr ng-repeat="round in data.roundsLed track by round.sys_id">
-                  <th scope="row"><a ng-href="?id={{::options.company_page}}&amp;sys_id={{::round.startup.value}}">{{::round.startup.display_value}}</a></th>
-                  <td>{{::round.round_date}}</td>
+                  <th scope="row"><a dir="auto" ng-href="?id={{::options.company_page}}&amp;sys_id={{::round.startup.value}}">{{::round.startup.display_value}}</a></th>
+                  <td>{{c.day(round.round_date)}}</td>
                   <td><span class="label label-primary" ng-if="::round.round_type">{{::round.round_type}}</span></td>
-                  <td ng-if="round.amount_usd !== undefined">{{round.amount_usd}}</td>
+                  <td ng-if="round.amount_usd !== undefined">{{c.money(round.amount_usd)}}</td>
                   <td ng-if="round.amount_usd === undefined"><span class="label label-info">Premium</span></td>
-                  <td ng-if="round.valuation_usd !== undefined">{{round.valuation_usd}}</td>
+                  <td ng-if="round.valuation_usd !== undefined">{{c.money(round.valuation_usd)}}</td>
                   <td ng-if="round.valuation_usd === undefined"><span class="label label-info">Premium</span></td>
                 </tr>
               </tbody>
             </table>
           </div>
-          <p class="text-muted" ng-if="data.ledTruncated">
-            Showing the first {{::data.roundsLimit}} of {{::data.ledTotal}} rounds this investor led. Open the record in the platform list to see them all.
+          <p class="text-muted" ng-if="data.roundsLedTruncated">
+            Showing the first {{c.count(data.roundsLedLimit)}} of {{c.count(data.roundsLedTotal)}} rounds this investor led. Open the record in the platform list to see them all.
           </p>
         </div>
       </div>
@@ -2072,25 +3079,25 @@ $scope.$on('$destroy', releaseWatch);
         <div class="panel-heading"><h2 class="panel-title">Rounds participated in</h2></div>
         <div class="panel-body">
           <div class="alert alert-info" ng-if="!c.hasParticipated()"><span>This investor has participated in no recorded round.</span></div>
-          <div class="table-responsive" ng-if="c.hasParticipated()">
+          <div class="table-responsive" tabindex="0" ng-if="c.hasParticipated()">
             <table class="table table-striped table-hover">
               <caption class="sr-only">Funding rounds this investor participated in, one row per round</caption>
               <thead><tr><th scope="col">Company</th><th scope="col">Date</th><th scope="col">Round</th><th scope="col">Amount</th><th scope="col">Valuation</th></tr></thead>
               <tbody>
                 <tr ng-repeat="round in data.roundsParticipated track by round.sys_id">
-                  <th scope="row"><a ng-href="?id={{::options.company_page}}&amp;sys_id={{::round.startup.value}}">{{::round.startup.display_value}}</a></th>
-                  <td>{{::round.round_date}}</td>
+                  <th scope="row"><a dir="auto" ng-href="?id={{::options.company_page}}&amp;sys_id={{::round.startup.value}}">{{::round.startup.display_value}}</a></th>
+                  <td>{{c.day(round.round_date)}}</td>
                   <td><span class="label label-primary" ng-if="::round.round_type">{{::round.round_type}}</span></td>
-                  <td ng-if="round.amount_usd !== undefined">{{round.amount_usd}}</td>
+                  <td ng-if="round.amount_usd !== undefined">{{c.money(round.amount_usd)}}</td>
                   <td ng-if="round.amount_usd === undefined"><span class="label label-info">Premium</span></td>
-                  <td ng-if="round.valuation_usd !== undefined">{{round.valuation_usd}}</td>
+                  <td ng-if="round.valuation_usd !== undefined">{{c.money(round.valuation_usd)}}</td>
                   <td ng-if="round.valuation_usd === undefined"><span class="label label-info">Premium</span></td>
                 </tr>
               </tbody>
             </table>
           </div>
-          <p class="text-muted" ng-if="data.participatedTruncated">
-            Showing the first {{::data.roundsLimit}} of {{::data.participatedTotal}} rounds this investor participated in. Open the record in the platform list to see them all.
+          <p class="text-muted" ng-if="data.roundsParticipatedTruncated">
+            Showing the first {{c.count(data.roundsParticipatedLimit)}} of {{c.count(data.roundsParticipatedTotal)}} rounds this investor participated in. Open the record in the platform list to see them all.
           </p>
         </div>
       </div>
@@ -2110,19 +3117,110 @@ $scope.$on('$destroy', releaseWatch);
     margin-bottom: $grid-gutter-width;
 }
 
+/* flow-root establishes a block formatting context, which is what makes a
+   wrapped .pull-right float contribute to this item's height. Without it the
+   float is out of flow, the item keeps the height of its label line alone, and
+   the float's second line hangs below the item where the NEXT item's opaque
+   background paints over it - see Float containment in Overflow guards at the
+   floor. overflow-wrap is a separate guard, for an unbreakable single word. */
 .bst-investor .list-group-item {
+    display: flow-root;
     overflow-wrap: break-word;
+    unicode-bidi: isolate;
+}
+
+/* inline-block, not Bootstrap's inline, so the chip run can WRAP. white-space:
+   nowrap on .label forbids a break inside a chip; between chips there is no break
+   opportunity at all, because ng-repeat clones its element with no whitespace text
+   node between the clones. A run of inline boxes with no break opportunity has
+   min-content == max-content, and a float's shrink-to-fit is floored at min-content,
+   so the float is forced to its full 342px inside a 291px column and overhangs off
+   the LEFT of the window - where a left-to-right document generates no scrollbar and
+   the content cannot be reached. An atomic inline-level box creates the break
+   opportunity, min-content collapses to the widest single chip, and the run wraps.
+   text-align keeps the wrapped run against the right edge, where the float put it;
+   it has no effect on a single short value, whose float shrink-wraps to its content. */
+.bst-investor .list-group-item .pull-right {
+    text-align: right;
 }
 
 .bst-investor .list-group-item .label {
+    display: inline-block;
     margin-left: $padding-base-vertical;
+    white-space: normal;
+    overflow-wrap: break-word;
+}
+
+.bst-investor h1.panel-title {
+    line-height: normal;
+}
+
+.bst-investor .bst-investor-state-heading {
+    margin-bottom: $grid-gutter-width;
 }
 
 .bst-investor .table-responsive {
     margin-bottom: 0;
-    border-color: $table-border-color;
+}
+
+.bst-investor .sr-only {
+    position: absolute;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+}
+
+.bst-investor .bst-upsell {
+    margin-bottom: $grid-gutter-width;
+}
+
+.bst-investor .bst-upsell .panel-title {
+    margin-bottom: $padding-base-vertical;
+}
+
+.bst-investor .bst-upsell .bst-upsell-fields {
+    margin-top: $padding-base-vertical;
+    margin-bottom: $padding-base-vertical;
+}
+
+.bst-investor .bst-upsell .bst-upsell-fields .label {
+    margin-right: $padding-base-vertical;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+    .bst-investor .progress-bar {
+        animation: none;
+    }
+}
+
+@media (forced-colors: active) {
+    .bst-investor .label {
+        border-style: solid;
+    }
+}
+
+.bst-investor [tabindex="-1"]:focus,
+.bst-investor[tabindex="-1"]:focus {
+    outline: $border-radius-base solid $brand-primary;
+    outline-offset: $border-radius-small;
 }
 ```
+
+**The overview list is laid out on the grid, and the reason is the one defect in this widget that made content genuinely unreachable.** Each of its rows used a Bootstrap `.pull-right` float for its value, and a float is removed from flow: `.list-group-item` has `overflow: visible` and no clearfix, so the row never grew to contain it and the next row — which has an opaque background — painted straight over the top. The focus-area chips are the worst case because they are a repeat and wrap to several lines: measured at 1366 the float overflowed its row by **29px** with two of four chips completely invisible and the other two about 70% hidden, and at 1024 — the declared floor — by **69px** with three of four completely invisible. Worse, a float wider than its container escapes to the **left**: the chip span measured 341.75px inside a 291.33px row at x = **−22.42**, running off the left edge of the viewport. Browsers do not extend `scrollWidth` for left-side overflow, so **no scrollbar appeared and the content could not be reached by any means**. The same float bisected the premium `aum_usd` figure and inflated the neighbouring row's height.
+
+Two of the three obvious remedies are unavailable here. A clearfix alone contains the float vertically but does nothing about a float wider than its row, so the left-side escape survives it. Capping the float with `max-width: 60%` fixes both — and is forbidden, because [zero hard-coded values](#zero-hard-coded-values) admits no percentage literal in widget CSS. The remaining answer is the one the same rule set prescribes anyway: **[layout through system primitives](#layout-through-system-primitives-only)**. A `.row` holding `.col-md-5` and `.col-md-7` gives the label and the value real columns that total twelve, carries Bootstrap's own clearfix so the row always grows to its tallest cell, and cannot overflow because a grid column is width-constrained by construction. The value keeps its right alignment through the `.text-right` utility rather than through a float. **No literal of any kind is introduced**, and the `.row`'s negative margins land exactly in the `.list-group-item`'s own 15px horizontal padding, so the row neither overflows its item nor shifts the content's left edge.
+
+Four of the CSS rules above also deserve a word:
+
+- **`unicode-bidi: isolate` on `.list-group-item` and `line-height: normal` on `h1.panel-title`** are this widget's share of [the cleaning rules these widgets depend on](#the-cleaning-rules-these-widgets-depend-on). The focus areas are Multi-choice values and the investor name is free text, so either can arrive right-to-left or carrying stacked combining marks.
+- **The reduced-motion guard** pairs with the busy bar's new rendered width, exactly as on the two sibling widgets: the width is what makes the striped animation perceptible, and therefore what turns the missing guard from a latent omission into a real one.
+- **The forced-colours chip border** is [rule 12](#rules-that-bind-all-eight). This widget renders the `Premium` marker in three places — the `aum_usd` row and the Amount and Valuation columns of both rounds tables — plus the type chip, the focus-area chips and every stage chip.
+- **The `.bst-upsell` rules** are [rule 16](#rules-that-bind-all-eight): this widget embeds `bst-premium-upsell` with `$sp.getWidget()`, which creates no instance, so the partial's own CSS field may never be compiled into this page and these declarations would otherwise have no source at all. They are exactly the partial's rules that nothing else on this page supplies — measured against the partial rendered on its own, not inferred — and the chip rule is the partial's own selector with this widget's root prepended, so the cascade resolves on specificity rather than on sheet order.
+- **`white-space: normal` and `overflow-wrap: break-word` on the chips** are [rule 13](#rules-that-bind-all-eight), and they are what stops the grid from being defeated from the inside. Bootstrap gives `.label` a `white-space: nowrap`, which is right for a one-word status marker and wrong for a Multi-choice value: it removes every soft-wrap opportunity, so the chip becomes a single unbreakable inline box that is intrinsically wider than the column it sits in. The column still cannot overflow — but its *content* can, and it escapes to the **right** into the neighbouring `.col-md-8`, which is a later sibling and therefore paints over it. Measured on a focus area reading `Financial technology and payments infrastructure`, the chip ran **58.73px** past its cell at 1366 and **97.63px** at 1024, losing **17.7%** and **33.5%** of its own width to over-painting and cutting the label mid-word. Restoring `normal` gives the text its break opportunities back and the chip then wraps inside the cell; `overflow-wrap: break-word` covers the remaining case of a single token longer than the cell. Both are behaviour keywords, so neither introduces a literal.
+
+  This is a milder failure than the float it sits beside — it escapes right rather than off the viewport edge, and the chip's centre stays clickable — but it is the same underlying mistake, which is **content that cannot be broken inside a container that cannot grow**. It is worth naming because the grid fix alone does not reach it: a grid column constrains its own box, not the intrinsic width of what it contains.
 
 ### `bst-trends-kpi`
 
@@ -2161,9 +3259,11 @@ var plan = search.buildPlan(null, search.appliesInclusion());
 
 // Every figure in this widget comes from an aggregate, and this is the widget's
 // only server round trip: an unhandled failure would publish an empty kpis array
-// and the row would render as nothing with no error and nothing to retry.
+// and the row would render as nothing with no error and nothing to retry. The
+// message goes in data.serverError, which the shared c.load() helper never touches,
+// so a failing Retry keeps the panel that carries the Retry control.
 data.kpis = [];
-data.error = '';
+data.serverError = '';
 try {
     data.kpis.push({
         id: 'startups',
@@ -2199,7 +3299,7 @@ try {
     }
 } catch (aggregateFailure) {
     data.kpis = [];
-    data.error = 'Could not load the dashboard figures. Use Retry to try again.';
+    data.serverError = 'Could not load the dashboard figures. Use Retry to try again.';
     gs.error('[bst-trends-kpi] KPI aggregate failed: ' + aggregateFailure);
 }
 ```
@@ -2208,62 +3308,100 @@ try {
 
 #### Data contract
 
-**Every member below is assigned onto `data` by the server script named in its row, and read by the consumer named in its row. There is no third source and no other member**: a template expression naming anything absent from this table renders nothing at best and raises a runtime expression error at worst, and a member published with no consumer is a dead output. `data.error` is not in any widget's table — it is set on the client by the shared `c.load()` helper of [Error and empty behaviour](#error-and-empty-behaviour) and by nothing on the server.
+**Every member below is assigned onto `data` by the server script named in its row, and read by the consumer named in its row. There is no third source and no other member**: a template expression naming anything absent from this table renders nothing at best and raises a runtime expression error at worst, and a member published with no consumer is a dead output. `data.error` is not in any widget's table — it is set on the client by the shared `c.load()` helper of [Error and empty behaviour](#error-and-empty-behaviour) and by nothing on the server. A widget whose own server script catches a failure and reports it publishes that message as **`data.serverError`**, which **is** in that widget's table, and which `c.load()` never touches; the error panel renders `c.errorText()`, which answers either of the two.
 
 | Member | Type | Published by | Consumed by |
 | --- | --- | --- | --- |
 | `authorised` | True/False | server item 1 | Template — the not-entitled alert and the `ng-if` on the panel row |
 | `kpis` | Array of panel descriptors | the server script's `data.kpis.push()` calls | Template — the panel `ng-repeat`; controller `c.columns($index)` |
+| `serverError` | String | the server script's `catch` block, empty on every successful run | Controller `c.errorText()` — and through that helper the error panel, its **Retry** control, and the `ng-if` on the panel row. No expression reads this member directly |
 
 #### Client controller
 
-1. Compute `c.columns($index)` as the Bootstrap column span for the panel at that position, from `c.data.kpis.length` and the index, using the table under [The KPI column spans](#the-kpi-column-spans). Choose only from `col-md-6`, `col-md-4` and `col-md-3`, and never a narrower class.
-2. Expose `c.hasLink(kpi)` for the conditional `.btn.btn-link`.
-3. Declare `c.busy` per [Busy, status and focus behaviour](#busy-status-and-focus-behaviour), and implement `c.load()` and `c.retry()` exactly as [Error and empty behaviour](#error-and-empty-behaviour) specifies. This widget issues no server call **after** its first render, but that first render *is* a server call and its five aggregates can fail, so it carries the error panel and a working **Retry**. It carries no status region, because it has no user-initiated action to announce.
-4. Read no data and issue no server call after the first render **except** `c.retry()`. The KPI figures are computed once, in the server script; `c.retry()` re-runs that script through `c.load()` and is the only later call this widget makes.
+1. Compute `c.columns($index)` as the Bootstrap column span for the panel at that position, from `c.data.kpis.length` and the index, using the table under [The KPI column spans](#the-kpi-column-spans). Choose only from `col-md-12`, `col-md-6`, `col-md-4` and `col-md-3`, and never a narrower class.
+2. Expose `c.breaksAfter($index)`, true only at the index the same table names in its **Break after index** column — index `2` when there are five panels, and nothing otherwise. The template renders a `.clearfix` where it is true; the reason it is needed at all is under that table.
+3. Expose `c.hasLink(kpi)` for the conditional `.btn.btn-link`.
+4. Declare `c.busy` per [Busy, status and focus behaviour](#busy-status-and-focus-behaviour), and implement `c.load()` and `c.retry()` exactly as [Error and empty behaviour](#error-and-empty-behaviour) specifies. This widget issues no server call **after** its first render, but that first render *is* a server call and its five aggregates can fail, so it carries the error panel and a working **Retry**. It carries no status region, because it has no user-initiated action to announce.
+5. Read no data and issue no server call after the first render **except** `c.retry()`. The KPI figures are computed once, in the server script; `c.retry()` re-runs that script through `c.load()` and is the only later call this widget makes.
 
 ##### The KPI column spans
 
-The panel count is **3, 4 or 5** — three always, plus one for each of `show_jobs` and `show_news`. A single span applied to all of them cannot total twelve at every count, so the span is chosen **per position**:
+The panel count is **3, 4 or 5** in any shipped configuration — three always, plus one for each of `show_jobs` and `show_news`. A single span applied to all of them cannot total twelve at every count, so the span is chosen **per position**:
 
-| Panels | Spans by index, `0` first | Rows |
-| --- | --- | --- |
-| 3 | `col-md-4`, `col-md-4`, `col-md-4` | One row of 12 |
-| 4 | `col-md-3`, `col-md-3`, `col-md-3`, `col-md-3` | One row of 12 |
-| 5 | `col-md-4`, `col-md-4`, `col-md-4`, `col-md-6`, `col-md-6` | 12, then 12 |
+| Panels | Spans by index, `0` first | Rows | Break after index |
+| --- | --- | --- | --- |
+| 1 | `col-md-12` | One row of 12 | — |
+| 2 | `col-md-6`, `col-md-6` | One row of 12 | — |
+| 3 | `col-md-4`, `col-md-4`, `col-md-4` | One row of 12 | — |
+| 4 | `col-md-3`, `col-md-3`, `col-md-3`, `col-md-3` | One row of 12 | — |
+| 5 | `col-md-4`, `col-md-4`, `col-md-4`, `col-md-6`, `col-md-6` | 12, then 12 | **`2`** |
 
-`c.columns($index)` returns `col-md-4` for any index of a three-panel row, `col-md-3` at four panels, and — at five panels — `col-md-4` for indexes `0` to `2` and `col-md-6` for indexes `3` and `4`. **Every row totals exactly twelve columns**, and the second row of the five-panel case wraps on its own because the Bootstrap grid is float-based. Return `col-md-4` for any count the table does not cover, so an unexpected count still renders a defined layout rather than none.
+`c.columns($index)` returns `col-md-12` at one panel, `col-md-6` at two, `col-md-4` at three, `col-md-3` at four, and — at five — `col-md-4` for indexes `0` to `2` and `col-md-6` for indexes `3` and `4`. **Every row totals exactly twelve columns.** Return `col-md-4` for any count the table does not cover, so an unexpected count still renders a defined layout rather than none.
+
+**Twelve columns per row is necessary and not sufficient, and the five-panel case is where that bites.** The Bootstrap grid is float-based, and a float can only drop to the next line if there is room for it beside the floats already placed — which depends on their **heights**, not on their column arithmetic. The five panels are not the same height: `c.hasLink(kpi)` is true for the startups KPI alone, so that one panel carries a `.btn.btn-link` and measures **34px taller** than the other four. Float 3 therefore cannot clear float 0, and instead of starting a second row it wedges into the gap beside it — measured as a lone `col-md-6` **indented by 390px** at 1366 and 1920 and by 323px at 1024, with float 4 then orphaned below it. The result was three ragged rows where the arithmetic promised two, at every viewport.
+
+`c.breaksAfter($index)` closes it, and the template renders a **Bootstrap clearfix** where it returns true:
+
+```html
+<div ng-repeat-start="kpi in data.kpis track by kpi.id" ng-class="c.columns($index)">
+  … the panel …
+</div>
+<div ng-repeat-end ng-class="{ clearfix: c.breaksAfter($index) }"></div>
+```
+
+`.clearfix` clears the floats placed before it, so float 3 begins on a fresh line at the container's left edge whatever the heights above it. This is Bootstrap 3's own documented remedy for uneven float wrapping, it is a **stock utility class** rather than custom layout CSS, and it introduces no measured value — which matters, because the two alternatives both do. Equalising the panels with a `min-height` would write a pixel literal into widget CSS, and equal-height columns by flexbox would be custom layout on a raw `<div>`; [zero hard-coded values](#zero-hard-coded-values) forbids the first and [layout through system primitives](#layout-through-system-primitives-only) the second. Moving the `.btn-link` out of the panel body would work too, and was rejected because the link belongs with the figure it acts on.
+
+`c.breaksAfter($index)` returns true only where the table's **Break after index** column names a value, so among the covered counts it is false for every count but five, and false at five for every index but `2`. A clearfix emitted anywhere else would break a row that was wrapping correctly.
+
+The **fallback** count needs the same treatment, for the same reason. A count the table does not cover renders at `col-md-4`, three to a row, and three-to-a-row wraps by float exactly as the five-panel case does — so it inherits the same failure: measured at six panels, panels 3 and 4 wedged into the shelf beside the taller float at an indent of 390px and panel 5 was orphaned on a third row. The guide's own promise is that an uncovered count "still renders a defined layout rather than none", and three ragged rows is not a defined layout. `c.breaksAfter` therefore also returns true after every third panel when the count exceeds five, and never after the last one, where a break would add an empty row:
+
+```javascript
+c.breaksAfter = function (index) {
+    var count = c.data.kpis.length;
+    if (count === 5) { return index === 2; }
+    if (count > 5) { return index % 3 === 2 && index < count - 1; }
+    return false;
+};
+```
+
+No shipped configuration reaches six — the count is three plus one for each of the two optional panels, so five is the maximum — and that is precisely why the branch is worth writing rather than reasoning away: it is the branch no acceptance test will exercise, and the one an operator meets first if a seventh KPI is ever added.
+
+**Two details of that markup are deliberate.** The repeat is written as `ng-repeat-start` / `ng-repeat-end` because one iteration must emit **two siblings** — the column and the break that may follow it — and a plain `ng-repeat` repeats a single element and its descendants only. Putting the break inside the column would be useless, since a clearfix inside a float clears nothing for that float's siblings.
+
+And the break is toggled with **`ng-class`, not `ng-if`**. `ng-if` on an `ng-repeat-end` element asks AngularJS to transclude the element that terminates the repeated range, which is a fragile interaction between two structural directives and the kind of thing that works until a version bump. `ng-class` avoids it completely: the element is always emitted, and it is either a clearfix or an empty in-flow block. An empty block of zero height between floated columns changes nothing — the floats are out of flow and it has no content to displace — so the inert case is genuinely inert, and the only behaviour that varies is the one the class supplies.
 
 #### HTML template
 
 ```html
-<div class="bst-kpi" aria-busy="{{c.busy}}">
+<div class="bst-kpi" tabindex="-1" aria-busy="{{c.busy}}">
   <h1 class="h2">{{::options.title}}</h1>
 
-  <div class="alert alert-warning" ng-if="!data.authorised">
+  <div class="alert alert-warning" role="alert" ng-if="!data.authorised">
     <span>Your account holds no Boston Startup Tracker role.</span>
   </div>
 
-  <div class="alert alert-danger" role="alert" ng-if="data.error">
+  <div class="alert alert-danger" role="alert" ng-if="c.errorText()">
     <span class="icon-cross-circle" aria-hidden="true">&nbsp;</span>
-    <span>{{data.error}}</span>
+    <span>{{c.errorText()}}</span>
     <button type="button" class="btn btn-default" ng-click="c.retry()">Retry</button>
   </div>
 
-  <div class="row" ng-if="data.authorised &amp;&amp; !data.error">
-    <div ng-class="c.columns($index)" ng-repeat="kpi in ::data.kpis track by kpi.id">
+  <div class="row" ng-if="data.authorised &amp;&amp; !c.errorText()">
+    <div ng-repeat-start="kpi in data.kpis track by kpi.id" ng-class="c.columns($index)">
       <div class="panel panel-default bst-kpi-panel">
         <div class="panel-heading">
           <h2 class="panel-title">
-            <span class="{{::kpi.glyph}}" aria-hidden="true">&nbsp;</span>{{::kpi.label}}
+            <span class="{{kpi.glyph}}" aria-hidden="true">&nbsp;</span>{{kpi.label}}
           </h2>
         </div>
         <div class="panel-body">
-          <p class="bst-kpi-value h2">{{::kpi.value}}</p>
-          <a class="btn btn-link" ng-if="c.hasLink(kpi)" ng-href="{{::kpi.link}}">Browse startups</a>
+          <p class="bst-kpi-value h2">{{c.count(kpi.value)}}</p>
+          <a class="btn btn-link" ng-if="c.hasLink(kpi)" ng-keydown="c.onButtonKey($event)"
+             ng-href="{{kpi.link}}">Browse startups</a>
         </div>
       </div>
     </div>
+    <div ng-repeat-end ng-class="{ clearfix: c.breaksAfter($index) }"></div>
   </div>
 </div>
 ```
@@ -2288,6 +3426,41 @@ The panel count is **3, 4 or 5** — three always, plus one for each of `show_jo
     font-family: $headings-font-family;
     font-weight: $headings-font-weight;
     color: $brand-primary;
+}
+
+/* Lays the panel row out by flex wrapping instead of by floats, so the rows are
+   decided by the declared column widths alone and every panel on a line takes that
+   line's height. Without this the one panel that carries a link is taller than its
+   siblings, the fourth panel cannot clear it, and five panels render as three ragged
+   rows. Bootstrap's own clearfix pseudo-elements would become flex items carrying the
+   width of the space in their `content`, which is enough to wrap a row one column
+   early, so they are dropped for the duration. Guarded at the medium breakpoint,
+   below which col-md-* carries no width and the float stack is correct. */
+@media (min-width: $screen-md-min) {
+    .bst-kpi .row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: stretch;
+    }
+
+    .bst-kpi .row:before,
+    .bst-kpi .row:after {
+        display: none;
+    }
+
+    .bst-kpi .row > div {
+        display: flex;
+    }
+
+    .bst-kpi .bst-kpi-panel {
+        flex: auto;
+    }
+}
+
+.bst-kpi [tabindex="-1"]:focus,
+.bst-kpi[tabindex="-1"]:focus {
+    outline: $border-radius-base solid $brand-primary;
+    outline-offset: $border-radius-small;
 }
 ```
 
@@ -2339,16 +3512,18 @@ var plan = search.buildPlan(null, search.appliesInclusion());
 // stored choice value, carrying the exact size of each group present in the data.
 // The aggregate is the one thing in this widget that can fail, and this is the
 // widget's only server round trip: an unhandled failure would publish no buckets
-// and the template would render an empty panel with nothing to retry.
+// and the template would render an empty panel with nothing to retry. The message
+// goes in data.serverError, which the shared c.load() helper never touches, so a
+// failing Retry keeps the panel that carries the Retry control.
 var sizes = {};
-data.error = '';
+data.serverError = '';
 try {
     sizes = builder.countByGroup('x_bst_startuptrk_startup', data.dimension,
         function (query) {
             search.applyPlan(query, plan);
         });
 } catch (aggregateFailure) {
-    data.error = 'Could not load this breakdown. Use Retry to try again.';
+    data.serverError = 'Could not load this breakdown. Use Retry to try again.';
     gs.error('[bst-trends-charts] countByGroup failed for dimension '
         + data.dimension + ': ' + aggregateFailure);
 }
@@ -2376,7 +3551,36 @@ data.largestLabel = largestLabel;
 
 Two properties of reading the result through the closed label list matter. A bucket the data does not populate is **absent** from the returned object rather than present as zero, which is why the loop defaults it — omitting that default would drop empty buckets from the chart and silently change its shape. And a stored value outside the choice list would appear as its own key in the result; reading through the label list ignores it, which is correct, because the chart's axis is the declared choice list. Such a value should not exist — cleaning rule 3 prevents it on every ingestion path — and if one is present the count of charted rows will be lower than the KPI figure, which is the signal to look for it.
 
-5. For each bucket publish `share`, the count divided by `largest` and expressed as a whole-number percentage — `0` when `largest` is `0`. Publish `data.buckets`, `data.largest` and **`data.largestLabel`** — the label of the largest bucket, or the empty string when `largest` is `0` — because the accessible description names it and has no other source.
+5. For each bucket publish **three** share members, and never one. Publish `data.buckets`, `data.largest` and **`data.largestLabel`** — the label of the largest bucket, or the empty string when `largest` is `0` — because the accessible description names it and has no other source.
+
+   ```javascript
+   buckets.forEach(function (bucket) {
+       // share: the true ratio to one decimal place, so a small non-zero bucket is not
+       // reported as zero. This is what aria-valuenow publishes, so it must be the
+       // honest figure rather than a display convenience.
+       bucket.share = largest === 0
+           ? 0
+           : Math.round(bucket.count / largest * 1000) / 10;
+
+       // barPercent: the companion table's CSS width. Floored at one percent for any
+       // non-zero count, because a width below that renders as no bar at all and the
+       // share column is this chart's declared accessible alternative.
+       bucket.barPercent = bucket.count === 0
+           ? 0
+           : Math.max(1, Math.round(bucket.count / largest * 100));
+
+       // shareText: the share as words, and the one member that can say 'present but
+       // very small'. A bucket whose true share is below 0.05 rounds to 0 at one
+       // decimal place, and printing '0%' beside a non-zero count contradicts it.
+       bucket.shareText = bucket.count === 0
+           ? '0%'
+           : (bucket.share === 0 ? 'less than 0.1%' : bucket.share + '%');
+   });
+   ```
+
+   **Three members rather than one, because the three questions have three different right answers.** A single whole-number percentage was asked to be the bar's width, the accessible value and the printed figure at once, and it fails all three for a small bucket: `Math.round(4 / 1000 * 100)` is `0`, so the bar disappears, `aria-valuenow` announces a measured zero, and nothing on the page distinguishes *four startups* from *none*. Rounding twice compounds it — the SVG width was `Math.round(barSpan * share / 100)`, so a share already rounded to `0` produced a width of `0` however wide the plot area was. Six of eight non-zero buckets vanished this way in one measured scenario, including, in another, a bucket of **13,579** startups.
+
+   Each member now answers exactly one question. `share` is the honest ratio and is what assistive technology receives. `barPercent` and the SVG's `barWidth` are *rendering* quantities, floored so that presence is always visible — a floor is legitimate there precisely because those two are pictures of the value rather than the value itself. `shareText` is the printed figure, and it is the only one able to say `less than 0.1%`, which is the truthful thing to show when a real share rounds away. **The floor never applies to a genuine zero**: every one of the three tests `count === 0` first, so an empty bucket still renders no bar and still prints `0%`, and the distinction the chart existed to draw is preserved in both directions.
 6. Compute **every** SVG coordinate on the server and publish it, so no numeric literal is written into the template or the CSS. The geometry, its five constants and the description string are specified under [The inline SVG chart](#the-inline-svg-chart).
 7. Resolve the render mode last, and publish it as `data.renderMode`. **`report` is published only when every one of six conditions holds**; any failure publishes `svg` and sets `data.reportUnavailable`. The allowlist and the reasoning are under [The report embed](#the-report-embed):
 
@@ -2443,22 +3647,41 @@ A horizontal bar chart, one bar per bucket, drawn as inline SVG inside the widge
 | --- | --- | --- |
 | `PLOT_WIDTH` | `720` | The width of the coordinate system. The rendered width comes from the `width="100%"` attribute, so this is a ratio, not a pixel promise. |
 | `LABEL_WIDTH` | `210` | The band on the left that carries the bucket label. |
-| `VALUE_WIDTH` | `70` | The band on the right that carries the count. |
+| `VALUE_WIDTH` | `70` | The **minimum** band on the right that carries the count. The band actually used is derived from the widest count — see below. |
+| `VALUE_DIGIT_WIDTH` | `11` | The width of one digit at the label type size, used to widen the value band when a count needs more than the minimum. A digit measures 10.113 units at `$font-size-large` in the portal's sans stack, so `11` is a deliberate upper bound rather than an exact metric. |
 | `BAR_HEIGHT` | `28` | The height of one bar. |
 | `BAR_GAP` | `12` | The vertical space between two bars. |
 
 **The derived geometry**, computed once from those constants and the bucket counts:
 
 ```javascript
-var PLOT_WIDTH = 720, LABEL_WIDTH = 210, VALUE_WIDTH = 70, BAR_HEIGHT = 28, BAR_GAP = 12;
-var barSpan = PLOT_WIDTH - LABEL_WIDTH - VALUE_WIDTH;
+var PLOT_WIDTH = 720, LABEL_WIDTH = 210, VALUE_WIDTH = 70;
+var BAR_HEIGHT = 28, BAR_GAP = 12, VALUE_DIGIT_WIDTH = 11;
+
+// The value band must fit the widest count it will carry, and the widest count is
+// always the largest bucket. A fixed 70-unit band is enough for five digits and not
+// for eight, and a band that is too narrow does not clip the value - it pushes the
+// end-anchored text leftward onto its own bar. Deriving the band keeps the two apart.
+var valueWidth = Math.max(VALUE_WIDTH,
+    String(largest).length * VALUE_DIGIT_WIDTH + BAR_GAP);
+var barSpan = PLOT_WIDTH - LABEL_WIDTH - valueWidth;
 var height = buckets.length * BAR_HEIGHT + (buckets.length - 1) * BAR_GAP;
 
 buckets.forEach(function (bucket, index) {
     bucket.y = index * (BAR_HEIGHT + BAR_GAP);
     bucket.textY = bucket.y + Math.round(BAR_HEIGHT * 0.7);
-    bucket.barWidth = Math.round(barSpan * bucket.share / 100);
-    bucket.valueX = LABEL_WIDTH + barSpan + BAR_GAP;
+
+    // Computed from the raw count, not from the rounded share, and floored at one
+    // unit for any non-zero count so a populated bucket is never drawn as empty.
+    bucket.barWidth = bucket.count === 0
+        ? 0
+        : Math.max(1, Math.round(barSpan * bucket.count / largest));
+
+    // Anchored at the right edge of the coordinate system and drawn right-to-left by
+    // text-anchor="end", so a count of any length grows into the plot area instead of
+    // past the viewBox. Left-anchored at LABEL_WIDTH + barSpan + BAR_GAP, an eight-digit
+    // count reached 724.95 against a 720-unit box and was clipped.
+    bucket.valueX = PLOT_WIDTH;
 });
 
 // The accessible description, assembled here rather than referenced from nowhere. An
@@ -2478,11 +3701,18 @@ data.chart = {
     height: height,
     barHeight: BAR_HEIGHT,
     labelWidth: LABEL_WIDTH,
+    axisX: LABEL_WIDTH,       // every bar starts here, so this is the zero line
+    axisY1: 0,
+    axisY2: height,
     description: chartDescription
 };
 ```
 
-`bucket.barWidth` is `0` when the bucket count is `0`, which draws nothing and is correct: an empty bucket has no bar, and its count is still stated in the value band and in the companion table.
+`bucket.barWidth` is `0` when, and only when, the bucket count is `0`, which draws nothing and is correct: an empty bucket has no bar, and its count is still stated in the value band and in the companion table. Every non-zero count draws at least one unit, so **no bar width is ever zero for a bucket that has records** — which is the whole distinction the picture is there to make.
+
+**The clamp is applied to `bucket.share` itself, not to a local copy of it.** `share` is published on every bucket and is read in three places — the `width` attribute of the SVG `<rect>`, the inline width of the companion table's `.progress-bar`, and that bar's `aria-valuenow`. Clamping a local variable bounds only the first of the three and leaves the other two reading the raw figure, so a negative aggregate would paint nothing while announcing a value below the `aria-valuemin="0"` the same element declares — a control whose stated value lies outside its own stated range. Assigning the clamped value back onto the bucket bounds all three at once, from one statement, and leaves `bucket.count` alone so the number the caller actually reads is still the unmodified aggregate.
+
+**An unclamped negative does not leave a negative width in the DOM to find, which is what makes it worth guarding rather than debugging later.** `ng-style` assigns the returned width to `element.style.width`, and `-13%` is not a valid CSS length, so the declaration is rejected outright and the element ends up with **no `style` attribute at all** rather than a visible `width: -13%`. The bar collapses to zero and the markup carries no trace of why. The only surviving evidence is the `aria-valuenow` the same element publishes, because an ARIA attribute is a string and is not validated against its own declared range — so the one symptom that does persist is the one nobody looks at. Guarding the value where it is computed is therefore the only place the defect is visible at all.
 
 **The description string**, published as `data.chart.description` and read by the SVG's `<desc>`. Assemble it on the server from the resolved dimension, the bucket count, and the largest bucket:
 
@@ -2493,6 +3723,10 @@ When `data.largest` is `0`, publish instead: `Horizontal bar chart of startups b
 **The accessible wiring.** The `<svg>` carries `role="img"` with an `aria-labelledby` pointing at its own `<title>` and an `aria-describedby` pointing at its own `<desc>`, so a screen reader announces the chart's name and its summary rather than reading a tree of shapes. Both identifiers are derived from `data.dimension` by the client controller, because `bst_dashboard` renders **two** instances of this widget in one document and a repeated `id` would make both point at the first chart's text.
 
 **The companion table is not optional.** The chart is a picture of the same numbers the table below it lists row by row, and the table is what carries the values to a caller who cannot use the picture. Both render together in `svg` mode.
+
+**The two dashboard chart panels do not end level, and that is a flagged design-system gap rather than a defect to be worked around.** Container 3 of [`bst_dashboard`](#bst_dashboard--dashboard--trends) puts two instances of this widget side by side, and they hold different numbers of buckets — eight for funding stage, six for industry — so their panels are different heights. Measured, the difference is **161px at 1024 and 172px at 1366 and above**, decomposing exactly into 58px of SVG (the two extra bars, at the rendered scale) and 114px of companion table (two extra rows at 57px each). Removing the SVG's fixed `height` attribute reduced it — the SVG's share now scales with the viewport instead of contributing a fixed 80 units — but it cannot remove it, because the remaining difference is real content.
+
+**Equal-height columns have no resolution inside this design system**, which is why the graceful-degradation ladder ends at a flag here rather than at a component. Bootstrap 3 is float-based and ships no equal-height row utility. The three ways to force it are all closed: a `min-height` on the panel is a pixel literal, which [zero hard-coded values](#zero-hard-coded-values) forbids; `display: flex` on the row is custom layout on a raw container, which [layout through system primitives](#layout-through-system-primitives-only) forbids; and choosing a spacing token as a stand-in height would be a measured value wearing a token's name, which is the same violation with the evidence hidden. A ragged lower edge between two independent panels in two independent rectangles is ordinary Bootstrap behaviour, it hides nothing and clips nothing, and **no caller-facing content is affected** — so it is recorded in [`../gaps-and-flags.md`](../gaps-and-flags.md) and left as it renders, rather than closed by breaking a rule the rest of this guide keeps.
 
 ##### The report embed
 
@@ -2513,7 +3747,7 @@ When any one of those checks does not pass — the mode is not `report`, the ide
 
 #### Data contract
 
-**Every member below is assigned onto `data` by the server script named in its row, and read by the consumer named in its row. There is no third source and no other member**: a template expression naming anything absent from this table renders nothing at best and raises a runtime expression error at worst, and a member published with no consumer is a dead output. `data.error` is not in any widget's table — it is set on the client by the shared `c.load()` helper of [Error and empty behaviour](#error-and-empty-behaviour) and by nothing on the server.
+**Every member below is assigned onto `data` by the server script named in its row, and read by the consumer named in its row. There is no third source and no other member**: a template expression naming anything absent from this table renders nothing at best and raises a runtime expression error at worst, and a member published with no consumer is a dead output. `data.error` is not in any widget's table — it is set on the client by the shared `c.load()` helper of [Error and empty behaviour](#error-and-empty-behaviour) and by nothing on the server. A widget whose own server script catches a failure and reports it publishes that message as **`data.serverError`**, which **is** in that widget's table, and which `c.load()` never touches; the error panel renders `c.errorText()`, which answers either of the two.
 
 | Member | Type | Published by | Consumed by |
 | --- | --- | --- | --- |
@@ -2521,40 +3755,43 @@ When any one of those checks does not pass — the mode is not `report`, the ide
 | `dimension` | String | server item 2 | Controller — the derived `id` values for `aria-labelledby` and `aria-describedby` |
 | `dimensionLabel` | String | server item 2 | Template — the companion table's first column header, and the `<desc>` text assembled on the server |
 | `labels` | Array of string | server item 3 | **Server-side only** — item 4's bucket loop. Published so the axis the chart was drawn against is visible in the widget's data payload |
-| `buckets` | Array of `{label,count,share,y,textY,barWidth,valueX}` | server items 4, 5 and 6 | Template — the SVG bars and the companion table rows |
+| `buckets` | Array of `{label,count,share,barPercent,shareText,y,textY,barWidth,valueX}` | server items 4, 5 and 6 | Template — the SVG bars, the printed share and the companion table rows. `share` is the true ratio to one decimal and is read **only** by `aria-valuenow`; `barPercent` is read **only** by `c.barStyle()`; `shareText` is read by the printed share and by `aria-valuetext`. The three are not interchangeable — see server item 5 |
 | `largest` | Integer | server item 5 | Controller `c.hasData()`; the server's own `<desc>` selection |
-| `chart` | `{viewBox,height,barHeight,labelWidth,description}` | server item 6 | Template — the `<svg>` attributes and its `<desc>` |
+| `largestLabel` | String | server item 5 | **Server-side only** — item 6's `<desc>` assembly names it; the empty string when `largest` is `0` |
+| `chart` | `{viewBox,height,barHeight,labelWidth,axisX,axisY1,axisY2,description}` | server item 6 | Template — the `<svg>` attributes, its `<desc>`, the zero line's coordinates and the label `clipPath`. `height` composes `viewBox` on the server and sizes the clip rectangle; it is **not** bound as an `svg` height attribute, for the reason under the template |
 | `renderMode` | String | server item 7 | Controller `c.isReport()`; the template's two render branches |
 | `report` | Widget model | server item 7, report branch only | Template — `<sp-widget widget="data.report">` |
 | `reportUnavailable` | True/False | server item 7, fallback branch only | Template — the fallback `.alert.alert-warning` |
+| `serverError` | String | the server script's `catch` block around the grouped aggregate, empty on every successful run | Controller `c.errorText()` — and through that helper the error panel, its **Retry** control, and every `ng-if` on the chart region. No expression reads this member directly |
 
 #### Client controller
 
 1. Expose `c.isSvg()` and `c.isReport()` from **`data.renderMode`**, not from `options.render_mode`. The server resolves the mode, including the fallback of step 7, so reading the raw option here would disagree with what the server prepared.
-2. Expose `c.barStyle(bucket)`, returning `{ width: bucket.share + '%' }` for the companion table's `.progress-bar`, and `c.hasData()`, true when `data.largest` is greater than zero.
-3. Expose the two identifiers the SVG's accessible wiring needs, each derived from `data.dimension` so the dashboard's two instances never collide:
+2. Expose `c.barStyle(bucket)`, returning `{ width: bucket.barPercent + '%' }` for the companion table's `.progress-bar`, and `c.hasData()`, true when `data.largest` is greater than zero. **Bind `barPercent` here and never `share`**: `share` is the honest ratio to one decimal place and is what `aria-valuenow` publishes, so using it as a CSS width would render a small bucket at a fraction of a percent — which is no bar at all, and reintroduces in the table exactly the invisibility that server item 5 removes from the chart.
+3. Expose the three identifiers the SVG needs, each derived from `data.dimension` so the dashboard's two instances never collide:
    - `c.titleId()` returns `'bst-charts-title-' + c.data.dimension`.
    - `c.descId()` returns `'bst-charts-desc-' + c.data.dimension`.
+   - `c.labelClipId()` returns `'bst-charts-labelclip-' + c.data.dimension`, and is referenced by every label `<text>` in that chart. A `clipPath` is resolved by identifier from the whole document, not from the enclosing `<svg>`, so two instances sharing one identifier would clip the second chart's labels against the first chart's rectangle — a rectangle whose height is the *other* chart's bucket count, which silently erases labels below that row.
 4. Declare `c.busy` per [Busy, status and focus behaviour](#busy-status-and-focus-behaviour), and implement `c.load()` and `c.retry()` exactly as [Error and empty behaviour](#error-and-empty-behaviour) specifies. This widget issues no server call **after** its first render, but that first render *is* a server call and its aggregate can fail, so it carries the error panel and a working **Retry** — `c.retry()` re-runs the server script through `c.load()`. It carries no status region, because it has no user-initiated action to announce.
 5. Perform no arithmetic on record data and compute no coordinate. Every count and every coordinate arrives from the server, and the template binds them with `ng-attr-*`.
 
 #### HTML template
 
 ```html
-<div class="bst-charts panel panel-default" aria-busy="{{c.busy}}">
+<div class="bst-charts panel panel-default" tabindex="-1" aria-busy="{{c.busy}}">
   <div class="panel-heading">
     <h2 class="panel-title">
       <span class="icon-chart" aria-hidden="true">&nbsp;</span>{{::options.title}}
     </h2>
   </div>
   <div class="panel-body">
-    <div class="alert alert-warning" ng-if="!data.authorised">
+    <div class="alert alert-warning" role="alert" ng-if="!data.authorised">
       <span>Your account holds no Boston Startup Tracker role.</span>
     </div>
 
-    <div class="alert alert-danger" role="alert" ng-if="data.error">
+    <div class="alert alert-danger" role="alert" ng-if="c.errorText()">
       <span class="icon-cross-circle" aria-hidden="true">&nbsp;</span>
-      <span>{{data.error}}</span>
+      <span>{{c.errorText()}}</span>
       <button type="button" class="btn btn-default" ng-click="c.retry()">Retry</button>
     </div>
 
@@ -2562,34 +3799,48 @@ When any one of those checks does not pass — the mode is not `report`, the ide
       <span>The configured report could not be read. Showing the built-in chart instead.</span>
     </div>
 
-    <div class="alert alert-info" ng-if="data.authorised &amp;&amp; !data.error &amp;&amp; c.isSvg() &amp;&amp; !c.hasData()">
+    <div class="alert alert-info" role="status" ng-if="data.authorised &amp;&amp; !c.errorText() &amp;&amp; c.isSvg() &amp;&amp; !c.hasData()">
       <span>No startup is recorded for this breakdown yet.</span>
     </div>
 
     <svg class="bst-charts-svg"
-         ng-if="data.authorised &amp;&amp; !data.error &amp;&amp; c.isSvg() &amp;&amp; c.hasData()"
+         ng-if="data.authorised &amp;&amp; !c.errorText() &amp;&amp; c.isSvg() &amp;&amp; c.hasData()"
          role="img"
          width="100%"
          preserveAspectRatio="xMinYMin meet"
-         ng-attr-height="{{data.chart.height}}"
          ng-attr-view_box="{{data.chart.viewBox}}"
          ng-attr-aria-labelledby="{{c.titleId()}}"
          ng-attr-aria-describedby="{{c.descId()}}">
       <title ng-attr-id="{{c.titleId()}}">{{::options.title}}</title>
-      <desc ng-attr-id="{{c.descId()}}">{{::data.chart.description}}</desc>
-      <g ng-repeat="bucket in ::data.buckets track by bucket.label">
-        <text class="bst-charts-text" x="0" ng-attr-y="{{bucket.textY}}">{{::bucket.label}}</text>
+      <desc ng-attr-id="{{c.descId()}}">{{data.chart.description}}</desc>
+      <line class="bst-charts-axis"
+            ng-attr-x1="{{data.chart.axisX}}" ng-attr-y1="{{data.chart.axisY1}}"
+            ng-attr-x2="{{data.chart.axisX}}" ng-attr-y2="{{data.chart.axisY2}}"></line>
+
+      <defs>
+        <clipPath ng-attr-id="{{c.labelClipId()}}">
+          <rect x="0" y="0"
+                ng-attr-width="{{data.chart.labelWidth}}"
+                ng-attr-height="{{data.chart.height}}"></rect>
+        </clipPath>
+      </defs>
+      <g ng-repeat="bucket in data.buckets track by bucket.label">
+        <text class="bst-charts-text" x="0"
+              ng-attr-clip-path="url(#{{c.labelClipId()}})"
+              ng-attr-y="{{bucket.textY}}">{{bucket.label}}</text>
         <rect ng-attr-x="{{data.chart.labelWidth}}"
               ng-attr-y="{{bucket.y}}"
               ng-attr-width="{{bucket.barWidth}}"
               ng-attr-height="{{data.chart.barHeight}}"
               fill="currentColor"></rect>
-        <text class="bst-charts-text" ng-attr-x="{{bucket.valueX}}"
-              ng-attr-y="{{bucket.textY}}">{{::bucket.count}}</text>
+        <text class="bst-charts-text" text-anchor="end"
+              ng-attr-x="{{bucket.valueX}}"
+              ng-attr-y="{{bucket.textY}}">{{c.count(bucket.count)}}</text>
       </g>
     </svg>
 
-    <div class="table-responsive" ng-if="data.authorised &amp;&amp; !data.error &amp;&amp; c.hasData()">
+    <div class="table-responsive" tabindex="0"
+         ng-if="data.authorised &amp;&amp; !c.errorText() &amp;&amp; c.hasData()">
       <table class="table table-striped bst-charts-table">
         <caption class="sr-only">{{::options.title}}, every value as a table</caption>
         <thead>
@@ -2600,18 +3851,20 @@ When any one of those checks does not pass — the mode is not `report`, the ide
           </tr>
         </thead>
         <tbody>
-          <tr ng-repeat="bucket in ::data.buckets track by bucket.label">
-            <th scope="row">{{::bucket.label}}</th>
+          <tr ng-repeat="bucket in data.buckets track by bucket.label">
+            <th scope="row">{{bucket.label}}</th>
             <td class="bst-charts-bar">
               <div class="progress">
                 <div class="progress-bar" role="progressbar"
                      ng-style="c.barStyle(bucket)"
-                     ng-attr-aria-label="{{::bucket.label}}"
-                     ng-attr-aria-valuenow="{{::bucket.share}}"
+                     ng-attr-aria-label="{{bucket.label}}"
+                     ng-attr-aria-valuenow="{{bucket.share}}"
+                     ng-attr-aria-valuetext="{{bucket.shareText}} of the largest category"
                      aria-valuemin="0" aria-valuemax="100"></div>
               </div>
+              <span class="bst-charts-share">{{::bucket.shareText}}</span>
             </td>
-            <td><span class="label label-default">{{::bucket.count}}</span></td>
+            <td><span class="label label-default">{{c.count(bucket.count)}}</span></td>
           </tr>
         </tbody>
       </table>
@@ -2622,12 +3875,20 @@ When any one of those checks does not pass — the mode is not `report`, the ide
 </div>
 ```
 
-Four properties of that template are what make the chart correct, and each is easy to lose in an edit.
+Seven properties of that template are what make the chart correct, and each is easy to lose in an edit.
 
-- **Every SVG coordinate arrives through `ng-attr-*`.** `x="0"` is the one literal, and `0` is a permitted literal everywhere in this portal. No coordinate is computed in the controller and none is written in the CSS.
+- **Every SVG coordinate arrives through `ng-attr-*`.** `x="0"` and `y="0"` are the only literals, and `0` is a permitted literal everywhere in this portal. No coordinate is computed in the controller and none is written in the CSS.
 - **`ng-attr-view_box` is written in snake case on purpose.** The rendered attribute must be `viewBox`, and the `ng-attr-` form converts a snake-case suffix to the camel-case attribute name. `ng-attr-viewbox` would emit a lowercase `viewbox`, which the SVG specification does not define, and the chart would render at its intrinsic size with no scaling.
 - **`fill="currentColor"` on every `<rect>`**, so the bar colour is inherited from the CSS `color` property of `.bst-charts-svg` and is never written as a literal.
-- **The companion table carries `.table-responsive` and a `.sr-only` caption**, and every `.progress-bar` in it carries `aria-label`, `aria-valuenow`, `aria-valuemin` and `aria-valuemax`. A progress bar with no name and no value is announced as an unlabelled control, which is why the bindings are part of the specification rather than a refinement.
+- **One `<line>` draws the zero line**, at `data.chart.axisX`, which is `LABEL_WIDTH` — the x every bar starts from. It is what makes an empty bucket legible: a bucket of `0` has a bar of width `0` and so draws nothing, and without the line there is no mark at all to read the `0` against. Its four coordinates are published by the server like every other coordinate, and its stroke comes from `$text-muted`.
+- **The companion table carries `.table-responsive` and a `.sr-only` caption**, and every `.progress-bar` in it carries `aria-label`, `aria-valuenow`, `aria-valuemin` and `aria-valuemax`. A progress bar with no name and no value is announced as an unlabelled control, which is why the bindings are part of the specification rather than a refinement. `aria-valuenow` binds `bucket.share`, which the server clamps to `0`-`100` in place for exactly this reason, so the announced value always lies inside the range the same element declares.
+
+- **There is deliberately no `height` attribute on the `<svg>`.** With `width="100%"`, a `viewBox` and `preserveAspectRatio="… meet"`, an element that *also* carries a height equal to its viewBox height pins its scale at `min(renderedWidth / 720, 1)` and then keeps its full unscaled height regardless: below 720 rendered units the drawing shrinks inside a box that does not, and the difference is dead space. Measured, that was **127.05px and 94.05px** of permanently blank area in the two dashboard charts at 1024, and 35.0% of the box in a twenty-bucket case. Omitting the height lets the viewBox supply the intrinsic aspect ratio, so the box is exactly as tall as the drawing at every width and the scale is no longer capped at 1:1. This is also half of what makes the labels legible at the 1024 floor — see the CSS note below.
+- **The label `<text>` is clipped to the label band.** SVG paints in document order and each group is ordered label, bar, value, so an opaque bar draws **on top of** a label that overruns its 210-unit band — measured, an 83-character label lost **62.0%** of its rendered width behind its own bar, leaving a fragment that reads as a complete but wrong label. The `clipPath` cuts the label cleanly at the band edge instead, so an overrun is visibly an overrun. The clip is declared **once per chart** in `<defs>` and referenced by every row, and its identifier is derived from `data.dimension` for the same reason the title and description identifiers are: `bst_dashboard` renders **two** instances in one document, and a repeated `id` would make the second chart's labels clip against the first chart's rectangle. **No per-element `<title>` is added** to recover the full string: this chart is tooltip-free by design, a `<title>` child is exactly how an SVG tooltip is created, and the companion table already carries every label in full as the declared accessible alternative.
+- **The value `<text>` is anchored at the right edge, not the left.** `text-anchor="end"` with `x` at `PLOT_WIDTH` grows a long count leftward into the plot area. Left-anchored, the design's own 70-unit value budget implied text reaching 732 in a 720-unit box, and an eight-digit count measured 724.95 — clipped by the viewBox with no warning at any viewport, because the overflow is in user units rather than CSS pixels.
+
+  **Anchoring at the right edge moves the problem rather than removing it, which is why the value band is derived.** Left-anchored, the design's own 70-unit value budget implied text reaching 732 in a 720-unit box, and an eight-digit count measured 724.95 — clipped by the viewBox with no warning at any viewport, because the overflow is in user units and therefore invisible to every CSS overflow check. End-anchored, the same count cannot leave the box, but it grows **inward**: measured, an eight-digit count reached 10.9 units past the bar's right edge, putting one digit on top of a `$brand-primary` bar at **2.75:1** where the rest of the string sits on white at 12.6:1. The digit is legible — the value text is the last child of its group, so it paints over the bar rather than under it — but it is the one character in the chart that fails contrast. Deriving `valueWidth` from `String(largest).length` reserves the room the count actually needs, so the bar ends before the value begins. **The derivation is a no-op for realistic data**: any count of five digits or fewer keeps `valueWidth` at the 70-unit minimum and `barSpan` at exactly 440, which is the geometry every other state is measured against.
+- **The companion table carries `.table-responsive`, `tabindex="0"` and a `.sr-only` caption**, and every `.progress-bar` in it carries `aria-label`, `aria-valuenow`, `aria-valuetext`, `aria-valuemin` and `aria-valuemax`. A progress bar with no name and no value is announced as an unlabelled control, and one with a bare number is announced without a unit — `aria-valuetext` is what supplies both, and assistive technology prefers it over `aria-valuenow` when it is present. The share is **also printed as text** in the same cell, because a bar is a picture and this column is the chart's declared accessible alternative: a column headed "Share of the largest category" that states no number anywhere is not one. `tabindex="0"` is required by [rule 14](#rules-that-bind-all-eight).
 
 `data.dimensionLabel` is published by server-script item 2 and is what this header binds, so the table's first column names what the rows are.
 
@@ -2640,19 +3901,23 @@ Four properties of that template are what make the chart correct, and each is ea
 
 .bst-charts .bst-charts-table {
     margin-bottom: 0;
-    border-color: $table-border-color;
 }
 
 .bst-charts .bst-charts-bar {
-    color: $brand-primary;
     width: auto;
 }
 
-/* No width and no height here. The element carries width="100%" and a bound
-   ng-attr-height, and a CSS declaration on either would override the
-   presentation attribute and discard the server-computed geometry. */
+/* No WIDTH here: the element carries width="100%" and a CSS width would override
+   that presentation attribute. `height: auto` is deliberate and does override the
+   bound ng-attr-height, which stays on the element as the no-CSS fallback. With a
+   percentage width and a fixed pixel height the two disagree: preserveAspectRatio
+   fits the drawing to the smaller of the two ratios, so the drawing filled the box
+   horizontally and left roughly a quarter of its height empty, and the box's height
+   no longer tracked its width. Letting the viewBox decide the height removes the
+   empty band and makes the box's aspect ratio the drawing's own. */
 .bst-charts .bst-charts-svg {
     display: block;
+    height: auto;
     margin-bottom: $grid-gutter-width;
     color: $brand-primary;
 }
@@ -2660,16 +3925,49 @@ Four properties of that template are what make the chart correct, and each is ea
 .bst-charts .bst-charts-svg .bst-charts-text {
     fill: $sp-tagline-color;
     font-family: $font-family-sans-serif;
-    font-size: $font-size-base;
+    font-size: $font-size-large;
 }
 
+/* The zero line every bar starts from. */
+.bst-charts .bst-charts-svg .bst-charts-axis {
+    stroke: $text-muted;
+}
+
+/* The track and the fill are left to the theme's own $progress-bg and
+   $progress-bar-bg, which is what makes the rendered pair equal row 19 of
+   The contrast check. An earlier revision overrode the track to $table-bg
+   (transparent) and the fill to currentColor - and currentColor on a
+   .progress-bar resolves against Bootstrap's own .progress-bar { color: #fff },
+   not against the cell around it, so the fill painted white on a transparent
+   track and measured 1.00:1. Neither override is reinstated. */
 .bst-charts .bst-charts-bar .progress {
     margin-bottom: 0;
-    background-color: $table-bg;
+}
+
+.bst-charts [tabindex="-1"]:focus,
+.bst-charts[tabindex="-1"]:focus {
+    outline: $border-radius-base solid $brand-primary;
+    outline-offset: $border-radius-small;
 }
 
 .bst-charts .bst-charts-bar .progress-bar {
-    background-color: currentColor;
+    background-color: $brand-primary;
+}
+
+.bst-charts .bst-charts-share {
+    color: $sp-tagline-color;
+}
+
+.bst-charts .sr-only {
+    position: absolute;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+}
+
+@media (forced-colors: active) {
+    .bst-charts .label {
+        border-style: solid;
+    }
 }
 ```
 
@@ -2732,7 +4030,7 @@ if (data.premiumDenied) {
         context: 'account',
         gated_fields: 'total_funding_usd,institutional_funding_last_5yrs,contact_email,aum_usd,amount_usd,valuation_usd',
         upsell_page: options.upsell_page,
-        heading: 'Upgrade to read premium fields'
+        heading: 'Premium fields are reserved'
     });
 }
 ```
@@ -2742,11 +4040,11 @@ if (data.premiumDenied) {
 
 #### Data contract
 
-**Every member below is assigned onto `data` by the server script named in its row, and read by the consumer named in its row. There is no third source and no other member**: a template expression naming anything absent from this table renders nothing at best and raises a runtime expression error at worst, and a member published with no consumer is a dead output. `data.error` is not in any widget's table — it is set on the client by the shared `c.load()` helper of [Error and empty behaviour](#error-and-empty-behaviour) and by nothing on the server.
+**Every member below is assigned onto `data` by the server script named in its row, and read by the consumer named in its row. There is no third source and no other member**: a template expression naming anything absent from this table renders nothing at best and raises a runtime expression error at worst, and a member published with no consumer is a dead output. `data.error` is not in any widget's table — it is set on the client by the shared `c.load()` helper of [Error and empty behaviour](#error-and-empty-behaviour) and by nothing on the server. A widget whose own server script catches a failure and reports it publishes that message as **`data.serverError`**, which **is** in that widget's table, and which `c.load()` never touches; the error panel renders `c.errorText()`, which answers either of the two.
 
 | Member | Type | Published by | Consumed by |
 | --- | --- | --- | --- |
-| `authorised` | True/False | server item 1 | Template — the not-entitled alert and the `ng-if` on the summary |
+| `authorised` | True/False | server item 2 | Template — the not-entitled alert and the `ng-if` on the summary |
 | `user` | `{name,user_name}` | server item 1 | Template — the signed-in heading; controller `c.statusText()` |
 | `roles` | Object of three booleans | server item 2 | **Server-side only** — items 3 and 4 derive the effective role and the entitlement rows from it |
 | `effectiveRole` | String | server item 3 | Template — the supporting role name; controller `c.statusText()` |
@@ -2759,7 +4057,7 @@ if (data.premiumDenied) {
 
 1. Implement `c.load()` and `c.retry()` exactly as [Error and empty behaviour](#error-and-empty-behaviour) specifies, and route the widget's initial load through `c.load()`.
 2. Expose `c.roleLabel()`, returning `data.effectiveRoleLabel`, and `c.isDenied()` from `data.premiumDenied`. **The template renders `c.roleLabel()`**, never the raw role name on its own; the role name is shown beside it as supporting detail.
-3. Declare `c.busy` and `c.statusText()` per [Busy, status and focus behaviour](#busy-status-and-focus-behaviour). This widget's status wording is:
+3. Declare `c.busy` and `c.statusText()` per [Busy, status and focus behaviour](#busy-status-and-focus-behaviour), and also declare `c.focusDestination()` and `c.onButtonKey($event)` per [Busy, status and focus behaviour](#busy-status-and-focus-behaviour), and `c.indeterminate()` for the striped bar. This widget's status wording is:
    - empty — `No entitlement is granted to this account.`, used when `data.effectiveRole` is `none`.
    - loaded — `Signed in as {{c.data.user.name}}. Effective role {{c.data.effectiveRoleLabel}}.`
 4. Issue no server call after the first render, other than a retry.
@@ -2769,55 +4067,80 @@ if (data.premiumDenied) {
 #### HTML template
 
 ```html
-<div class="bst-account" aria-busy="{{c.busy}}">
+<div class="bst-account" tabindex="-1" aria-busy="{{c.busy}}">
   <div class="sr-only" role="status" aria-live="polite" aria-atomic="true">{{c.statusText()}}</div>
 
-  <div class="alert alert-danger" role="alert" ng-if="data.error">
+  <div class="progress" ng-if="c.busy">
+    <div class="progress-bar progress-bar-striped active" role="progressbar"
+         ng-style="c.indeterminate()"
+         aria-label="Loading your account" aria-valuemin="0" aria-valuemax="100"
+         aria-valuetext="Loading"></div>
+  </div>
+
+  <h1 class="h2" tabindex="-1" ng-if="c.errorText()">Your account</h1>
+
+  <div class="alert alert-danger" role="alert" ng-if="c.errorText()">
     <span class="icon-cross-circle" aria-hidden="true">&nbsp;</span>
-    <span>{{data.error}}</span>
+    <span>{{c.errorText()}}</span>
     <button type="button" class="btn btn-default" ng-click="c.retry()">Retry</button>
   </div>
 
-  <div class="panel panel-default">
+  <div class="panel panel-default" ng-if="!data.error">
     <div class="panel-heading">
       <h1 class="panel-title" tabindex="-1">
         <span class="icon-user" aria-hidden="true">&nbsp;</span>{{::options.title}}
       </h1>
     </div>
     <ul class="list-group">
-      <li class="list-group-item">Signed in as <span class="pull-right">{{::data.user.name}}</span></li>
-      <li class="list-group-item">User name <span class="pull-right">{{::data.user.user_name}}</span></li>
       <li class="list-group-item">
-        Effective role
-        <span class="pull-right">
-          <span class="label label-primary" ng-if="data.authorised">{{c.roleLabel()}}</span>
-          <span class="label label-default" ng-if="!data.authorised">No role</span>
-          <small class="text-muted bst-account-role-name">{{::data.effectiveRole}}</small>
-        </span>
+        <div class="row">
+          <div class="col-md-5 col-lg-5">Signed in as</div>
+          <div class="col-md-7 col-lg-7 text-right"><bdi dir="auto">{{::data.user.name}}</bdi></div>
+        </div>
+      </li>
+      <li class="list-group-item">
+        <div class="row">
+          <div class="col-md-5 col-lg-5">User name</div>
+          <div class="col-md-7 col-lg-7 text-right"><bdi dir="auto">{{::data.user.user_name}}</bdi></div>
+        </div>
+      </li>
+      <li class="list-group-item">
+        <div class="row">
+          <div class="col-md-5 col-lg-5">Effective role</div>
+          <div class="col-md-7 col-lg-7 text-right">
+            <span class="label label-primary" ng-if="data.authorised">{{c.roleLabel()}}</span>
+            <span class="label label-default" ng-if="!data.authorised">No role</span>
+            <small class="text-muted bst-account-role-name"
+                   ng-if="::data.effectiveRole">{{::data.effectiveRole}}</small>
+          </div>
+        </div>
       </li>
     </ul>
   </div>
 
-  <div class="alert alert-warning" ng-if="!data.authorised">
+  <div class="alert alert-warning" role="alert" ng-if="!data.error &amp;&amp; !data.authorised">
     <span>Your account holds none of the three Boston Startup Tracker roles. An administrator grants one on the instance.</span>
   </div>
 
-  <div class="panel panel-default" ng-if="::options.show_entitlements">
+  <div class="panel panel-default" ng-if="!data.error &amp;&amp; options.show_entitlements">
     <div class="panel-heading"><h2 class="panel-title">Entitlements</h2></div>
     <ul class="list-group">
       <li class="list-group-item" ng-repeat="row in ::data.entitlements track by row.label">
-        {{::row.label}}
-        <span class="pull-right">
-          <span class="label label-primary" ng-if="::row.granted">Granted</span>
-          <span class="label label-default" ng-if="::!row.granted">Not granted</span>
-        </span>
+        <div class="row">
+          <div class="col-md-8 col-lg-8">{{::row.label}}</div>
+          <div class="col-md-4 col-lg-4 text-right">
+            <span class="label label-primary" ng-if="::row.granted">Granted</span>
+            <span class="label label-default" ng-if="::!row.granted">Not granted</span>
+          </div>
+        </div>
       </li>
     </ul>
   </div>
 
-  <sp-widget widget="data.upsell" ng-if="data.upsell"></sp-widget>
+  <sp-widget widget="data.upsell" ng-if="!data.error &amp;&amp; data.upsell"></sp-widget>
 
-  <a class="btn btn-default" ng-href="?id=bst_home">Back to search</a>
+  <a class="btn btn-default" ng-keydown="c.onButtonKey($event)"
+     ng-href="?id=bst_home">Back to search</a>
 </div>
 ```
 
@@ -2832,10 +4155,74 @@ if (data.premiumDenied) {
     margin-bottom: $grid-gutter-width;
 }
 
+/* Same float containment and the same word guard as the company and investor
+   overviews. Signed in as and User name both carry a .pull-right, and a
+   sys_user name is not length-bounded by this application. */
+.bst-account .list-group-item {
+    display: flow-root;
+    overflow-wrap: break-word;
+    unicode-bidi: isolate;
+}
+
 .bst-account .list-group-item .label {
     margin-left: $padding-base-vertical;
+    white-space: normal;
+    overflow-wrap: break-word;
+}
+
+.bst-account .sr-only {
+    position: absolute;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+}
+
+.bst-account .btn:focus {
+    outline-style: auto;
+}
+
+.bst-account .bst-upsell {
+    margin-bottom: $grid-gutter-width;
+}
+
+.bst-account .bst-upsell .panel-title {
+    margin-bottom: $padding-base-vertical;
+}
+
+.bst-account .bst-upsell .bst-upsell-fields {
+    margin-top: $padding-base-vertical;
+    margin-bottom: $padding-base-vertical;
+}
+
+.bst-account .bst-upsell .bst-upsell-fields .label {
+    margin-right: $padding-base-vertical;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.bst-account .bst-upsell .bst-upsell-guidance {
+    margin-bottom: 0;
+}
+
+
+@media (forced-colors: active) {
+    .bst-account .label {
+        border-style: solid;
+    }
+}
+
+.bst-account [tabindex="-1"]:focus,
+.bst-account[tabindex="-1"]:focus {
+    outline: $border-radius-base solid $brand-primary;
+    outline-offset: $border-radius-small;
 }
 ```
+
+- **`overflow-wrap: break-word` and `unicode-bidi: isolate` on `.list-group-item`** are this widget's share of [the cleaning rules these widgets apply at render](#rules-that-bind-all-eight). Every value in the identity and entitlement rows is data — a display name, a user name, a role name — so any of them can arrive as one unbreakable token or in a right-to-left script.
+- **`white-space: normal` and `overflow-wrap: break-word` on a chip in a list row** are [rule 13](#rules-that-bind-all-eight). This widget's chips carry **role names**, and a fully qualified scoped role name such as `x_bst_startuptrk.premium_user` is the longest chip text anywhere in the portal; Bootstrap's `.label { white-space: nowrap }` would make it an unbreakable box wider than its own cell.
+- **`.sr-only`** is [rule 15](#rules-that-bind-all-eight), acting on the status region this widget renders.
+- **`.btn:focus { outline-style: auto }`** restores a focus indicator that is not the hover treatment. Bootstrap resolves `.btn:focus` and `.btn:hover` to the **same** background, so measured on this widget keyboard focus and pointer hover computed an identical `background-color` and the only difference was an inset ring at roughly 2.8:1. The ring is declared unconditionally, for the reason given for the [search widget's focus rule](#bst-startup-search): a media-query scope would fix only the mode where the indication vanishes and leave the mode where it is merely weak.
+- **The forced-colours chip border** is [rule 12](#rules-that-bind-all-eight). This widget renders ten `.label` chips — the effective role, three entitlement markers and the six withheld field names — and forced colours discards `background-color`, which is the only thing distinguishing `Granted` from `Not granted`.
+- **The `.bst-upsell` rules** are [rule 16](#rules-that-bind-all-eight): this widget embeds `bst-premium-upsell` with `$sp.getWidget()`, which creates no instance, so the partial's own CSS field may never be compiled into this page and these declarations would otherwise have no source at all. They are exactly the partial's rules that nothing else on this page supplies — measured against the partial rendered on its own, not inferred — and the chip rule is the partial's own selector with this widget's root prepended, so the cascade resolves on specificity rather than on sheet order.
 
 ### `bst-premium-upsell`
 
@@ -2865,14 +4252,16 @@ Every option is supplied by the host; none is read from a URL parameter, and non
 | `context` | `company` | `investor` | `account` |
 | `gated_fields` | `total_funding_usd,institutional_funding_last_5yrs,amount_usd,valuation_usd,contact_email` | `aum_usd,amount_usd,valuation_usd` | `total_funding_usd,institutional_funding_last_5yrs,contact_email,aum_usd,amount_usd,valuation_usd` |
 | `upsell_page` | `options.upsell_page` of the host instance, `bst_account` | `options.upsell_page` of the host instance, `bst_account` | `options.upsell_page` of the host instance, `bst_account` |
-| `heading` | `Premium data is hidden on this profile` | `Premium investor data is hidden` | `Upgrade to read premium fields` |
+| `heading` | `Premium data is hidden on this profile` | `Premium investor data is hidden` | `Premium fields are reserved` |
 
 Each host embeds it **only** when at least one key was omitted from its own serialised data, or — on the account summary — when the caller holds neither `x_bst_startuptrk.admin` nor `x_bst_startuptrk.premium_user`.
 
 #### Server script
 
 1. Read `options.context`, `options.gated_fields`, `options.upsell_page` and `options.heading`. Apply the defaults above for any that arrive empty, then **publish the resolved context as `data.context`** — the client controller derives the region's accessible identifier from it, and reading `options.context` in the controller would read the unresolved value.
-2. Split `options.gated_fields` on the comma, trim each entry, discard empties, and map each to a human label. Publish the result as `data.fields`.
+2. Split `options.gated_fields` on the comma, trim each entry, discard empties, and map each surviving token to an object carrying the token as `name` and its human label as `label`. Publish that array as `data.fields`.
+
+**Publish objects, not bare label strings.** The template repeats with `track by field.name` and renders `{{::field.label}}`, so a string array breaks it twice over: every `field.name` evaluates to `undefined`, which AngularJS treats as one repeated tracking key and rejects with a `ngRepeat:dupes` error the moment two or more fields are withheld, and every `{{::field.label}}` renders empty, so the chips appear blank. The token is kept alongside the label rather than discarded because it is the stable identity — two different columns can share a display label, as `contact_email` does across two tables, whereas the token is unique within the allowlist.
 
 **The allowlist is six option tokens, and they represent the seven physical access-controlled fields.** The counts differ by one on purpose: `contact_email` is one token covering **two** columns, `x_bst_startuptrk_founder.contact_email` and `x_bst_startuptrk_executive.contact_email`, which carry the same name, the same label and the same field-level access control on two tables. The seven fields themselves are listed under [Step 6](#step-6--access-control-in-every-widget-server-script).
 
@@ -2899,7 +4288,7 @@ When every supplied token is rejected, `data.fields` is an empty array and the t
 
 Apply the `account` wording for any context value that is not one of the three, so an unrecognised context still renders a sentence that is true of every surface.
 
-4. Publish `data.callToActionLabel` — `See your entitlements` for `company` and `investor` — and `data.upsellPage` from `options.upsell_page`. **Publish no call-to-action label for `account`**, where the caller is already on the destination; publish `data.guidance` instead, the one truthful instruction this application can give:
+4. Publish `data.callToActionLabel` — `Go to account management` for `company` and `investor` — and `data.upsellPage` from `options.upsell_page`. **Publish no call-to-action label for `account`**, where the caller is already on the destination; publish `data.guidance` instead, the one truthful instruction this application can give:
 
 > `An administrator grants the premium role on this instance. Ask your ServiceNow administrator to add the role x_bst_startuptrk.premium_user to your user record.`
 
@@ -2909,11 +4298,11 @@ Apply the `account` wording for any context value that is not one of the three, 
 
 #### Data contract
 
-**Every member below is assigned onto `data` by the server script named in its row, and read by the consumer named in its row. There is no third source and no other member**: a template expression naming anything absent from this table renders nothing at best and raises a runtime expression error at worst, and a member published with no consumer is a dead output. `data.error` is not in any widget's table — it is set on the client by the shared `c.load()` helper of [Error and empty behaviour](#error-and-empty-behaviour) and by nothing on the server.
+**Every member below is assigned onto `data` by the server script named in its row, and read by the consumer named in its row. There is no third source and no other member**: a template expression naming anything absent from this table renders nothing at best and raises a runtime expression error at worst, and a member published with no consumer is a dead output. `data.error` is not in any widget's table — it is set on the client by the shared `c.load()` helper of [Error and empty behaviour](#error-and-empty-behaviour) and by nothing on the server. A widget whose own server script catches a failure and reports it publishes that message as **`data.serverError`**, which **is** in that widget's table, and which `c.load()` never touches; the error panel renders `c.errorText()`, which answers either of the two.
 
 | Member | Type | Published by | Consumed by |
 | --- | --- | --- | --- |
-| `fields` | Array of string labels | server item 2 | Template — the withheld-field list |
+| `fields` | Array of `{name, label}` objects | server item 2 | Template — the withheld-field list, repeated `track by field.name` and rendered from `field.label` |
 | `body` | String | server item 3 | Template — the alert body |
 | `callToActionLabel` | String | server item 4 | Template — the call-to-action button, on the `company` and `investor` contexts only |
 | `upsellPage` | String | server item 4 | Template — that button's `href` |
@@ -2921,7 +4310,7 @@ Apply the `account` wording for any context value that is not one of the three, 
 
 #### Client controller
 
-1. Expose `c.isAccount()` from `options.context`, so the account host renders `data.guidance` rather than a navigation link to the page it is already on.
+1. Expose `c.isAccount()` from **`data.context`**, so the account host renders `data.guidance` rather than a navigation link to the page it is already on. Read the **resolved** context and never `options.context`, for the reason server item 1 gives: the server applies the default before publishing, so an option that arrives empty or misspelled reaches the controller as the resolved value through `data` and as the raw value through `options`. `c.headingId()` already reads `data.context`, and the two must agree — a controller that resolves the same question from two different sources will eventually answer it two different ways.
 2. Declare `c.busy` per [Busy, status and focus behaviour](#busy-status-and-focus-behaviour). This widget carries no status region and no error panel: it renders once, from options its host supplied, and issues no server call of its own.
 3. Expose **no** request, upgrade or notification function. There is nothing for such a function to do that would be true.
 4. Expose `c.headingId()`, returning `'bst-upsell-title-' + (c.data.context || 'default')`. The template's root is a **labelled region**, not an alert: this notice is present from the first render and states a standing fact about the caller's entitlement, so announcing it assertively would interrupt for something that did not just happen. `role="region"` with an `aria-labelledby` gives it a name and a place in the landmark list instead. The identifier is derived from the context because the three hosts pass three different values and two upsells must never share an `id`.
@@ -2930,16 +4319,17 @@ Apply the `account` wording for any context value that is not one of the three, 
 
 ```html
 <div class="bst-upsell alert alert-info" role="region" aria-labelledby="{{::c.headingId()}}" aria-busy="{{c.busy}}">
-  <h2 ng-attr-id="{{::c.headingId()}}">
+  <h2 class="panel-title" ng-attr-id="{{::c.headingId()}}">
     <span class="icon-locked" aria-hidden="true">&nbsp;</span>{{::options.heading}}
   </h2>
   <p>{{::data.body}}</p>
-  <ul class="list-unstyled bst-upsell-fields" ng-if="::data.fields.length > 0">
+  <ul class="list-inline bst-upsell-fields" ng-if="::data.fields.length > 0">
     <li ng-repeat="field in ::data.fields track by field.name">
       <span class="label label-default">{{::field.label}}</span>
     </li>
   </ul>
-  <a class="btn btn-primary" ng-if="::!c.isAccount()" ng-href="?id={{::data.upsellPage}}">
+  <a class="btn btn-primary" ng-if="::!c.isAccount()" ng-keydown="c.onButtonKey($event)"
+     ng-href="?id={{::data.upsellPage}}">
     {{::data.callToActionLabel}}
   </a>
   <p class="bst-upsell-guidance" ng-if="::c.isAccount()">{{::data.guidance}}</p>
@@ -2959,12 +4349,37 @@ Apply the `account` wording for any context value that is not one of the three, 
     margin-bottom: $padding-base-vertical;
 }
 
+/* The chips stack one per line, so the separation they need is vertical and it
+   belongs on the list item. A horizontal margin has no adjacent sibling to
+   separate from, because each .label is the only inline child of its own block
+   <li>; and a vertical margin on the inline .label itself would not affect the
+   line box either. The list item is the only element that can carry it. */
+.bst-upsell .bst-upsell-fields > li + li {
+    margin-top: $padding-base-vertical;
+}
+
 .bst-upsell .bst-upsell-fields .label {
     margin-right: $padding-base-vertical;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.bst-upsell .panel-title {
+    margin-bottom: $padding-base-vertical;
 }
 
 .bst-upsell .bst-upsell-guidance {
     margin-bottom: 0;
+}
+
+.bst-upsell .btn:focus {
+    outline-style: auto;
+}
+
+@media (forced-colors: active) {
+    .bst-upsell .label {
+        border-style: solid;
+    }
 }
 ```
 
@@ -3082,7 +4497,7 @@ This is a checklist. Every widget author satisfies every item before a widget is
 - [ ] Every colour, spacing, radius and font value in widget CSS resolves to a Bootstrap 3.3.6 or `$sp-*` SASS variable declared in the theme's CSS-variables field.
 - [ ] The **only** permitted literals in widget CSS are `0`, `none`, `auto`, `inherit`, `currentColor` and `transparent`. This governs *measured* values — colours, lengths, radii and font sizes. A CSS **keyword** that names a behaviour rather than a measurement is not a measured value and is permitted: `display: block`, `overflow-wrap: break-word`, `border-color` resolving to a token, and the like. The test is whether the value could have been a token and was not.
 - [ ] No hex colour, `rgb()`, `rgba()`, `hsl()`, pixel, point, em, rem or percentage literal appears in any widget CSS. A percentage that varies with data is bound with `ng-style` from a server-computed value, never written as a literal.
-- [ ] No `font-size` declaration appears in any widget CSS. Type size comes from the Bootstrap heading elements and utility classes.
+- [ ] No `font-size` declaration appears in any widget CSS **except on SVG text**, where there is exactly one: `.bst-charts .bst-charts-svg .bst-charts-text`. Everywhere else type size comes from the Bootstrap heading elements and utility classes. The exception is stated because SVG text is the one place where no Bootstrap class can supply the size — `.h1` through `.h6`, `.small` and `.lead` all set a size on an HTML element, and none of them targets an SVG `<text>` node, which takes its size from the inherited CSS `font-size` and nothing else. The declaration is therefore unavoidable, and it names the **token** `$font-size-large`, so no measured literal enters the stylesheet.
 - [ ] No `!important` appears in any widget CSS.
 - [ ] The theme's CSS-variables field is the single site where a value is written. Every other literal is a defect.
 
@@ -3094,11 +4509,28 @@ This is a checklist. Every widget author satisfies every item before a widget is
 - [ ] `.table.table-striped.table-hover` inside `.table-responsive` rather than an unclassed `<table>`.
 - [ ] `.panel.panel-default` with `.panel-heading`, `.panel-title` and `.panel-body` rather than a bare container.
 - [ ] `.list-group` with `.list-group-item` for key-and-value detail lists.
-- [ ] `.label.label-primary` and `.label.label-default` for status, category and multi-valued chips.
+- [ ] `.label.label-primary` and `.label.label-default` for status, category and multi-valued chips, assigned by [One chip class per logical field type](#one-chip-class-per-logical-field-type) and never by which template is being written.
 - [ ] `.media` with `.media-left`, `.media-body` and `.media-heading` for a result card.
 - [ ] `.alert` with `.alert-info`, `.alert-warning` or `.alert-danger` for every notice.
 - [ ] `.breadcrumb`, rendered by the stock Breadcrumbs widget, for the trail.
 - [ ] The stock **Data Table from Instance Definition** widget wherever a plain paginated record list suffices, rather than a bespoke widget.
+
+### One chip class per logical field type
+
+**A field renders in the same chip class on every surface it appears on, and the class is decided by what the field means rather than by which template is being written.** Four widgets render `Startup.industry`, three render `FundingRound.round_type`, and two render `Startup.institutional_funding_last_5yrs`. Without a single assignment the same value acquires a different treatment on each surface, and a reader who has learned that a blue chip means a stage has to unlearn it one page later. The assignment below is the whole of it.
+
+| Logical field type | Chip class | Every field of that type in this portal |
+| --- | --- | --- |
+| A **state** — where the record currently sits in a lifecycle | `.label.label-primary` | `Startup.funding_stage`, `FundingRound.round_type`, `JobPosting.active` rendered as `Open`, `Investor.type`, the caller's effective role, an entitlement's `Granted` |
+| A **category or attribute** — a classification the record carries | `.label.label-default` | `Startup.industry`, `Startup.employee_count_range`, `Startup.institutional_funding_last_5yrs` rendered as `Yes` or `No`, `Founder.title`, `Executive.title`, `JobPosting.remote_type`, `Investor.focus_areas`, a participating investor's name, a chart bucket's count, `No role`, `Not granted`, a withheld field's label in the upsell list |
+| A **withheld premium value** | `.label.label-info` | Reserved. The word `Premium` and nothing else — see [Upsell substitution](#upsell-substitution) |
+
+Four rules follow, and each names the defect it prevents:
+
+- [ ] **A field carries one class portal-wide.** `Startup.industry` is `.label-default` on the result card, in the profile header, in the investor's portfolio table and nowhere as plain text; `FundingRound.round_type` is `.label-primary` in all three of its tables.
+- [ ] **A True/False field renders as a `Yes` or `No` chip, never as its stored value.** `RestResponseBuilder.valueOf()` returns a boolean field as a JavaScript boolean, so `{{record.field}}` renders the literal `true` or `false` — which is a value from the database rather than an answer to the reader's question. Both surfaces that render `institutional_funding_last_5yrs` use `{{… ? 'Yes' : 'No'}}` inside a `.label-default`.
+- [ ] **A figure is not a chip.** `Investor.portfolio_count`, `Investor.aum_usd`, `Startup.total_funding_usd`, `Startup.founded_year` and every currency and count render as text, because a chip reads as a classification and a quantity is not one. The one deliberate exception is a chart bucket's count, which is a legend beside its bar rather than a figure in a sentence.
+- [ ] **`.label-info` is never used for data.** It marks a value the caller may not read, so a category rendered in it would read as withheld.
 
 ### Layout through system primitives only
 
@@ -3106,6 +4538,7 @@ This is a checklist. Every widget author satisfies every item before a widget is
 - [ ] Layout inside a widget uses `.container`, `.row` and `.col-md-*` / `.col-lg-*`.
 - [ ] The column spans in any one row total 12.
 - [ ] **Never** apply a custom `display: flex`, `display: grid`, `float` or absolute-position rule to a raw `<div>` to achieve a layout the grid already provides.
+- [ ] **One exception, and it is the only one:** `bst-trends-kpi` sets `display: flex` with `flex-wrap: wrap` and `align-items: stretch` on its own `.row`, above `$screen-md-min`. **Equal-height columns are not a layout the Bootstrap 3 grid provides** — the grid is float-based, and a float clears every preceding float or none, so a row containing one taller panel cannot wrap cleanly. The rule replaces nothing the grid does; it supplies the one thing it cannot. Any further use of a custom `display` on a grid element is a violation, and the widths stay on `.col-md-*` / `.col-lg-*` classes rather than moving into flex properties.
 
 ### Responsive stance — the 1024-pixel floor
 
@@ -3125,7 +4558,15 @@ The mechanic is stated here; the decision behind the floor is recorded in [`../.
 | --- | --- | --- | --- |
 | `x_bst_startuptrk_startup.logo_url` | The image behind it has no declared dimensions at all. A 2000-by-50 wordmark satisfies a height cap and stays two thousand pixels wide. | `max-height: $navbar-height` **and** `max-width: $navbar-height`, with `width: auto` and `height: auto` so the image scales inside that box rather than being squashed into it. | `.bst-results .media-object` and `.bst-company .bst-company-logo` |
 | `x_bst_startuptrk_startup.website`, `x_bst_startuptrk_investor.website` | 255 characters, and a URL has no spaces, so it is one unbreakable word. | The link is labelled **`Visit the company website`** and **`Visit the investor website`** rather than with the address itself. The address remains the `ng-href` target. | The Website row of the company and investor overview list groups |
-| `name` at 100, `title` at 150, news `title` and `summary` at 255 | Any of them may arrive with no space in it. | `overflow-wrap: break-word` on the containers that render them. | `.bst-results .media-body`, `.bst-company .list-group-item`, `.bst-company .media-heading` and `.bst-investor .list-group-item` |
+| `name` at 100, `title` at 150, news `title` and `summary` at 255 | Any of them may arrive with no space in it. | `overflow-wrap: break-word` on the containers that render them. | `.bst-results .media-body`, `.bst-company .list-group-item`, `.bst-company .media-heading`, `.bst-investor .list-group-item` and `.bst-account .list-group-item` |
+| Any value rendered in a `.pull-right` inside a `.list-group-item` — `aum_usd` as `$1,250,000,000`, a four-or-more-value `focus_areas` chip set, `employee_count_range`, a `sys_user` name | Wide enough to wrap onto a second line inside the float, at any viewport where the column is narrow. `Investor.focus_areas` is a multi-choice over six values, so the widest legitimate value is all six chips. | `display: flow-root`, which establishes a block formatting context so the float's full height is counted. | `.bst-company .list-group-item`, `.bst-investor .list-group-item` and `.bst-account .list-group-item` |
+| `x_bst_startuptrk_investor.focus_areas` rendered as a chip run — the only multi-valued field in any list item | Six chips measure about 342 pixels. The column's content box is about 291 at the `md` tier, so the run is wider than the box it sits in. | `display: inline-block` on the chip, which is what makes the run breakable at all, plus `text-align: right` on the float so the wrapped run stays where the float put it. | `.bst-investor .list-group-item .label` and `.bst-investor .list-group-item .pull-right` |
+
+**Float containment is a different guard from word breaking, and the two are not interchangeable.** `overflow-wrap: break-word` decides where a single unbreakable *word* may be split; it has nothing to say about a float. A `.pull-right` is `float: right`, so it is out of normal flow and contributes no height to the item that contains it. While its content fits on the label's own line the item looks correct by accident. The moment the content needs a second line the float extends below the item's box, the item keeps the height of its label line alone, and the next `.list-group-item` — which has an opaque background and paints later in document order — covers the overhanging half. The value is not pushed aside, it is **occluded**: the reader sees the top half of a figure and no indication that a bottom half exists. Establishing a block formatting context on the item makes the float's height part of the item's height, which is the only thing that fixes it; neither `overflow-wrap` nor a wider column does. Verify it by measuring rather than by eye — see the checklist row under [Overflow guards at the floor](#overflow-guards-at-the-floor).
+
+`display: flow-root` is a permitted value under [Design system](#design-system): it names a containment behaviour rather than a measured length, in the same way `overflow-wrap: break-word` does, and it is not a substitute for a layout the grid provides. The grid lays out columns; nothing in it contains a float inside a list item.
+
+**Containing the float vertically does not narrow it, and the horizontal half has its own cause.** A float's width is shrink-to-fit — `min(max(min-content, available), max-content)` — so it is *floored at its min-content width* and will exceed its container whenever min-content does. Bootstrap's `.label` carries `white-space: nowrap`, which forbids a break **inside** a chip; and `ng-repeat` clones its element with **no whitespace text node between the clones**, so there is no break opportunity **between** chips either. The whole six-chip run is therefore one unbreakable inline box: min-content equals max-content, the float is forced to its full width inside a narrower column, and because it is right-floated the excess hangs off the **left**, which in a left-to-right document produces no scrollbar and cannot be scrolled to. Measured on the delivered markup: min-content and max-content are both 355 pixels as authored, and injecting a single space between two chips collapses min-content to 72. So the fix is to restore the break opportunity — `display: inline-block` makes each chip an atomic inline-level box, between which a line may break, min-content falls to the widest single chip, and the run wraps inside the column. Three other candidates were measured and rejected: `max-width: none` and `display: inline-block` on the float itself are provable no-ops, rendering byte-identically to no fix at all, because the float's `max-width` is already `none` and `float: right` blockifies `inline-block` straight back to `block`; and making the item a flex container relocates the overhang from the left to the right without ever wrapping the run, and would additionally have to *replace* the `display: flow-root` above rather than sit beside it.
 
 Two further guards are already in place for the same reason and are recorded here so they are not removed as redundant: every wide table is wrapped in `.table-responsive`, which scrolls the table rather than the page; and the inline SVG chart carries `width="100%"` with a `viewBox`, so it scales to its column instead of overflowing it.
 
@@ -3406,17 +4847,35 @@ Run every check before this guide is signed off. A failed check is a defect in t
 - [ ] **Pagination at zero.** Search for a name that matches nothing. The pager reads `No results to show` and never `1 to 0 of 0`, and **Next** is disabled.
 - [ ] **Tabs.** On the company profile, exactly one tab control carries `tabindex="0"` and `aria-selected="true"` at a time; each control's `aria-controls` resolves to the `id` of its own pane; and `ArrowRight`, `ArrowLeft`, `Home` and `End` all move the selection and the focus together. Tab moves out of the strip, not through it.
 - [ ] **Nothing overflows at 1024 pixels, with the widest data the schema permits.** Seed one startup whose `logo_url` is a 2000-by-50 wordmark, whose `website` is 255 characters, and whose `name` is 100 characters with no space in it; seed one job posting with a 150-character title and one news article with a 255-character title. At a 1024-pixel viewport no card, panel, table or list item is wider than its column, and no horizontal scrollbar appears on the document. The guards are listed under [Overflow guards at the floor](#overflow-guards-at-the-floor).
+- [ ] **No floated value escapes its list item, at the floor, with the widest data the schema permits.** For every `li.list-group-item` that contains a `.pull-right`, on the company, investor and account overviews, measure `floatRect.bottom − liRect.bottom`. It must be **negative** on every row. A positive value means the item is not a block formatting context and the value's second line is hanging below the row, where the next item's opaque background covers it — the reader then sees the top half of a figure with nothing to indicate a bottom half exists. Probe the 992-to-1199 pixel band directly rather than by zooming out: at 200 percent zoom a 1024-pixel viewport becomes a 960-pixel one, which is below the `md` breakpoint, so the columns stack full-width and the defect disappears without being fixed.
+- [ ] **The widest chip run fits its column.** Seed an investor with all six `focus_areas` values and read the `.pull-right` in that row at a 1024-pixel viewport. Its `left` must be **greater than or equal to** the column's content-box left, and the chips must occupy two or more lines. A float `left` below zero means the run is unbreakable and part of it is off the left edge of the window, which no scrollbar can reach, so the value is permanently unreadable rather than merely awkward.
 - [ ] **Every data table names itself and its axes.** All six tables — funding rounds and open roles on the company profile, portfolio and the two rounds tables on the investor profile, and the chart's companion table — carry a `<caption class="sr-only">`, a `scope="col"` on every column header, and a `<th scope="row">` as the first cell of every body row. No `<th>` without a `scope` appears in any template.
-- [ ] **Each state is announced once, by one region.** With `data.error` set, only the visible `.alert.alert-danger[role="alert"]` announces; `c.statusText()` returns the empty string and the polite region says nothing. Confirm with a screen reader that a failed load is announced once, not twice.
+- [ ] **Each state is announced once, by one region.** With the error panel showing — `c.errorText()` returning a message — only the visible `.alert.alert-danger[role="alert"]` announces; `c.statusText()` returns the empty string and the polite region says nothing. Confirm with a screen reader that a failed load is announced once, not twice.
 - [ ] **No static notice claims to be an alert.** `bst-premium-upsell` and the results premium notice are `role="region"` with an `aria-labelledby` pointing at their own heading. Search the eight templates for `role="alert"`: it appears only on the six error panels, each of which is rendered in response to a failure.
 - [ ] **One submit control per form.** `bst-startup-search` renders exactly one `type="submit"` button — the `.input-group-btn` beside the name field — and one `type="button"` **Clear**. Tab through the form and confirm a screen reader announces `Search, button` once, not twice.
 - [ ] **One `h1` per page, and no skipped level.** Each of the five routes renders exactly one `<h1>` — the `.panel-title` of `bst-startup-search` on `bst_home`, the `.media-heading` carrying the company name on `bst_company`, the `.panel-title` carrying the investor name on `bst_investor`, the `<h1 class="h2">` of `bst-trends-kpi` on `bst_dashboard`, and the `.panel-title` of `bst-account-summary` on `bst_account`. Read the outline with the browser's accessibility tree and confirm it descends `h1` → `h2` → `h3` with no level skipped and no second `h1`. The owners are listed under [Heading hierarchy](#heading-hierarchy).
+- [ ] **One `h1` per page in every state, not only the loaded one.** On `bst_company` and `bst_investor`, drive each of the four states in turn — loaded, unauthorised, not found and a failed load — and confirm `document.querySelectorAll('h1').length` is **1** on all four. The record-bound heading and the static `Company profile` / `Investor profile` heading are gated on exact complements, so a count of `0` means one gate is wrong and a count of `2` means they overlap.
+- [ ] **The retry handoff has a destination during the failure it is retrying.** With `data.error` set, confirm the static `h1.h2` is in the document and carries `tabindex="-1"`, then press **Retry** and confirm focus lands on a heading rather than on `document.body`.
+- [ ] **Focus is never lost to the document body, and the destination is visible when it arrives.** Three interactions remove the control that holds focus: **Retry** when a retry succeeds, the **Next** pager button when it becomes the last page, and **Previous** when it becomes the first. Drive each and read `document.activeElement` afterwards: it must be an element inside the acting widget, never `document.body`. Then screenshot the destination while it holds focus and confirm a ring is visible — a programmatic move with no indicator relocates the reading position and says nothing about it. Measure the ring against its background: at least 3:1.
+- [ ] **The indeterminate bar paints.** During the busy window on `bst-startup-results`, `bst-company-profile` and `bst-investor-profile`, read the `.progress-bar.progress-bar-striped.active`'s rendered width. It must equal its trough's width, not zero. `document.elementFromPoint()` at the trough's centre must return the bar rather than the `.progress` track behind it. Bootstrap ships `.progress-bar { width: 0% }`, so a bar with no bound width animates its stripes across nothing at all.
+- [ ] **SPACE activates every control that looks like a button.** Tab to each of the seven `a.btn` controls — **View profile** on each result card, the results upsell call to action, **Back to search** on the company, investor and account widgets, **Browse startups** on the KPI panel, and the upsell partial's call to action — and press SPACE. Each must activate, and `window.scrollY` must not change: an unhandled SPACE scrolls the page and activates nothing, which is the opposite of what a caller pressing a button expects. Then press ENTER on each and confirm the same result.
+- [ ] **The three search controls show a focus ring that can be seen.** Focus the name input, the industry select and the location input in turn and measure the computed `outline` against the adjacent background. Bootstrap's own `.form-control:focus` sets `outline: 0` and substitutes a pale blue border and glow measuring 2.37:1 against white and 1.47:1 against the unfocused border, so both readings of the non-text contrast requirement fail unless the ring is restored.
+- [ ] **Error gating is substitutive on every widget, not additive on some.** Set `data.error` on each of the six widgets that carry a **Retry** and confirm that the stale content is **gone** rather than sitting under the error alert: on `bst-startup-results` no `.bst-results-card`, no upsell and no pager; on `bst-account-summary` no identity panel, no entitlements and no upsell, with only the **Back to search** escape hatch remaining. A widget that leaves its previous result set on screen beside a failure tells the caller that data is current when it is not.
+- [ ] **Every figure and every date is formatted by the widget.** Read every currency, date and count position listed in [The display contract](#the-display-contract) and confirm none renders a raw stored value: no `USD;` prefix anywhere, no bare ISO date, and a thousands separator on every four-digit-or-larger figure. Check the KPI panel and a four-digit chart bucket **together** — if one separates and the other does not, the formatting is coming from the payload rather than from the portal, and it will diverge again on the next record.
+- [ ] **The visible input, the model and the URL agree.** Type a value with leading and trailing spaces into the name field, submit, then compare the input's `value` property, the Angular model and the decoded URL parameter. All three must be the trimmed value. AngularJS trims into the model by default, which makes the model and the URL agree while leaving the visible field untrimmed — a three-way divergence in which the field shows something the search did not use, so the two text inputs carry `ng-trim="false"` and the submit-time trim writes back through the model.
 - [ ] **No heading element carries a value or is used for size.** The KPI figure is a `<p class="bst-kpi-value h2">`, not an `<h2>`. Search the eight templates for a heading element whose content is a number or a bare field value: there must be none.
 - [ ] **Progress bars are named.** Every `role="progressbar"` carries a name, and every determinate bar in `bst-trends-charts` also carries `aria-valuenow`, `aria-valuemin` and `aria-valuemax`.
+- [ ] **Every announced progress value is inside its declared range.** Read `aria-valuenow` off every `.progress-bar` in both `bst-trends-charts` instances and confirm each is between the `aria-valuemin` and `aria-valuemax` on the same element. A figure outside that range means the server published an unclamped `bucket.share`; the geometry can look correct while this is broken, because the width attribute and the ARIA value are separate bindings.
 - [ ] **Decorative glyphs are hidden.** Every `.icon-*` span carries `aria-hidden="true"`.
 - [ ] **The chart draws.** With `render_mode` `svg`, `bst-trends-charts` renders an `<svg role="img">` whose `viewBox` attribute is present and camel-cased, with one `<rect>` per bucket and a `<title>` and `<desc>` whose `id` values differ between the dashboard's two instances.
-- [ ] **The chart honours its bound dimensions at the 1024-pixel floor.** At a 1024-pixel viewport the `<svg>` fills the width of its `col-md-6` column, its rendered height equals `data.chart.height`, and no bar is clipped at either end. No widget CSS declares `width` or `height` on `.bst-charts-svg`: the width comes from the element's `width="100%"` attribute and the height from `ng-attr-height`, and a CSS declaration on either overrides the attribute and discards the server-computed geometry.
+- [ ] **The chart honours its aspect ratio at the 1024-pixel floor.** At a 1024-pixel viewport the `<svg>` fills the width of its `col-md-6` column, and its rendered height is that width divided by the viewBox's own aspect ratio rather than the bound `data.chart.height` — so the drawing fills the box on **both** axes and no band of empty canvas is left below it. Measure it: `rect.height / rect.width` must equal `viewBoxHeight / 720` to within a pixel, and the drawing's ink must reach the bottom of the box. No widget CSS declares `width` on `.bst-charts-svg` — the width comes from the element's `width="100%"` attribute — while `height: auto` **is** declared and deliberately overrides `ng-attr-height`, which remains on the element as the no-CSS fallback. No bar is clipped at either end.
+- [ ] **The zero line is drawn and every bar starts on it.** One `<line class="bst-charts-axis">` per chart, at `x = data.chart.labelWidth`, spanning the full viewBox height. Confirm each `<rect>`'s `x` equals that same value, so a bucket of `0` reads as a mark on the line rather than as nothing at all.
+- [ ] **Each count sits beside its own bar.** For every bucket, the value `<text>`'s `x` equals `data.chart.labelWidth + barWidth + 12`, so the gap between a bar's end and its number is one `BAR_GAP` on every row rather than a fixed column the short bars never reach.
+- [ ] **The companion table's bars are visible.** Sample the fill of any `.bst-charts-bar .progress-bar`: it must be `rgb(25, 118, 210)` on an `rgb(245, 245, 245)` track — the `$progress-bar-bg` and `$progress-bg` pair that row 19 of [The contrast check](#the-contrast-check) measures at 4.22:1. A white fill means a widget rule has reintroduced `background-color: currentColor`, which on a `.progress-bar` resolves against Bootstrap's own `color: #fff`.
+- [ ] **Two clean KPI rows, and no ragged edge.** At any viewport at or above 992 pixels, with five panels, read every KPI column's rect: there must be exactly **two** distinct `top` values, the second row must start at `left` equal to the first column's `left`, and every column on a row must report the same `height`. Three distinct `top` values means the flex rule under [`bst-trends-kpi`](#bst-trends-kpi) is not in force and the float staircase is back.
 - [ ] **Both dashboard widgets state an initial failure.** Temporarily rename `RestResponseBuilder` so `countWith()` and `countByGroup()` throw, then load `bst_dashboard`. `bst-trends-kpi` and `bst-trends-charts` each render one `.alert.alert-danger` with a working **Retry**, and neither renders an empty panel, a zero, nor a chart with no bars. Restore the name and use Retry: both widgets render their figures without a page reload.
+- [ ] **Both dashboard widgets state an initial failure.** Temporarily rename `RestResponseBuilder` so `countWith()` and `countByGroup()` throw, then load `bst_dashboard`. `bst-trends-kpi` and `bst-trends-charts` each render one `.alert.alert-danger` with a working **Retry**, and neither renders an empty panel, a zero, a chart with no bars, nor the "No startup is recorded for this breakdown yet" notice — a data-availability message may never stand in for a failure.
+- [ ] **A failing retry stays recoverable, and a succeeding one repaints.** With the name still renamed, press **Retry** on each widget. The aggregate fails again, and each widget **still** renders its `.alert.alert-danger` and its **Retry** button — a widget left showing only its heading, with no figures, no error and nothing to press, is the failure this step exists to catch. Now restore the name and press **Retry** again: the panel disappears and the figures and bars appear, without a page reload. Both directions are required; a widget that recovers only on reload fails this step.
 - [ ] **The chart falls back on an unconfigured report.** Set `render_mode` to `report` with an empty `report_id`. The widget renders the warning alert and the SVG chart, not an empty panel.
 - [ ] **The chart falls back on a report outside the allowlist.** Set `render_mode` to `report` and `report_id` to a readable report whose `title` is not one of the two allowlisted names — any stock report will do. The widget renders the warning alert and the SVG chart, and embeds nothing. Repeat with an allowlisted report whose `aggregate` has been changed away from `COUNT`: same result. Neither case may embed.
 - [ ] **The chart falls back when the reporting widget is absent.** Set `render_mode` to `report` and `report_id` to an allowlisted report, then temporarily rename the `report-chart` widget's `id`. The widget renders the warning alert and the SVG chart rather than a blank panel or a server error. Restore the `id` afterwards.
@@ -3426,8 +4885,8 @@ Run every check before this guide is signed off. A failed check is a defect in t
 
 ### Design system
 
-- [ ] Every one of the **52** theme variables under [The CSS-variables field](#the-css-variables-field) is declared with the literal value that table gives. No value the portal applies is left to a release default — **including every component foreground**, which is where a release default most easily hides.
-- [ ] **Every text pair the portal renders reaches WCAG 2.1 AA.** Run the check under [The contrast check](#the-contrast-check) and confirm it prints `FAILURES: 0`. Then confirm on the rendered portal, with the browser's colour picker, that a `Premium` marker is white on `#17607d` and not white on `#5bc0de`, and that `.text-muted` is `#595959` and not `#777777`. Those two release defaults measure 2.09:1 and 4.11:1, and both fail.
+- [ ] Every one of the **54** theme variables under [The CSS-variables field](#the-css-variables-field) is declared with the literal value that table gives. No value the portal applies is left to a release default — **including every component foreground**, which is where a release default most easily hides.
+- [ ] **Every text pair the portal renders reaches WCAG 2.1 AA.** Run the check under [The contrast check](#the-contrast-check) and confirm it prints `FAILURES: 0`. Then confirm on the rendered portal, with the browser's colour picker, that a `Premium` marker is white on `#17607d` and not white on `#5bc0de`, that `.text-muted` is `#595959` and not `#777777`, and that a tab-strip `.badge` is white on `#595959` and not white on `#777777`. Those three release defaults measure 2.09:1, 4.11:1 and 4.48:1, and all three fail.
 - [ ] No widget CSS contains a literal colour, spacing, radius or font value. The only literals present are `0`, `none`, `auto`, `inherit`, `currentColor` and `transparent`. The inline SVG chart's coordinates are **not** CSS: they are server-computed and bound with `ng-attr-*`.
 - [ ] No `.col-xs-*` or `.col-sm-*` class appears in any widget template, and no `size`, `size_xs` or `size_sm` is set on any `sp_rectangle`.
 - [ ] The walkthrough was performed at 1024 pixels wide and above, the declared floor.

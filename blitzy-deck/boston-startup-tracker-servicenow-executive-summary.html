@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="deck-noscript">
 <head>
 <meta charset="utf-8">
 <link rel="icon" href="data:,">
@@ -21,6 +21,11 @@
      carry a sourceMappingURL a browser resolves when developer tools are attached.
      Subresource Integrity: five remote assets carry a SHA-384 integrity digest and
      crossorigin="anonymous" - the two reveal.js stylesheets and the three library scripts.
+     Two of the three script tags are in the markup below. The third, Mermaid's, is created by
+     loadMermaid() in the inline script on the first navigation to a slide that has a diagram
+     to draw, and it carries the same pinned URL, the same digest and the same crossorigin and
+     referrer policy the markup would have given it - script-src governs it identically,
+     whether the tag is parsed or created.
      The Google Fonts stylesheet carries crossorigin and NO integrity digest, because its
      response body is negotiated per user agent. Its risk assessment, the alternatives
      considered and the residual exposure are recorded in docs/decisions/DECISION_LOG.md
@@ -37,6 +42,12 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- The two library origins are warmed as well as the two font origins. Between them they
+     carry the majority of this document's bytes, and every asset they serve is requested
+     with crossorigin="anonymous", so each hint declares the same credentials mode as the
+     request it warms. D-535. -->
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://unpkg.com" crossorigin>
 <!-- Subresource Integrity. Every remote asset whose bytes are fixed by its pinned
      version carries a sha384 digest of those bytes. The Google Fonts stylesheet
      below carries crossorigin and no integrity digest: its response body is
@@ -997,10 +1008,16 @@
   letter-spacing: 0.04em;
 }
 
-/* Title-slide small type on a navy chip. D-134. */
+/* Title-slide small type on a navy chip. The pill wraps its own text at every
+   moment, including the frames in which the theme's
+   `.slides > section.present { display: flex }` rule does not match: a slide that
+   has just become `.past` mid-transition, and a printed page, where reveal.js
+   assigns `display: block`. `align-self` governs a flex item only, so the width
+   is declared alongside it. D-134, D-393. */
 .reveal .slide-title .eyebrow,
 .reveal .slide-title .deck-meta {
   align-self: flex-start;
+  width: fit-content;
   max-width: 100%;
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-pill);
@@ -1094,6 +1111,69 @@
 }
 
 /* --------------------------------------------------------------------------
+   Navigation chrome
+
+   Two corrections to the reveal.js control layer, both later in source order
+   than reveal.css and at its own specificity, so neither needs !important.
+   D-394, D-395.
+   -------------------------------------------------------------------------- */
+/* The progress bar seeks to a slide when it is clicked, so it presents the same
+   pointer every other click target on the deck presents. */
+.reveal .progress {
+  cursor: pointer;
+}
+
+/* reveal.js fades a back arrow to opacity 0.3, which leaves the glyph under the
+   3:1 non-text contrast floor on all three of this deck's backgrounds. 0.7 is
+   the lowest value that clears the floor on each of them, and it stays below the
+   0.9 of an unfaded control so the fade still reads as a fade. */
+.reveal:not(.rtl) .controls[data-controls-back-arrows='faded'] .navigate-left.enabled,
+.reveal .controls[data-controls-back-arrows='faded'] .navigate-up.enabled {
+  opacity: 0.7;
+}
+
+/* --------------------------------------------------------------------------
+   Diagram fit
+
+   Mermaid writes `max-width: <intrinsic>px` as an inline style on every svg it
+   renders, so a diagram narrower than its container never fills it and its
+   labels stay the smallest type on the slide. The cap is released here, and with
+   !important because an inline declaration cannot be beaten any other way; the
+   height caps below then govern the fit. D-396.
+   -------------------------------------------------------------------------- */
+.reveal .slides pre.mermaid > svg {
+  width: 100%;
+  max-width: 100% !important;
+  height: auto;
+}
+
+/* --------------------------------------------------------------------------
+   Body type stack
+
+   Names the body typeface on the document element as well as on the deck root,
+   so a computed style read on the body reports the deck's own stack. D-498.
+   -------------------------------------------------------------------------- */
+body {
+  font-family: var(--ff-body);
+}
+
+/* --------------------------------------------------------------------------
+   Caption beneath an icon strip
+
+   The strip carries its meaning as an accessible name; this line carries the
+   same meaning for a sighted reader. D-497.
+   -------------------------------------------------------------------------- */
+.reveal .slides .icon-row-caption {
+  flex: none;
+  margin: var(--space-1) 0 0 0;
+  font-family: var(--ff-body);
+  font-size: var(--fs-small);
+  font-weight: 400;
+  line-height: 1.35;
+  color: var(--blitzy-text);
+}
+
+/* --------------------------------------------------------------------------
    Diagram scale caps, one per diagram size class
    -------------------------------------------------------------------------- */
 /* Sizes a sandbox-level render frame from the height Mermaid declares on it, above
@@ -1111,34 +1191,145 @@
   overflow: visible;
 }
 
+/* A container holding diagram source rather than a drawing paints nothing, and
+   its source can never leave the card. The exemption is the terminal-failure
+   state below, which replaces the source with a visible notice and must paint.
+   D-493. */
+.reveal .slides pre.mermaid {
+  overflow: hidden;
+  min-height: var(--diagram-reserve, 0px);
+}
+
+/* Reserved height per diagram size class, held in both the unrendered and the
+   rendered state so the box does not resize when the drawing replaces the
+   source. The floor is the reserve, the ceiling is the reserve while the source
+   is still in the box, so an unrendered container is exactly the height its
+   drawing will occupy. Each value is the tallest container that class produces
+   across the supported 1024 to 1920 pixel range. D-502. */
+.reveal .slides pre.mermaid.diagram-tall {
+  --diagram-reserve: 605px;
+}
+
+.reveal .slides pre.mermaid.diagram-md {
+  --diagram-reserve: 355px;
+}
+
+.reveal .slides pre.mermaid.diagram-sm {
+  --diagram-reserve: 336px;
+}
+
+.reveal .slides pre.mermaid.diagram-wide {
+  --diagram-reserve: 636px;
+}
+
+.reveal .slides pre.mermaid:not([data-processed]):not([data-diagram-error='true']) {
+  visibility: hidden;
+  max-height: var(--diagram-reserve, none);
+}
+
+/* Each cap is the height its own slide actually has left once the heading, the
+   supporting line, any bullets and the container's padding are measured out, less
+   a margin of a few tens of pixels. A cap set well below that figure is what made
+   the diagram labels the smallest type in the deck: the fit scale is the smaller
+   of the width ratio and the height ratio, and a low cap makes the height ratio
+   the binding one. D-396. */
 .reveal .slides pre.mermaid.diagram-tall > svg {
-  max-height: 540px;
+  max-height: 620px;
 }
 
 .reveal .slides pre.mermaid.diagram-md > svg {
-  max-height: 470px;
+  max-height: 640px;
 }
 
 .reveal .slides pre.mermaid.diagram-sm > svg {
-  max-height: 380px;
+  max-height: 470px;
 }
 
 /* Height allowance for the widest diagram in the deck. */
 .reveal .slides pre.mermaid.diagram-wide > svg {
-  max-height: 600px;
+  max-height: 656px;
 }
 
-/* Timeline container: a shorter height cap and a tighter vertical box than the
-   other diagram classes. Invariant it holds - the diagram and all four bullets
-   beneath it fit the 1920 by 1080 stage, which does not scroll. D-134. */
+/* Timeline container: a tighter vertical box than the other diagram classes. The
+   vertical padding is dropped entirely and the height cap takes the room it was
+   using, because this is the one diagram in the deck whose fit is decided by its
+   height: every pixel the container keeps for itself is a pixel the drawing is
+   scaled down by, and the drawing is what has to be legible. Invariant it holds -
+   the diagram and all four bullets beneath it fit the 1920 by 1080 stage, which
+   does not scroll. D-134, D-396. */
 .reveal .slides pre.mermaid.diagram-timeline {
-  margin-top: var(--space-2);
-  margin-bottom: var(--space-2);
-  padding-top: var(--space-2);
-  padding-bottom: var(--space-2);
+  margin-top: var(--space-1);
+  margin-bottom: var(--space-1);
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+/* The bullet list that shares a slide with the tallest diagram in the deck. The
+   invariant every diagram cap serves is that the whole stack fits the 1920 by
+   1080 stage, which does not scroll; this list carries the tighter rhythm that
+   invariant needs beside a diagram at its height cap. D-501. */
+.reveal .slides ul.bullets-tight > li {
+  margin-bottom: var(--space-1);
 }
 .reveal .slides pre.mermaid.diagram-timeline > svg {
-  max-height: 500px;
+  max-height: 604px;
+}
+
+/* --------------------------------------------------------------------------
+   Reserved diagram boxes, one per diagram size class
+   -------------------------------------------------------------------------- */
+/* Each value is the layout height that class's own rendered container measures, taken from
+   the container rather than from its cap: 568, 274, 327 and 534 CSS px. The containers are
+   border-box, so the figure already includes the class's padding and its 1 px border top and
+   bottom. Reserving it holds the box still across the moment Mermaid replaces the diagram
+   source with the drawing, which is the moment the content beneath a diagram used to move -
+   by 93 px on the two-column slide, 508 px on the wide flowchart and 153 px on the small one.
+   Only measured classes are reserved; .diagram-wide carries none of its own because the one
+   container using it is the timeline. D-538. */
+.reveal .slides pre.mermaid.diagram-tall {
+  min-height: 568px;
+}
+
+.reveal .slides pre.mermaid.diagram-md {
+  min-height: 274px;
+}
+
+.reveal .slides pre.mermaid.diagram-sm {
+  min-height: 327px;
+}
+
+.reveal .slides pre.mermaid.diagram-timeline {
+  min-height: 534px;
+}
+
+/* A container that has not been drawn yet HOLDS its reserved height, clips what it contains
+   and paints its text in no colour, so the diagram source neither sizes the box nor appears
+   on screen in the frames before the drawing replaces it - measured at 344 ms and 447 ms of
+   legible source after first paint on a cold deep link before this rule carried the colour.
+   All three conditions lift the moment Mermaid marks the container processed, returning it to
+   the theme's overflow: visible, which Mermaid's own label overflow depends on, and to the
+   theme's text colour, which the drawing itself does not use - Mermaid paints its labels with
+   fill. A container that has reported a terminal failure is excluded, so its notice keeps the
+   height its own rule below declares and is read in the colour that rule gives it. D-538. */
+.reveal .slides pre.mermaid:not([data-processed]):not([data-diagram-error]) {
+  overflow: hidden;
+  color: transparent;
+}
+
+.reveal .slides pre.mermaid.diagram-tall:not([data-processed]):not([data-diagram-error]) {
+  height: 568px;
+}
+
+.reveal .slides pre.mermaid.diagram-md:not([data-processed]):not([data-diagram-error]) {
+  height: 274px;
+}
+
+.reveal .slides pre.mermaid.diagram-sm:not([data-processed]):not([data-diagram-error]) {
+  height: 327px;
+}
+
+.reveal .slides pre.mermaid.diagram-timeline:not([data-processed]):not([data-diagram-error]) {
+  height: 534px;
 }
 
 /* Removes the brightness filter Mermaid's own timeline stylesheet applies to every
@@ -1189,9 +1380,329 @@
   height: 1.4em;
   flex: none;
 }
+
+/* --------------------------------------------------------------------------
+   Print pagination guard
+
+   reveal.js decides how many page boxes a slide needs on the PDF export path
+   from one early reading of the section's scrollHeight, and it takes that
+   reading while Mermaid is still working. A container that has not yet received
+   its svg is a pre holding the diagram source, and preformatted source stacks
+   one line box per source line plus one per authored line break - several times
+   the height of the finished drawing. A slide measured in that state can cross
+   the one-page threshold and put a blank sheet into the export behind itself.
+   Bounding the container until its svg arrives keeps the reading near the height
+   of the drawing it is about to hold, on every path rather than only under print
+   media. The selector stops matching the instant the svg becomes a child, so no
+   rendered diagram is ever clipped by it, and the terminal error notice is
+   excluded so it keeps the box declared for it above. D-401.
+   -------------------------------------------------------------------------- */
+.reveal .slides pre.mermaid:not([data-diagram-error='true']):not(:has(> svg)) {
+  max-height: 160px;
+  overflow: hidden;
+}
+
+/* --------------------------------------------------------------------------
+   Print
+
+   The deck is authored for a browser, and reveal.js supplies the pagination for
+   both printed forms. Two things it does are wrong for a deck that paints its
+   own slide backgrounds, and both are corrected here rather than left to the
+   printer.
+
+   1. reveal.js forces every heading to `#000 !important` on the plain print
+      path. On the three dark slide types that lands black ink on a deep indigo
+      panel, which measures as low as 1.28:1. The ink is restored to the deck's
+      own inverted token, at the same declaration weight, so the printed page
+      carries the contrast the screen carries.
+   2. A background painted by a class rather than by an image is dropped by the
+      printer's default economy setting, which would leave inverted ink on white.
+      `print-color-adjust: exact` on exactly the three dark section classes keeps
+      the background that the restored ink is legible against.
+
+   The pill widths are handled by the shrink-wrap declaration above, which holds
+   on the printed page because it does not depend on a flex container.
+   D-397.
+   -------------------------------------------------------------------------- */
+@media print {
+  .reveal .slides > section.slide-title,
+  .reveal .slides > section.slide-divider,
+  .reveal .slides > section.slide-closing {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .reveal .slides > section.slide-title,
+  .reveal .slides > section.slide-title h1,
+  .reveal .slides > section.slide-title h2,
+  .reveal .slides > section.slide-title h3,
+  .reveal .slides > section.slide-title p,
+  .reveal .slides > section.slide-title li,
+  .reveal .slides > section.slide-title strong,
+  .reveal .slides > section.slide-title small,
+  .reveal .slides > section.slide-divider,
+  .reveal .slides > section.slide-divider h1,
+  .reveal .slides > section.slide-divider h2,
+  .reveal .slides > section.slide-divider h3,
+  .reveal .slides > section.slide-divider p,
+  .reveal .slides > section.slide-divider li,
+  .reveal .slides > section.slide-divider strong,
+  .reveal .slides > section.slide-divider small,
+  .reveal .slides > section.slide-closing,
+  .reveal .slides > section.slide-closing h1,
+  .reveal .slides > section.slide-closing h2,
+  .reveal .slides > section.slide-closing h3,
+  .reveal .slides > section.slide-closing p,
+  .reveal .slides > section.slide-closing li,
+  .reveal .slides > section.slide-closing strong,
+  .reveal .slides > section.slide-closing small {
+    color: var(--blitzy-text-invert) !important;
+  }
+
+  .reveal .slides > section.slide-title .eyebrow,
+  .reveal .slides > section.slide-divider .eyebrow,
+  .reveal .slides > section.slide-closing .eyebrow {
+    color: var(--blitzy-accent-teal) !important;
+  }
+
+  .reveal .slides > section.slide-title .brand-lockup,
+  .reveal .slides > section.slide-divider .brand-lockup,
+  .reveal .slides > section.slide-closing .brand-lockup,
+  .reveal .slides > section.slide-title .hero-icon,
+  .reveal .slides > section.slide-divider .hero-icon,
+  .reveal .slides > section.slide-closing .hero-icon {
+    color: var(--blitzy-accent-teal) !important;
+  }
+
+  /* A container whose diagram is still unrendered when the printer takes the
+     page must not paint its source as a wall of preformatted text across the
+     document. It wraps and it is bounded, so the failure reads as a short
+     notice rather than as several thousand pixels of code. */
+  .reveal .slides pre.mermaid {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    max-height: 656px;
+    overflow: hidden;
+    white-space: normal;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Degradation surfaces
+
+   Three states in which a remote asset did not arrive. Each is announced in
+   words rather than left as an empty area, and each keeps the deck readable.
+   D-494, D-495, D-496.
+   -------------------------------------------------------------------------- */
+
+/* The one banner every degradation state writes into. It is fixed to the top of
+   the viewport so it is visible on whichever slide the reader is on. */
+.deck-notice {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 60;
+  box-sizing: border-box;
+  padding: var(--space-2) var(--space-3);
+  background-color: var(--blitzy-primary-navy);
+  color: var(--blitzy-text-invert);
+  font-family: var(--ff-body);
+  font-size: var(--fs-eyebrow);
+  line-height: 1.35;
+  text-align: left;
+}
+
+.deck-notice strong {
+  font-family: var(--ff-display);
+  font-weight: 600;
+}
+
+/* The presentation engine itself did not arrive. reveal.css hides every slide
+   and reveal.js is what un-hides one, so the slides are restored to a single
+   readable stacked document and the stage transform is dropped. */
+.deck-degraded .reveal,
+.deck-degraded .reveal .slides,
+.deck-noscript .reveal,
+.deck-noscript .reveal .slides {
+  position: static;
+  width: auto;
+  height: auto;
+  top: auto;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  overflow: visible;
+  transform: none;
+  text-align: left;
+}
+
+.deck-degraded .reveal .slides > section,
+.deck-noscript .reveal .slides > section {
+  display: block;
+  position: static;
+  width: auto;
+  min-height: 0;
+  height: auto;
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  top: auto;
+  left: auto;
+  padding: var(--space-5) var(--space-4);
+  border-bottom: 1px solid var(--blitzy-border);
+}
+
+/* The engine did not arrive but scripting did, so every container already holds
+   its failure notice in place of its source, and the notice is what must paint. */
+.deck-degraded .reveal .slides pre.mermaid {
+  visibility: visible;
+  overflow: auto;
+  white-space: pre-wrap;
+  text-align: left;
+  font-family: var(--ff-mono);
+  font-size: var(--fs-small);
+}
+
+/* Scripting is off, so nothing replaced the diagram source and nothing can. The
+   container leaves the flow rather than holding a reserved blank area, and the
+   static line beneath it carries the diagram's meaning in words. D-503. */
+.deck-noscript .reveal .slides pre.mermaid {
+  display: none;
+}
+
+.reveal .slides .diagram-static-note {
+  display: none;
+}
+
+.deck-noscript .reveal .slides .diagram-static-note {
+  display: block;
+  margin: var(--space-3) 0;
+  font-family: var(--ff-body);
+  font-size: var(--fs-small);
+  line-height: 1.35;
+  color: var(--blitzy-text);
+  text-align: left;
+}
+
+/* Keeps a slide whose only visual is a diagram carrying a painted element when no
+   diagram can be drawn, matching the icon placeholder treatment. D-503. */
+.deck-noscript .reveal .slides .diagram-static-note::before {
+  content: '';
+  display: block;
+  width: 120px;
+  height: 6px;
+  margin-bottom: var(--space-1);
+  background-image: var(--gradient-accent-bar);
+  border-radius: var(--radius-sm);
+}
+
+/* The icon set did not arrive, or scripting never ran to request it. Every
+   placeholder keeps its declared box and is painted with a declared gradient, so
+   a slide whose only visual is an icon still carries a non-text element rather
+   than a transparent hole. D-496, D-503. */
+.deck-icons-missing .reveal [data-lucide],
+.deck-noscript .reveal [data-lucide] {
+  display: inline-block;
+  background-image: var(--gradient-accent-bar);
+  border-radius: var(--radius-sm);
+}
+
+.deck-icons-missing .reveal .hero-icon[data-lucide],
+.deck-noscript .reveal .hero-icon[data-lucide] {
+  border-radius: var(--radius-md);
+}
+
+/* --------------------------------------------------------------------------
+   Reduced motion
+
+   The presentation engine drives its slide change and its pause overlay from a
+   CSS transition, so zeroing the durations removes the movement while leaving
+   the mandated transition name in place. D-499.
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .reveal .slides section,
+  .reveal .slides > section,
+  .reveal .slides > section > section,
+  .reveal .slides,
+  .reveal .pause-overlay,
+  .reveal .progress span,
+  .reveal .controls button,
+  .reveal .controls .controls-arrow,
+  .reveal .controls .controls-arrow::before,
+  .reveal .controls .controls-arrow::after,
+  .reveal .backgrounds .slide-background,
+  .reveal .backgrounds .slide-background-content {
+    transition-duration: 0s;
+    transition-delay: 0s;
+    animation-duration: 0s;
+    animation-delay: 0s;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Forced colours
+
+   The engine paints each navigation chevron and the progress fill from
+   currentColor, which forced colours rewrites to the canvas colour and renders
+   invisible. System colour keywords are the values this mode honours, so the
+   two controls are restated in them. They are the one place in this block where
+   a value is not a palette token, because a palette token is exactly what
+   forced colours discards. D-500.
+   -------------------------------------------------------------------------- */
+@media (forced-colors: active) {
+  .reveal .controls .controls-arrow::before,
+  .reveal .controls .controls-arrow::after,
+  .reveal .controls [class*='navigate-']::before,
+  .reveal .controls [class*='navigate-']::after {
+    background-color: ButtonText;
+    forced-color-adjust: none;
+  }
+
+  .reveal .progress {
+    background-color: Canvas;
+    border: 1px solid CanvasText;
+  }
+
+  .reveal .progress span {
+    background-color: Highlight;
+    forced-color-adjust: none;
+  }
+
+  /* The engine fades an available back direction to three tenths opacity, and
+     forced colours adjusts colour but never opacity, so that chevron still paints
+     close to the canvas even with its stroke restated above. Full opacity is what
+     lets the restated stroke carry its own value. An unavailable direction is left
+     alone: the engine withholds it with visibility rather than opacity, and a
+     control that leads nowhere should stay unpainted. D-500. */
+  .reveal:not(.rtl) .controls[data-controls-back-arrows='faded'] .navigate-left.enabled,
+  .reveal .controls[data-controls-back-arrows='faded'] .navigate-up.enabled {
+    opacity: 1;
+  }
+}
 </style>
+
+<script>
+/* Removes the no-JavaScript marker before any slide is parsed, so a scripted
+   load never paints the stacked fallback and a load with scripting disabled
+   keeps it. D-494. */
+document.documentElement.className =
+  document.documentElement.className.replace(/(^|\s)deck-noscript(\s|$)/, ' ');
+</script>
 </head>
 <body>
+<!-- The scripted deck needs JavaScript. Without it the presentation engine
+     never runs, and the engine's own stylesheet is what hides every slide, so
+     this notice states the condition and the class it carries restores the
+     slides to one readable stacked document. D-494. -->
+<noscript>
+  <div class="deck-notice" role="alert">
+    <strong>This summary needs JavaScript to present.</strong>
+    JavaScript is turned off, so the slides below are shown as one continuous
+    document instead of a presentation. The same content is in the package
+    documents under servicenow-startup-tracker-poc/docs.
+  </div>
+</noscript>
 <div class="reveal">
 <div class="slides">
 
@@ -1230,27 +1741,30 @@
       <span class="kpi-label">Tests designed, in ten suites</span>
     </li>
   </ul>
-  <p class="footnote">One importable package of 313 configuration records, plus six sequenced guides for the parts the platform builds itself.</p>
+  <p class="footnote">One importable package of 313 records, plus six guides for what the platform builds itself.</p>
 </section>
 
 <!-- 3 of 16 - Content: before and after architecture -->
 <section>
   <h2>Before and after</h2>
-  <div class="two-col">
+  <div class="two-col" data-diagram-pair="architecture">
     <div class="col">
       <h3 class="col-head"><i data-lucide="circle-slash" aria-hidden="true"></i> Before</h3>
       <pre class="mermaid diagram-tall">
 flowchart TB
   accTitle: The previous system, before the rebuild
   accDescr: A browser reaches a single-page application of seventeen interface components, which calls web routes that authenticate a caller but never authorise one. The routes reach data classes on a separate database server. A task queue on five fixed intervals drives partner clients whose keys are written into the source, and those clients write to the same data classes. A cache, a search cluster, a proxy and container tooling sit alongside, unconnected to the rest.
-  U["Browser"] --> S["Single-page app, 17 components"]
-  S --> F["Web routes, never authorised"]
+  U["Browser"] --> S["Single-page app<br/>17 components"]
+  S --> F["Web routes<br/>never authorised"]
   F --> M["Data classes"]
-  M --> P["Separate database server"]
-  J["Task queue, five fixed intervals"] --> I["Partner keys in source files"]
+  M --> P["Separate<br/>database server"]
+  J["Task queue<br/>five fixed intervals"] --> I["Partner keys<br/>in source files"]
   I --> M
-  X["Cache, search, proxy, containers"]
+  X["Cache, search<br/>proxy, containers"]
 </pre>
+      <!-- The same diagram in words, for a reader whose browser is not running
+           scripts and so cannot draw it. D-503. -->
+      <p class="diagram-static-note">Diagram 1, not drawn without JavaScript: The previous system, before the rebuild.</p>
     </div>
     <div class="col">
       <h3 class="col-head"><i data-lucide="check" aria-hidden="true"></i> After</h3>
@@ -1258,16 +1772,19 @@ flowchart TB
 flowchart TB
   accTitle: The rebuilt system, one governed application
   accDescr: People and systems reach two entry points: a Service Portal of five pages and eight widgets, and an interface layer of thirty-one operations. Both pass through one access-control engine of forty-nine rules, seven of them field gates, which fronts a shared service layer of eight classes over ten tables holding fifty-three core columns. Two scheduled flows reach two named connections that ship no secrets, and use the same service layer. Ten test suites of thirty-six tests verify the tables.
-  U2["People and systems"] --> SP["Service Portal, 5 pages, 8 widgets"]
-  U2 --> API["Interface layer, 31 operations"]
-  SP --> AC["Access control, 49 rules, 7 field gates"]
+  U2["People and<br/>systems"] --> SP["Service Portal<br/>5 pages, 8 widgets"]
+  U2 --> API["Interface layer<br/>31 operations"]
+  SP --> AC["Access control<br/>49 rules<br/>7 field gates"]
   API --> AC
-  AC --> SL["Shared service layer, 8 classes"]
-  SL --> T["10 tables, 53 core columns"]
-  FL["2 scheduled flows"] --> CA["2 named connections, no secrets shipped"]
+  AC --> SL["Shared service<br/>layer, 8 classes"]
+  SL --> T["10 tables<br/>53 core columns"]
+  FL["2 scheduled<br/>flows"] --> CA["2 named<br/>connections<br/>no secrets shipped"]
   FL --> SL
-  ATF["10 suites, 36 tests"] -.-> T
+  ATF["10 suites<br/>36 tests"] -.-> T
 </pre>
+      <!-- The same diagram in words, for a reader whose browser is not running
+           scripts and so cannot draw it. D-503. -->
+      <p class="diagram-static-note">Diagram 2, not drawn without JavaScript: The rebuilt system, one governed application.</p>
     </div>
   </div>
   <p class="footnote">Retired outright rather than moved: the cache, the search cluster, the proxy, the process manager and the container tooling.</p>
@@ -1301,7 +1818,7 @@ flowchart TB
       <span class="kpi-label">Tests designed for sign-off</span>
     </li>
   </ul>
-  <div class="icon-row">
+  <div class="icon-row" role="img" aria-label="The six record types the paid tier reaches: search, people, funding, roles, news and measures">
     <i data-lucide="search" aria-hidden="true"></i>
     <i data-lucide="users" aria-hidden="true"></i>
     <i data-lucide="banknote" aria-hidden="true"></i>
@@ -1309,6 +1826,7 @@ flowchart TB
     <i data-lucide="newspaper" aria-hidden="true"></i>
     <i data-lucide="gauge" aria-hidden="true"></i>
   </div>
+  <p class="icon-row-caption">Search, people, funding, roles, news and measures &mdash; the six record types the paid tier reaches.</p>
   <p class="footnote">The prior codebase left role-based access control unwritten, so every signed-in caller reached every field of every record.</p>
 </section>
 
@@ -1323,25 +1841,26 @@ flowchart TB
 <!-- 7 of 16 - Content: mapping summary -->
 <section>
   <h2>What replaced what</h2>
-  <div class="icon-row">
+  <div class="icon-row" role="img" aria-label="The four things that replaced the old parts: access rules, named connections, designed tests and retired infrastructure">
     <i data-lucide="shield" aria-hidden="true"></i>
     <i data-lucide="key" aria-hidden="true"></i>
     <i data-lucide="clipboard-check" aria-hidden="true"></i>
     <i data-lucide="server-off" aria-hidden="true"></i>
   </div>
+  <p class="icon-row-caption">Access rules, named connections, designed tests, retired infrastructure.</p>
   <table class="table-compact">
     <thead>
       <tr><th scope="col">Then</th><th scope="col">Now</th></tr>
     </thead>
     <tbody>
       <tr><td>8 classes</td><td>10 tables</td></tr>
-      <tr><td>Sign-in only</td><td>49 rules</td></tr>
+      <tr><td>Sign-in</td><td>49 rules</td></tr>
       <tr><td>Unserved routes</td><td>31 operations</td></tr>
       <tr><td>5 intervals</td><td>1 cadence</td></tr>
-      <tr><td>Hardcoded keys</td><td>2 connections</td></tr>
+      <tr><td>Hardcoded</td><td>2 connections</td></tr>
       <tr><td>17 components</td><td>5 pages, 8 widgets</td></tr>
-      <tr><td>27 dead tests</td><td>36 designed</td></tr>
-      <tr><td>Cache, search, proxy</td><td>Retired</td></tr>
+      <tr><td>27 dead</td><td>36 designed</td></tr>
+      <tr><td>Cache, search</td><td>Retired</td></tr>
     </tbody>
   </table>
   <p class="footnote">146 traced rows.</p>
@@ -1456,16 +1975,19 @@ flowchart TB
 flowchart LR
   accTitle: How data reaches the tables and how it leaves them
   accDescr: Crunchbase and LinkedIn each reach a named connection bound by name, and the two connections feed two scheduled flows running on a cadence between six and forty-eight hours. Crunchbase is the only source with a published read contract, and it is not live until its key is supplied. LinkedIn publishes no read interface for people or third-party job postings, so its call confirms company identity only and its rows come from the fallback dataset of six files and sixty-five rows, which also stands in for Crunchbase while that key is outstanding. Four cleaning rules run before anything is written to ten tables. Access control with forty-nine rules then guards both ways out: an interface layer of thirty-one operations and a Service Portal of five pages.
-  CB["Crunchbase<br/>read contract published"] -->|"records, once keyed"| AL["2 named connections<br/>bound by name"]
-  LI["LinkedIn<br/>no read interface"] -->|"company identity only"| AL
-  AL --> FL["2 scheduled flows<br/>cadence 6 to 48 hours"]
-  FB["Fallback dataset<br/>6 files, 65 rows"] ==>|"every row today"| FL
-  FL --> CL["4 rules: trim, de-duplicate<br/>normalise, reject"]
+  CB["Crunchbase<br/>contract<br/>published"] -->|"once<br/>keyed"| AL["2 named<br/>connections<br/>bound by name"]
+  LI["LinkedIn<br/>no read<br/>interface"] -->|"identity<br/>only"| AL
+  AL --> FL["2 flows<br/>every 6 to<br/>48 hours"]
+  FB["Fallback data<br/>6 files<br/>65 rows"] ==>|"every<br/>row today"| FL
+  FL --> CL["4 rules<br/>trim, dedupe<br/>normalise<br/>reject"]
   CL --> DB["10 tables"]
-  DB --> AC["Access control<br/>49 rules"]
-  AC --> API["Interface layer<br/>31 operations"]
-  AC --> SP["Service Portal<br/>5 pages"]
+  DB --> AC["Access<br/>control<br/>49 rules"]
+  AC --> API["Interface<br/>layer<br/>31 operations"]
+  AC --> SP["Service<br/>Portal<br/>5 pages"]
 </pre>
+  <!-- The same diagram in words, for a reader whose browser is not running
+       scripts and so cannot draw it. D-503. -->
+  <p class="diagram-static-note">Diagram 3, not drawn without JavaScript: How data reaches the tables and how it leaves them.</p>
   <p class="footnote">Every run is labelled &ldquo;live validated&rdquo; or &ldquo;fallback validated&rdquo;, so neither can be mistaken for the other. Nothing in this delivery is labelled live validated yet.</p>
 </section>
 
@@ -1523,7 +2045,7 @@ flowchart LR
     <li class="kpi-card">
       <i class="kpi-icon" data-lucide="clipboard-check" aria-hidden="true"></i>
       <span class="kpi-value">36</span>
-      <span class="kpi-label">Tests designed, in ten suites</span>
+      <span class="kpi-label">Tests, in ten suites</span>
     </li>
     <li class="kpi-card">
       <i class="kpi-icon" data-lucide="check" aria-hidden="true"></i>
@@ -1533,24 +2055,27 @@ flowchart LR
     <li class="kpi-card">
       <i class="kpi-icon" data-lucide="shield" aria-hidden="true"></i>
       <span class="kpi-value">11</span>
-      <span class="kpi-label">Required gates, checked after install</span>
+      <span class="kpi-label">Gates checked after install</span>
     </li>
   </ul>
   <pre class="mermaid diagram-sm">
 flowchart LR
   accTitle: The checks between a package and an accepted installation
-  accDescr: Nine package checks run first, then the package is imported and previewed within a six-hundred-second budget. If the preview reports any problem the package is fixed and re-issued; if it reports none the package is committed. Twelve checks then decide acceptance and all twelve must pass. Of those twelve, only the eleven required gates trigger a roll back; a failure of the twelfth, which counts the delivered columns, is corrected in the package and re-issued instead.
-  V["Validate, 9 package checks"] --> IM["Import"]
-  IM --> PV["Preview, 600 second budget"]
+  accDescr: Nine package checks run first, then the package is imported and previewed within a six-hundred-second budget. If the preview reports any problem the package is fixed and re-issued; if it reports none the package is committed. Fifteen checks then decide acceptance and all fifteen must pass. Of those fifteen, only the eleven required gates trigger a roll back; a failure of one of the other four, being the column count and the three security checks, is corrected in the package and re-issued instead.
+  V["Validate<br/>9 package<br/>checks"] --> IM["Import"]
+  IM --> PV["Preview<br/>600 second<br/>budget"]
   PV --> Q{"Problems?"}
   Q -->|"none"| CM["Commit"]
-  Q -->|"any"| FX["Fix and re-issue"]
-  CM --> GT["12 checks decide acceptance"]
-  GT -->|"all 12 pass"| OK["Accepted"]
-  GT -->|"1 of the 11 gates fails"| RB["Roll back"]
+  Q -->|"any"| FX["Fix and<br/>re-issue"]
+  CM --> GT["12 checks<br/>decide"]
+  GT -->|"all pass"| OK["Accepted"]
+  GT -->|"a gate fails"| RB["Roll back"]
   GT -->|"the 12th fails"| FX
 </pre>
-  <p class="footnote">Two of the nine pass on the file; seven are review checks. Tests and gates need a live instance.</p>
+  <!-- The same diagram in words, for a reader whose browser is not running
+       scripts and so cannot draw it. D-503. -->
+  <p class="diagram-static-note">Diagram 4, not drawn without JavaScript: The checks between a package and an accepted installation.</p>
+  <p class="footnote">Two of nine pass on the file; seven are reviews. Tests and gates need an instance.</p>
 </section>
 
 <!-- 14 of 16 - Content: risks and mitigations -->
@@ -1559,7 +2084,7 @@ flowchart LR
   <table class="table-compact">
     <thead>
       <tr>
-        <th scope="col" aria-label="Risk level"></th>
+        <th scope="col">Level</th>
         <th scope="col">Reviewer</th>
         <th scope="col">Risk</th>
         <th scope="col">Control</th>
@@ -1569,14 +2094,14 @@ flowchart LR
       <tr>
         <td><span class="sev sev-high" role="img" aria-label="High risk, Security"><i data-lucide="triangle-alert" aria-hidden="true"></i></span></td>
         <th scope="row">Security</th>
-        <td title="A field-access check performed as the instance administrator passes without testing enforcement at all">Silent enforcement failure</td>
+        <td title="A field-access check performed as the instance administrator passes without testing enforcement at all">Silent failure</td>
         <td>21 role checks</td>
       </tr>
       <tr>
         <td><span class="sev sev-high" role="img" aria-label="High risk, DevOps"><i data-lucide="triangle-alert" aria-hidden="true"></i></span></td>
         <th scope="row">DevOps</th>
         <td title="Rollback by scope deletion is irreversible and must never run against an existing installation">Irreversible recovery</td>
-        <td>Clean preview first</td>
+        <td>Clean preview</td>
       </tr>
       <tr>
         <td><span class="sev sev-high" role="img" aria-label="High risk, API/Integration"><i data-lucide="triangle-alert" aria-hidden="true"></i></span></td>
@@ -1587,8 +2112,8 @@ flowchart LR
       <tr>
         <td><span class="sev sev-med" role="img" aria-label="Medium risk, Data/SME"><i data-lucide="info" aria-hidden="true"></i></span></td>
         <th scope="row">Data/SME</th>
-        <td title="A stored aggregate drifts when data arrives by a path that skips the business rules">Count drift, short feeds</td>
-        <td>Recalculated, counted</td>
+        <td title="A stored aggregate drifts when data arrives by a path that skips the business rules">Count drift</td>
+        <td>Recalculated</td>
       </tr>
       <tr>
         <td><span class="sev sev-med" role="img" aria-label="Medium risk, UX"><i data-lucide="info" aria-hidden="true"></i></span></td>
@@ -1609,15 +2134,18 @@ timeline
   accTitle: The migration timeline, in three phases
   accDescr: Three phases in relative order. Install: validate the package, then import, preview and commit it, then clear the fifteen acceptance-blocking checks. Build: bind the two named connections, build both ingestion flows, then the portal with its pages and widgets, and load the six sample files. Prove: run the ten test suites and walk the acceptance record. The order is relative and no calendar dates are stated.
   section Install
-    Steps 1 to 2 : Validate the package : Import, preview and commit
-    Step 3 : Clear the fifteen checks
+    Steps 1 to 2 : Validate package : Import and commit
+    Step 3 : Clear the checks
   section Build
-    Steps 4 to 6 : Bind the two aliases : Build both ingestion flows
-    Steps 7 to 8 : Portal, pages and widgets : Load the six sample files
+    Steps 4 to 6 : Bind the aliases : Build both flows
+    Steps 7 to 8 : Portal and widgets : Load the files
   section Prove
-    Steps 9 to 10 : Run the ten test suites : Walk the acceptance list
+    Steps 9 to 10 : Run the suites : Walk acceptance
 </pre>
-  <ul>
+  <!-- The same diagram in words, for a reader whose browser is not running
+       scripts and so cannot draw it. D-503. -->
+  <p class="diagram-static-note">Diagram 5, not drawn without JavaScript: The migration timeline, in three phases.</p>
+  <ul class="bullets-tight">
     <li>Ten steps, in dependency order: install, build, prove.</li>
     <li>Maintainers work as the application administrator, inside the scope.</li>
     <li>Declarative change re-exports; hand-built change follows its guide.</li>
@@ -1645,9 +2173,12 @@ timeline
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"
         integrity="sha384-M/JtqCVlLcK9lwVnBnMXP0V577CBULkjodKsR/PITOe4MSKNbbwqCemEyluOw0+5"
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.0/dist/mermaid.min.js"
-        integrity="sha384-Wm9qzEgq4j1jEnuFK2FxKTlwuhbV2QqtGhcchvjDoKxeJ7WWAW7fysBq+1s6myfX"
-        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<!-- Mermaid is NOT loaded here. It is the largest asset this document uses and the first
+     slide carries no diagram, so a parser-blocking tag for it would delay the first paint of
+     every viewing to fetch and evaluate a bundle that viewing may never need. It is fetched
+     instead by loadMermaid() below, on the first navigation to a slide that has a diagram to
+     draw, from the same pinned URL and under the same integrity digest declared there. The
+     version stays pinned at 11.4.0 and there is still no build step. D-536. -->
 <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.js"
         integrity="sha384-5CfF4CEHqpO1XQ4mm8VVI47GvbX+x3uWlFHIsfFD1rrxLx6xergBU2tq/TVzKHGv"
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
@@ -1659,6 +2190,20 @@ timeline
   var mermaidConfigured = false;
   var sources = [];
   var attempts = [];
+
+  /* The Mermaid bundle, pinned at the version Rule 2 fixes and carrying the same sha384
+     digest of those exact bytes the head declares for every other remote asset. It is
+     requested by loadMermaid() rather than by a tag in the markup. D-536. */
+  var MERMAID_SRC = 'https://cdn.jsdelivr.net/npm/mermaid@11.4.0/dist/mermaid.min.js';
+  var MERMAID_SRI = 'sha384-Wm9qzEgq4j1jEnuFK2FxKTlwuhbV2QqtGhcchvjDoKxeJ7WWAW7fysBq+1s6myfX';
+
+  /* The one in-flight request for that bundle, or null before the first need. D-536. */
+  var mermaidRequest = null;
+
+  /* An icon placeholder that has not been replaced yet. Lucide copies data-lucide onto the
+     svg it emits, so the factory's own selector keeps matching a rendered icon; excluding
+     svg is what distinguishes work still to do from work already done. D-537. */
+  var PLACEHOLDER = '[data-lucide]:not(svg)';
 
   /* The single render queue. Every pass is appended to it and starts after the
      pass before it has settled. */
@@ -1712,6 +2257,43 @@ timeline
     }
   }
 
+  /* Adds a marker class to the document element once. */
+  function mark(name) {
+    var root = document.documentElement;
+    if ((' ' + root.className + ' ').indexOf(' ' + name + ' ') >= 0) {
+      return false;
+    }
+    root.className = (root.className + ' ' + name).replace(/^\s+/, '');
+    return true;
+  }
+
+  /* The one visible banner every degradation state writes into. A remote asset
+     that did not arrive is stated in words on whichever slide the reader is on,
+     rather than leaving an empty area with nothing to explain it. One banner
+     carries every line, so two failures read as two sentences and not as two
+     competing overlays. Recorded at D-494, D-495 and D-496. */
+  function notice(sentence) {
+    var box = document.getElementById('deck-degradation-notice');
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'deck-degradation-notice';
+      box.className = 'deck-notice';
+      box.setAttribute('role', 'alert');
+      var lead = document.createElement('strong');
+      lead.textContent = 'This summary is showing a reduced form. ';
+      box.appendChild(lead);
+      if (document.body) {
+        document.body.insertBefore(box, document.body.firstChild);
+      }
+    }
+    if (box.textContent.indexOf(sentence) >= 0) {
+      return;
+    }
+    var line = document.createElement('span');
+    line.textContent = sentence + ' ';
+    box.appendChild(line);
+  }
+
   /* Terminal failure of one diagram. A console warning alone is invisible to a
      presenter, so the container is also marked and given a short visible notice
      carrying the diagram's own accessible title: an unrendered diagram then reads
@@ -1738,9 +2320,9 @@ timeline
     box.appendChild(glyph);
     box.appendChild(text);
     node.appendChild(box);
-    if (window.lucide && typeof window.lucide.createIcons === 'function') {
-      window.lucide.createIcons();
-    }
+    /* The notice carries a placeholder of its own, so the icon pass has work to do and runs
+       through the one function that owns it rather than calling the factory a second way. */
+    renderIcons();
   }
 
   /* Configures Mermaid once, with the theme variables this deck's brand rule
@@ -1762,10 +2344,18 @@ timeline
       securityLevel: 'strict',
       theme: 'base',
       themeVariables: {
+        fontSize: '20px',
         primaryColor: '#F2F0FE',
         primaryTextColor: '#333333',
         primaryBorderColor: '#5B39F3',
-        lineColor: '#999999',
+        /* The connector stroke carries the palette's body text value rather than
+           its muted value. A connector is what makes a diagram readable as a
+           sequence, so it is held to the same three to one floor as any other
+           graphical object; the muted value measures 2.85 to one against the card
+           and the body value measures 12.63 to one. Both are declared palette
+           values, so the palette is applied either way. D-505 supersedes D-134's
+           mapping for this variable alone. */
+        lineColor: '#333333',
         secondaryColor: '#F4EFF6',
         cScale0: '#5B39F3',
         cScaleLabel0: '#FFFFFF',
@@ -1783,6 +2373,9 @@ timeline
         htmlLabels: false,
         useMaxWidth: true,
         curve: 'basis',
+        nodeSpacing: 26,
+        rankSpacing: 30,
+        padding: 10,
         subGraphTitleMargin: { top: 8, bottom: 14 }
       }
     });
@@ -1790,11 +2383,49 @@ timeline
     return true;
   }
 
+  /* True while the document is laid out for print. Three signals, because the two
+     printed paths announce themselves differently: reveal.js's own print view
+     marks the root element and reports itself through isPrintView(), and a plain
+     browser print announces nothing at all beyond the media match. D-398. */
+  function printView() {
+    if (document.documentElement.classList.contains('print-pdf')) {
+      return true;
+    }
+    if (window.Reveal && typeof window.Reveal.isPrintView === 'function') {
+      try {
+        if (window.Reveal.isPrintView()) {
+          return true;
+        }
+      } catch (viewError) {
+        report('Print view query skipped', viewError);
+      }
+    }
+    if (/print-pdf/i.test(window.location.search)) {
+      return true;
+    }
+    if (window.matchMedia) {
+      try {
+        if (window.matchMedia('print').matches) {
+          return true;
+        }
+      } catch (mediaError) {
+        report('Print media query skipped', mediaError);
+      }
+    }
+    return false;
+  }
+
   /* True only for a container that has a real layout box AND sits on the slide
-     reveal.js currently shows. D-131, D-147. */
+     reveal.js currently shows. The second test is dropped in print view, where
+     every slide is laid out at once and only one of them carries `.present`: with
+     the test in force every other container is skipped, no later slidechanged
+     arrives to retry it, and the printed page carries the diagram's source as
+     text. The layout-box test is kept in both, because a container with no box
+     cannot be measured and Mermaid would size it from nothing.
+     D-131, D-147, D-398. */
   function renderable(node) {
     var slide = node.closest ? node.closest('section') : null;
-    if (slide && !slide.classList.contains('present')) {
+    if (slide && !slide.classList.contains('present') && !printView()) {
       return false;
     }
     return node.offsetWidth > 0 && node.getClientRects().length > 0;
@@ -1829,12 +2460,60 @@ timeline
     node.innerHTML = sources[index];
   }
 
-  /* Applies the Mermaid configuration and returns every container that already
-     carries a render to its source. */
+  /* Equalises the drawings of a comparison group. Mermaid sizes each svg from its
+     own content, so two diagrams a reader is asked to compare side by side render
+     the same authored label size at two different sizes and end at two different
+     heights. Every drawing inside one `[data-diagram-pair]` group is given the
+     same viewBox extent, the largest of the group on each axis, with its own
+     drawing centred inside that extent, so the group shares one scale and one
+     height. The drawing itself is never touched; only the window onto it is.
+     Its own extent is stashed on first pass, so a later pass cannot compound.
+     D-399. */
+  function normalisePairs() {
+    var groups = Array.prototype.slice.call(
+      document.querySelectorAll('[data-diagram-pair]'));
+    groups.forEach(function (group) {
+      var drawings = [];
+      Array.prototype.slice.call(group.querySelectorAll('pre.mermaid > svg'))
+        .forEach(function (svg) {
+          var raw = svg.getAttribute('data-natural-view-box')
+            || svg.getAttribute('viewBox') || '';
+          var box = raw.split(/[\s,]+/).map(Number);
+          if (box.length !== 4) {
+            return;
+          }
+          var finite = box.every(function (value) { return isFinite(value); });
+          if (!finite || !(box[2] > 0) || !(box[3] > 0)) {
+            return;
+          }
+          svg.setAttribute('data-natural-view-box', box.join(' '));
+          drawings.push({ svg: svg, box: box });
+        });
+      if (drawings.length < 2) {
+        return;
+      }
+      var width = 0;
+      var height = 0;
+      drawings.forEach(function (drawing) {
+        width = Math.max(width, drawing.box[2]);
+        height = Math.max(height, drawing.box[3]);
+      });
+      drawings.forEach(function (drawing) {
+        var minX = drawing.box[0] - (width - drawing.box[2]) / 2;
+        var minY = drawing.box[1] - (height - drawing.box[3]) / 2;
+        drawing.svg.setAttribute('viewBox',
+          minX + ' ' + minY + ' ' + width + ' ' + height);
+        drawing.svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+      });
+    });
+  }
+
+  /* Returns every container that already carries a render to its source, and applies the
+     Mermaid configuration if the bundle happens to be present already. The reset no longer
+     depends on the bundle: Mermaid arrives on first need now, and a container carrying a
+     stale drawing has to be returned to its source whether or not it has arrived. D-536. */
   function reclaim() {
-    if (!configureMermaid()) {
-      return false;
-    }
+    configureMermaid();
     containers().forEach(function (node, index) {
       if (node.getAttribute('data-processed') === 'true'
           || node.querySelector('svg, iframe')) {
@@ -1842,6 +2521,55 @@ timeline
       }
     });
     return true;
+  }
+
+  /* True for a container that sits on the slide reveal.js currently shows and does not
+     already carry a healthy drawing - the one condition under which a render pass has work
+     to do, and therefore the one condition under which the Mermaid bundle is needed. A
+     container that has already reported a terminal failure is not awaiting anything. D-536. */
+  function awaiting(node) {
+    if (!renderable(node)) {
+      return false;
+    }
+    if (node.getAttribute('data-diagram-error') === 'true') {
+      return false;
+    }
+    if (node.getAttribute('data-processed') === 'true') {
+      return !healthy(node);
+    }
+    return true;
+  }
+
+  /* Fetches the Mermaid bundle on first need and resolves true once window.mermaid exists.
+     The tag is built with the pinned URL, the integrity digest and the crossorigin and
+     referrer policy every other remote asset of this document carries, so loading it late
+     changes when the bundle arrives and nothing about which bytes arrive. Concurrent passes
+     share the one request. A resolve of false is a load failure, which renderDiagrams()
+     reports on the affected containers rather than leaving them blank. D-536. */
+  function loadMermaid() {
+    if (typeof window.mermaid !== 'undefined') {
+      return Promise.resolve(true);
+    }
+    if (mermaidRequest) {
+      return mermaidRequest;
+    }
+    mermaidRequest = new Promise(function (resolve) {
+      var tag = document.createElement('script');
+      tag.src = MERMAID_SRC;
+      tag.integrity = MERMAID_SRI;
+      tag.crossOrigin = 'anonymous';
+      tag.referrerPolicy = 'no-referrer';
+      tag.async = true;
+      tag.onload = function () {
+        resolve(typeof window.mermaid !== 'undefined');
+      };
+      tag.onerror = function (loadError) {
+        report('Mermaid bundle did not load', loadError);
+        resolve(false);
+      };
+      document.head.appendChild(tag);
+    });
+    return mermaidRequest;
   }
 
   /* Renders exactly one container per Mermaid call and waits for it to finish
@@ -1895,21 +2623,54 @@ timeline
       });
   }
 
+  /* Draws whatever the slide reveal.js currently shows still needs drawn. A pass over a slide
+     with no diagram to draw does no work and requests nothing, which is what keeps the bundle
+     off the first paint of a viewing that never reaches a diagram. Rule 2's requirement is
+     that this runs on ready and on every slide change, and it does. D-536. */
   function renderDiagrams() {
-    if (!configureMermaid()) {
+    if (!containers().some(awaiting)) {
       return Promise.resolve();
     }
-    return containers().reduce(function (chain, node, index) {
-      return chain.then(function () {
-        return renderDiagram(node, index);
-      });
-    }, Promise.resolve());
+    return loadMermaid().then(function () {
+      if (!configureMermaid()) {
+        containers().forEach(function (node, index) {
+          if (awaiting(node)) {
+            fail(node, index, 'Diagram ' + (index + 1)
+              + ' could not be drawn: the Mermaid bundle is unavailable', MERMAID_SRC);
+          }
+        });
+        notice('The diagram library did not load, so each diagram is reported in '
+          + 'place of its drawing.');
+        return undefined;
+      }
+      return containers().reduce(function (chain, node, index) {
+        return chain.then(function () {
+          return renderDiagram(node, index);
+        });
+      }, Promise.resolve());
+    });
   }
 
-  /* Replaces every data-lucide placeholder with its SVG. A replaced glyph is no
-     longer an <i> placeholder and is not matched by a later pass. */
+  /* Replaces every data-lucide placeholder with its SVG. The factory is invoked on each of
+     the three reveal.js events below, as Rule 2 requires, and returns without calling into
+     Lucide when no unreplaced placeholder is left. That guard is not an optimisation of a
+     no-op: Lucide copies data-lucide onto the svg it emits, so its own selector keeps
+     matching a rendered icon and an unguarded pass destroys and re-creates every glyph in
+     the deck on every slide change. D-537. */
   function renderIcons() {
     if (typeof window.lucide === 'undefined') {
+      /* The icon set is absent. Every placeholder keeps its declared box and is
+         painted from a declared gradient by the marker class, so a slide whose
+         only visual is an icon still carries a non-text element, and the banner
+         states why the glyphs are not the authored ones. D-496. */
+      if (mark('deck-icons-missing')) {
+        report('Icon set absent', 'lucide undefined');
+      }
+      notice('The icon set did not load, so plain placeholders are shown in '
+        + 'place of the icons.');
+      return;
+    }
+    if (!document.querySelector(PLACEHOLDER)) {
       return;
     }
     try {
@@ -1922,6 +2683,7 @@ timeline
   function paint() {
     queue = queue
       .then(renderDiagrams)
+      .then(normalisePairs)
       .then(renderIcons)
       .catch(function (error) {
         report('Render pass skipped', error);
@@ -1929,7 +2691,15 @@ timeline
     return queue;
   }
 
+  /* The presentation engine is absent. Its stylesheet is what hides every slide
+     and the engine is what un-hides one, so with the stylesheet reachable and
+     the script blocked the page would carry sixteen slides the browser refuses
+     to paint. The marker class restores them as one readable stacked document
+     and the banner states the cause. Recorded at D-494. */
   if (typeof window.Reveal === 'undefined') {
+    mark('deck-degraded');
+    notice('The presentation engine did not load, so the slides are shown as '
+      + 'one continuous document instead of a presentation.');
     paint();
     return;
   }
@@ -1946,8 +2716,93 @@ timeline
      that is already healthy. D-147. */
   window.Reveal.on('slidetransitionend', paint);
 
+  /* The printed passes. reveal.js builds its print layout asynchronously after
+     ready, so the ready pass measures the on-screen layout and the printed pages
+     would otherwise get no pass of their own; `pdf-ready` is the event that fires
+     once that layout exists. `beforeprint` and a print media match cover the
+     plain browser print path, which reveal.js does not announce. Every pass is
+     idempotent: a healthy diagram short-circuits without spending an attempt.
+     D-398. */
+  window.Reveal.on('pdf-ready', paint);
+  window.addEventListener('beforeprint', paint);
+
+  if (window.matchMedia) {
+    var printMedia = window.matchMedia('print');
+    if (typeof printMedia.addEventListener === 'function') {
+      printMedia.addEventListener('change', paint);
+    } else if (typeof printMedia.addListener === 'function') {
+      printMedia.addListener(paint);
+    }
+  }
+
+  /* A short ladder of extra passes, in print view only, so the deck does not
+     depend on a single event arriving: the print layout is assembled over several
+     frames and a container measured before its page box exists is skipped without
+     spending an attempt. Each rung is a no-op once every diagram is healthy. */
+  window.Reveal.on('ready', function () {
+    if (!printView()) {
+      return;
+    }
+    [0, 250, 900, 2500].forEach(function (delay) {
+      window.setTimeout(paint, delay);
+    });
+  });
+
+  /* reveal.js renders its own speaker-notes region with `tabindex="0"` and no
+     accessible name. It is hidden on this deck, so it never reaches a Tab walk,
+     and it is named here so it could not become an unlabelled stop if it ever
+     were shown. D-400. */
+  window.Reveal.on('ready', function () {
+    var notes = document.querySelector('.reveal .speaker-notes');
+    if (notes && !notes.getAttribute('aria-label')) {
+      notes.setAttribute('aria-label', 'Speaker notes');
+    }
+  });
+
+  /* The engine disables every control group on a slide change before re-enabling
+     the available ones, which drops keyboard focus from a chevron to the document
+     body. A reader stepping through from the chevrons then has to Tab back in on
+     every slide.
+
+     The control that still holds focus at the moment the change is announced is
+     the one focus is returned to. Nothing is remembered between changes, so a
+     reader who has since moved focus elsewhere cannot have it pulled back. The
+     focus-visible test is what keeps a pointer click from leaving a ring behind,
+     and a browser that cannot evaluate it skips the behaviour rather than guess.
+     D-504. */
+  window.Reveal.on('slidechanged', function () {
+    var focused = document.activeElement;
+    var control = focused && focused.closest
+      ? focused.closest('.reveal .controls button')
+      : null;
+    if (!control) {
+      return;
+    }
+    try {
+      if (!control.matches(':focus-visible')) {
+        return;
+      }
+    } catch (selectorUnsupported) {
+      return;
+    }
+    window.requestAnimationFrame(function () {
+      if (document.activeElement !== document.body) {
+        return;
+      }
+      if (control.disabled || !control.classList.contains('enabled')) {
+        return;
+      }
+      control.focus();
+    });
+  });
+
   window.Reveal.initialize({
     hash: true,
+    /* Hash routing alone records the current slide but creates no history entry,
+       so the browser's Back button leaves the deck instead of stepping back a
+       slide. This option pushes an entry per slide change and implies hash
+       routing, so the mandated hash behaviour is unchanged. D-506. */
+    history: true,
     transition: 'slide',
     controlsTutorial: false,
     width: 1920,

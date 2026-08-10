@@ -251,7 +251,11 @@ Run them in the order below. G-1 and G-2 come first because they are mechanical 
 
 - [ ] **The three pinned library versions are referenced exactly:** reveal.js **5.1.0**, Mermaid **11.4.0**, Lucide **0.460.0**. **Evidence:** the three source URLs copied from the deck.
 
-- [ ] **Every versioned static asset the deck loads carries a SHA-384 `integrity` attribute and `crossorigin="anonymous"`.** There are **five** such assets — two stylesheets and three scripts — and all five are required to carry both attributes. This is what pins the deck to the exact reviewed bytes: a substituted or tampered file fails to load rather than executing. **Verify the hashes rather than merely observing that the attribute is present** — an integrity attribute holding the wrong digest silently blocks the asset, which looks identical to a network failure. Recompute each digest from the URL the deck names and compare it to the attribute:
+- [ ] **Every versioned static asset the deck loads is pinned by a SHA-384 digest and loaded `crossorigin="anonymous"`.** There are **five** such assets — two stylesheets and three scripts — and all five are required to carry both. This is what pins the deck to the exact reviewed bytes: a substituted or tampered file fails to load rather than executing.
+
+  **Four of the five declare it as markup; the fifth declares it as a constant, and the check reads both.** `reveal.css`, `white.css`, `reveal.js` and `lucide.js` are parsed from the document and carry `integrity="sha384-…"` and `crossorigin="anonymous"` on the element. `mermaid.min.js` is **not parsed at all** — it is injected on demand the first time a slide carrying a diagram is reached, per `D-536` — so its URL and digest are declared as the `MERMAID_SRC` and `MERMAID_SRI` constants of the deck's inline script, and the injecting code sets `integrity`, `crossOrigin` and `referrerPolicy` on the element it creates. The pin is therefore identical in effect and the browser enforces it identically; what differs is only where the string is written. The extraction below reads **every** `sha384-` token in document order, which covers both forms, and the URL list is stated in that same document order — note that Mermaid is now **last**, after Lucide, because its constant sits in the inline script below the two parsed script tags.
+
+  **Verify the hashes rather than merely observing that a digest is present** — a digest holding the wrong value silently blocks the asset, which looks identical to a network failure. Recompute each digest from the URL the deck names and compare it to the declared value:
 
   **Requires exactly two binaries: `curl` and `openssl`.** Run it from this directory, `servicenow-startup-tracker-poc/docs/`, so the relative path to the deck resolves. It downloads each asset to a temporary file, refuses an empty body, digests the file rather than a pipe, compares the result against the attribute the deck declares, and **exits non-zero on the first mismatch or download failure** — so a network error can never be mistaken for a pass.
 
@@ -269,18 +273,19 @@ Run them in the order below. G-1 and G-2 come first because they are mechanical 
   tmp=$(mktemp -d) ; trap 'rm -rf "$tmp"' EXIT
   rc=0
 
-  # The five integrity values the deck declares, in document order.
-  sed -n 's/.*integrity="\(sha384-[A-Za-z0-9+/=]*\)".*/\1/p' "$deck" > "$tmp/declared"
+  # The five digests the deck declares, in document order: four integrity attributes
+  # and the MERMAID_SRI constant of the inline script.
+  grep -o 'sha384-[A-Za-z0-9+/=]*' "$deck" > "$tmp/declared"
   declared_n=$(wc -l < "$tmp/declared" | tr -d ' ')
-  [ "$declared_n" -eq 5 ] || { printf 'FAIL  expected 5 integrity attributes in the deck, found %s\n' "$declared_n" >&2 ; exit 1 ; }
+  [ "$declared_n" -eq 5 ] || { printf 'FAIL  expected 5 sha384 digests in the deck, found %s\n' "$declared_n" >&2 ; exit 1 ; }
 
   i=0
   for u in \
     https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css \
     https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/white.css \
     https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js \
-    https://cdn.jsdelivr.net/npm/mermaid@11.4.0/dist/mermaid.min.js \
-    https://unpkg.com/lucide@0.460.0/dist/umd/lucide.js ; do
+    https://unpkg.com/lucide@0.460.0/dist/umd/lucide.js \
+    https://cdn.jsdelivr.net/npm/mermaid@11.4.0/dist/mermaid.min.js ; do
 
     i=$((i + 1))
     want=$(sed -n "${i}p" "$tmp/declared")
@@ -322,13 +327,13 @@ Run them in the order below. G-1 and G-2 come first because they are mechanical 
       'https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css',
       'https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/white.css',
       'https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js',
-      'https://cdn.jsdelivr.net/npm/mermaid@11.4.0/dist/mermaid.min.js',
       'https://unpkg.com/lucide@0.460.0/dist/umd/lucide.js',
+      'https://cdn.jsdelivr.net/npm/mermaid@11.4.0/dist/mermaid.min.js',
   ]
-  declared = re.findall(r'integrity="(sha384-[A-Za-z0-9+/=]*)"',
+  declared = re.findall(r'sha384-[A-Za-z0-9+/=]+',
                         io.open(DECK, encoding='utf-8').read())
   if len(declared) != len(URLS):
-      sys.exit('FAIL  expected %d integrity attributes, found %d' % (len(URLS), len(declared)))
+      sys.exit('FAIL  expected %d sha384 digests, found %d' % (len(URLS), len(declared)))
   rc = 0
   for url, want in zip(URLS, declared):
       try:
@@ -349,7 +354,9 @@ Run them in the order below. G-1 and G-2 come first because they are mechanical 
   PY
   ```
 
-  **Evidence:** the five recomputed `sha384-` values beside the five attribute values as written in the deck, and confirmation that each pair matches exactly. Then, with the deck open in a browser, confirm from the network panel that **all five assets returned HTTP 200 and none was blocked**, and from the console that **no integrity or cross-origin error was reported**. A blocked stylesheet leaves the deck unstyled and a blocked script leaves it unrendered, so a passing structural count with a blocked asset is not a pass.
+  **Evidence:** the five recomputed `sha384-` values beside the five declared values as written in the deck — four attributes and the `MERMAID_SRI` constant — and confirmation that each pair matches exactly. Then, with the deck open in a browser, confirm from the network panel that **the four parsed assets returned HTTP 200 and none was blocked**, then **navigate to a slide carrying a diagram** and confirm the injected `mermaid.min.js` also returned HTTP 200 and was not blocked — it is not requested on the title slide, so a network panel read before that navigation will show four assets and not five, which is the delivered behaviour rather than a fault. From the console confirm that **no integrity or cross-origin error was reported**. A blocked stylesheet leaves the deck unstyled and a blocked script leaves it unrendered, so a passing structural count with a blocked asset is not a pass.
+
+  **The network panel shows ten subresource requests, not five, and the reconciliation is exact — so a count of ten is not a discrepancy against the five named here.** The five are the assets the deck itself declares with a `<link>` or a `<script>` tag, and they are the only ones an `integrity` attribute can cover. A bare `file://` open fetches **1 document and 10 subresources**: the five pinned assets; the Google Fonts stylesheet, which is the one declared exception above; the **three `fonts.gstatic.com` `.woff2` binaries** that stylesheet then requests, which are `@font-face` sources rather than declared assets; and **one stylesheet the deck never declares** — `https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/fonts/source-sans-pro/source-sans-pro.css`, which reveal's own `dist/theme/white.css` reaches through the `@import` on its line 6. **A transitive `@import` cannot carry an integrity attribute**, so that request sits outside this item by construction rather than by exemption. It is served from an origin the deck's Content Security Policy already admits, so it raises no violation, and it is inert: the four `Source Sans Pro` faces it registers stay `unloaded` for the life of the page, because the inline theme rebinds `--r-main-font`, `--r-heading-font` and `--r-code-font`, and the family is named nowhere in the deck. Its whole cost is 553 bytes on the wire, and **no font binary is fetched from any `cdn.jsdelivr.net` path**. **One measurement trap:** that sub-request is issued `no-cors`, so `PerformanceResourceTiming` reports its `responseStatus` as `0` — read its status from the network panel, where it is `200`, not from the timing API. **Evidence:** the request count with every request's URL and status, and confirmation that the five carrying a digest are the five named above.
 
 - [ ] **The pinned library versions were checked against published security advisories, and any conflict is recorded as a named acceptance decision rather than left implicit.** The pins are stated verbatim by the presentation rule, so a version carrying an advisory **cannot be silently upgraded** — the rule outranks the baseline. What this gate requires is that the conflict be *known and signed off*, not that it be absent. Query the advisory database for each of the three libraries at the pinned version, and for each hit record the advisory identifier, the version that fixes it, and the disposition. **Mermaid `11.4.0` is a known open case, and its disposition record is already written.** [Disposition record](./gaps-and-flags.md#disposition-record) carries the item, the pinned and fixing versions, the authority for the pin, the assessment date, the scope of the risk, the mitigations, the residual risk, the recommended disposition and the review trigger — every field the delivery can establish. It is accompanied by an [advisory-by-advisory scope table](./gaps-and-flags.md#advisory-scope-as-re-queried) giving, for each of six identified advisories, the range it states, whether `11.4.0` falls inside that range, and whether the code path it describes is reachable in this deck. **The decision itself is recorded — `B` accept, on 2026-08-09 (UTC), with the risk owner named as the rule owner role** — because option `A` requires amending a rule the delivery may not amend, so no genuine choice remained open. **Two fields are deliberately unfilled**, because only a human can supply them: the **name** of the person accepting the residual risk, and the **date accepted** in UTC. **This gate is satisfied only when both carry a value.** **Evidence:** the advisory set as re-queried on the acceptance date, per library at the pinned version, including anything absent from the snapshot in that table; the two supplied field values copied here; the record's `Status` reading `CLOSED — accepted`; and the decision-log row carrying the acceptance. **An unrecorded advisory fails this gate, and so does a disposition record with either remaining required field still reading `REQUIRED — not yet supplied`.** A recorded and signed acceptance passes it — but acceptance is a human act, and ticking this box is not one.
 
@@ -357,7 +364,7 @@ Run them in the order below. G-1 and G-2 come first because they are mechanical 
 
 - [ ] **The deck's inline theme block is byte-identical to the canonical theme file.** The rule names [`../../blitzy-deck/references/blitzy-reveal-theme.css`](../../blitzy-deck/references/blitzy-reveal-theme.css) as the canonical theme and simultaneously forbids a local file dependency, so the deck mirrors that CSS inline instead of linking it. **Compare the two as bytes, not by eye:** extract the text between `<style id="blitzy-theme">` and its closing tag and diff it against the file, or compare a cryptographic digest of each. A single differing byte — a leading newline is the usual culprit — means the delivered theme and the canonical theme are not the same artifact. **Evidence:** the two byte counts, the two digests, and the diff result, which must be empty.
 
-  **Pass condition:** the section count is within 12 to 18 inclusive; every section carries a visual; all four slide types are present and every section resolves to exactly one of them under the classification rule above; every content slide is at or under four bullets and forty body words; the emoji hit count is zero; all three library versions and all three font families are present as specified; all five versioned assets carry a verified SHA-384 `integrity` value and `crossorigin="anonymous"`, load with HTTP 200 and raise no integrity or cross-origin error; every advisory against a pinned version is either absent or recorded with a signed acceptance; and the inline theme block is byte-identical to the canonical theme file.
+  **Pass condition:** the section count is within 12 to 18 inclusive; every section carries a visual; all four slide types are present and every section resolves to exactly one of them under the classification rule above; every content slide is at or under four bullets and forty body words; the emoji hit count is zero; all three library versions and all three font families are present as specified; all five versioned assets carry a verified SHA-384 digest — four as an `integrity` attribute, Mermaid as the `MERMAID_SRI` constant applied to the element the deck injects — and `crossorigin="anonymous"`, load with HTTP 200 when requested, and raise no integrity or cross-origin error; every advisory against a pinned version is either absent or recorded with a signed acceptance; and the inline theme block is byte-identical to the canonical theme file.
 
 ### G-9 — governance completeness
 
@@ -430,7 +437,7 @@ Five prerequisites and three pre-flight checks, all of them before the upload. *
 - [ ] **The retrieved update set was identified by resolving a run-unique name, and exactly one record matched.** The header name carries a token unique to this run. Evidence: the name uploaded, the single `sys_id` it resolved to — recorded in the [sign-off header](#sign-off-header) — and that record's `application_scope`, which must read `x_bst_startuptrk`. **Selecting the most recently created `sys_remote_update_set`, or resolving a fixed name that a retry or a parallel clone could also have created, must not be used**: either form can select another run's record and then preview and commit it.
 - [ ] **The retrieved update set reached the loaded state.** Evidence: the state observed and the elapsed poll time.
 - [ ] **The preview was triggered through the preview processor, and its response was asserted before anything was polled.** Evidence: the `HTTP 200` from the processor call and the `answer` value, which must be a 32-character hexadecimal execution-tracker `sys_id`. **`PATCH {"state":"previewing"}` must not be used**: it answers `HTTP 200` and is ignored, so the sequence polls a preview that was never started. Equally, polling before the tracker identifier is established polls nothing.
-- [ ] **The preview completed.** Evidence: the state observed and the elapsed poll time.
+- [ ] **The preview completed.** Evidence: the state observed and the elapsed poll time, **stated against the 600 s budget as `observed s / 600 s` together with the pass count**. This duration has never been observed on an instance — it is the one timing in this package carried as a prediction, `600 s` across `313` records, that is `1.92 s` per record — so the number recorded here is the first measurement of it and is required whether the preview finishes fast or slow.
 - [ ] **The error-type preview-problem set is empty.** This is also the evidence for pre-delivery gate [G-3](#g-3--referential-integrity). Evidence: the `result` array and its length. Record the warning-type set alongside it; warnings are logged and do not abort.
 - [ ] **The commit completed, and the commit processor's response was asserted rather than assumed.** Evidence: the processor response recorded, then the state observed and the elapsed poll time.
 - [ ] **Every failure was reported from fields that exist.** Evidence: for any failure handled in this section, the `state` value, the execution tracker's `message`, and the preview-problem records. **`error_detail` must not be reported**: `sys_remote_update_set` carries no such column, so the platform drops it from the response and a step that logs it logs nothing on every failure it handles.
@@ -451,7 +458,7 @@ Read on reaching `previewed`, **before** the commit. It is a precondition of the
 
 ### B4 — the eleven required post-commit gates
 
-[`./validation-gates.md`](./validation-gates.md) defines **eleven required** gates — the seven entity-table reads, the three role-record gates and the one scope-record gate — together with **one acceptance-required, non-rollback** check, `GATE-COL-01`, and **four non-normative diagnostics**, `GATE-SEC-01` to `GATE-SEC-04`. **The rollback decision is the eleven: `11 of 11`, with no partial pass and no waiver.** The acceptance decision is those eleven **and** `GATE-COL-01` — **twelve checks block acceptance, of which the eleven also trigger rollback**; the four diagnostics are run and recorded on every deployment and block nothing. The classes are defined at [Three classes of check](./validation-gates.md#three-classes-of-check-and-what-each-one-blocks) and mirrored here.
+[`./validation-gates.md`](./validation-gates.md) defines **eleven required** gates — the seven entity-table reads, the three role-record gates and the one scope-record gate — together with **four acceptance-required, non-rollback** checks — `GATE-COL-01` and `GATE-SEC-01` to `GATE-SEC-03` — and **one non-normative diagnostic**, `GATE-SEC-04`. **The rollback decision is the eleven: `11 of 11`, with no partial pass and no waiver.** The acceptance decision is those eleven **and** the four — **fifteen checks block acceptance, of which the eleven also trigger rollback**; the one diagnostic is run and recorded on every deployment and blocks nothing. The classes are defined at [Three classes of check](./validation-gates.md#three-classes-of-check-and-what-each-one-blocks) and mirrored here.
 
 **The eleven required gates.** Gates 1 to 7 read each entity table's `sys_db_object` record, scoped to `x_bst_startuptrk`, and assert its name together with `access` `package_private`, `read_access` `false` and `ws_access` `false`. That is a **departure from the literal text of AAP section 0.11.2**, which reads as a row read on each of the seven; a row read is not available because `D-310` seals all ten application tables closed to every external route, and `D-311` expressed the gates in this form instead. The departure is accepted explicitly, and row `12` below carries that acceptance. **An empty `result` array is a failure for those seven**: there is exactly one `sys_db_object` record per table and it exists from the moment the table commits, so an empty result means no dictionary record carries that name inside the scope and the table did not commit. It cannot mean "committed but empty" the way a row read could.
 
@@ -470,7 +477,7 @@ Read on reaching `previewed`, **before** the commit. It is a precondition of the
 | 11 | `GATE-SCOPE-01` | Exactly one scope record for `x_bst_startuptrk` | | | |
 | | **Required aggregate** | | | | **`11 of 11` required** |
 
-7 entity-table gates + 3 role-record gates + 1 scope-record gate = 11. That is the required gate set in full, and the rollback decision in full. It is not the whole of the acceptance decision: `GATE-COL-01` below blocks acceptance too, which is why the acceptance aggregate is 12 and the rollback aggregate is 11.
+7 entity-table gates + 3 role-record gates + 1 scope-record gate = 11. That is the required gate set in full, and the rollback decision in full. It is not the whole of the acceptance decision: `GATE-COL-01` and `GATE-SEC-01` to `GATE-SEC-03` below block acceptance too, which is why the acceptance aggregate is 15 and the rollback aggregate is 11.
 
 - [ ] **Each of the seven table gates read that table's dictionary record, scoped, and asserted all four values.** The request is `GET /api/now/table/sys_db_object?sysparm_query=name=<table>^sys_scope.scope=x_bst_startuptrk&sysparm_fields=name,access,read_access,ws_access&sysparm_limit=2`, and the pass condition is exactly `HTTP 200` with one record reading `name` `<table>`, `access` `package_private`, `read_access` `false` and `ws_access` `false`. **An empty `result` array is a failure**: there is one dictionary record per table from the moment it commits, so an empty result means the table is absent from the scope. Evidence: the four field values for each of the seven. Booleans arrive as the strings `true` and `false`, so compare against `false` as text.
 - [ ] **No table gate was satisfied by a row read, and no row read of an application table returned `200`.** Confirm the negative directly, because it is the containment property the whole access-control design rests on: issue `GET /api/now/table/x_bst_startuptrk_startup?sysparm_limit=1` as the deployment administrator and record the status, which **must not** be `200`. An administrator holds every role, so a `200` here would mean the native route is open to every authenticated caller holding one of the three scoped roles, outside the application's rate limiter and outside its two endpoint execution controls. Evidence: the request issued and the status returned, for at least one entity table and for `x_bst_startuptrk_ingest_staging`.
@@ -498,9 +505,11 @@ Read on reaching `previewed`, **before** the commit. It is a precondition of the
 | # | Check | Assertion | Result | Timestamp (UTC) | Observed count and per-table split |
 | --- | --- | --- | --- | --- | --- |
 | A1 | `GATE-COL-01` | The seven entity tables carry exactly 53 columns between them | | | expected 53 = 12 + 6 + 6 + 6 + 8 + 9 + 6 |
-| | **Acceptance aggregate** | | | | **12 of 12 acceptance-blocking checks — the 11 required gates and this one. The four `GATE-SEC` diagnostics below are recorded, never required** |
+| | **Acceptance aggregate** | | | | **15 of 15 acceptance-blocking checks — the 11 required gates, this one and the three `GATE-SEC` access-posture checks below. `GATE-SEC-04` is recorded, never required** |
 
-**`GATE-SEC-01` to `GATE-SEC-04` — non-normative diagnostics, recorded and never required.** All **four** are run on every deployment and their results carried with the deployment record, because a weakened access posture is worth knowing about immediately and because `GATE-SEC-04` is the only check that exercises the one read path the sealed tables leave open. **None of the four is an acceptance gate: a failure here is investigated and reported, and it never triggers the rollback and never blocks acceptance.** The class definition is in [`./validation-gates.md`](./validation-gates.md#three-classes-of-check-and-what-each-one-blocks), and the counts there govern: **12 checks block acceptance, 11 of them trigger rollback**.
+**`GATE-SEC-01` to `GATE-SEC-03` — acceptance-required, non-rollback.** All **three** are run on every deployment and their results carried with the deployment record, because each names an exposure rather than a preference: raw staged payloads reachable over an external route, an application table permitting a cross-scope write, or REST endpoints carrying no authorisation. **A failure blocks acceptance and never triggers the rollback** — the remedy is to correct the delivered records and re-import, or for the platform owner to record written acceptance of the named exposure in the evidence record.
+
+**`GATE-SEC-04` — the one non-normative diagnostic, recorded and never required.** It is run on every deployment because it is the only check that exercises the one read path the sealed tables leave open, but it is **not** an acceptance gate: it is the one check here that is not an HTTP request but a background script a human runs in the platform UI, so no deployment pipeline can assert on it. A failure is investigated and reported, and it never triggers the rollback and never blocks acceptance. The class definition is in [`./validation-gates.md`](./validation-gates.md#three-classes-of-check-and-what-each-one-blocks), and the counts there govern: **15 checks block acceptance, 11 of them trigger rollback**.
 
 **One external instance prerequisite.** Not a gate and not a check of this delivery: the Global-scope XML entity-resolution properties, which this application cannot set and whose remedy lies with the platform owner. Record the two values read, or their absence, and to whom a non-hardened reading was reported.
 
@@ -519,7 +528,7 @@ Read on reaching `previewed`, **before** the commit. It is a precondition of the
 | `glide.stax.whitelist_enabled` | | | |
 
 
-- [ ] **All eleven required gates pass, `11 of 11`.** Evidence: rows 1 to 11 above. This is the rollback decision and eleven of the twelve acceptance-blocking checks, there is no partial pass and no waiver, and no manual-build guide starts before every one of them reports a pass.
+- [ ] **All eleven required gates pass, `11 of 11`.** Evidence: rows 1 to 11 above. This is the rollback decision and eleven of the fifteen acceptance-blocking checks, there is no partial pass and no waiver, and no manual-build guide starts before every one of them reports a pass.
 - [ ] **`GATE-COL-01` passes, returning exactly 53.** Evidence: row A1 above, with the observed count and the per-table split. **A failure blocks acceptance** and criterion 1 may not be recorded as met while it stands; the remedy is to correct the Update Set and re-import, never to roll back.
 - [ ] **All four security diagnostics were run and their observed values recorded, `4 of 4` recorded.** Evidence: rows D1 to D4 above, each with its observed value. **None of the four blocks acceptance and none triggers the rollback** — they are class 3, so a failure is reported, investigated and carried with the deployment record, and no operator may hold a deployment on one. Recording all four is nonetheless mandatory, because each observes something the eleven required gates cannot see. Remedy a failure as the corresponding **On failure** cell in [`./validation-gates.md`](./validation-gates.md) directs — for `GATE-SEC-02`, correct the dictionary records and re-import.
 - [ ] **No gate or check instructed a change to anything outside the `x_bst_startuptrk` scope.** No gate in this deployment has a Global-scope remedy, and none may be given one. Evidence: the statement that every remedy applied was inside the application scope.
@@ -929,7 +938,7 @@ Criterion 2 is met when, and only when, all four hold. The matrix, the five ACL 
 
 **A `total_count` assertion of the form "at least the number of rows returned" is not acceptable here, and must not be recorded as evidence.** It passes against a count of the entire table, against a count that ignores the filter, and against a count that ignores the inclusion criteria — the three failures this assertion exists to catch. Likewise, asserting only that no row repeats across pages passes against a second page that returned unrelated rows; membership must be asserted by identifier.
 
-The bounds are read from two properties — `x_bst_startuptrk.rest.default_limit`, shipped value `20`, applied when `sysparm_limit` does not resolve to a usable value, and `x_bst_startuptrk.rest.max_limit`, shipped value `50`, the largest page the API will serve. A `sysparm_limit` above the maximum is clamped to the value read from that property, and the clamped call must return the whole four-row filtered set on one page in sort order; a `sysparm_offset` above `10000` is refused with `400`.
+The bounds are read from two properties — `x_bst_startuptrk.rest.default_limit`, shipped value `20`, applied when `sysparm_limit` does not resolve to a usable value, and `x_bst_startuptrk.rest.max_limit`, shipped value `50`, the largest page the API will serve. A `sysparm_limit` above the maximum is clamped to the value read from that property, and the clamped call must return the whole four-row filtered set on one page in sort order; a `sysparm_offset` above `10000` is refused with `400`. **Each property is itself resolved to at least `1` and at most `50`**, so neither the caller nor an administrator can widen a page beyond fifty records — setting either property to `9999` still yields `50`, including for a request that carries no pagination parameter at all.
 
 - [ ] **The discriminator and the seeded cardinality are recorded for every resource.** Evidence: per resource, the discriminator parameter used, the token, the number of records seeded under it, and the number the request is expected to count. The parameter differs per resource — `name` for `/startups`, `/founders` and `/investors`, `startup` for `/funding-rounds`, `/jobs` **and `/news`**, and the `{startup_id}` path segment for the nested executives path. `GET /news` accepts a `source` filter as well, but the discriminator the test uses is `startup`, because the news fixtures hang off the parent startup exactly as the other child fixtures do and their negative control hangs off a **second** parent — the one mechanism that makes the control uncountable is shared by all five child resources. [`./manual-build/05-atf-test-suites.md`](./manual-build/05-atf-test-suites.md) is authoritative for the per-resource marker column. The **five** `sys_id`-keyed no-match values must be **well formed** 32-character identifiers, because a malformed one is refused with `400` rather than answered with an empty page.
 - [ ] **`total_count` is exact, and the exactness rests on a stated invariant.** All seven entity tables and the join table grant table-level read to all three application roles and carry **no record-level access control**, so record-level visibility is identical for every caller and one aggregate is a correct total for all of them. **Adding a record-level rule to any of those tables makes every `total_count` in this application wrong rather than merely imprecise.** Evidence: confirmation that no record-level access control exists on those eight tables, read from [`./access-control.md`](./access-control.md).
@@ -1063,6 +1072,7 @@ Tick a resource only when all three of its cells carry a recorded result.
 - [ ] **No standing administrator credential was created.** The administrator caller is ephemeral, `web_service_access_only` `true`, minted at step 230 and removed by the framework rollback, by the next run's step 230 sweep and by step 290. Evidence: residue query `R1` returning **0** records for the `bst.atf.rest.` prefix, which covers both callers, and `R2` returning **two** shells each reading `bst.atf.retired`.
 - [ ] **Step 290's cleanup was asserted, not assumed.** Four window keys across both callers, the created record, and the administrator shell. The counter rows and the created record are written by inbound HTTP in their own sessions and are **not** rolled back with the test. Evidence: the step 290 output message.
 - [ ] **What this block does not cover is recorded rather than implied.** `PUT` is asserted on no resource; the read-denial message `Caller holds no Boston Startup Tracker role` is reachable by no caller this package defines, because table-level read is granted to all three application roles; and claim 5 is omitted where the instance's REST step will not take a run-time value in `end_point`, in which case claim 4's `404` is the administrator's passage past the guard and step 290 removes the record. Evidence: which of the two endpoint bindings was available, and the omission if any.
+- [ ] **Record whether responses are served compressed. Not acceptance-blocking, and it is not part of criterion 3's pass condition.** Issue one of the six list calls with `Accept-Encoding: gzip` and record the response's `Content-Encoding` header and its transferred size against its uncompressed size. This was not observable during validation — the hibernating instance's placeholder responder returns no `Content-Encoding` — and it is a property of the instance's web tier rather than of anything in the Update Set; the requirements state no compression requirement. The uncompressed ceiling is stated in [Response size](./api-reference.md#response-size-and-why-there-is-no-projection-parameter): a page of 50 startups with every text column at its declared maximum is 244.9 KiB. Evidence: the header observed and the two sizes, or the explicit statement that it could not be captured and why.
 
 ### Criterion 3 — pass condition
 
@@ -1161,13 +1171,48 @@ Before **each** of the six counted runs: reload the source files for that flow p
     var KEY = 'x_bst_startuptrk.ingestion.last_run_provenance';
     var props = new AppProperties();
 
+    // gs.setProperty is not on the scoped GlideSystem surface, and this script runs with
+    // the application picker on Boston Startup Tracker. The property record is therefore
+    // read and written directly -- the same record AppProperties._readRunState() reads,
+    // so the write and the read-back below cannot disagree through a cached value.
+    function readRaw() {
+        var row = new GlideRecord('sys_properties');
+        row.addQuery('name', KEY);
+        row.setLimit(1);
+        row.query();
+        if (!row.next()) {
+            return '';
+        }
+        var stored = row.getValue('value');
+        return String(stored === null ? '' : stored);
+    }
+    function writeRaw(value) {
+        var row = new GlideRecord('sys_properties');
+        row.addQuery('name', KEY);
+        row.setLimit(1);
+        row.query();
+        if (!row.next()) {
+            gs.info('[bst.cadence.reset] ' + KEY + ' does not exist on this instance, so ' +
+                'there is nothing to reposition. Stopping without a write.');
+            return false;
+        }
+        row.setValue('value', value);
+        if (!row.update()) {
+            gs.info('[bst.cadence.reset] the write to ' + KEY + ' was refused. Stopping. ' +
+                'Confirm the account holds x_bst_startuptrk.admin and can write ' +
+                'sys_properties.');
+            return false;
+        }
+        return true;
+    }
+
     // Every decision below is made against the RAW string, and every segment that is
     // not the counted source's is copied through byte for byte. Rebuilding a segment
     // from parsed members would not be safe: AppProperties sanitises a run token when
     // it parses one, and readRunMarkers() recognises only crunchbase, linkedin and a
     // legacy bare value, so a rebuild could silently alter or drop what it did not
     // recognise. This script alters exactly one field of exactly one segment.
-    var raw = String(gs.getProperty(KEY, ''));
+    var raw = readRaw();
     gs.info('[bst.cadence.reset] captured verbatim: "' + raw + '"');
 
     var markers = props.readRunMarkers();
@@ -1224,10 +1269,12 @@ Before **each** of the six counted runs: reload the source files for that flow p
     }
 
     var next = segments.join(';');
-    gs.setProperty(KEY, next);
+    if (!writeRaw(next)) {
+        return;
+    }
 
     // Read back, and prove the untouched segments really were untouched.
-    var after = String(gs.getProperty(KEY, ''));
+    var after = readRaw();
     var before_others = raw.split(';').filter(function (s) {
         return s.trim().toLowerCase().indexOf(SOURCE + '=') !== 0;
     }).join(';');
@@ -1252,8 +1299,32 @@ Before **each** of the six counted runs: reload the source files for that flow p
     var CAPTURED = '';
     // ---- end of substitution ----
     var KEY = 'x_bst_startuptrk.ingestion.last_run_provenance';
-    gs.setProperty(KEY, CAPTURED);
-    var now = gs.getProperty(KEY, '');
+
+    // gs.setProperty is not on the scoped GlideSystem surface, and this script runs with
+    // the application picker on Boston Startup Tracker. The property record is written
+    // directly, and read back from the record so the confirmation cannot come from a
+    // cached value.
+    var row = new GlideRecord('sys_properties');
+    row.addQuery('name', KEY);
+    row.setLimit(1);
+    row.query();
+    if (!row.next()) {
+        gs.info('[bst.cadence.reset] ' + KEY + ' does not exist on this instance. ' +
+            'Stopping without a write.');
+        return;
+    }
+    row.setValue('value', CAPTURED);
+    if (!row.update()) {
+        gs.info('[bst.cadence.reset] the write to ' + KEY + ' was refused. The captured ' +
+            'value has NOT been restored. Confirm the account holds ' +
+            'x_bst_startuptrk.admin and can write sys_properties, then re-run this step.');
+        return;
+    }
+    var back = new GlideRecord('sys_properties');
+    back.addQuery('name', KEY);
+    back.setLimit(1);
+    back.query();
+    var now = back.next() ? String(back.getValue('value') === null ? '' : back.getValue('value')) : '';
     gs.info('[bst.cadence.reset] restored=' + (now === CAPTURED) + '; value now: "' + now + '"');
 })();
 ```
@@ -1278,29 +1349,31 @@ Before **each** of the six counted runs: reload the source files for that flow p
 
 **One evidence table, and every column of it comes from the run's own published `run_summary` event or from the health members part `8c` reports.** An earlier revision carried two overlapping tables for these same six runs, which made it possible to fill one and leave the other empty while both looked complete. There is now exactly one.
 
-| # | Flow | Run | Timestamp (UTC) | Guard | `processed` | `rejected` | `duplicates` | `unmatched` | `rule3_deviations` | `skipped` | `published` | `healthy` | `faults` | `marker_stamped` | Unhandled errors | Provenance |
-| --- | --- | --: | --- | --- | --: | --: | --: | --: | --: | --: | --- | --- | --- | --- | --: | --- |
-| 1 | `Crunchbase Ingestion` | 1 | | | | | | | | | | | | | | |
-| 2 | `Crunchbase Ingestion` | 2 | | | | | | | | | | | | | | |
-| 3 | `Crunchbase Ingestion` | 3 | | | | | | | | | | | | | | |
-| 4 | `LinkedIn Ingestion` | 1 | | | | | | | | | | | | | | |
-| 5 | `LinkedIn Ingestion` | 2 | | | | | | | | | | | | | | |
-| 6 | `LinkedIn Ingestion` | 3 | | | | | | | | | | | | | | |
-| | **Aggregate** | | | **6 of 6 proceed** | **must be > 0 on every row** | | | | | **must be 0** | **must be `true`** | **must be `true`** | **must be empty** | **must be `true`** | **must total 0** | |
+| # | Flow | Run | Timestamp (UTC) | Guard | `processed` | `rejected` | `duplicates` | `unmatched` | `rule3_deviations` | `skipped` | `errors` | `published` | `healthy` | `faults` | `marker_stamped` | Unhandled errors | Provenance |
+| --- | --- | --: | --- | --- | --: | --: | --: | --: | --: | --: | --: | --- | --- | --- | --- | --: | --- |
+| 1 | `Crunchbase Ingestion` | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 2 | `Crunchbase Ingestion` | 2 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 3 | `Crunchbase Ingestion` | 3 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 4 | `LinkedIn Ingestion` | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 5 | `LinkedIn Ingestion` | 2 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 6 | `LinkedIn Ingestion` | 3 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| | **Aggregate** | | | **6 of 6 proceed** | **must be > 0 on every row** | | | | | **must be 0** | **must be 0** | **must be `true`** | **must be `true`** | **must be empty** | **must be `true`** | **must total 0** | |
 
 **Guard** reads `proceed` on every counted row; a `no_op` means the row records a no-op and the row is replaced by a genuine scheduled run. Every numeric column is taken **verbatim from the `run_summary` event** of that run's published block — never computed by subtraction, and never inferred from the entity tables. The four status columns — `published`, `healthy`, `faults` and `marker_stamped` — are taken **verbatim from the `run_closed` line** of the same execution, which is the last line that execution wrote. **Provenance** reads exactly `live` or `fallback`, taken from the `run_summary` event's `provenance` member; no third value is valid.
 
 - [ ] **Every counted run is data-bearing: `Records processed` is non-zero on all six rows.** A zero means the run found nothing pending and demonstrated nothing, however cleanly it completed. **A row with `Records processed` of zero is not a counted run and must be replaced**, not explained. Evidence: the **Records processed** column, six non-zero values.
 - [ ] **The counters of each run match the exact expectations for its source.** Over a full reload the flows produce the values below, derived from the designed defects catalogued in [`../sample-data/README.md`](../sample-data/README.md). A different distribution means a file was edited or the transform is mismapped, not that the criterion was met more loosely.
 
-  | Flow | `processed` | `rejected` | `duplicates` | `unmatched` | `skipped` |
-  | --- | --: | --: | --: | --: | --: |
-  | `Crunchbase Ingestion` | **26** | **6** | **1** | **6** | **0** |
-  | `LinkedIn Ingestion` | **26** | **6** | **0** | **5** | **0** |
+  | Flow | `processed` | `rejected` | `duplicates` | `unmatched` | `skipped` | `errors` |
+  | --- | --: | --: | --: | --: | --: | --: |
+  | `Crunchbase Ingestion` | **26** | **6** | **1** | **6** | **0** | **0** |
+  | `LinkedIn Ingestion` | **26** | **6** | **0** | **5** | **0** | **0** |
+
+  **The LinkedIn figures assume its precondition 7 holds** — the Crunchbase flow has already run, so the parent `Startup` records exist. Run the LinkedIn flow against an empty startup table and every one of its rows is **rejected** for an unresolvable parent, which is [guide 03's documented behaviour](./manual-build/03-flow-linkedin-ingestion.md#62--the-shared-startup-upsert-path) rather than a fault. Record the order the two flows were run in.
 
   **`skipped` of zero is the expected value, not a missing one**, because `skipped` counts an upsert failure — a row that passed every cleaning rule and then could not be written. Any non-zero `skipped` is a defect to investigate before the run is recorded. **`duplicates` for LinkedIn cannot be non-zero at all**, because within-batch deduplication inspects only `startup` entries and this flow ingests none. Evidence: the five counters per run, eighteen values in total across the six runs.
 
-- [ ] **Every counted run reports `skipped` zero, `published` `true`, `healthy` `true`, `faults` empty and `marker_stamped` `true`.** `skipped` counts operational failures rather than cleaning outcomes — a write the platform would not complete, or a join row that would not insert — so a non-zero value is a genuine fault and a run carrying one is not fit to count. **Rejections are different and do not bear on health**: a record rejected by a cleaning rule is the specified behaviour working correctly. Evidence: the five columns above, read from the two sources named beneath the table.
+- [ ] **Every counted run reports `skipped` zero, `errors` zero, `published` `true`, `healthy` `true`, `faults` empty and `marker_stamped` `true`.** `errors` is the subset of `skipped` that is an incoming row whose own write failed, so `skipped` zero implies `errors` zero; a run reporting `errors` above zero names its fault `write_failures` rather than the wider `operational_skips`. `skipped` counts operational failures rather than cleaning outcomes — a write the platform would not complete, or a join row that would not insert — so a non-zero value is a genuine fault and a run carrying one is not fit to count. **Rejections are different and do not bear on health**: a record rejected by a cleaning rule is the specified behaviour working correctly. Evidence: the five columns above, read from the two sources named beneath the table.
 - [ ] **Crunchbase Ingestion — three consecutive guard-passing runs, zero unhandled errors.** Evidence: rows 1 to 3 above.
 - [ ] **LinkedIn Ingestion — three consecutive guard-passing runs, zero unhandled errors.** Evidence: rows 4 to 6 above.
 - [ ] **The three runs per flow are consecutive.** No guard-passing execution of that flow falls between them unrecorded. Evidence: the run identifiers in order, and confirmation that the log holds no guard-passing execution of that flow between the first and the third.
@@ -1389,7 +1462,7 @@ Two ATF tests, suite `BST FLOW suite — ingestion`, one per flow. **Neither tes
 - [ ] **Every staging row the batch claimed reached a terminal state.** Step 80's `Record Query` for this test's `import_run` token with `import_state` `pending` returns **zero** rows. Evidence: the query result per test.
 - [ ] **The run summary the ingestion emitted was asserted, and no second one exists.** Step 100 asserts exactly one `run_summary` line for this run's token with its exact counters, and that **no all-zero summary exists for the run** — the assertion that catches a `writeRunSummary()` call reintroduced into the setup step. Evidence: the step 100 output message per test.
 - [ ] **Skip the record and continue the run was asserted per record type, not as a total.** One call reports a non-zero `accepted` **and** a non-zero `rejected`, and **every** record type in the batch produced both a rejection and a processed row — Crunchbase 2 refused and 3 processed startups, 1 and 3 investors, 1 and 1 funding round; LinkedIn 1 and 2 founders, 1 and 1 executive, 1 and 2 job postings. A halt-on-first-error implementation reports rejections and nothing processed for the type it stopped on, wherever the sort placed it. Evidence: the per-type counts from each test's step 40 and step 70 messages.
-- [ ] **Half B asserted the flow and action wiring out of the platform's own tables.** Step 110 covers all eight wiring rows: both flows resolved from `sys_hub_flow` by **internal name** — `crunchbase_ingestion` and `linkedin_ingestion`, not the display labels — with **exactly one match each**, both `Published` and `Active`, their five actions each present and ordered, and the credential alias bound by name. Evidence: the step 110 output message per test.
+- [ ] **Half B asserted the flow and action wiring out of the platform's own tables.** Step 110 covers all eight wiring rows: both flows resolved from `sys_hub_flow` by **internal name** — `crunchbase_ingestion` and `linkedin_ingestion`, not the display labels — with **exactly one match each**, both `Published` and `Active`, their **seven** actions each present, published and ordered, the flow calling **all seven** alongside exactly one `If`, and the credential alias bound by name. Evidence: the step 110 output message per test.
   **A test without half B passes for the wrong reason**: half A exercises the mapper, and a flow that was never wired together would still let it pass. Evidence: confirmation that step 110 exists in both tests and that all eight rows hold.
 - [ ] **Neither test wrote a system property, and that was verified rather than assumed.** `ingestStaging()` reaches `writeRunSummary()`, which emits the `run_summary` event and **writes no property**; the completion marker is stamped **only** by `IngestionLogger.markRunComplete()`, which **no step of either test calls**.
   **Evidence to record:** the step 120 output message of each test, which asserts no `running` claim on either source, `source_mode` still reading `fallback` and no legacy bare value, and which writes the resulting property value into the step output. Record that value verbatim.
@@ -1416,7 +1489,7 @@ Two ATF tests, suite `BST FLOW suite — ingestion`, one per flow. **Neither tes
 - [ ] **Discovery is bounded.** The bounds are declared in the discovery action's own script, not as system properties: a `PAGE_SIZE` of 100 rows per request and a `MAX_CALLS` ceiling of 200 HTTP calls across all passes, with keyset pagination that advances on the last row's identifier and terminates on a short or empty page. Evidence: the two constants as built, the number of source records one counted run acquired, the number of pages and calls it made against the 200-call ceiling, and `0` occurrences of the `cursor_missing` fault code. On the fallback path, the run-ceiling result instead: rows consumed, rows left `pending`, and `ceiling_reached`. A run whose population was a single hard-coded record is not evidence of a bounded discovery; it is evidence of no discovery. **No cursor persists between runs**, and none needs to: the natural-key matcher makes a re-enumerated population idempotent, which the repeat-batch item below is what proves.
 - [ ] **The cadence state is per source and is persisted, not mined from the log.** It is held as one entry per source inside the single property `x_bst_startuptrk.ingestion.last_run_provenance`, in the form `source=provenance|state|stamp|run`, and is read through `AppProperties.getLastSuccessAt(source)`. Evidence: the `crunchbase` and `linkedin` entries read back after the counted runs, and confirmation that raising `x_bst_startuptrk.logging.level` to `warn` does **not** change the guard's decision. A guard that read the application log would be silently disabled by that property, and one flow's run would satisfy the other flow's cadence.
 - [ ] **A repeat of the identical batch added nothing.** Evidence: the per-table row counts and the record identifiers before and after a second run over the same input, showing the **same set** and not merely the same count. A scheduled flow re-reads its population every cadence window, so a build without working natural keys doubles the data on the second run and this is the only item that would notice.
-- [ ] **A partially linked record was reported as such, not as processed.** **There is no `partial` counter, and none may be invented**: `writeRunSummary()` publishes exactly `processed`, `rejected`, `skipped`, `duplicates`, `unmatched`, `rule3_deviations`, `events_dropped`, `provenance` and `source_system`. A funding round whose participant links could not all be reconciled is handled by `_applyEntry()` instead — the entry is **not** marked processed, its staging row settles at `error`, and `skipRecord()` counts it in **`skipped`**. Evidence: the `skipped` count of every counted run — `0` on a clean run — together with confirmation that no staging row of the run sits at `error`, and that the entity row count and the join row count agree. A round that was written while some of its participant links were not is not a success.
+- [ ] **A partially linked record was reported as such, not as processed.** **There is no `partial` counter, and none may be invented**: `writeRunSummary()` publishes exactly `processed`, `rejected`, `skipped`, `errors`, `duplicates`, `unmatched`, `rule3_deviations`, `events_dropped`, `provenance` and `source_system`, where `errors` is the subset of `skipped` that is an incoming row whose own write failed. A funding round whose participant links could not all be reconciled is handled by `_applyEntry()` instead — the entry is **not** marked processed, its staging row settles at `error`, and `skipRecord()` counts it in **`skipped`**. Evidence: the `skipped` count of every counted run — `0` on a clean run — together with confirmation that no staging row of the run sits at `error`, and that the entity row count and the join row count agree. A round that was written while some of its participant links were not is not a success.
 - [ ] **The unmatched-choice count was read from the counter, not derived.** Evidence: the `unmatched` member of each run summary, and confirmation it came from `IngestionLogger.counters()`. Accepted minus written is a different quantity that coincides on some batches; a build reporting the derived form leaves the real counter untested and the criterion's cleaning evidence unsupported.
 
 - [ ] **No flow test wrote the ingestion state property, so there was nothing to restore.** Both orchestrators finish by calling `IngestionLogger.markRunComplete()` **when a flow runs them** — that call writes this source's `succeeded` entry into the single property `x_bst_startuptrk.ingestion.last_run_provenance`, and that entry's stamp is the value the cadence guard compares. **The ATF tests do not reach it**: they call `ingestStaging()`, which reaches `writeRunSummary()` and writes no property, and part `8c` — the only caller of `markRunComplete()` — exists only inside a flow execution. A test that wrote the marker would silently disable the next scheduled run of that source for up to a full cadence window while passing, which is why the design avoids the write rather than reversing it. Evidence: the step 120 output message of each test, and residue query `R4` run after the suite, showing **no `running` state for either source** and `x_bst_startuptrk.ingestion.source_mode` still reading `fallback`. A `running` state left for either source blocks the next scheduled run of that source until the cadence-aged takeover clears it, so it is recorded and corrected before any run is counted.
@@ -1453,6 +1526,27 @@ The two flows, their cadence guards, the four cleaning rules and the run-summary
 > **Prompt section 10.0, criterion 5.** All 5 Service Portal routes render and navigate per prompt section 5.0, verified by walkthrough against the enumerated route list, **with the startup inclusion filter confirmed active on Home / Search**.
 
 The portal URL suffix is `bst`, and routing is query-parameter based. Every route resolves at `/bst?id=<page>`, with a record-scoped page adding `&sys_id=<record>`. **Those addresses describe where a route lives; they are not how this criterion reaches it.** The criterion requires the routes to *navigate*, so the walkthrough enters every route by activating a rendered control and reads the address bar only to confirm where the click landed. The pages, their widgets and their navigation controls are specified in [`./manual-build/04-service-portal-pages-and-widgets.md`](./manual-build/04-service-portal-pages-and-widgets.md), whose routing table enumerates fifteen hops and shows every route carrying at least one incoming hop.
+
+### 5.0 — the entry condition, checked before any route is walked
+
+**Read this before walking anything.** Criterion 5 is the only success criterion whose subject **does not exist when the deployment finishes**. The other four are evidenced against artifacts the Update Set installs; this one is evidenced against artifacts a human builds afterwards.
+
+The delivered Update Set carries **zero** `sp_portal`, `sp_page`, `sp_widget` and `sp_theme` records. That is a design consequence rather than an omission: only tables carrying the `update_synch` dictionary attribute are captured into `sys_update_xml`, the Service Portal tables do not carry it, and adding it to a table that lacks it out of the box is unsupported. The portal is therefore built by hand from [`./manual-build/04-service-portal-pages-and-widgets.md`](./manual-build/04-service-portal-pages-and-widgets.md), which is why that guide exists and why [`./manual-build-instructions.md`](./manual-build-instructions.md) sequences it fourth.
+
+**The eleven post-commit gates passing does not mean the portal exists.** Every one of them reads a table, a role or the scope record; not one touches a portal record. A deployment can clear [`./validation-gates.md`](./validation-gates.md) in full, be recorded ACCEPTED by [`./deployment-runbook.md`](./deployment-runbook.md), and still have five unbuilt routes. Reading a green runbook as evidence for this criterion is the single most likely way to record criterion 5 as met without having tested anything.
+
+Until guide 04 has been executed in full, criterion 5 is **unevaluated** — which is a distinct outcome from *not met*. Recording it as not met asserts a walkthrough happened and failed; recording it as unevaluated states the truth, that its subject had not been built. The summary table at the end of this document accepts either.
+
+Confirm all four counts below before starting 5a. Any zero means the guide has not been run, or has not been finished, and the walkthrough cannot begin.
+
+| # | What must exist | Expected | Built by |
+| --- | --- | --- | --- |
+| 1 | `sp_portal` with url suffix `bst` | exactly 1 | guide 04, step 1 |
+| 2 | `sp_theme` bound to that portal | exactly 1 | guide 04, step 2 |
+| 3 | `sp_page` records `bst_home`, `bst_company`, `bst_investor`, `bst_dashboard`, `bst_account` | exactly 5 | guide 04, step 3 |
+| 4 | `sp_widget` records, the eight `bst-*` widgets | exactly 8 | guide 04, step 4 |
+
+- [ ] **All four counts hold, and the portal's Main menu binding resolves.** The menu is checked here rather than in 5a because it is the only incoming control for two of the five routes: if it is unbound, three of the fifteen hops cannot be taken and 5a fails for a build reason rather than a navigation one. Evidence: the four counts as returned, and the menu record the portal's **Main menu** field points at.
 
 ### 5a — the five routes
 
@@ -1509,6 +1603,7 @@ The predicate is `active` true **AND** `headquarters_location` containing `Bosto
 - [ ] **Half 2 — the same startup is still visible to an administrator in the platform list view.** Open the `x_bst_startuptrk_startup` list inside the scoped application and confirm the record is present and readable. Evidence: the list view used and the record shown. A record failing the criteria **remains in the table for administrative visibility**; if it is absent here, the criteria have been implemented as an access control rather than as a query filter, which is a defect. **This half is a visibility check on the query filter and is not an access-control check**; it is the one place in this checklist where an observation made as the administrator is valid evidence, and it establishes nothing about field-level enforcement. Enforcement is the subject of [criterion 2](#criterion-2--all-three-roles-enforce-field-level-acls-on-100--of-the-seven-premium-fields) and of section [5d](#5d--the-premium-upsell-treatment-under-the-base-role), both of which require impersonation.
 - [ ] **Control — a startup that passes the criteria does appear in Home / Search.** Evidence: the record used and the search that returned it. Without this, half 1 could pass because the search returns nothing at all.
 - [ ] **`institutional_funding_last_5yrs` takes no part in the predicate.** Seed or use a passing startup with `institutional_funding_last_5yrs` false and confirm it still appears in the results. Evidence: the record used, its flag value, and its presence in the results. The resolution of this point is recorded in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md) and flagged in [`./gaps-and-flags.md`](./gaps-and-flags.md).
+- [ ] **Record the execution plan of this query — it has never been observed. Not acceptance-blocking, and it is not part of criterion 5's pass condition.** This predicate is the one hot query in the application with no supporting predicate index, and the reasoning for why no index would serve it — a leading-wildcard `CONTAINS` on `headquarters_location` and a two-value `active` — is derived from the declared index definitions rather than from a database plan. See [Declared indexes](./data-model.md#the-inclusion-filter-carries-no-predicate-index-and-no-index-would-serve-it). On the woken instance, run the Home / Search read and capture the plan — **System Diagnostics > Stats > Slow Queries**, or a session SQL debug of the same read — and record whether an index is used and which. Evidence: the query captured and the plan observed, or the explicit statement that the plan could not be captured and why. A plan that contradicts the reasoning is a documentation defect to correct, not a criterion failure.
 
 ### 5d — the premium upsell treatment under the base role
 
@@ -1522,6 +1617,7 @@ The predicate is `active` true **AND** `headquarters_location` containing `Bosto
 ### 5e — the supported viewport
 
 - [ ] **The walkthrough was performed at 1024 pixels wide or above.** 1024 pixels is the declared supported floor of this portal; a narrower viewport is out of scope and a defect observed only below it is not a defect of this criterion. Evidence: the viewport width used for the walkthrough.
+- [ ] **The ragged lower edge on the Dashboard / Trends route was recognised as the recorded gap and not raised as a defect.** The two chart panels sit in one row at `col-md-6 col-lg-6` and are sized by their own bucket counts, so their lower edges differ — **161.00 px** at 1024 pixels and **172.11 px** at 1366 and above, the larger figure decomposing into 58.11 px of chart and 114.00 px of companion table. Confirm only that **nothing clips, scrolls vertically or overlaps** and that the whole difference is empty page inside the shorter panel's own column. This is gap **G8** in [`./gaps-and-flags.md`](./gaps-and-flags.md#g8-in-detail--the-unequal-lower-edges-of-the-two-dashboard-chart-panels), accepted as delivered because every remedy is closed by the zero-hard-coded-values or layout-primitives rule; closing it needs a written exception or an equal-height mechanism the design system does not provide. Evidence: the observation that neither panel clips or overlaps.
 
 ### 5f — the rendered quality gates at the floor
 
@@ -1602,7 +1698,7 @@ Three items, one per project rule. Each is a check performed against the deliver
   - [ ] **The Mermaid source in each container is raw Mermaid syntax**, so it parses when extracted from the file without HTML entity decoding. Evidence: the result of extracting each block's text and parsing it.
   - [ ] **The reveal.js configuration matches the required values**: hash routing enabled, slide transitions, the controls tutorial disabled, and a 1920 by 1080 stage. Evidence: the four configuration values as written in the initialisation call.
   - [ ] **The three library versions match the pinned values** — reveal.js **5.1.0**, Mermaid **11.4.0**, Lucide **0.460.0** — and **the three font families** — **Inter**, **Space Grotesk**, **Fira Code** — are requested at the specified weights. Evidence: the four source URLs and the font link as written.
-  - [ ] **Every versioned static asset the deck loads — all five, the three scripts and the two stylesheets — carries a SHA-384 `integrity` attribute and `crossorigin="anonymous"`, exactly as gate [G-8](#g-8--deck-structure) states. The Google Fonts stylesheet carries `crossorigin` without an integrity hash, because its bytes are not stable, and it is the one documented exception**, and the document carries a Content Security Policy restricting sources to the pinned origins. The webfont stylesheet is documented as the one exception, since Google Fonts serves a per-user-agent response that no fixed hash can cover. Evidence: the `integrity` value on each script and stylesheet, the policy as written, and the statement of the font exception.
+  - [ ] **Every versioned static asset the deck loads — all five, the three scripts and the two stylesheets — carries a SHA-384 `integrity` attribute and `crossorigin="anonymous"`, exactly as gate [G-8](#g-8--deck-structure) states. The Google Fonts stylesheet carries `crossorigin` without an integrity hash, because its bytes are not stable, and it is the one documented exception**, and the document carries a Content Security Policy restricting sources to the pinned origins. The webfont stylesheet is documented as the one exception, since Google Fonts serves a per-user-agent response that no fixed hash can cover. **Two further remote responses are neither assets this deck declares nor exceptions to this item**, and both are accounted for under gate [G-8](#g-8--deck-structure): the three `fonts.gstatic.com` font binaries the webfont stylesheet requests, and the `source-sans-pro.css` that reveal's own `white.css` reaches through an `@import`, which no `integrity` attribute can reach. **The policy is a standing maintenance obligation, not a decoration.** Under `default-src 'none'` it admits `cdn.jsdelivr.net`, `unpkg.com`, `fonts.googleapis.com` and `fonts.gstatic.com` alongside `'self'` and `data:`, per `D-382`, so **an asset added later from any other origin is blocked outright rather than degraded** until the policy admits it — and whoever adds one must extend the policy in the same change. The block is observable rather than silent: it fires a `securitypolicyviolation` event naming the `blockedURI` and the `effectiveDirective`, and the browser reports it as a console error, which is why the zero-violation and zero-console-message readings corroborate each other. Evidence: the `integrity` value on each script and stylesheet, the policy as written, the statement of the font exception, and the count of `securitypolicyviolation` events across a full traversal, which must be `0`.
   - [ ] **The full brand system is applied and embedded inline** — the complete custom-property block, the slide-type classes and the component classes. Evidence: the presence of the custom-property block in the inline style element.
   - [ ] **The canonical theme file exists at [`../../blitzy-deck/references/blitzy-reveal-theme.css`](../../blitzy-deck/references/blitzy-reveal-theme.css) and its CSS is byte-identical to the deck's inline style block.** Evidence: the result of comparing the file against the inline block.
   - [ ] **Every status claim on every slide is true of the delivery as it stands.** A claim that the application is tested, that coverage is passing, or that it is ready to install is only permitted once the corresponding evidence exists in this checklist. Until then the deck says designed, specified or pending validation. Evidence: one line per status claim, naming the checklist item that substantiates it or the hedged wording used instead.
@@ -1629,7 +1725,7 @@ The delivery is complete when, and only when, every one of the following holds *
 
 - [ ] **All nine pre-delivery gates pass.** [Section A](#a--pre-delivery-gates-g-1-to-g-9), 9 of 9.
 - [ ] **The Update Set imports, previews with an empty error-type problem set, passes both pre-commit checks, and commits.** [Section B](#b--deployment-gates), and specifically `PRE-COMMIT-01` and `PRE-COMMIT-02` of [section B3](#b3--the-import-completeness-assertion), **each of which must read `313`** — the update-record count the validator reported — before the commit is issued. Both are preconditions of the gate set rather than members of it, and neither is waivable.
-- [ ] **All eleven required post-commit gates pass**, `11 of 11`, **`GATE-COL-01` passes** — 12 of 12 acceptance-blocking checks — and the four non-normative diagnostics were run and recorded whatever their outcome. There is no partial pass, no waiver and no exempt gate among the eleven, and a failure of any one of them initiates the rollback; `GATE-COL-01` blocks acceptance without triggering it. [Section B](#b--deployment-gates), with the eleven listed at [section B4](#b4--the-eleven-required-post-commit-gates).
+- [ ] **All eleven required post-commit gates pass**, `11 of 11`, **`GATE-COL-01` and `GATE-SEC-01` to `GATE-SEC-03` pass** — 15 of 15 acceptance-blocking checks — and the one non-normative diagnostic, `GATE-SEC-04`, was run and recorded whatever its outcome. There is no partial pass, no waiver and no exempt gate among the eleven, and a failure of any one of them initiates the rollback; the four class 2 checks block acceptance without triggering it. [Section B](#b--deployment-gates), with the eleven listed at [section B4](#b4--the-eleven-required-post-commit-gates).
 - [ ] **All 10 suites and 36 tests pass, with the coverage gate satisfied.** [Section H1](#h1--the-coverage-gate).
 - [ ] **All five success criteria are verified with their stated evidence**, and every ingestion run's provenance is recorded as `live` or `fallback`. Criteria [1](#criterion-1--all-seven-tables-exist-with-100--of-their-fields), [2](#criterion-2--all-three-roles-enforce-field-level-acls-on-100--of-the-seven-premium-fields), [3](#criterion-3--all-six-rest-resources-return-correct-paginated-responses-and-a-429-with-a-retry-value), [4](#criterion-4--scheduled-flows-ingest-and-clean-on-the-configured-cadence-with-zero-unhandled-errors) and [5](#criterion-5--all-five-service-portal-routes-render-and-navigate-as-specified). **Verified means observed on an instance and written into an evidence field.** The presence of an artifact is not evidence that the criterion it serves is met, and no criterion may be inferred from a passing build, a green validator or a committed Update Set.
 - [ ] **Every partial implementation is recorded as partial.** Cleaning rule 3 is **PARTIAL** on the six choice lists that declare no `Other` member, and `LinkedIn Ingestion` has **no generally available live acquisition path**, so a credential alone never makes it `live validated`. Both are flagged in [`./gaps-and-flags.md`](./gaps-and-flags.md), and neither is recorded as met. Evidence: the `rule3_deviations` counts from criterion 4, and the two flag entries.
@@ -1691,7 +1787,7 @@ The delivery is complete when, and only when, every one of the following holds *
 | Criterion 3 — REST resources | met / not met |
 | Criterion 4 — scheduled flows | met / not met / **not evidenced** |
 | Criterion 4 — executions observed | of 6 recorded |
-| Criterion 5 — portal routes | met / not met |
+| Criterion 5 — portal routes | met / not met / **unevaluated**, when guide 04 had not been run |
 | Coverage gate — suites | of 10 passing |
 | Coverage gate — tests | of 36 passing |
 | Rule 1, Rule 2, Rule 3 | verified / not verified |

@@ -6,15 +6,15 @@ These gates run **after** the Update Set at [`../update-set/x_bst_startuptrk_bos
 
 **The seven entity-table gates read table metadata rather than table rows**, because the seven entity tables are delivered sealed against every external route — `access` `package_private`, `read_access` `false`, `ws_access` `false` — so no Table API request reaches them at all. Each gate therefore asserts the same two facts a row read was asked to establish, and asserts them more precisely: that the table committed, and that it committed with the sealed posture the access-control design depends on. The ACL-respecting read path is exercised separately by `GATE-SEC-04`. The reasoning, the alternative and the residual risk are recorded at `D-027` in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
-**This document additionally defines five checks that are not deployment gates, and they do not all carry the same weight** — see [Three classes of check](#three-classes-of-check-and-what-each-one-blocks). `GATE-COL-01` is **acceptance-required and non-rollback**: success criterion 1 depends on it, so a failure blocks acceptance, but the remedy is to correct the Update Set and re-import rather than to delete a scope whose tables and roles all committed. `GATE-SEC-01` through `GATE-SEC-04` are **non-normative diagnostics**: recorded on every deployment because each observes something the required eleven cannot see, and blocking neither acceptance nor triggering rollback. A non-normative diagnostic **must not** be cited as an entry condition by any other document in this package, and no manual-build guide may make one a precondition of its own work.
+**This document additionally defines five checks that are not deployment gates, and they do not all carry the same weight** — see [Three classes of check](#three-classes-of-check-and-what-each-one-blocks). `GATE-COL-01` is **acceptance-required and non-rollback**: success criterion 1 depends on it, so a failure blocks acceptance, but the remedy is to correct the Update Set and re-import rather than to delete a scope whose tables and roles all committed. `GATE-SEC-01` through `GATE-SEC-03` are **acceptance-required and non-rollback** on the same terms: each observes an access-posture fact the required eleven cannot see, and a weakened posture is not something acceptance may pass over — but the remedy is again to correct the delivered records and re-import, never to delete a scope that committed. They differ from `GATE-COL-01` in one respect only, and it is stated wherever they appear: a failure may alternatively be closed by the platform owner recording written acceptance of the named exposure in the evidence record. `GATE-SEC-04` is the single **non-normative diagnostic**: recorded on every deployment, blocking neither acceptance nor rollback, because it is the one check here that is not an HTTP request — it is a background script a human runs in the platform UI, so no deployment pipeline can assert on it. A non-normative diagnostic **must not** be cited as an entry condition by any other document in this package, and no manual-build guide may make one a precondition of its own work.
 
 | Class | Members | Blocks acceptance? | Triggers rollback? |
 | --- | --- | --- | --- |
 | **1 — required deployment gate** | `GATE-TBL-01` to `-07`, `GATE-ROLE-01` to `-03`, `GATE-SCOPE-01` — **eleven** | **Yes** | **Yes** |
-| **2 — acceptance-required, non-rollback** | `GATE-COL-01` — **one** | **Yes** | No |
-| **3 — non-normative diagnostic** | `GATE-SEC-01`, `GATE-SEC-02`, `GATE-SEC-03`, `GATE-SEC-04` — **four** | No | No |
+| **2 — acceptance-required, non-rollback** | `GATE-COL-01`, `GATE-SEC-01`, `GATE-SEC-02`, `GATE-SEC-03` — **four** | **Yes** | No |
+| **3 — non-normative diagnostic** | `GATE-SEC-04` — **one** | No | No |
 
-The rollback decision is therefore *eleven of eleven*, and the acceptance decision is *twelve of twelve* — the eleven plus `GATE-COL-01`. Nothing in this package may restate either number as anything else.
+The rollback decision is therefore *eleven of eleven*, and the acceptance decision is *fifteen of fifteen* — the eleven, plus `GATE-COL-01` and `GATE-SEC-01` through `GATE-SEC-03`. Nothing in this package may restate either number as anything else.
 
 One further condition is recorded and is **not a check of this delivery at all**: the instance's XML entity-resolution configuration, under [Instance prerequisite for XML entity resolution](#instance-prerequisite-for-xml-entity-resolution). There is no `GATE-SEC-05` in this gate set.
 
@@ -28,7 +28,7 @@ This document carries assertions and their pass and fail conditions only. Every 
 
 ## Referenced documents
 
-**This document is executable on its own.** The eleven required gates, `GATE-COL-01`, the four non-normative diagnostics, the one external instance prerequisite and the two pre-commit checks, the request shape, every target, query, expected result and pass condition, the transient-error retry rule, the failure handling and the evidence record are stated here in full. An operator needs no other file to run them and record the outcome.
+**This document is executable on its own.** The eleven required gates, the four acceptance-required non-rollback checks, the one non-normative diagnostic, the one external instance prerequisite and the two pre-commit checks, the request shape, every target, query, expected result and pass condition, the transient-error retry rule, the failure handling and the evidence record are stated here in full. An operator needs no other file to run them and record the outcome.
 
 **Every document named below is delivered and readable.** Each link resolves to a file in this package, among them `../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`, `./data-model.md` and `./access-control.md`, so a reader can follow any link and read the content the statement around it describes; no link is a forward reference to something still to be written.
 
@@ -46,7 +46,7 @@ Every gate below is stated with the same seven fields.
 | **Query** | The query string appended to the target, in the form defined under [Common request shape](#common-request-shape). |
 | **Expected result** | The HTTP status and response body the request returns when the gate passes. |
 | **Pass condition** | The mechanical test applied to that response. A gate passes only when this test holds exactly. |
-| **On failure** | The action taken when the pass condition does not hold. Every **On failure** cell below is read subject to the [Transient-error retry rule](#transient-error-retry-rule): where a cell says any status other than `200` initiates the rollback, an `HTTP 500` initiates it only after the single 30-second retry has also failed. |
+| **On failure** | The action taken when the pass condition does not hold. Every **On failure** cell below is read subject to the [Transient-error retry rule](#transient-error-retry-rule): where a cell says any status other than `200` initiates the rollback, a **retryable server error** — `HTTP 500`, `502`, `503` or `504` — initiates it only after the single 30-second retry has also failed. |
 
 ## Common request shape
 
@@ -80,24 +80,44 @@ Accept: application/json
 
 The `sys_scope.scope` term is a dot-walk from `sys_db_object` to the scope record, so a match proves the table committed **into `x_bst_startuptrk`** rather than into the Global scope. `sysparm_limit=2` is deliberate: one is the pass, and a second row is the ambiguity the gate must be able to see rather than silently truncate.
 
-Five response forms are referenced by the pass conditions below.
+**Six** response forms are referenced by the pass conditions below. The sixth is not a gate outcome at all, and it is listed first among the `HTTP 200` forms because it is the one that most easily passes for a real result.
 
 | Response | Meaning |
 | --- | --- |
+| `HTTP 200` with a **non-JSON `Content-Type`** — an HTML hibernation notice, a login page or a redirect landing page | **Not a gate outcome. Do not evaluate the gate, do not record a failure, and do not initiate the rollback.** The instance is asleep, or the session is not authenticated, and the request never reached the application tier. See [A `200` that is not an answer](#a-200-that-is-not-an-answer). |
 | `HTTP 200` with a body carrying a `result` array | The read succeeded. The array holds the matching records, of which there may be zero. |
 | `HTTP 200` with an **empty** `result` array | **A failure for every gate and check in this document**, because each one asserts that a named record exists. For `GATE-TBL-01` through `GATE-TBL-07` an empty array means no `sys_db_object` record carries that table name inside the `x_bst_startuptrk` scope, so the table did not commit. |
 | `HTTP 400` with body `{"error":{"message":"Invalid table <target>","detail":null},"status":"failure"}` | The named target table does not exist on the instance. No gate in this document targets an application table, so on a correct deployment this form appears only if a platform table name was mistyped. It is also the expected response to a read of an application table, which is why no gate issues one — see [Common request shape](#common-request-shape). |
 | `HTTP 401` or `HTTP 403` | The credentials are invalid, or the account lacks the role the target requires. Every gate in this document reads a platform table and needs `admin`, so a `401` or `403` is a credential or role problem rather than a statement about the application: correct the account and reissue before reading the response as a gate outcome. |
-| `HTTP 500` | The instance returned a server error. This form is transient and is subject to the retry rule below. |
+| A **retryable server error** — `HTTP 500`, `HTTP 502`, `HTTP 503` or `HTTP 504` | The instance, or the edge in front of it, returned a server error. This form is transient and is subject to the retry rule below. |
+
+### A `200` that is not an answer
+
+**Every gate below tests a record count or a field value, and every one of those tests is applied to a parsed JSON body. A response that is not JSON has no gate outcome in it — neither a pass nor a fail — and treating it as a fail is worse than treating it as nothing, because the fail path initiates the [rollback](#failure-handling), and the rollback deletes a scope.**
+
+This is not hypothetical. It was the observed condition of the target instance: a hibernated instance answers **every** path — the Table API, the scoped Scripted REST API, `/login.do`, `/stats.do` and paths that do not exist at all — with `HTTP 200`, `Content-Type: text/html`, a byte-identical **5904**-byte hibernation page, `Server: snow_adc` (the edge tier answering because no application node is running), **no** `Set-Cookie` and **no** `WWW-Authenticate`. The content type stays `text/html` even when `Accept: application/json` is negotiated explicitly, and a valid administrator credential presented over HTTP Basic changes nothing. A logged-out or expired session produces the same shape from a live instance: an HTML login page under a `200`.
+
+**Before evaluating any gate in this document, apply the same four-part test [`./deployment-runbook.md`](./deployment-runbook.md#pre-flight-1--instance-reachable-and-credentials-valid) applies at pre-flight 1** — the status is `200`, the `Content-Type` is `application/json`, the body parses as JSON, and the parsed body carries a top-level `result` member. A response failing any of the four is classified as this sixth form.
+
+| Condition | Disposition |
+| --- | --- |
+| All four hold | Evaluate the gate against its pass condition, as written. |
+| Status `200`, `Content-Type` not `application/json`, or the body does not parse, or there is no top-level `result` | **Stop the gate run.** Record the observed `Content-Type`, the body length and the first 200 characters of the body — **never** a credential. Do **not** mark any gate `pass` or `fail`; mark the run **not evaluated**. Restart from pre-flight 1 in [`./deployment-runbook.md`](./deployment-runbook.md#pre-flight-checks): wake the instance or re-authenticate, then run the whole gate set again from the first gate. |
+
+**Do not health-check this condition on the status code.** A status-only check reports a hibernating instance as healthy, because the status is `200`. Detect it on content — the content type, the absence of a top-level `result`, or the absence of a `Set-Cookie` on a form login — exactly as the four-part test does.
+
+**Gates already recorded in this run are not carried forward.** A gate set that stopped on this form is re-run in full rather than resumed, because the instance state that produced it is not local to one gate.
 
 ### Transient-error retry rule
 
 This rule applies to every required gate, to every additive hardening check, and to the two checks under [Pre-commit import completeness](#pre-commit-import-completeness), and is stated here in full. The failure matrix in [`./deployment-runbook.md`](./deployment-runbook.md) carries the same rule, and the per-operation retry policy stated there governs the non-idempotent steps of the import sequence rather than these reads.
 
-- A gate that returns `HTTP 500` is **retried exactly once**, after waiting **30 seconds**. The retry reissues the identical request.
-- The gate is then evaluated on the retry's response. A retry returning `HTTP 200` that satisfies the pass condition is a **pass**. A retry returning `HTTP 500` again, or any other status that does not satisfy the pass condition, is a **fail**.
-- A gate is retried **at most once**. A second `HTTP 500` is final.
-- No status other than `HTTP 500` is retried. `HTTP 400`, `HTTP 401` and `HTTP 403` are evaluated on their first response and fail immediately.
+**A retryable server error means any of `HTTP 500`, `HTTP 502`, `HTTP 503` or `HTTP 504`.** The class is four statuses rather than one because the request does not reach the platform directly: it passes through an edge that answers in its own right, and the QA run of 2026-08-09 measured that edge returning `502 Bad Gateway` on between 21.7 % and 25.0 % of requests issued in parallel. A gate that treated only `500` as transient would fail on a `502` at its first response — and a failing required gate initiates the rollback, so a momentary edge error would destroy a deployment that had committed correctly. Every one of the four is a statement about the transport, not about the application.
+
+- A gate that returns a **retryable server error** is **retried exactly once**, after waiting **30 seconds**. The retry reissues the identical request.
+- The gate is then evaluated on the retry's response. A retry returning `HTTP 200` that satisfies the pass condition is a **pass**. A retry returning a retryable server error again, or any other status that does not satisfy the pass condition, is a **fail**.
+- A gate is retried **at most once**. A second retryable server error is final.
+- No status outside that class is retried. `HTTP 400`, `HTTP 401`, `HTTP 403` and `HTTP 404` are evaluated on their first response and fail immediately. In particular a `200` carrying HTML rather than JSON is **not** retried — it is a hibernating or unauthenticated instance, which no wait resolves.
 - No gate is compared against a previous deployment.
 
 Apart from this rule, each gate is evaluated on one response.
@@ -213,14 +233,16 @@ A check in this document belongs to exactly one of three classes. **The distinct
 | Class | Members | Blocks acceptance? | Triggers rollback? | What the class covers |
 | --- | --- | --- | --- | --- |
 | **1 — required deployment gate** | `GATE-TBL-01` to `-07`, `GATE-ROLE-01` to `-03`, `GATE-SCOPE-01` — **11** | **Yes** | **Yes** | These are the acceptance set AAP section 0.11.2 and the deployment environment define. A failure means the commit did not produce the application, so the scope is deleted and the deployment retried. |
-| **2 — acceptance-required, non-rollback** | `GATE-COL-01` — **1** | **Yes** | **No** | Success criterion 1 requires all 53 binding columns, and this check is how their **count** is machine-verified. A failure means the delivered schema is wrong, which acceptance cannot pass over — but the remedy is to correct the Update Set and re-import, not to delete a scope whose tables and roles all committed correctly. |
-| **3 — non-normative diagnostic** | `GATE-SEC-01`, `GATE-SEC-02`, `GATE-SEC-03`, `GATE-SEC-04` — **4** | No | No | Each observes something the required eleven cannot see and is recorded on every deployment, but the posture it reports is not part of any success criterion's pass condition. A failure is reported, investigated and carried with the deployment record. |
+| **2 — acceptance-required, non-rollback** | `GATE-COL-01`, `GATE-SEC-01`, `GATE-SEC-02`, `GATE-SEC-03` — **4** | **Yes** | **No** | `GATE-COL-01`: success criterion 1 requires all 53 binding columns, and this check is how their **count** is machine-verified. The three `GATE-SEC` checks: each observes an access-posture fact the required eleven cannot see. A failure of any of the four means the delivered artifact is wrong in a way acceptance cannot pass over — but the remedy is to correct the Update Set and re-import, not to delete a scope whose tables and roles all committed correctly. A `GATE-SEC` failure may alternatively be closed by the platform owner recording written acceptance of the named exposure; `GATE-COL-01` has no such route. |
+| **3 — non-normative diagnostic** | `GATE-SEC-04` — **1** | No | No | The one check here that is not an HTTP request: a background script a human runs in the platform UI, so no deployment pipeline can assert on it. It is recorded on every deployment because it exercises the one read path the sealed tables leave open, but the posture it reports is not part of any success criterion's pass condition. A failure is reported, investigated and carried with the deployment record. |
 
 **Class 2 exists because of a real asymmetry, not as a hedge.** Criterion 1 in [`./validation-checklist.md`](./validation-checklist.md) asks that all seven tables exist **with 100 % of their fields**, and it evidences the field list two ways: a manual field-by-field walk of all 53 columns, and this automated count. Classing the count as merely advisory would leave the only machine-checkable evidence of the binding field list carrying no weight — so a deployment that committed 45 columns would clear every check that mattered and be recorded as accepted. Classing it as a rollback trigger would be equally wrong: deleting the scope discards seven correctly committed tables and three correctly committed roles to fix a dictionary defect that lives in the Update Set.
 
 So `GATE-COL-01` **blocks acceptance and does not trigger rollback**, and both halves of that are stated wherever it appears.
 
-**No class 3 diagnostic decides anything.** Read the four of them, record their outcomes, and act on a failure as its own **On failure** cell directs — which in no case is the rollback. No document in this package may cite a class 3 diagnostic as a precondition of any work, and no operator may hold a deployment on one.
+**The same asymmetry puts `GATE-SEC-01` to `GATE-SEC-03` in class 2, and it is why they are not diagnostics.** Each names an exposure rather than a preference: `GATE-SEC-01` failing means raw staged payloads are reachable over an external route, `GATE-SEC-02` failing means an application table permits a cross-scope write, and `GATE-SEC-03` failing means the REST endpoints carry no authorisation. A deployment in any of those states cannot be recorded as accepted merely because the eleven gates passed — which is exactly what classing them as advisory would permit. Deleting the scope would be equally wrong, and for the same reason it is wrong for `GATE-COL-01`: the defect lives in the delivered dictionary or access-control records, not in a scope whose tables and roles committed correctly. The one route out that `GATE-COL-01` does not have is a written acceptance of the named exposure recorded by the platform owner, because an exposure can be a knowing operational choice in a way a wrong column count cannot.
+
+**The single class 3 diagnostic decides nothing.** Read `GATE-SEC-04`, record its outcome, and act on a failure as its own **On failure** cell directs — which is neither the rollback nor an acceptance hold. No document in this package may cite it as a precondition of any work, and no operator may hold a deployment on it.
 
 ### Acceptance-required check 1 — entity column count
 
@@ -234,9 +256,9 @@ An encoded query is written `[field][operator][value]` with **no separator betwe
 
 The per-table split, for diagnosing a count that is off: Startup 12, Founder 6, Executive 6, Investor 6, Funding round 8, Job posting 9, News article 6. 12 + 6 + 6 + 6 + 8 + 9 + 6 = 53. The three supporting tables are excluded from this check; their columns are documented in [`./data-model.md`](./data-model.md).
 
-### Non-normative diagnostics 1 to 4 — the access posture and the secured read path
+### The access posture and the secured read path — `GATE-SEC-01` to `GATE-SEC-04`
 
-Three checks recording that the access posture the application depends on actually committed. The posture is **uniform across all ten tables** — every one of them is `package_private` with `read_access` and `ws_access` `false` and every write, configuration and schema flag `false` — and these checks assert it in one read each, across the ten together, rather than table by table. All three are class 3: recorded on every deployment, and neither acceptance-blocking nor rollback-triggering.
+Four checks in total: **three acceptance-required checks** recording that the access posture the application depends on actually committed, followed by the **single class 3 diagnostic** that exercises the read path those checks leave open. The posture is **uniform across all ten tables** — every one of them is `package_private` with `read_access` and `ws_access` `false` and every write, configuration and schema flag `false` — and `GATE-SEC-01` to `GATE-SEC-03` assert it in one read each, across the ten together, rather than table by table. **All three are class 2**: recorded on every deployment, **acceptance-blocking**, and never rollback-triggering — each names an exposure rather than a preference, as [Three classes of check](#three-classes-of-check-and-what-each-one-blocks) sets out, and each may alternatively be closed by the platform owner recording written acceptance of the named exposure. `GATE-SEC-04`, below them, is the class 3 diagnostic and decides nothing.
 
 `GATE-SEC-01` deliberately overlaps gates 1 to 7, which assert the same three flags per table. The overlap is the point: the seven gates fail one table at a time and name it, while `GATE-SEC-01` answers "are all ten closed" in a single read and is the check that would notice a supporting table drifting open, which no required gate covers.
 
@@ -244,9 +266,9 @@ Three checks recording that the access posture the application depends on actual
 
 | Check ID | Assertion | Target | Query | Expected result | Pass condition | On failure |
 | --- | --- | --- | --- | --- | --- | --- |
-| `GATE-SEC-01` | Every one of the ten application tables is reachable from the `x_bst_startuptrk` scope only, over no external route. | `sys_db_object` | `sysparm_query=nameSTARTSWITHx_bst_startuptrk_^access=package_private^read_access=false^ws_access=false&sysparm_fields=name,access,read_access,ws_access&sysparm_limit=50` | `HTTP 200` with a `result` array holding exactly 10 records — the seven entity tables and the three supporting tables, all with `access` `package_private`, `read_access` `false` and `ws_access` `false`. | Status is exactly `200` and `result` holds exactly 10 records. | Fewer than 10: at least one table is open on a route the application's own controls never see. Take the difference between the ten names in [`./data-model.md`](./data-model.md) and the names returned — each missing name is a table whose read posture did not commit. The staging table is the one that matters most, because it holds verbatim upstream payloads and unvalidated personal data. More than 10: a table outside the delivered set carries the scope prefix. Report `GATE-SEC-01` with the names observed and investigate. **No rollback**, and acceptance is not blocked — but a missing entity table will already have failed its own required gate, and a missing supporting table is a defect in the delivered artifact whose remedy is to correct the dictionary record and re-import. |
-| `GATE-SEC-02` | No application table permits any cross-scope write, configuration or schema operation. | `sys_db_object` | `sysparm_query=nameSTARTSWITHx_bst_startuptrk_^create_access=false^update_access=false^delete_access=false^alter_access=false^configuration_access=false&sysparm_fields=name,create_access,update_access,delete_access,alter_access,configuration_access&sysparm_limit=50` | `HTTP 200` with a `result` array holding exactly 10 records. | Status is exactly `200` and `result` holds exactly 10 records. | Fewer than 10: at least one table accepts writes or schema changes from outside the scope, which would let an out-of-scope caller alter application data through a route the application's own controls never see. **This is the posture check that matters.** Report `GATE-SEC-02` with the names of the tables missing from the result and treat it as a blocking defect in the delivered artifact: correct the dictionary records, re-export and re-import. Do not put the application into use with this check failing. **No rollback** — the defect lives in the Update Set. |
-| `GATE-SEC-03` | Both REST endpoint access controls committed. | `sys_security_acl` | `sysparm_query=type=REST_Endpoint^nameSTARTSWITHBoston Startup Tracker API&sysparm_fields=name,type,operation` | `HTTP 200` with a `result` array holding exactly 2 records, `Boston Startup Tracker API read` and `Boston Startup Tracker API write`, both with `operation` `execute`. | Status is exactly `200`, `result` holds exactly 2 records, and both carry `operation` `execute`. | Fewer than 2: endpoint authorisation on the Scripted REST API falls back to the platform's broad default REST access control, which admits any authenticated internal user. Report `GATE-SEC-03` and correct it before the API is exposed. **No rollback.** |
+| `GATE-SEC-01` | Every one of the ten application tables is reachable from the `x_bst_startuptrk` scope only, over no external route. | `sys_db_object` | `sysparm_query=nameSTARTSWITHx_bst_startuptrk_^access=package_private^read_access=false^ws_access=false&sysparm_fields=name,access,read_access,ws_access&sysparm_limit=50` | `HTTP 200` with a `result` array holding exactly 10 records — the seven entity tables and the three supporting tables, all with `access` `package_private`, `read_access` `false` and `ws_access` `false`. | Status is exactly `200` and `result` holds exactly 10 records. | Fewer than 10: at least one table is open on a route the application's own controls never see. Take the difference between the ten names in [`./data-model.md`](./data-model.md) and the names returned — each missing name is a table whose read posture did not commit. The staging table is the one that matters most, because it holds verbatim upstream payloads and unvalidated personal data. More than 10: a table outside the delivered set carries the scope prefix. Report `GATE-SEC-01` with the names observed and investigate. **Acceptance is blocked** — a table outside the scope's reach exposes raw staged payloads over an external route — until the dictionary records are corrected and re-imported, or the platform owner records written acceptance of the named exposure. **No rollback**: the defect lives in the Update Set, and a missing entity table will already have failed its own required gate. |
+| `GATE-SEC-02` | No application table permits any cross-scope write, configuration or schema operation. | `sys_db_object` | `sysparm_query=nameSTARTSWITHx_bst_startuptrk_^create_access=false^update_access=false^delete_access=false^alter_access=false^configuration_access=false&sysparm_fields=name,create_access,update_access,delete_access,alter_access,configuration_access&sysparm_limit=50` | `HTTP 200` with a `result` array holding exactly 10 records. | Status is exactly `200` and `result` holds exactly 10 records. | Fewer than 10: at least one table accepts writes or schema changes from outside the scope, which would let an out-of-scope caller alter application data through a route the application's own controls never see. **This is the posture check that matters.** Report `GATE-SEC-02` with the names of the tables missing from the result and treat it as a blocking defect in the delivered artifact: correct the dictionary records, re-export and re-import, or record the platform owner's written acceptance of the exposure. **Acceptance is blocked** and the application is **not put into use** while this check is failing. **No rollback** — the defect lives in the Update Set. |
+| `GATE-SEC-03` | Both REST endpoint access controls committed. | `sys_security_acl` | `sysparm_query=type=REST_Endpoint^nameSTARTSWITHBoston Startup Tracker API&sysparm_fields=name,type,operation` | `HTTP 200` with a `result` array holding exactly 2 records, `Boston Startup Tracker API read` and `Boston Startup Tracker API write`, both with `operation` `execute`. | Status is exactly `200`, `result` holds exactly 2 records, and both carry `operation` `execute`. | Fewer than 2: endpoint authorisation on the Scripted REST API falls back to the platform's broad default REST access control, which admits any authenticated internal user. Report `GATE-SEC-03` and correct it before the API is exposed. **Acceptance is blocked** until both controls are corrected and re-imported, or the exposure is accepted in writing by the platform owner. **No rollback.** |
 
 **Why `GATE-SEC-01` expects ten and not three.** An earlier revision delivered the seven entity tables `access` `public` with `read_access` and `ws_access` `true`, so that the eleven required gates could read each table's rows directly, and `GATE-SEC-01` then expected the three supporting tables alone. That posture opened a second read route to entity data — the native Table API for an authenticated caller, and unsecured record access for a script in any other application scope — and that route sits outside the application's fixed-window rate limiter and outside the two `REST_Endpoint` execution controls. **All ten tables are now closed**, the seven required table gates read the dictionary instead of the rows, and this check expects all ten. There is no second read route to compensate for, so the residual-risk register that accompanied the open posture no longer applies; the current disposition is recorded in [`./gaps-and-flags.md`](./gaps-and-flags.md) and the decision, its alternatives and the superseded one in [`../../docs/decisions/DECISION_LOG.md`](../../docs/decisions/DECISION_LOG.md).
 
@@ -295,9 +317,9 @@ It reads through `GlideRecordSecure`, so it evaluates the same table-level and f
 
 **The acceptance contract is eleven gates.** 7 entity-table gates + 3 role-record gates + 1 scope-record gate = **11 required gates**, exactly the set AAP section 0.11.2 and the deployment environment define.
 
-1 column-count check = **1 acceptance-required, non-rollback check**, class 2.
+1 column-count check + 3 access-posture checks = **4 acceptance-required, non-rollback checks**, class 2.
 
-4 access-posture and secured-read checks = **4 non-normative diagnostics**, class 3.
+1 secured-read check = **1 non-normative diagnostic**, class 3.
 
 **Sixteen checks in total: 12 of them block acceptance, 11 of those 12 trigger rollback, and the 4 class 3 diagnostics block nothing.** The classes are defined under [Three classes of check](#three-classes-of-check-and-what-each-one-blocks).
 
@@ -319,26 +341,28 @@ The eleven required gates, in the order they are run:
 
 **The aggregate rollback pass condition is that all eleven required gates pass — `11 of 11`.** There is no partial pass. No required gate may be skipped, deferred or waived, and no other check may be substituted for one.
 
-The one acceptance-required, non-rollback check:
+The four acceptance-required, non-rollback checks:
 
 | # | Check ID | Assertion | Blocks acceptance | Triggers rollback |
 | --- | --- | --- | --- | --- |
 | A1 | `GATE-COL-01` | The seven entity tables carry exactly 53 columns between them. | **Yes** | No |
+| A2 | `GATE-SEC-01` | All ten application tables are reachable from the `x_bst_startuptrk` scope only. | **Yes** | No |
+| A3 | `GATE-SEC-02` | No application table permits any cross-scope write, configuration or schema operation. | **Yes** | No |
+| A4 | `GATE-SEC-03` | Both REST endpoint access controls committed. | **Yes** | No |
 
-The four non-normative diagnostics, recorded and never required:
+**Together with the eleven above, these four are the acceptance decision: `15 of 15`.** `A2` to `A4` are the only checks in this set whose failure has a second remedy — a written acceptance of the named exposure recorded by the platform owner — and `A1` has no such route.
+
+The one non-normative diagnostic, recorded and never required:
 
 | # | Check ID | Assertion |
 | --- | --- | --- |
-| D1 | `GATE-SEC-01` | All ten application tables are reachable from the `x_bst_startuptrk` scope only. |
-| D2 | `GATE-SEC-02` | No application table permits any cross-scope write, configuration or schema operation. |
-| D3 | `GATE-SEC-03` | Both REST endpoint access controls committed. |
-| D4 | `GATE-SEC-04` | Each of the seven entity tables resolves and is readable through the ACL-respecting path after the commit. |
+| D1 | `GATE-SEC-04` | Each of the seven entity tables resolves and is readable through the ACL-respecting path after the commit. |
 
 **The rollback pass condition** is that all eleven class 1 gates pass. There is no partial pass among them, none is advisory, and none may be skipped, deferred or waived.
 
-**The acceptance pass condition** is that all eleven class 1 gates pass and `GATE-COL-01` passes — **twelve checks in total**. The four class 3 diagnostics are run and recorded on every deployment whatever their outcome, and none of them blocks acceptance. A class 2 or class 3 failure leaves the deployment in place and blocks acceptance until the delivered artifact is corrected and re-imported, or — for a class 3 check only — until the platform owner records written acceptance of the exposure in the evidence record; neither class ever initiates the rollback. The **rollback** condition remains the eleven class 1 gates alone.
+**The acceptance pass condition** is that all eleven class 1 gates pass and all four class 2 checks pass — `GATE-COL-01` and `GATE-SEC-01` through `GATE-SEC-03` — **fifteen checks in total**. The single class 3 diagnostic, `GATE-SEC-04`, is run and recorded on every deployment whatever its outcome, and it never blocks acceptance. A class 2 failure leaves the deployment in place and blocks acceptance until the delivered artifact is corrected and re-imported, or — for one of the three `GATE-SEC` checks only — until the platform owner records written acceptance of the exposure in the evidence record; neither class 2 nor class 3 ever initiates the rollback. The **rollback** condition remains the eleven class 1 gates alone.
 
-One further condition is recorded and is **not a check of this delivery at all**: the instance's XML entity-resolution configuration, under [Instance prerequisite for XML entity resolution](#instance-prerequisite-for-xml-entity-resolution). It is owned by the platform owner, is not settable or fixable from within this application, and is reported rather than gated. There is no `GATE-SEC-04` in this gate set.
+One further condition is recorded and is **not a check of this delivery at all**: the instance's XML entity-resolution configuration, under [Instance prerequisite for XML entity resolution](#instance-prerequisite-for-xml-entity-resolution). It is owned by the platform owner, is not settable or fixable from within this application, and is reported rather than gated. There is no `GATE-SEC-05` in this gate set.
 
 `PRE-COMMIT-01` and `PRE-COMMIT-02` are preconditions of this gate set, not members of it, so neither count above is changed by them. They are equally not waivable: the eleven required gates are evaluated only on a deployment whose commit had records to apply.
 
@@ -346,19 +370,37 @@ Gates 1 to 7, `GATE-COL-01` and `GATE-SEC-04` cover the seven entity tables only
 
 The three supporting tables — `x_bst_startuptrk_m2m_round_investor`, `x_bst_startuptrk_ingest_staging` and `x_bst_startuptrk_rate_limit_counter` — carry no required gate. They are `package_private` with `ws_access` `false`, exactly as the seven entity tables now are, so no Table API read of them can succeed and none is attempted; they are documented in [`./data-model.md`](./data-model.md) and exercised by the Automated Test Framework suites built in [`./manual-build/05-atf-test-suites.md`](./manual-build/05-atf-test-suites.md).
 
+### What a full pass does not establish
+
+**Fifteen of fifteen is not "the application is delivered".** Every check in this document reads a record the **Update Set** committed, so a full pass establishes exactly that the declarative half of the deliverable installed correctly — the ten tables and their columns, choices and indexes, the three roles, the access controls, the eight Script Includes, the REST definition and its 31 operations, the 11 properties, the three business rules, the scheduled job, the views and the application menu.
+
+**It establishes nothing about the artifacts the platform builds through its own interface, because the Update Set contains none of them.** The record counts in the delivered file are zero for every one of these types, and no gate here reads any of them:
+
+| Artifact class | Record types, count in the Update Set | Built by |
+| --- | --- | --- |
+| The portal, its theme, the five pages and the eight widgets | `sp_portal`, `sp_theme`, `sp_page`, `sp_widget`, `sp_container`, `sp_row`, `sp_rectangle`, `sp_instance` — **0 of each** | [`./manual-build/04-service-portal-pages-and-widgets.md`](./manual-build/04-service-portal-pages-and-widgets.md) |
+| The two Connection & Credential Aliases | **0** | [`./manual-build/01-connection-credential-aliases.md`](./manual-build/01-connection-credential-aliases.md) |
+| The two Flow Designer ingestion flows | `sys_hub_flow` — **0** | [`./manual-build/02-flow-crunchbase-ingestion.md`](./manual-build/02-flow-crunchbase-ingestion.md) and [`./manual-build/03-flow-linkedin-ingestion.md`](./manual-build/03-flow-linkedin-ingestion.md) |
+| The ten ATF suites and their 36 tests | `sys_atf_test`, `sys_atf_test_suite`, `sys_atf_step` — **0 of each** | [`./manual-build/05-atf-test-suites.md`](./manual-build/05-atf-test-suites.md) |
+
+**The consequence to state plainly, because a reader of a green gate report will otherwise assume the opposite: immediately after the commit, none of the five Service Portal routes exists.** `/bst` resolves to nothing. That is the expected state, not a failure — **success criterion 5 is not evaluated at this point and must not be recorded as failing**, and neither may criterion 3's rate-limit assertions or criterion 4's scheduled runs, which likewise depend on artifacts built later. No check in this document is designed to detect their absence, and none should be added: the split between what travels in an Update Set and what does not is a platform constraint, and prompt section 11.0 answers it with manual build instructions rather than with more gates.
+
+The runbook states the same boundary at the point an operator reaches it, with the consequence of each absence: [What is not installed, and what the gates deliberately do not test](./deployment-runbook.md#what-is-not-installed-and-what-the-gates-deliberately-do-not-test).
+
 ## Failure handling
 
 On failure of any one of the **eleven required** gates:
 
+0. **First establish that the response is a gate outcome at all.** If it is the sixth response form — `HTTP 200` with a non-JSON content type, an unparseable body, or no top-level `result` — this is **not a failure** and steps 1 to 3 do not apply: the gate is **not evaluated**, no rollback is initiated, and the run restarts from pre-flight 1 per [A `200` that is not an answer](#a-200-that-is-not-an-answer). Reaching step 3 on a sleeping or unauthenticated instance would delete a scope over a condition that is not a deployment defect.
 1. Report the failing gate by its identifier, together with the HTTP status and the response body observed.
-2. If the observed status is `HTTP 500` and the gate has not yet been retried, wait 30 seconds and reissue the identical request exactly once, per the [Transient-error retry rule](#transient-error-retry-rule). Evaluate the gate on that response and report the retry's status and body alongside the first.
-3. Initiate the rollback when the pass condition still does not hold — that is, immediately for any status other than `HTTP 500`, and for `HTTP 500` only after the single retry has also failed. **The rollback is permitted only under the conditions [`./deployment-runbook.md`](./deployment-runbook.md) states**, which include a proven clean install and an exact scope identifier captured this run; where those conditions do not hold, report the failure and stop rather than delete.
+2. If the observed status is a **retryable server error** — `HTTP 500`, `502`, `503` or `504` — and the gate has not yet been retried, wait 30 seconds and reissue the identical request exactly once, per the [Transient-error retry rule](#transient-error-retry-rule). Evaluate the gate on that response and report the retry's status and body alongside the first.
+3. Initiate the rollback when the pass condition still does not hold — that is, immediately for any status outside the retryable-server-error class, and for a status inside it only after the single retry has also failed. **The rollback is permitted only under the conditions [`./deployment-runbook.md`](./deployment-runbook.md) states**, which include a proven clean install and an exact scope identifier captured this run; where those conditions do not hold, report the failure and stop rather than delete.
 
 The failing gate is reported before the rollback is initiated. A gate that passes on its retry is a pass, is recorded as such, and initiates no rollback.
 
 **On failure of `GATE-COL-01`**, follow steps 1 and 2 above and then **stop without rolling back**. The deployment stays in place, and **acceptance is blocked**: record the observed column count and the per-table split, correct the Update Set so the seven entity tables carry exactly the 53 binding columns, and re-import. Do not delete the scope — the tables and roles committed correctly, and deleting them discards working artifacts to fix a dictionary defect that lives in the source file. Do not record criterion 1 as met while this check is failing.
 
-**On failure of one of the four class 3 diagnostics**, no rollback is initiated under any circumstance, and **acceptance is blocked**. Follow steps 1 and 2 above, report the check by its identifier with the status and body observed, act on its own **On failure** cell, and record the outcome in the evidence record. The application is **not put into use** while a class 3 check is failing: either the delivered posture is corrected and re-imported, or the platform owner records written acceptance of the named exposure in the evidence record. That policy applies to all three equally — a `GATE-SEC-01` failure exposes raw staged payloads to an external route and a `GATE-SEC-03` failure removes endpoint authorisation, neither of which is milder than the cross-scope write access `GATE-SEC-02` covers; the remedy there is to correct the dictionary records and re-import, not to destroy the installation.
+**On failure of one of the three `GATE-SEC` access-posture checks**, no rollback is initiated under any circumstance, and **acceptance is blocked**. Follow steps 1 and 2 above, report the check by its identifier with the status and body observed, act on its own **On failure** cell, and record the outcome in the evidence record. The application is **not put into use** while one of them is failing: either the delivered posture is corrected and re-imported, or the platform owner records written acceptance of the named exposure in the evidence record. That policy applies to all three equally — a `GATE-SEC-01` failure exposes raw staged payloads to an external route and a `GATE-SEC-03` failure removes endpoint authorisation, neither of which is milder than the cross-scope write access `GATE-SEC-02` covers; the remedy there is to correct the dictionary records and re-import, not to destroy the installation.
 
 `PRE-COMMIT-01` and `PRE-COMMIT-02` are handled differently, and their own rows state it: they are read before the commit, so a failure means the commit does not happen and there is no scope to roll back. The remedy is to remove the retrieved update set by [Removing a failed retrieved update set](#removing-a-failed-retrieved-update-set), correct the Update Set XML and restart the import sequence. The [Transient-error retry rule](#transient-error-retry-rule) applies to both of them as it does to the gates.
 
@@ -399,15 +441,21 @@ The eleven required gates are recorded next. **This table alone carries the acce
 | Acceptance-required check ID | Result | Timestamp (UTC) | Observed count and per-table split |
 | --- | --- | --- | --- |
 | `GATE-COL-01` | | | expected 53 = 12 + 6 + 6 + 6 + 8 + 9 + 6 |
-| **Aggregate** | | | 12 of 12 acceptance-blocking checks required — the 11 gates above and this one. The four diagnostics below are recorded, never required |
+| **Aggregate** | | | 15 of 15 acceptance-blocking checks required — the 11 gates above, this one and the three `GATE-SEC` access-posture checks below. `GATE-SEC-04` is recorded, never required |
 
-The four non-normative diagnostics are recorded separately again, so a reader can never mistake one of them for part of the acceptance set:
+The three access-posture checks are recorded next, and they **are** part of the acceptance set:
 
 | Security check ID | Result | Timestamp (UTC) | Note, and the written acceptance recorded for any failure |
 | --- | --- | --- | --- |
 | `GATE-SEC-01` | | | |
 | `GATE-SEC-02` | | | |
 | `GATE-SEC-03` | | | |
+| **Aggregate** | | | Acceptance-required, non-rollback. A failure blocks acceptance until the delivered records are corrected and re-imported, or until the platform owner records written acceptance of the named exposure in this row. |
+
+The single non-normative diagnostic is recorded separately again, so a reader can never mistake it for part of the acceptance set:
+
+| Diagnostic check ID | Result | Timestamp (UTC) | Note |
+| --- | --- | --- | --- |
 | `GATE-SEC-04` | | | seven log lines, each `valid=true can_read=true` |
 | **Aggregate** | | | Non-normative. Recorded, not required. A failure here does not fail the deployment and does not block acceptance. |
 
@@ -420,7 +468,7 @@ The instance prerequisite is recorded as an observation rather than a result:
 
 Every table is filled in the same way. Record `pass` or `fail` in **Result**. Record the time of the request in **Timestamp (UTC)** in `YYYY-MM-DD HH:MM:SS` form. Record the observed HTTP status and the `result` record count in **Note**, and for a failing gate or check also the response body. For `GATE-TBL-01` through `GATE-TBL-07` record the four field values returned — `name`, `access`, `read_access` and `ws_access` — because all four are asserted, and a `fail` is diagnosed from which of them departed. For `GATE-COL-01` record the count returned **and** the per-table split, since a count that is off is diagnosed from the split. For the instance prerequisite, record each property value as read, or `absent`, and the name of the platform owner it was reported to where it is not the hardened value. Record no credential value in any field.
 
-Where a gate was retried under the [Transient-error retry rule](#transient-error-retry-rule), record the retry in the same row: note the first `HTTP 500`, the 30-second wait and the retry's status, and set **Timestamp (UTC)** to the retried request. **Result** carries the outcome of the retry, so a gate that returned `HTTP 500` and then `HTTP 200` is recorded as `pass` with the retry noted. A row that shows `pass` with no note of a retry means the gate passed on its first response.
+Where a gate was retried under the [Transient-error retry rule](#transient-error-retry-rule), record the retry in the same row: note the first status — whichever of `HTTP 500`, `502`, `503` or `504` was observed — the 30-second wait and the retry's status, and set **Timestamp (UTC)** to the retried request. **Result** carries the outcome of the retry, so a gate that returned `HTTP 502` and then `HTTP 200` is recorded as `pass` with the retry noted. A row that shows `pass` with no note of a retry means the gate passed on its first response.
 
 ## Related documents
 

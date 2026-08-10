@@ -93,8 +93,8 @@ The order above is fixed by four dependencies. Each is mechanical.
 %%{init: {'flowchart': {'rankSpacing': 22, 'padding': 6}}}%%
 flowchart LR
     US["Update Set"] --> G01["01 aliases"]
-    G01 --> G02["02 Crunchbase: 5 actions + 1 flow"]
-    G01 --> G03["03 LinkedIn: 5 actions + 1 flow"]
+    G01 --> G02["02 Crunchbase: 7 actions + 1 flow"]
+    G01 --> G03["03 LinkedIn: 7 actions + 1 flow"]
     G02 --> G03
     G03 --> G04["04 portal"]
     G04 --> G06["06 staging"]
