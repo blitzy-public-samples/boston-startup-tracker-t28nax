@@ -229,6 +229,8 @@ Every item must be established and recorded before the pre-flight checks run; ti
       ```
 
       Require `HTTP 200` and a non-empty `value` naming the release and patch level. If the release predates that floor, **request a new Personal Developer Instance rather than downgrading feature usage.** **Do not** read `glide.buildname` or `glide.buildtag`: neither property exists on the instance, so the query returns an empty `result` array and the release cannot be established from it. The requirement is `REQ-RB-08` of [Requirements carried to the deployment runbook](./validation-gates.md#requirements-carried-to-the-deployment-runbook).
+
+      **This one read establishes two things, and both are compared.** The family token answers the feature floor — [Establishing the release floor](#establishing-the-release-floor). The **patch level in the same value** answers the security baseline — [Establishing the security patch baseline](#establishing-the-security-patch-baseline) — which is a separate comparison against a separate table, and reading the value without making it is what turns a check into an assumption.
 - [ ] **The instance refuses XML entity resolution.** Read both properties and require `glide.stax.allow_entity_resolution` to be `false` and `glide.stax.whitelist_enabled` to be `true`:
 
       ```text
@@ -272,6 +274,40 @@ GET {SERVICENOW_INSTANCE_URL}/api/now/table/sys_properties?sysparm_query=name=gl
 | `HTTP 401` or `HTTP 403` | A failure of pre-flight 1, which has already passed. Restart from [Environment validation](#environment-validation--run-this-first). |
 
 **One caution on the ordering.** The alphabet restarted after `zurich`, so `australia` is **later** than `zurich` despite sorting earlier. Any family name not listed in the table above is therefore not to be judged by sorting it: establish its position from the published release notes and record the finding. Where the position cannot be established, treat it as below the floor and abort — the cost of a needless new instance is trivial beside the cost of discovering the shortfall in guide 02.
+
+### Establishing the security patch baseline
+
+**The release read above already returns the patch level; this is the comparison that uses it.** The feature floor and the security baseline are different questions with different answers: an instance can sit far above the Yokohama feature floor and still be below the patch level at which a known, actively exploited platform vulnerability was fixed. A runbook that extracts the family token and discards the patch number has answered the first question and left the second one open while appearing to have closed it.
+
+**The advisory this comparison exists for.** `CVE-2026-6875`, vendor advisory `KB3137947`, disclosed 2026-07-13: an unauthenticated sandbox escape in the platform's script execution reachable through a pre-authentication endpoint, CVSS 4.0 `9.5`, with exploitation reported in the wild within days of disclosure. It is a **platform** defect, not an application one — nothing in `x_bst_startuptrk` introduces it and nothing in `x_bst_startuptrk` can remediate it, because the fix is a platform patch and prompt section 6.0 forbids this application from modifying anything outside its own scope. What this deployment can do is **refuse to install onto an instance that is below the fixed level**, and record the level it observed.
+
+**Extract the patch number** from the same `glide.war` value read above. Its form is `glide-<family>-<date>__patch<n><suffix>-<date>`, so for `glide-zurich-06-25-2025__patch10-...` the family token is `zurich` and the patch number is `10`.
+
+**Compare against the fixed level for that family.** The vendor states the fixed releases per family; the pass rule below is the mechanical form of them.
+
+| Family | Fixed at | Pass rule |
+| --- | --- | --- |
+| `zurich` | Patch 7b **or** Patch 9 | Patch number **9 or above**; **or** patch 7 with the `b` hot fix applied. **Patch 8 does not pass** — it is above 7b's number and below 9, and neither of the two fixed lines covers it. |
+| `yokohama` | Patch 12 Hot Fix 1b **or** Patch 13 | Patch number **13 or above**; **or** patch 12 with hot fix `1b` applied. |
+| `australia` | Patch 2 | Patch number **2 or above**. |
+| `brazil` | Early availability or general availability | Any. The family shipped with the fix. |
+| any other family | Not stated here | **Do not infer it.** Read the fixed level from advisory `KB3137947` for that family and record which level the advisory stated, then apply it. An unestablished baseline is not a passing one. |
+
+**Pass condition.** The family and patch number extracted from `glide.war` satisfy the pass rule for that family. Record the full `glide.war` value, the family token, the patch number and the rule applied in the [deployment log](#deployment-log) — all four, because the value alone does not show which comparison was made against it.
+
+**On failure.**
+
+| Observed | Action |
+| --- | --- |
+| A patch level **below** the family's fixed level | **Abort the deployment. Nothing is uploaded.** A Personal Developer Instance is ServiceNow-hosted, and the vendor patched hosted instances on 2026-07-13, so an instance below the fixed level is an anomaly rather than a routine state: report it, request a freshly provisioned instance, and do not proceed on the current one. Installing an application onto an instance with a known unauthenticated code-execution path would place this application's data behind a boundary that does not hold, and no access control this application ships is meaningful on such an instance — the 49 ACLs and the secured read path are enforced by the platform whose sandbox is the thing in question. |
+| A `value` that yields a family token but **no parsable patch number** | **Abort.** The baseline could not be established. Read the release and patch level from the instance's own statistics page, confirm it against advisory `KB3137947`, and record which level it is before continuing. |
+| A family not listed above | Establish the fixed level for that family from the advisory, record it, then apply the comparison. Do not pass the check by absence of a row. |
+
+**Two things this check deliberately does not do.**
+
+It does **not** apply the vendor's interim mitigations. The published stop-gaps for this advisory include setting `glide.script.use.sandbox` to true, which the vendor documents as a **one-way change that cannot be undone**, along with several `glide.*` escaping and sanitisation properties. All of them live in the Global scope, all are outside `x_bst_startuptrk`, and one of them is irreversible on the instance — so this runbook reads a patch level and aborts rather than reconfiguring an instance it does not own. Where an operator judges a mitigation necessary, that is an instance-owner decision taken outside this deployment and recorded outside this artifact.
+
+It does **not** claim the application is exposed or unexposed by anything it ships. The application's own posture against the class of defect the advisory belongs to is a separate, already-satisfied matter: all 8 Script Includes are `client_callable = false` and `access = package_private`, none runs elevated, no script in the scope evaluates caller-supplied text, and the authorization boundary is 49 ACLs read through `GlideRecordSecure`. That posture is stated in [`./access-control.md`](./access-control.md) and verified by the ATF suites; it is not a mitigation for a platform sandbox escape and is not offered as one.
 
 ## Pre-delivery validation — gates G-1 and G-2
 
@@ -447,6 +483,18 @@ Check every one of the four, in that order, and record which one failed.
 **Hibernation covers the whole instance, including the scoped API.** Every path answers the same page, not only the Table API: `/api/now/table/sys_remote_update_set`, `/api/now/table/sys_scope`, `/api/now/table/sys_user_role`, each of the seven application tables, `/api/x_bst_startuptrk/v1/startups`, `/login.do` and `/stats.do` were all observed returning a byte-identical `5904`-byte HTML body. The content type stays `text/html` even when `Accept: application/json` is negotiated explicitly, and the `Server` response header reads `snow_adc` — the edge answering because no application node is running. No path reports the condition as an error status, which is exactly why check 1 tests the content type and the body rather than the status.
 
 **Waking it needs a different credential from the one this runbook uses.** The wake path the hibernation page itself offers, `https://developer.servicenow.com/dev.do#!/home?wu=true`, is the developer portal's *unauthenticated* home rather than a sign-in form; signing in from there arrives at `https://signon.servicenow.com/x_snc_sso_auth.do?pageId=login`, which asks for a **ServiceNow ID** — the email-keyed developer-portal account that owns the instance. `SERVICENOW_USERNAME` and `SERVICENOW_PASSWORD` are the instance's own administrator credential and do not satisfy it. That gate is identifier-first and its single field is labelled **Email**, so an instance-style user name such as `admin` cannot be submitted at all: the **Next** control stays **disabled** for the whole attempt — no password field is ever presented, **no error text is displayed**, and the field acquires no `aria-invalid` — because the control is enabled only for an identifier carrying an `@` and a dotted domain. The refusal is therefore silent rather than announced, and nothing is transmitted; the developer-portal wake endpoints answer `HTTP 401` to the same credential, and `GET /api/snc/devportal/instance/wakeup` answers `HTTP 401` with `User is not authenticated`. An operator holding only the two environment secrets therefore cannot wake this instance and must escalate to the ServiceNow ID that owns it. Until it is awake every step below is un-runnable, and so is all ATF execution — which is what leaves the coverage gate in [`validation-checklist.md`](./validation-checklist.md) unevaluable rather than failed.
+
+**How to tell when it is awake, without spending a credential.** "Wake it, wait 2 minutes and restart the pre-flight checks" leaves the retry gated on a timer, and a timer answers the wrong question. Three signals answer the right one, all of them credential-free, and any one of them is sufficient to justify restarting the checks. Re-run the four-part check above only once one of them holds.
+
+| # | Probe | Asleep | Awake |
+| --- | --- | --- | --- |
+| 1 | `GET /api/now/table/sys_remote_update_set?sysparm_limit=1` with **no** `Authorization` header | `HTTP 200`, `Content-Type: text/html`, no `WWW-Authenticate` | **`HTTP 401` carrying a `WWW-Authenticate` header.** A live instance must challenge an unauthenticated Table API call. This is the single most decisive probe, and it needs no credential at all. |
+| 2 | Any response header set from the instance | No `X-Transaction-Id`; `Server: snow_adc` | **`X-Transaction-Id` present.** Every real application node emits it; the edge does not. |
+| 3 | `GET` a path that **cannot** exist, for example `/this-path-cannot-exist-<nonce>.xyz` | `HTTP 200` with the same `5904`-byte hibernation body | **`HTTP 404`**, or a redirect to the login page. The edge answers every unknown path with the hibernation page; a live instance does not. |
+
+**Probe 3 is worth stating because it is the strongest discriminator and the easiest to get wrong in the other direction.** The edge is **not** returning HTML for literally everything: the hibernation page's own assets are served correctly, and a request for `/gilroy-bold-webfont.woff2` returns `HTTP 200` with `Content-Type: font/woff2` and a body whose first four bytes are `wOF2`. What the edge hosts is a small purpose-built static site — one HTML page and its fonts — and it answers **every other path**, application, API and nonexistent alike, with that one page. So the correct reading of a `200` here is not "the server is broken" but "no application node is running", and the correct probe is one whose *live* answer is an error rather than a success.
+
+**Record the probe used and its observed values in the deployment log**, not merely the conclusion. A retry justified by a timer and a retry justified by an observed `401` look identical in a log that records only the restart.
 
 **On failure.** **Abort.** Do not proceed to check 2.
 

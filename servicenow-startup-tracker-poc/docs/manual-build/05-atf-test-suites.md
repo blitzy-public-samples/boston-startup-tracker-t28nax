@@ -3194,7 +3194,7 @@ The token row itself is written to the staging table by step 20 with `import_sta
 
 The one deliberate exception is the update case inside the rule 3 step, which calls `ingestStaging()` a second time under a **different** token (`<T>-update`) to prove that an uncoercible value leaves a previously stored value in place. It touches no row of the main batch.
 
-**Only two further calls into `IngestionMapper` appear anywhere in this suite, and neither touches the batch step 40 ingested.** The rule 3 step's second `ingestStaging()` call runs under the `<T>-update` token described above, and [the participant carrier assertion](#the-participant-carrier-assertion) at step 95 calls `resolveParticipants()`, which is a pure function of its argument. Both are supplementary assertions over a disjoint input.
+**Only three further calls into `IngestionMapper` appear anywhere in this suite, and none touches the batch step 40 ingested.** The rule 3 step's second `ingestStaging()` call runs under the `<T>-update` token described above; the rule 2 step's [invisible-variant assertion](#the-invisible-variant-assertion--dedupe-converges-on-the-rendered-name) runs under the `<T>-invis` token and additionally calls `startupKey()`, which is a pure function of its two arguments; and [the participant carrier assertion](#the-participant-carrier-assertion) at step 95 calls `resolveParticipants()`, likewise a pure function. All three are supplementary assertions over a disjoint input.
 
 
 ### Rule 2 — deduplication (Crunchbase) and parent resolution (LinkedIn)
@@ -3274,6 +3274,83 @@ Fixture rows 1, 2 and 3 form the triple. Row 3 is the negative control: without 
     return true;
 })(outputs, steps, params, stepResult, assertEqual);
 ```
+
+#### The invisible-variant assertion — dedupe converges on the rendered name
+
+**The case-differing pair above does not detect the defect this assertion covers.** `startupKey()` lowercases and trims, so a build that trimmed and lowercased and did nothing else passes the whole Crunchbase assertion — and would still let a name carrying a character that paints nothing produce a second row that renders identically to the first. Append the block below to the **same rule 2 step**. It stages four rows of its own under the token `<T>-invis`, so the batch step 40 ingested is untouched, and it makes three assertions the pair above cannot:
+
+| Assertion | What a build that fails it looks like |
+| --- | --- |
+| The two variants that render `<T> Invis Co` collapse to **one** row | A stored value still carries U+200B or U+00AD, so two rows render identically and a caller cannot tell them apart. This is the assertion that fails on a trim-only build |
+| The two variants that render `<T> InvisCo` collapse to **one** row of their own | The same defect, on the other rendered form |
+| **No** accepted `name` contains any member of the zero-width and directional formatting class | The value was neutralised somewhere downstream — in a widget, or in a log line — rather than at the write path, so a second reader still sees the original |
+
+Note precisely what is and is not asserted: **two** rows survive, not one, because two visibly different names were supplied. `<T> Invis Co` and `<T> Invis<U+200B>Co` do not render the same, and merging them would require substituting a space for the invisible character, which would also merge two genuinely distinct company names. The invariant is *one accepted row per distinct rendered name*, and it is the invariant a caller can actually check on the portal. The character inventory and the reason each class receives a different action are in [`../api-reference.md` → Two character classes, two actions](../api-reference.md#two-character-classes-two-actions); the one implementation is `AppProperties.normaliseText()`, which `IngestionMapper._string()` — and therefore `trimStrings()`, `startupKey()` and every comparison in that class — reads its text through.
+
+```javascript
+    // ---- supplementary: rule 2 converges on the RENDERED name, under its own token ----
+    var INVIS = '\u200B';               // zero-width space
+    var SHY = '\u00AD';                 // soft hyphen
+    var RLO = '\u202E';                 // right-to-left override
+    var BOM = '\uFEFF';                 // byte order mark
+    // Two variants render '<T> Invis Co'; two render '<T> InvisCo'. All four share one HQ.
+    var VARIANTS = [T + ' Invis Co', BOM + T + ' Invis Co' + RLO,
+        T + ' Invis' + INVIS + 'Co', T + ' Invis' + SHY + 'Co'];
+    var v = 0;
+    for (v = 0; v !== VARIANTS.length; v++) {
+        var row = new GlideRecord('x_bst_startuptrk_ingest_staging');
+        row.initialize();
+        row.setValue('source_system', 'crunchbase');
+        row.setValue('record_type', 'startup');
+        row.setValue('import_state', 'pending');
+        row.setValue('import_run', T + '-invis');
+        row.setValue('name', VARIANTS[v]);
+        row.setValue('headquarters_location', 'Boston, MA');
+        row.setValue('active', 'true');
+        row.insert();
+    }
+    new IngestionMapper().ingestStaging(T + '-invis', 'crunchbase', T + '-invis', 'fallback');
+
+    var invis = new GlideRecord('x_bst_startuptrk_startup');
+    invis.addQuery('name', 'STARTSWITH', T + ' Invis');
+    invis.query();
+    var storedNames = [];
+    while (invis.next()) {
+        storedNames.push(String(invis.getValue('name')));
+    }
+    function countOf(name) {
+        var n = 0, i = 0;
+        for (i = 0; i !== storedNames.length; i++) {
+            if (storedNames[i] === name) { n = n + 1; }
+        }
+        return n;
+    }
+    assertEqual({ name: 'the two variants rendering "' + T + ' Invis Co" produced exactly one row',
+        shouldbe: 1, value: countOf(T + ' Invis Co') });
+    assertEqual({ name: 'the two variants rendering "' + T + ' InvisCo" produced exactly one row',
+        shouldbe: 1, value: countOf(T + ' InvisCo') });
+    assertEqual({ name: 'one accepted row per distinct rendered name, and no more',
+        shouldbe: 2, value: storedNames.length });
+    assertEqual({ name: 'no accepted name carries a zero-width or directional formatting character',
+        shouldbe: true,
+        value: !(/[\u00ad\u061c\u180e\u200b-\u200f\u202a-\u202e\u2060-\u2064\u2066-\u2069\ufeff\ufff9-\ufffb]/
+            .test(storedNames.join('|'))) });
+    // The key itself, asserted as a pure function so a failure names the cause rather than
+    // the symptom: the two forms carry two keys, and each form carries exactly one.
+    var mapper = new IngestionMapper();
+    assertEqual({ name: 'startupKey ignores a leading BOM and a trailing RLO',
+        shouldbe: mapper.startupKey(T + ' Invis Co', 'Boston, MA'),
+        value: mapper.startupKey(BOM + T + ' Invis Co' + RLO, 'Boston, MA') });
+    assertEqual({ name: 'startupKey treats a zero-width space and a soft hyphen alike',
+        shouldbe: mapper.startupKey(T + ' Invis' + INVIS + 'Co', 'Boston, MA'),
+        value: mapper.startupKey(T + ' Invis' + SHY + 'Co', 'Boston, MA') });
+    assertEqual({ name: 'startupKey keeps the two rendered forms distinct',
+        shouldbe: true,
+        value: mapper.startupKey(T + ' Invis Co', 'Boston, MA')
+            !== mapper.startupKey(T + ' Invis' + INVIS + 'Co', 'Boston, MA') });
+```
+
+**Rollback covers these four staging rows and the two startups they create**, on the same basis as every other record a step of this suite inserts: they are created inside the test transaction, under a token no other row carries.
 
 #### The LinkedIn assertion — parent resolution, and its failure
 

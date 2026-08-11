@@ -110,7 +110,7 @@ The **Status** column is therefore an assertion about the artifact, and it takes
 | Portal pages / widgets | 5 / 8 | **5 / 8** | **Matches** | — |
 | Fallback dataset files / rows | 6 / not specified | **6 / 65** | **Matches** — the plan fixes the file count and not the row count | — |
 | Flag inventory entries | 10 | **19**, `F1` to `F19`, of which three carry the *partially implemented, flagged* disposition | **Matches** — the plan's ten are all present, and every further entry is a requirement with no clean platform equivalent found while building, which is exactly what prompt section 11.0 requires be flagged | D-088 for the extension to 12, D-252 for the extension to 17, D-300 for the extension to 19 |
-| Decisions logged | ~44 | **557**, `D-001` to `D-557` across 30 sections | **Matches** — the plan's figure is an estimate | D-089 for the overrun |
+| Decisions logged | ~44 | **571**, `D-001` to `D-571` across 31 sections | **Matches** — the plan's figure is an estimate | D-089 for the overrun |
 | Design-system gaps | 7 | **7**, `G1` to `G7` | **Matches** | — |
 | In-scope repository files | 30 | **30**, 29 created and 1 updated | **Matches** | — |
 
@@ -216,7 +216,7 @@ Twenty files: 7 route modules, 6 service modules, 3 utility modules, `app.py`, `
 | `src/data_collection/data_cleaning/startup_cleaner.py:L86` — missing text filled with the literal `Unknown` | Cleaning rule | Cleaning rule 4: reject a record missing a mandatory field rather than filling it | Replaced | D-051 |
 | `src/data_collection/data_cleaning/startup_cleaner.py:L90` — missing numeric values filled with the column median | Cleaning rule | Cleaning rule 4 again; median imputation is the exact opposite of rejection and is not carried forward in any form | Replaced | D-051 |
 | `src/data_collection/data_cleaning/startup_cleaner.py:L171-L176` — a four-entry placeholder industry dictionary whose output values match none of the target choices, with the blanket coercion at `:L183-L184` | Cleaning rule | Cleaning rule 3: normalise to the enumerated choice list, coerce an unmatched value to `Other` where that member exists, and log it | Replaced | D-022 |
-| `src/data_collection/data_cleaning/startup_cleaner.py` — whitespace and string handling | Cleaning rule | Cleaning rule 1: trim every string field, in `IngestionMapper` | Replaced | D-051 |
+| `src/data_collection/data_cleaning/startup_cleaner.py` — whitespace and string handling | Cleaning rule | Cleaning rule 1: put every string field into the one stored form, in `IngestionMapper.trimStrings()` through `AppProperties.normaliseText()` — the single definition every write path and the REST read boundary share | Replaced | D-051, D-558, D-559 |
 | `src/data_collection/data_cleaning/investor_cleaner.py` — 315 physical lines, the largest legacy file | Cleaning module | **Retired.** Its transformations have no counterpart among the four mandated cleaning rules | Retired | D-051 |
 | `src/data_collection/data_cleaning/__init__.py` | Package marker | **Retired** | Retired | D-003 |
 | `src/data_collection/data_enrichment/startup_enricher.py` | Enrichment module | **Retired.** No enrichment requirement exists | Retired | D-051 |
@@ -885,13 +885,13 @@ Four of the nine excluded attributes were **real columns** in the legacy schema 
 
 | Rule 1 obligation | Discharged by |
 | --- | --- |
-| A decision log with what was decided, the alternatives, the rationale and the risks | [`./DECISION_LOG.md`](./DECISION_LOG.md), **557** decisions `D-001` to `D-557` across **30** sections, the last twenty carrying the remediation decisions of twenty review lenses, each naming the row it amends |
+| A decision log with what was decided, the alternatives, the rationale and the risks | [`./DECISION_LOG.md`](./DECISION_LOG.md), **571** decisions `D-001` to `D-571` across **31** sections, the last twenty-one carrying the remediation decisions of twenty-one review lenses, each naming the row it amends |
 | A bidirectional traceability matrix for a migration, source constructs to target implementations | **This file**, sections 1 and 2 forward, sections 3 and 4 reverse |
 | **100 percent coverage, no gaps** | Section 4.1's assertion, demonstrated by the twelve denominators of section 5.1 and the exclusion register of section 4.2. The claim is about **mapping** coverage — every source construct and every requirement has a row, and every delivered artifact has a justification — and per [0.5.1](#051-what-a-status-asserts-and-what-it-does-not) it is not a claim that every mapped artifact has been observed to pass. No measure in this file is marked `GAP` |
 | Every deviation from a literal reading recorded explicitly | **256** rows flagged as deviations in the decision log, indexed row by row under [Index of deviation rows](./DECISION_LOG.md#index-of-deviation-rows); the two that concern this file are `D-087`, the extension from 8 mapped features to the 10 the document defines, and `D-088`, the flag inventory's growth from 10 entries to 12 and thence to 19 at `D-252` and `D-300` |
 | No rationale in code, and none here | This file carries no rationale. Every judgement row carries a `D-###` reference in place of an explanation, and the log is the single source of truth for *why*. The code side is the convention at `D-005`, verified by a comment-block sweep over every Script Include, business rule and scheduled executable in the Update Set, and over the validator, both stylesheet copies, the presentation and every script block in the build guides, with the boundary between description and justification stated at `D-308` |
 
-**Decision references used in this file.** Every `D-###` cited above resolves to a row in `./DECISION_LOG.md`, whose identifiers run contiguously from `D-001` to `D-557`. The five that Rule 3 elevates — `D-024` field-level access control, `D-076` the scope-deletion rollback, `D-043` credential handling, `D-010` the join table and the cascade cluster, and `D-055` the portal tabs and routes — all appear in the target column of section 1 or section 3, so each of the five review entries is traceable from this matrix to the artifact it concerns.
+**Decision references used in this file.** Every `D-###` cited above resolves to a row in `./DECISION_LOG.md`, whose identifiers run contiguously from `D-001` to `D-571`. The five that Rule 3 elevates — `D-024` field-level access control, `D-076` the scope-deletion rollback, `D-043` credential handling, `D-010` the join table and the cascade cluster, and `D-055` the portal tabs and routes — all appear in the target column of section 1 or section 3, so each of the five review entries is traceable from this matrix to the artifact it concerns.
 
 ### 5.4 Related documents
 

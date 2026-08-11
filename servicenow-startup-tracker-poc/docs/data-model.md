@@ -777,6 +777,33 @@ In encoded-query form the equivalent predicate is `active=true^headquarters_loca
 
 One operational requirement applies to every caller of the filter: **the criteria are a query filter, not an ACL.** The platform does not apply them, so they must be applied identically to the result set **and** to the `total_count` returned with a paginated response. Applying them to one and not the other makes the count disagree with the page contents. Record-level read access to all seven entity tables is granted to all three roles, and the role difference is at field level only; see [`./access-control.md`](./access-control.md).
 
+### What `CONTAINS` admits, and why it is not tightened
+
+**`CONTAINS` is a substring test with no notion of a word, a field boundary or a place, and that is the specification rather than an implementation choice.** Prompt section 1.1 states the rule verbatim, including the parenthesis "(case-insensitive substring)", so the semantics below are what the delivery was required to implement. They are recorded here because a reader who sees "contains Boston" will reasonably assume it means "is in Boston", and it does not.
+
+**What matches that a reader might not expect.** Any value carrying the token's characters anywhere in the string is eligible, whatever surrounds them. Two observed examples, both eligible and both correct against the rule as written:
+
+| Stored `headquarters_location` | Eligible | Why |
+| --- | --- | --- |
+| `Austin, TX (see boston.example.com)` | **Yes** | The token appears inside a domain name in a parenthetical. `CONTAINS` does not know that a domain name is not a city. |
+| `Boston Spa, West Yorkshire` | **Yes** | A different place whose name begins with the token. No word-boundary or trailing-context test exists in the predicate. |
+| `Somerville, MA` | No | A city immediately adjacent to both tokens' metropolitan area, and it contains neither token. The rule is a token test, not a geographic one, so it under-matches as readily as it over-matches. |
+
+**One variant that the write path now forecloses.** A value carrying an invisible or bidirectional control character adjacent to the token — a right-to-left override before `Boston, MA`, say — still contains the token's characters and so was always eligible. That is unchanged and is not the point: what changed is that such a value can no longer be **stored**. Both write paths — `IngestionMapper` for the flows and staging transform, and the `Trim and validate startup` before rule for every direct write — route every string through the single normaliser `AppProperties.normaliseText()`, which removes that character class outright. So the residual behaviour of this predicate is the legitimate-substring case in the table above, and nothing that depends on a character a reader cannot see.
+
+**Why the rule is not tightened.** Both available tightenings deviate from binding text, and the specification outranks the improvement:
+
+- **Adding a structured column** — a normalised city, a region code, a metropolitan-area reference — would add a field to a list prompt section 1.0 declares "binding and complete — do not add, omit, or infer additional fields".
+- **Replacing `CONTAINS`** with an equality test, a prefix test or a word-boundary comparison would change the rule prompt section 1.1 states verbatim. Equality in particular would exclude every real value in the shipped sample data, all of which carry a state or a district after the city.
+
+**What bounds the consequence.** Three properties, each independently checkable, and together they make an incidental match a data-quality outcome rather than a security one:
+
+1. **A non-administrative caller cannot write the column.** Write, create and delete on all seven entity tables are granted to `x_bst_startuptrk.admin` alone; both `x_bst_startuptrk.user` and `x_bst_startuptrk.premium_user` are read-only. See [`./access-control.md`](./access-control.md). The only routes by which an unintended value arrives are an administrator entering it, an upstream API payload carrying it, or an operator importing a comma-separated file containing it — each already a privileged or operator-mediated act.
+2. **The value is only ever displayed.** `headquarters_location` is not a locator, is not executed, is not part of any authorization decision, and is never concatenated into a query — every caller-supplied filter value is validated and bound as a parameter, and the validation contract is in [`./api-reference.md`](./api-reference.md).
+3. **The failure mode is one extra row.** An incidental match places a startup in a portal search result that a stricter reading of "Boston area" would have excluded. Nothing is disclosed that the caller's role does not already permit, because record-level read on this table is granted to all three roles and the role difference is at field level only.
+
+**The lever an operator does have.** The tokens are not compiled in: `x_bst_startuptrk.inclusion.location_tokens` supplies them, so a narrower token — `Boston, MA` in place of `Boston` — narrows the predicate with no code change and no schema change. **It also changes the criteria the delivery was accepted against**, so treat it as a change to the acceptance evidence of criterion 5 rather than as configuration: re-run the criterion-5 inclusion-filter walkthrough in [`./validation-checklist.md`](./validation-checklist.md) after changing it, and record the value in force. If a future requirement introduces a structured location field, this subsection is where the predicate would change and the closed-field-list constraint above is what that requirement would have to lift.
+
 ## How the ingestion transform respects this dictionary
 
 Everything above is a declaration. This section is the contract the one writer that builds records dynamically — `IngestionMapper`, serving both flows and the staging transform — holds itself to, so a declaration here and a write there cannot disagree. The REST layer's equivalent contract, which validates a caller-supplied body rather than a source payload, is in [`./api-reference.md`](./api-reference.md).

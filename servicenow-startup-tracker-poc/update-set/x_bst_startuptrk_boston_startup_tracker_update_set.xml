@@ -5034,7 +5034,7 @@
     <category>customer</category>
     <comments/>
     <name>sys_script_include_c4f1621bf0621985f01e0746f7331fa6</name>
-    <payload>&lt;record_update table="sys_script_include"&gt;&lt;sys_script_include action="INSERT_OR_UPDATE"&gt;&lt;access&gt;package_private&lt;/access&gt;&lt;active&gt;true&lt;/active&gt;&lt;api_name&gt;x_bst_startuptrk.AppProperties&lt;/api_name&gt;&lt;caller_access/&gt;&lt;client_callable&gt;false&lt;/client_callable&gt;&lt;description&gt;Typed accessors for the eleven scoped properties including the 6 to 48 hour cadence clamp, the one log severity policy and the per source last successful run marker, and for the LinkedIn API version the class carries as a constant. Implements prompt 4.0 and 3.0 configuration.&lt;/description&gt;&lt;mobile_callable&gt;false&lt;/mobile_callable&gt;&lt;name&gt;AppProperties&lt;/name&gt;&lt;sandbox_callable&gt;false&lt;/sandbox_callable&gt;&lt;script&gt;var AppProperties = Class.create();
+    <payload>&lt;record_update table="sys_script_include"&gt;&lt;sys_script_include action="INSERT_OR_UPDATE"&gt;&lt;access&gt;package_private&lt;/access&gt;&lt;active&gt;true&lt;/active&gt;&lt;api_name&gt;x_bst_startuptrk.AppProperties&lt;/api_name&gt;&lt;caller_access/&gt;&lt;client_callable&gt;false&lt;/client_callable&gt;&lt;description&gt;Typed accessors for the eleven scoped properties including the 6 to 48 hour cadence clamp, the one log severity policy and the per source last successful run marker, and for the LinkedIn API version the class carries as a constant. Carries the application's one text normalisation definition, normaliseText, and its one diagnostic sanitiser, safeText. Implements prompt 4.0 and 3.0 configuration.&lt;/description&gt;&lt;mobile_callable&gt;false&lt;/mobile_callable&gt;&lt;name&gt;AppProperties&lt;/name&gt;&lt;sandbox_callable&gt;false&lt;/sandbox_callable&gt;&lt;script&gt;var AppProperties = Class.create();
 AppProperties.prototype = {
     initialize: function () {
         this.PREFIX = 'x_bst_startuptrk.';
@@ -5066,10 +5066,21 @@ AppProperties.prototype = {
     /* The redaction placeholder every sanitised substring is replaced by. */
     REDACTED: '(redacted)',
 
-    /* Control, zero-width and bidirectional-override characters, all replaced before anything
-       is matched, so a value can neither break the line it is written on nor disguise what it
-       says to a reader. */
-    CONTROL: /[\u0000-\u001f\u007f\u200b-\u200f\u202a-\u202e\u2028\u2029\ufeff]/g,
+    /* Zero-width and directional formatting characters, every one of which paints nothing: the
+       soft hyphen, the Arabic letter mark, the Mongolian vowel separator, the zero-width space,
+       the two joiners, the two directional marks, the five bidirectional embeddings and
+       overrides, the word joiner and the four invisible operators, the four bidirectional
+       isolates, the byte order mark and the three interlinear annotation marks. Removed
+       outright by normaliseText, never replaced, so a stored value equals the value a reader
+       sees. Implements prompt 4.0 cleaning rule 1 and prompt 3.0 body validation. */
+    INVISIBLE: /[\u00ad\u061c\u180e\u200b-\u200f\u202a-\u202e\u2060-\u2064\u2066-\u2069\ufeff\ufff9-\ufffb]/g,
+
+    /* Characters that occupy width or force a line break rather than painting nothing: the C0
+       controls, DEL, and the line and paragraph separators. The C1 range U+0080 to U+009F is
+       not a member. Replaced by one space by normaliseText, never removed, so two tokens a
+       control character separated are not joined into one.
+       Implements prompt 4.0 cleaning rule 1 and prompt 3.0 body validation. */
+    BLANKED: /[\u0000-\u001f\u007f\u2028\u2029]/g,
 
     /* The default cap applied to a sanitised diagnostic string. */
     DETAIL_LIMIT: 200,
@@ -5163,7 +5174,27 @@ AppProperties.prototype = {
         { find: /"[^"\r\n]{24,}"/g, put: '"(redacted)"' }
     ],
 
-    /* Returns one diagnostic string that is safe to record anywhere. Control characters are
+    /* Returns one text in the one form the application stores and compares: every zero-width
+       and directional formatting character removed, every remaining control character replaced
+       by one space, then trimmed. **This is the one implementation in the application.** Every
+       value an ingestion run writes, every value the REST create and update boundary writes,
+       every de-duplication key and every field the startup insert and update rule trims reads
+       its text through this method rather than through a copy of it, so one value cannot be
+       stored in two forms and two values differing only in characters nobody can see cannot be
+       stored as two records. Implements prompt 4.0 cleaning rules 1 and 2 and prompt 3.0 body
+       validation. */
+    normaliseText: function (value) {
+        if (value === null) {
+            return '';
+        }
+        if (value === undefined) {
+            return '';
+        }
+        return String(value).replace(this.INVISIBLE, '').replace(this.BLANKED, ' ').trim();
+    },
+
+    /* Returns one diagnostic string that is safe to record anywhere. Every zero-width and
+       directional formatting character is removed and every remaining control character is
        replaced, every credential, address, locator, web token and long opaque or quoted run is
        redacted, whitespace is collapsed, a double quote becomes a single quote so the value
        cannot break a quoted field, and the result is capped with the truncation marked.
@@ -5179,7 +5210,7 @@ AppProperties.prototype = {
         if (isNaN(cap) || cap &amp;lt;= 0) {
             cap = this.DETAIL_LIMIT;
         }
-        var text = String(value).replace(this.CONTROL, ' ');
+        var text = this.normaliseText(value);
         var i = 0;
         for (i = 0; i !== this.SANITISERS.length; i++) {
             text = text.replace(this.SANITISERS[i].find, this.SANITISERS[i].put);
@@ -6114,16 +6145,6 @@ RestQueryHelper.prototype = {
         this.SIGNED_NUMBER = /^-?[0-9]{1,9}$/;
         this.AMOUNT = /^-?[0-9]{1,15}(\.[0-9]{1,2})?$/;
         this.ISO_DATE = /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/;
-        /* Neutralised on input: the C0 controls U+0000 to U+001F, DEL, the zero-width
-           space, the two directional marks, the bidirectional overrides, the line and
-           paragraph separators and the byte order mark. The C1 range U+0080 to U+009F is
-           deliberately NOT a member: every character that could break out of a CONTAINS
-           operand or forge a log line is inside the set above. U+200C and U+200D are
-           deliberately NOT members either: they are letter-joining characters that carry
-           meaning in Persian and Indic scripts and bind the members of an emoji sequence.
-           Implements prompt 3.0
-           body validation. */
-        this.CONTROL = /[\u0000-\u001f\u007f\u200b\u200e\u200f\u202a-\u202e\u2028\u2029\ufeff]/g;
         this.HTTPS_URL = new RegExp('^[Hh][Tt][Tt][Pp][Ss]:\\/\\/'
             + '[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?'
             + '(?:\\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)+'
@@ -6202,7 +6223,8 @@ RestQueryHelper.prototype = {
     /* Returns a query parameter validated as an absolute https URL, for a filter that
        looks a record up by the provider locator it was ingested with. An absent value is
        accepted and applies no filter; a value that is not an https URL is refused, so a
-       locator filter cannot become an unbounded substring scan.
+       locator filter cannot become an unbounded substring scan. The value returned is the
+       normalised form, so the filter binds the stored value rather than the caller's bytes.
        Implements prompt 3.0 filter parameters. */
     getUrlParam: function (request, name) {
         var raw = this._param(request, name);
@@ -6216,7 +6238,7 @@ RestQueryHelper.prototype = {
                 error: name + ' must be an absolute https URL'
             };
         }
-        return { ok: true, value: raw, error: '' };
+        return { ok: true, value: this._normalise(raw), error: '' };
     },
 
     /* Returns a query parameter validated as a 32 character record identifier.
@@ -6649,16 +6671,14 @@ RestQueryHelper.prototype = {
         return parsed;
     },
 
-    /* Returns a value trimmed and stripped of control characters at its full length,
-       which is the form every length check is applied to. */
+    /* Returns a value in the one stored form at its full length, which is the form every
+       length check is applied to: every zero-width and directional formatting character
+       removed, every remaining control character replaced by one space, then trimmed. The
+       character inventory and both actions are AppProperties.normaliseText, the application's
+       one definition, so a value written through this boundary and the same value written by
+       an ingestion run are stored identically. Implements prompt 3.0 body validation. */
     _normalise: function (value) {
-        if (value === null) {
-            return '';
-        }
-        if (value === undefined) {
-            return '';
-        }
-        return String(value).replace(this.CONTROL, ' ').trim();
+        return this.props.normaliseText(value);
     },
 
     _text: function (value, max) {
@@ -8019,7 +8039,6 @@ IngestionLogger.prototype = {
         this.props = new AppProperties();
         this.LEVELS = { debug: 10, info: 20, warn: 30, error: 40 };
         this.PROVENANCE = ['live', 'fallback'];
-        this.CONTROL = /[\u0000-\u001f\u007f]/g;
         this.VALUE_LIMIT = 200;
         this.EVENT_LIMIT = 1000;
         this.UNIDENTIFIED = '(unidentified)';
@@ -8497,7 +8516,7 @@ IngestionLogger.prototype = {
         if (value === undefined) {
             return '';
         }
-        var text = String(value).replace(this.CONTROL, ' ').replace(/"/g, "'").trim();
+        var text = this.props.normaliseText(value).replace(/"/g, "'");
         if (text.length &amp;gt; this.VALUE_LIMIT) {
             text = text.substring(0, this.VALUE_LIMIT);
         }
@@ -9126,7 +9145,12 @@ IngestionMapper.prototype = {
         return this.logger;
     },
 
-    /* Cleaning rule 1: trims whitespace on every string value. Implements prompt 4.0. */
+    /* Cleaning rule 1: puts every string value into the one stored form, which is every
+       zero-width and directional formatting character removed, every remaining control
+       character replaced by one space, then trimmed. The inventory and both actions are
+       AppProperties.normaliseText, the application's one definition, so a value cleaned here
+       and the same value written through the REST boundary are stored identically.
+       Implements prompt 4.0 cleaning rule 1. */
     trimStrings: function (data) {
         var cleaned = {};
         var key = '';
@@ -9136,7 +9160,7 @@ IngestionMapper.prototype = {
             }
             var value = data[key];
             if (typeof value === 'string') {
-                cleaned[key] = value.trim();
+                cleaned[key] = this.props().normaliseText(value);
             } else {
                 cleaned[key] = value;
             }
@@ -11318,7 +11342,7 @@ IngestionMapper.prototype = {
             }
             return '';
         }
-        return String(value).trim();
+        return this._string(value);
     },
 
     _normaliseMulti: function (runId, recordType, field, raw, allowed) {
@@ -11430,23 +11454,16 @@ IngestionMapper.prototype = {
     },
 
     _blank: function (value) {
-        if (value === null) {
-            return true;
-        }
-        if (value === undefined) {
-            return true;
-        }
-        return String(value).trim() === '';
+        return this._string(value) === '';
     },
 
+    /* Returns a value in the one stored form, through AppProperties.normaliseText, the
+       application's one definition. Every mapped value, every de-duplication key and every
+       comparison this class makes reads its text through here, so two values differing only in
+       characters nobody can see compare equal.
+       Implements prompt 4.0 cleaning rules 1, 2 and 4. */
     _string: function (value) {
-        if (value === null) {
-            return '';
-        }
-        if (value === undefined) {
-            return '';
-        }
-        return String(value).trim();
+        return this.props().normaliseText(value);
     },
 
     type: 'IngestionMapper'
@@ -14043,7 +14060,8 @@ IngestionMapper.prototype = {
     <category>customer</category>
     <comments/>
     <name>sys_script_db47106f01240b829205ce83010abe5d</name>
-    <payload>&lt;record_update table="sys_script"&gt;&lt;sys_script action="INSERT_OR_UPDATE"&gt;&lt;abort_action&gt;false&lt;/abort_action&gt;&lt;access&gt;package_private&lt;/access&gt;&lt;action_delete&gt;false&lt;/action_delete&gt;&lt;action_insert&gt;true&lt;/action_insert&gt;&lt;action_query&gt;false&lt;/action_query&gt;&lt;action_update&gt;true&lt;/action_update&gt;&lt;active&gt;true&lt;/active&gt;&lt;add_message&gt;false&lt;/add_message&gt;&lt;advanced&gt;true&lt;/advanced&gt;&lt;change_fields&gt;false&lt;/change_fields&gt;&lt;client_callable&gt;false&lt;/client_callable&gt;&lt;collection&gt;x_bst_startuptrk_startup&lt;/collection&gt;&lt;condition/&gt;&lt;description&gt;Trims whitespace on Startup string fields and rejects records missing a mandatory name or headquarters location. Implements prompt 4.0 cleaning rules 1 and 4.&lt;/description&gt;&lt;execute_function&gt;false&lt;/execute_function&gt;&lt;is_rest&gt;false&lt;/is_rest&gt;&lt;name&gt;Trim and validate startup&lt;/name&gt;&lt;order&gt;100&lt;/order&gt;&lt;priority&gt;100&lt;/priority&gt;&lt;rest_method/&gt;&lt;rest_method_text/&gt;&lt;rest_service/&gt;&lt;rest_service_text/&gt;&lt;rest_variables/&gt;&lt;script&gt;(function executeRule(current, previous) {
+    <payload>&lt;record_update table="sys_script"&gt;&lt;sys_script action="INSERT_OR_UPDATE"&gt;&lt;abort_action&gt;false&lt;/abort_action&gt;&lt;access&gt;package_private&lt;/access&gt;&lt;action_delete&gt;false&lt;/action_delete&gt;&lt;action_insert&gt;true&lt;/action_insert&gt;&lt;action_query&gt;false&lt;/action_query&gt;&lt;action_update&gt;true&lt;/action_update&gt;&lt;active&gt;true&lt;/active&gt;&lt;add_message&gt;false&lt;/add_message&gt;&lt;advanced&gt;true&lt;/advanced&gt;&lt;change_fields&gt;false&lt;/change_fields&gt;&lt;client_callable&gt;false&lt;/client_callable&gt;&lt;collection&gt;x_bst_startuptrk_startup&lt;/collection&gt;&lt;condition/&gt;&lt;description&gt;Puts every Startup string field into the one stored form through AppProperties.normaliseText, which removes every zero-width and directional formatting character, replaces every remaining control character with one space and trims, and rejects records missing a mandatory name or headquarters location. Implements prompt 4.0 cleaning rules 1 and 4.&lt;/description&gt;&lt;execute_function&gt;false&lt;/execute_function&gt;&lt;is_rest&gt;false&lt;/is_rest&gt;&lt;name&gt;Trim and validate startup&lt;/name&gt;&lt;order&gt;100&lt;/order&gt;&lt;priority&gt;100&lt;/priority&gt;&lt;rest_method/&gt;&lt;rest_method_text/&gt;&lt;rest_service/&gt;&lt;rest_service_text/&gt;&lt;rest_variables/&gt;&lt;script&gt;(function executeRule(current, previous) {
+    var props = new AppProperties();
     var trimmable = ['name', 'description', 'headquarters_location', 'website',
         'logo_url', 'industry', 'funding_stage', 'employee_count_range'];
     var i = 0;
@@ -14053,25 +14071,25 @@ IngestionMapper.prototype = {
         if (value === null) {
             continue;
         }
-        var trimmed = String(value).trim();
-        if (trimmed !== String(value)) {
-            current.setValue(field, trimmed);
+        var normalised = props.normaliseText(value);
+        if (normalised !== String(value)) {
+            current.setValue(field, normalised);
         }
     }
-    if (String(current.getValue('name')).trim() === '') {
+    if (props.normaliseText(current.getValue('name')) === '') {
         gs.addErrorMessage(gs.getMessage('Startup name is required.'));
         current.setAbortAction(true);
         return;
     }
-    if (String(current.getValue('headquarters_location')).trim() === '') {
+    if (props.normaliseText(current.getValue('headquarters_location')) === '') {
         gs.addErrorMessage(gs.getMessage('Startup headquarters location is required.'));
         current.setAbortAction(true);
         return;
     }
     /* Aborts when active is empty. An insert that leaves active unset carries the
        dictionary default true. Implements prompt 4.0 rejection of partial records. */
-    var activeValue = String(current.getValue('active'));
-    if (activeValue.trim() === '') {
+    var activeValue = props.normaliseText(current.getValue('active'));
+    if (activeValue === '') {
         gs.addErrorMessage(gs.getMessage('Startup active is required.'));
         current.setAbortAction(true);
     }
