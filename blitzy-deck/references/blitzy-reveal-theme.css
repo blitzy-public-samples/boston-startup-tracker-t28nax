@@ -1,0 +1,838 @@
+/* ==========================================================================
+   blitzy-reveal-theme.css
+
+   Canonical Blitzy reveal.js presentation theme. Defines the Blitzy design
+   tokens, the reveal.js integration layer, base typography, the four slide
+   types, the ten component classes, the Mermaid diagram container, and the
+   supporting surfaces (tables, inline mono, Lucide icons, lists, links).
+
+   The theme is calibrated for a 1920 x 1080 reveal.js stage.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Design tokens: required Blitzy custom properties
+   -------------------------------------------------------------------------- */
+:root {
+  --blitzy-primary: #5B39F3;
+  --blitzy-primary-dark: #2D1C77;
+  --blitzy-primary-navy: #1A105F;
+  --blitzy-primary-light: #7A6DEC;
+  --blitzy-primary-deep: #4101DB;
+  --blitzy-accent-teal: #94FAD5;
+  --blitzy-surface-0: #FFFFFF;
+  --blitzy-surface-1: #F4EFF6;
+  --blitzy-surface-2: #F2F0FE;
+  --blitzy-surface-3: #F5F5F5;
+  --blitzy-border: #D9D9D9;
+  --blitzy-border-soft: rgba(91, 57, 243, 0.18);
+  --blitzy-text: #333333;
+  --blitzy-text-muted: #999999;
+  --blitzy-text-invert: #FFFFFF;
+  --ff-body: 'Inter', system-ui, sans-serif;
+  --ff-display: 'Space Grotesk', 'Inter', sans-serif;
+  --ff-mono: 'Fira Code', 'Courier New', monospace;
+  --gradient-hero: linear-gradient(68deg, #7A6DEC 15.56%, #5B39F3 62.74%, #4101DB 84.44%);
+  --gradient-divider: linear-gradient(135deg, #2D1C77 0%, #5B39F3 100%);
+  --gradient-accent-bar: linear-gradient(90deg, #5B39F3 0%, #94FAD5 100%);
+}
+
+/* --------------------------------------------------------------------------
+   Design tokens: supplementary radii, spacing and type scale
+   Derived radius, spacing and type-scale steps referenced throughout this file.
+   -------------------------------------------------------------------------- */
+:root {
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
+
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-5: 48px;
+  --space-6: 64px;
+  --slide-pad-x: 112px;
+  --slide-pad-y: 84px;
+
+  --fs-body: 32px;
+  --fs-lead: 38px;
+  --fs-h1: 104px;
+  --fs-h2: 68px;
+  --fs-h3: 46px;
+  --fs-h4: 34px;
+  --fs-small: 24px;
+  --fs-eyebrow: 22px;
+  --fs-kpi-value: 82px;
+  --fs-kpi-label: 21px;
+  --fs-table: 26px;
+  --fs-diagram: 26px;
+  --fs-code: 0.88em;
+}
+
+/* --------------------------------------------------------------------------
+   reveal.js integration layer
+   Remaps the reveal.js theme variables onto Blitzy tokens on the .reveal
+   element, from which every descendant inherits them.
+   -------------------------------------------------------------------------- */
+.reveal {
+  --r-background-color: var(--blitzy-surface-0);
+  --r-main-font: var(--ff-body);
+  --r-main-font-size: var(--fs-body);
+  --r-main-color: var(--blitzy-text);
+  --r-block-margin: var(--space-3);
+  --r-heading-margin: 0 0 var(--space-3) 0;
+  --r-heading-font: var(--ff-display);
+  --r-heading-color: var(--blitzy-text);
+  --r-heading-line-height: 1.12;
+  --r-heading-letter-spacing: -0.01em;
+  --r-heading-text-transform: none;
+  --r-heading-text-shadow: none;
+  --r-heading-font-weight: 600;
+  --r-heading1-text-shadow: none;
+  --r-heading1-size: var(--fs-h1);
+  --r-heading2-size: var(--fs-h2);
+  --r-heading3-size: var(--fs-h3);
+  --r-heading4-size: var(--fs-h4);
+  --r-code-font: var(--ff-mono);
+  --r-link-color: var(--blitzy-primary);
+  --r-link-color-dark: var(--blitzy-primary-deep);
+  --r-link-color-hover: var(--blitzy-primary-light);
+  --r-selection-background-color: var(--blitzy-accent-teal);
+  --r-selection-color: var(--blitzy-text);
+}
+
+/* Page canvas behind the slide stage */
+.reveal-viewport {
+  background-color: var(--blitzy-surface-0);
+}
+
+.reveal .controls {
+  color: var(--blitzy-primary);
+}
+
+/* Keyboard focus indicator on the navigation arrows */
+.reveal .controls button:focus-visible {
+  outline: 3px solid currentColor;
+  outline-offset: 4px;
+  border-radius: var(--radius-sm);
+}
+
+/* A focused back arrow drops the faded treatment reveal.js gives it */
+.reveal:not(.rtl) .controls[data-controls-back-arrows="faded"] .navigate-left.enabled:focus-visible,
+.reveal .controls[data-controls-back-arrows="faded"] .navigate-up.enabled:focus-visible {
+  opacity: 1;
+}
+
+.reveal .progress {
+  color: var(--blitzy-primary);
+  background-color: var(--blitzy-border);
+}
+
+/* Navigation arrows switch to the teal accent while a dark slide type shows,
+   as a top-level slide or as the shown child of the shown stack */
+.reveal:has(.slides > section.present:is(.slide-title, .slide-divider, .slide-closing)) .controls,
+.reveal:has(.slides > section.present > section.present:is(.slide-title, .slide-divider, .slide-closing)) .controls {
+  color: var(--blitzy-accent-teal);
+}
+
+/* --------------------------------------------------------------------------
+   Base typography
+   -------------------------------------------------------------------------- */
+.reveal h1,
+.reveal h2,
+.reveal h3,
+.reveal h4,
+.reveal h5,
+.reveal h6 {
+  font-family: var(--ff-display);
+  text-transform: none;
+  text-shadow: none;
+  word-wrap: break-word;
+}
+
+.reveal h1 {
+  font-weight: 700;
+}
+
+.reveal h2 {
+  font-weight: 600;
+}
+
+.reveal h3,
+.reveal h4 {
+  font-weight: 500;
+}
+
+.reveal h5 {
+  font-size: var(--fs-h4);
+  font-weight: 500;
+}
+
+.reveal h6 {
+  font-size: var(--fs-small);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
+.reveal p {
+  font-family: var(--ff-body);
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.reveal strong,
+.reveal b {
+  font-weight: 600;
+}
+
+.reveal em {
+  font-style: italic;
+}
+
+.reveal small {
+  font-size: var(--fs-small);
+}
+
+/* --------------------------------------------------------------------------
+   Slide stage geometry
+   Gives every slide the full 1920 x 1080 stage, making a slide-type
+   background full bleed from its class alone. Declares geometry only; the
+   hidden and shown display states are reveal.js's own.
+   -------------------------------------------------------------------------- */
+.reveal .slides > section:not(.stack),
+.reveal .slides > section > section {
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  padding: var(--slide-pad-y) var(--slide-pad-x);
+  overflow: visible;
+}
+
+/* The slide reveal.js is showing lays its content out as a flex column,
+   over the inline display value reveal.js assigns to a shown slide. */
+.reveal .slides > section.present:not(.stack),
+.reveal .slides > section.present > section.present {
+  display: flex !important;
+}
+
+/* --------------------------------------------------------------------------
+   Slide type: Content (the unclassed default)
+   -------------------------------------------------------------------------- */
+.reveal .slides > section:not(.stack):not(.slide-title):not(.slide-divider):not(.slide-closing),
+.reveal .slides > section > section:not(.slide-title):not(.slide-divider):not(.slide-closing) {
+  color: var(--blitzy-text);
+  text-align: left;
+}
+
+.reveal .slides > section:not(.stack):not(.slide-title):not(.slide-divider):not(.slide-closing) > h2 {
+  margin-bottom: var(--space-4);
+}
+
+/* --------------------------------------------------------------------------
+   Slide type: Title
+   -------------------------------------------------------------------------- */
+.reveal .slide-title {
+  --r-heading-color: var(--blitzy-text-invert);
+  --r-link-color: var(--blitzy-accent-teal);
+  --r-link-color-hover: var(--blitzy-surface-0);
+  justify-content: center;
+  background-image: var(--gradient-hero);
+  background-color: var(--blitzy-primary);
+  color: var(--blitzy-text-invert);
+  text-align: left;
+}
+
+.reveal .slide-title h1,
+.reveal .slide-title h2,
+.reveal .slide-title h3,
+.reveal .slide-title h4,
+.reveal .slide-title h5,
+.reveal .slide-title h6,
+.reveal .slide-title p,
+.reveal .slide-title li,
+.reveal .slide-title strong,
+.reveal .slide-title b,
+.reveal .slide-title em,
+.reveal .slide-title small {
+  color: var(--blitzy-text-invert);
+}
+
+.reveal .slide-title h1 {
+  max-width: 1500px;
+  margin-bottom: var(--space-4);
+}
+
+.reveal .slide-title p {
+  max-width: 1300px;
+  font-size: var(--fs-lead);
+  line-height: 1.4;
+}
+
+.reveal .slide-title a {
+  color: var(--blitzy-accent-teal);
+}
+
+.reveal .slide-title a:hover {
+  color: var(--blitzy-surface-0);
+}
+
+/* --------------------------------------------------------------------------
+   Slide type: Section Divider
+   -------------------------------------------------------------------------- */
+.reveal .slide-divider {
+  --r-heading-color: var(--blitzy-text-invert);
+  --r-link-color: var(--blitzy-accent-teal);
+  --r-link-color-hover: var(--blitzy-surface-0);
+  justify-content: center;
+  align-items: center;
+  background-image: var(--gradient-divider);
+  background-color: var(--blitzy-primary-dark);
+  color: var(--blitzy-text-invert);
+  text-align: center;
+}
+
+.reveal .slide-divider h1,
+.reveal .slide-divider h2,
+.reveal .slide-divider h3,
+.reveal .slide-divider h4,
+.reveal .slide-divider h5,
+.reveal .slide-divider h6,
+.reveal .slide-divider p,
+.reveal .slide-divider li,
+.reveal .slide-divider strong,
+.reveal .slide-divider b,
+.reveal .slide-divider em,
+.reveal .slide-divider small {
+  color: var(--blitzy-text-invert);
+}
+
+.reveal .slide-divider h1,
+.reveal .slide-divider h2 {
+  max-width: 1500px;
+  margin-top: var(--space-5);
+  margin-bottom: var(--space-3);
+  text-align: center;
+}
+
+.reveal .slide-divider p {
+  max-width: 1240px;
+  font-size: var(--fs-lead);
+  text-align: center;
+}
+
+.reveal .slide-divider a {
+  color: var(--blitzy-accent-teal);
+}
+
+.reveal .slide-divider a:hover {
+  color: var(--blitzy-surface-0);
+}
+
+/* --------------------------------------------------------------------------
+   Slide type: Closing
+   -------------------------------------------------------------------------- */
+.reveal .slide-closing {
+  --r-heading-color: var(--blitzy-text-invert);
+  --r-link-color: var(--blitzy-accent-teal);
+  --r-link-color-hover: var(--blitzy-surface-0);
+  justify-content: center;
+  background-color: var(--blitzy-primary-navy);
+  color: var(--blitzy-text-invert);
+  text-align: left;
+}
+
+.reveal .slide-closing h1,
+.reveal .slide-closing h2,
+.reveal .slide-closing h3,
+.reveal .slide-closing h4,
+.reveal .slide-closing h5,
+.reveal .slide-closing h6,
+.reveal .slide-closing p,
+.reveal .slide-closing li,
+.reveal .slide-closing strong,
+.reveal .slide-closing b,
+.reveal .slide-closing em,
+.reveal .slide-closing small {
+  color: var(--blitzy-text-invert);
+}
+
+.reveal .slide-closing h2 {
+  max-width: 1400px;
+  margin-bottom: var(--space-4);
+}
+
+.reveal .slide-closing ul,
+.reveal .slide-closing ol {
+  max-width: 1300px;
+  margin-bottom: var(--space-5);
+}
+
+.reveal .slide-closing a {
+  color: var(--blitzy-accent-teal);
+}
+
+.reveal .slide-closing a:hover {
+  color: var(--blitzy-surface-0);
+}
+
+/* --------------------------------------------------------------------------
+   Component: kpi-grid
+   Even row of KPI cards that wraps at three to four cards on the stage.
+   -------------------------------------------------------------------------- */
+.reveal .kpi-grid {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: var(--space-4);
+  width: 100%;
+  margin: var(--space-4) 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+.reveal .kpi-grid > * {
+  flex: 1 1 380px;
+  min-width: 340px;
+}
+
+/* --------------------------------------------------------------------------
+   Component: kpi-card
+   -------------------------------------------------------------------------- */
+.reveal .kpi-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  box-sizing: border-box;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  background-color: var(--blitzy-surface-1);
+  border: 1px solid var(--blitzy-border-soft);
+  border-radius: var(--radius-md);
+  color: var(--blitzy-text);
+  text-align: left;
+}
+
+/* --------------------------------------------------------------------------
+   Component: kpi-value
+   -------------------------------------------------------------------------- */
+.reveal .slides .kpi-value {
+  display: block;
+  margin: 0;
+  font-family: var(--ff-display);
+  font-size: var(--fs-kpi-value);
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  color: var(--blitzy-primary);
+}
+
+/* --------------------------------------------------------------------------
+   Component: kpi-label
+   -------------------------------------------------------------------------- */
+.reveal .slides .kpi-label {
+  display: block;
+  margin: 0;
+  font-family: var(--ff-body);
+  font-size: var(--fs-kpi-label);
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--blitzy-text);
+}
+
+/* --------------------------------------------------------------------------
+   Component: kpi-icon
+   Sizes the icon slot and the Lucide glyph it carries.
+   -------------------------------------------------------------------------- */
+.reveal .slides .kpi-icon,
+.reveal .slides .kpi-icon [data-lucide] {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  color: var(--blitzy-primary);
+}
+
+/* --------------------------------------------------------------------------
+   Component: eyebrow
+   Small mono kicker above a heading.
+   -------------------------------------------------------------------------- */
+.reveal .eyebrow {
+  display: block;
+  flex: none;
+  margin: 0 0 var(--space-3) 0;
+  font-family: var(--ff-mono);
+  font-size: var(--fs-eyebrow);
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--blitzy-primary);
+}
+
+/* The eyebrow reads teal on the three dark slide types */
+.reveal .slide-title .eyebrow,
+.reveal .slide-divider .eyebrow,
+.reveal .slide-closing .eyebrow {
+  color: var(--blitzy-accent-teal);
+}
+
+/* --------------------------------------------------------------------------
+   Component: accent-bar
+   -------------------------------------------------------------------------- */
+.reveal .accent-bar {
+  display: block;
+  flex: none;
+  width: 100%;
+  max-width: 720px;
+  height: 10px;
+  margin: var(--space-4) 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background-image: var(--gradient-accent-bar);
+}
+
+/* --------------------------------------------------------------------------
+   Component: brand-lockup
+   -------------------------------------------------------------------------- */
+.reveal .brand-lockup {
+  display: flex;
+  flex: none;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 0 0;
+  font-family: var(--ff-display);
+  font-size: var(--fs-h4);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--blitzy-text);
+  text-align: left;
+}
+
+/* The lockup reads inverted on the three dark slide types */
+.reveal .slide-title .brand-lockup,
+.reveal .slide-divider .brand-lockup,
+.reveal .slide-closing .brand-lockup {
+  color: var(--blitzy-text-invert);
+}
+
+/* The Lucide glyph the lockup carries */
+.reveal .brand-lockup [data-lucide] {
+  flex: none;
+  width: 40px;
+  height: 40px;
+}
+
+/* --------------------------------------------------------------------------
+   Component: hero-icon
+   Large thematic icon for the title and divider slide types. Sizes the icon
+   slot and the Lucide glyph it carries.
+   -------------------------------------------------------------------------- */
+.reveal .slides .hero-icon,
+.reveal .slides .hero-icon [data-lucide] {
+  flex: none;
+  width: 112px;
+  height: 112px;
+  color: inherit;
+  stroke-width: 1.5;
+}
+
+.reveal .slides .hero-icon {
+  margin: 0 0 var(--space-4) 0;
+}
+
+/* --------------------------------------------------------------------------
+   Component: icon-row
+   Horizontal strip of Lucide glyphs used as a Content slide visual.
+   -------------------------------------------------------------------------- */
+.reveal .icon-row {
+  display: flex;
+  flex: none;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-6);
+  width: 100%;
+  margin: var(--space-4) 0;
+  padding: 0;
+  list-style: none;
+  color: var(--blitzy-primary);
+}
+
+/* The Lucide glyphs the strip carries */
+.reveal .icon-row [data-lucide] {
+  flex: none;
+  width: 56px;
+  height: 56px;
+}
+
+/* Icon-row glyphs inherit the slide colour on the three dark slide types */
+.reveal .slide-title .icon-row,
+.reveal .slide-divider .icon-row,
+.reveal .slide-closing .icon-row {
+  color: var(--blitzy-accent-teal);
+}
+
+/* --------------------------------------------------------------------------
+   Mermaid diagram container
+   Neutralises the reveal.js pre treatment (reduced font size, mono family,
+   drop shadow, 90% width, left alignment) and frames the rendered SVG.
+   Leaves the pre default white-space undeclared.
+   -------------------------------------------------------------------------- */
+.reveal .mermaid,
+.reveal pre.mermaid,
+.reveal .slides pre.mermaid {
+  display: block;
+  flex: none;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  margin: var(--space-3) auto;
+  padding: var(--space-4);
+  overflow: visible;
+  background-color: var(--blitzy-surface-0);
+  border: 1px solid var(--blitzy-border-soft);
+  border-radius: var(--radius-lg);
+  box-shadow: none;
+  font-family: var(--ff-body);
+  font-size: var(--fs-diagram);
+  line-height: 1.35;
+  letter-spacing: normal;
+  text-align: center;
+  color: var(--blitzy-text);
+  word-wrap: normal;
+}
+
+/* Caps the rendered diagram to the stage without clipping */
+.reveal .mermaid > svg,
+.reveal pre.mermaid > svg,
+.reveal .slides pre.mermaid > svg {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: 660px;
+  margin: 0 auto;
+  overflow: visible;
+  font-family: var(--ff-body);
+}
+
+/* Permits Mermaid foreignObject label overflow */
+.reveal .mermaid svg foreignObject,
+.reveal pre.mermaid svg foreignObject,
+.reveal .slides pre.mermaid svg foreignObject {
+  overflow: visible;
+}
+
+/* --------------------------------------------------------------------------
+   Supporting surface: styled tables
+   -------------------------------------------------------------------------- */
+.reveal .slides table {
+  flex: none;
+  width: 100%;
+  margin: var(--space-3) 0;
+  border-collapse: collapse;
+  border-spacing: 0;
+  background-color: var(--blitzy-surface-0);
+  border: 1px solid var(--blitzy-border);
+  font-family: var(--ff-body);
+  font-size: var(--fs-table);
+  line-height: 1.35;
+  text-align: left;
+}
+
+.reveal .slides table th {
+  padding: var(--space-2) var(--space-3);
+  background-color: var(--blitzy-surface-2);
+  border-bottom: 2px solid var(--blitzy-primary);
+  font-family: var(--ff-display);
+  font-size: var(--fs-table);
+  font-weight: 600;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.reveal .slides table td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--blitzy-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.reveal .slides table tbody tr:nth-child(even) {
+  background-color: var(--blitzy-surface-3);
+}
+
+.reveal .slides table tbody tr:last-child td,
+.reveal .slides table tbody tr:last-child th {
+  border-bottom: 0;
+}
+
+.reveal .slides table th[align="center"],
+.reveal .slides table td[align="center"] {
+  text-align: center;
+}
+
+.reveal .slides table th[align="right"],
+.reveal .slides table td[align="right"] {
+  text-align: right;
+}
+
+/* --------------------------------------------------------------------------
+   Supporting surface: inline mono
+   -------------------------------------------------------------------------- */
+.reveal code {
+  padding: 0.08em var(--space-1);
+  border-radius: var(--radius-sm);
+  background-color: var(--blitzy-surface-2);
+  font-family: var(--ff-mono);
+  font-size: var(--fs-code);
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--blitzy-primary-deep);
+}
+
+/* Inline mono on the three dark slide types */
+.reveal .slide-title code,
+.reveal .slide-divider code,
+.reveal .slide-closing code {
+  background-color: var(--blitzy-primary-dark);
+  color: var(--blitzy-accent-teal);
+}
+
+/* --------------------------------------------------------------------------
+   Supporting surface: light surface islands
+   Tables and KPI cards carry a light background on every slide type. Their
+   contents take the light text token on every slide type.
+   -------------------------------------------------------------------------- */
+.reveal .slides table :is(th, td, h1, h2, h3, h4, h5, h6, p, li, strong, b, em, small),
+.reveal .slides .kpi-card :is(h1, h2, h3, h4, h5, h6, p, li, strong, b, em, small):not(.kpi-value):not(.kpi-label) {
+  color: var(--blitzy-text);
+}
+
+/* A brand-lockup nested in an island keeps the light treatment too */
+.reveal .slides table .brand-lockup,
+.reveal .slides .kpi-card .brand-lockup {
+  color: var(--blitzy-text);
+}
+
+.reveal .slides table code,
+.reveal .slides .kpi-card code {
+  background-color: var(--blitzy-surface-2);
+  color: var(--blitzy-primary-deep);
+}
+
+.reveal .slides table li::marker,
+.reveal .slides .kpi-card li::marker {
+  color: var(--blitzy-primary);
+}
+
+.reveal .slides table a,
+.reveal .slides .kpi-card a {
+  color: var(--blitzy-primary);
+  border-bottom-color: var(--blitzy-border-soft);
+}
+
+.reveal .slides table a:hover,
+.reveal .slides .kpi-card a:hover {
+  color: var(--blitzy-primary-light);
+  border-bottom-color: var(--blitzy-primary);
+}
+
+/* --------------------------------------------------------------------------
+   Supporting surface: Lucide SVG icons
+   Default size for an unclassed data-lucide placeholder and the SVG that
+   replaces it, and lets every glyph take its stroke from the surrounding text
+   colour. The hero-icon, kpi-icon, icon-row and brand-lockup components carry
+   their own sizes.
+   -------------------------------------------------------------------------- */
+.reveal [data-lucide],
+.reveal svg.lucide {
+  display: inline-block;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  vertical-align: middle;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+}
+
+/* --------------------------------------------------------------------------
+   Supporting surface: lists
+   -------------------------------------------------------------------------- */
+.reveal .slides ul,
+.reveal .slides ol {
+  display: block;
+  box-sizing: border-box;
+  width: auto;
+  margin: 0 0 var(--space-3) 0;
+  padding-left: var(--space-5);
+  text-align: left;
+}
+
+.reveal .slides ul ul,
+.reveal .slides ul ol,
+.reveal .slides ol ol,
+.reveal .slides ol ul {
+  margin-top: var(--space-2);
+  margin-bottom: 0;
+  margin-left: 0;
+}
+
+.reveal .slides li {
+  margin-bottom: var(--space-3);
+  line-height: 1.4;
+}
+
+.reveal .slides li:last-child {
+  margin-bottom: 0;
+}
+
+.reveal .slides li::marker {
+  color: var(--blitzy-primary);
+  font-weight: 700;
+}
+
+/* List markers read teal on the three dark slide types */
+.reveal .slide-title li::marker,
+.reveal .slide-divider li::marker,
+.reveal .slide-closing li::marker {
+  color: var(--blitzy-accent-teal);
+}
+
+/* --------------------------------------------------------------------------
+   Supporting surface: links
+   -------------------------------------------------------------------------- */
+.reveal a {
+  text-decoration: none;
+  border-bottom: 2px solid var(--blitzy-border-soft);
+  transition: color 0.2s ease, border-bottom-color 0.2s ease;
+}
+
+.reveal a:hover {
+  text-decoration: none;
+  border-bottom: 2px solid var(--blitzy-primary);
+}
+
+.reveal .slide-title a,
+.reveal .slide-divider a,
+.reveal .slide-closing a {
+  border-bottom-color: var(--blitzy-accent-teal);
+}
+
+.reveal .slide-title a:hover,
+.reveal .slide-divider a:hover,
+.reveal .slide-closing a:hover {
+  border-bottom-color: var(--blitzy-surface-0);
+}
