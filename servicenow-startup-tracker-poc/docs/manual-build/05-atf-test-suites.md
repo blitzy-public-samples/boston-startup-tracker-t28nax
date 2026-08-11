@@ -139,7 +139,7 @@ Once both hold, the **Automated Test Framework** application menu exposes the mo
 | **Suite Results** | `sys_atf_test_suite_result` | Reading a suite's rolled-up outcome; the evidence artifact this guide records. |
 | **Administration** > **Step Configurations** | `sys_atf_step_config` | Reading the available step configurations. This guide creates **no** new step configuration. |
 
-**The client test runner is not required by this suite set.** Every one of the 510 steps built below uses a **Server - Independent** or **Server - REST** step configuration. Not one is a client-side step, so no run here needs a browser session to drive a form, and the client runner is **not** a prerequisite: a server-only test or suite is scheduled and executed without one.
+**The client test runner is not required by this suite set.** Every one of the 511 steps built below uses a **Server - Independent** or **Server - REST** step configuration. Not one is a client-side step, so no run here needs a browser session to drive a form, and the client runner is **not** a prerequisite: a server-only test or suite is scheduled and executed without one.
 
 Open **All** > **Automated Test Framework** > **Run Client Test Runner** in a second browser tab **only** in the one case where it is genuinely needed — if you add a client-side step to a test in this guide, or if a run reports that it is waiting for a client test runner. A run that waits for a runner while every step is server-side is the symptom of a client-side step having been added by accident; find and remove it rather than attaching a runner to work around it. The [Build verification](#build-verification) prerequisites carry the box that confirms no client-side step exists.
 
@@ -208,14 +208,14 @@ Three permitted ways to move a value between steps, in order of preference. Ever
 | --- | --- | --- |
 | Test suites | **10** | `sys_atf_test_suite` |
 | Tests | **36** | `sys_atf_test` |
-| Test steps | **510**, itemised under [The step inventory](#the-step-inventory) | `sys_atf_step` |
+| Test steps | **511**, itemised under [The step inventory](#the-step-inventory) | `sys_atf_step` |
 | Suite test membership rows | 36 | `sys_atf_test_suite_test` |
 | New step configurations | **0** | `sys_atf_step_config` — every step below uses a stock configuration |
 | Parent, master or aggregating suites | **0** | There is no eleventh suite. See [Assemble](#assemble). |
 
 ### The step inventory
 
-**510 steps, derived from the sequences below rather than estimated.** Every figure here is the length of a sequence this guide publishes, multiplied by the number of tests that use it. A build whose count differs has either dropped a step or added one, and the difference is the thing to find.
+**511 steps, derived from the sequences below rather than estimated.** Every figure here is the length of a sequence this guide publishes, multiplied by the number of tests that use it — counted from the step tables themselves, never from a remembered figure. A build whose count differs has either dropped a step or added one, and the difference is the thing to find. Two rows carry a per-test count that differs inside one suite, and both are listed separately rather than averaged: `BST REST — startups` carries two blocks no other resource does, and the LinkedIn flow test omits one step the Crunchbase one carries.
 
 | Suite | Tests | Sequence length per test | Steps | How it is made up |
 | --- | --: | --- | --: | --- |
@@ -223,18 +223,19 @@ Three permitted ways to move a value between steps, in order of preference. Ever
 | 2 — founder | 1 | 14 | **14** | The skeleton unchanged |
 | 3 — executive | 1 | 14 | **14** | The skeleton unchanged |
 | 4 — investor | 1 | 14 | **14** | The skeleton **less** step 20, no parent, and **less** step 90, one mandatory column, **plus** 130 and 140 |
-| 5 — funding round | 1 | 15 | **15** | The skeleton **plus** 130 |
+| 5 — funding round | 1 | 16 | **16** | The skeleton **plus** the second parent insert at 25, which creates the investor `lead_investor` binds to, **plus** 130 |
 | 6 — job posting | 1 | 14 | **14** | The skeleton unchanged |
 | 7 — news article | 1 | 14 | **14** | The skeleton with step 100 **replaced**, not added to |
 | 8 — the 7 `*.1` cells | 7 | 6 | **42** | 5, 8, 10, 20, 30, 50 |
 | 8 — the 14 `*.2` and `*.3` cells | 14 | 9 | **126** | 5, 8, 10, 20, 30, 35, 38, 40, 50 |
-| 9 — startups | 1 | 34 | **34** | The 30-step REST sequence **plus** the four invalid-offset steps, with the retirement step at 240 |
-| 9 — founders | 1 | 55 | **55** | The 30-step sequence, **plus** a second pass repeating display orders 25 to 170 for the nested token — 25 steps. The user, impersonation and fixture steps are not repeated, and the caller is retired once |
-| 9 — investors, funding-rounds, jobs, news | 4 | 30 | **120** | The 30-step sequence unchanged |
-| 10 — ingestion | 2 | 16 | **32** | 20, 30, 40, 45, 60, 70, 75, 80, 85, 90, 95, 98, 99, 100, 110, 160 — no user step, no impersonation |
-| | **36** | | **510** | |
+| 9 — startups | 1 | 53 | **53** | The 28-step REST sequence, **plus** the four invalid-offset steps at 200 to 225 and the 21-step authorization block at 230 to 290, with the retirement step renumbered from 190 to 300 |
+| 9 — founders | 1 | 53 | **53** | The 28-step sequence, **plus** a second pass repeating display orders 25 to 170 for the nested token with 200 added to each — 25 steps. The caller-mint step at 15 and the fixture step at 20 are not repeated, and the caller is retired once, at 400 |
+| 9 — investors, funding-rounds, jobs, news | 4 | 28 | **112** | The 28-step sequence unchanged |
+| 10 — ingestion, Crunchbase | 1 | 12 | **12** | 20, 30, 40, 50, 60, 70, 80, 90, 95, 100, 110, 120 — no user step, no impersonation |
+| 10 — ingestion, LinkedIn | 1 | 11 | **11** | The same sequence **less** step 95, the participant carrier assertion, which the LinkedIn test omits because it ingests no funding rounds |
+| | **36** | | **511** | |
 
-**The 30-step REST sequence is the table under [The shared REST step sequence](#the-shared-rest-step-sequence) including step 190**, and the 14-step CRUD skeleton is the table under [The shared CRUD skeleton](#the-shared-crud-skeleton). Display orders are deliberately non-contiguous in both, so a later insertion needs no renumbering; the count is of steps, never of the highest display order.
+**The 28-step REST sequence is the table under [The shared REST step sequence](#the-shared-rest-step-sequence) including step 190**, and the 14-step CRUD skeleton is the table under [The shared CRUD skeleton](#the-shared-crud-skeleton). Display orders are deliberately non-contiguous in both, so a later insertion needs no renumbering; the count is of steps, never of the highest display order. Every figure in the table above is the row count of one of those two tables, plus or minus the additions and omissions each suite section names — count the rows rather than trusting the figure.
 
 **Exactly ten `sys_atf_test_suite` records exist when this guide is complete, and the ten are the ten below.** No parent suite, no master suite and no suite-of-suites is created: the ten are run as an ordered batch by hand, in the order given under [Assemble](#assemble). A suite record whose only purpose is to nest the others would be an eleventh suite record and would put the delivered inventory at 11 against a specification of 10.
 
@@ -1597,13 +1598,15 @@ This password-holding caller is distinct from the three run-time impersonation u
 
 #### This suite does not impersonate, and that is a requirement of the lifecycle
 
-**Suite 8 is the only suite that impersonates.** Suites 1 to 7 create a scoped-admin fixture writer and impersonate it, suite 10 states its own reason under [This suite does not impersonate](#this-suite-does-not-impersonate), and suite 9 must not, for a reason specific to this identity work:
+**Suites 1 to 8 impersonate; suites 9 and 10 do not.** That is the whole lifecycle, and it is tabulated once under [The identity lifecycle, once, for all ten suites](#the-identity-lifecycle-once-for-all-ten-suites). Suites 1 to 7 create a scoped-admin fixture writer at display order 5 and impersonate it at 10; suite 8 does the same and then steps down to the role under test; suite 10 states its own reason under [This suite does not impersonate](#this-suite-does-not-impersonate); and suite 9 must not, for a reason specific to this identity work:
 
-- Steps 15 and 190 write `sys_user`, `sys_user_has_role` and `sys_auth_profile_basic`. **All three are outside the `x_bst_startuptrk` scope and none of them is writable by a caller holding only a scoped application role.** An `Impersonate` step placed before step 5 would therefore make the mint fail, and one placed anywhere before step 190 would make the retirement fail — silently leaving a live credential on the instance, which is the exact outcome this lifecycle exists to prevent.
+- Steps 15 and 190 write `sys_user`, `sys_user_has_role` and `sys_auth_profile_basic`. **All three are outside the `x_bst_startuptrk` scope and none of them is writable by a caller holding only a scoped application role.** An `Impersonate` step placed before step 15 would therefore make the mint fail, and one placed anywhere before the retirement step would make the retirement fail — silently leaving a live credential on the instance, which is the exact outcome this lifecycle exists to prevent.
 - Nothing in this suite needs an impersonated session. The identity under test is the **HTTP caller**, which authenticates independently of the ATF session, and the premium-key-absence assertion is made against the response body that caller received.
 - The fixtures are therefore written by the operator's own session, as instance provisioning. That is the same posture as the shell and the ATF runner property, and it keeps every `sys_user` write out of the application: prompt section 6.0 binds the application, not the operator.
 
-**Do not add a `Create a User` step or an `Impersonate` step to any test in this suite.** Row 5 of [Build verification](#build-verification) is the check.
+**Do not add a `Create a User` step or an `Impersonate` step to any test in this suite.** The box reading *Neither REST test creates a user and neither impersonates* under **Suite 9** in [Build verification](#build-verification) is the check, and [the per-suite counts under Step 2](#step-2--verify-the-role-set-before-trusting-the-test) record this suite's contribution to the role-set verification total as **0** for the same reason.
+
+**The caller's role set is still verified — inside the mint step, not by a separate verification step.** Step 15's script asserts that the account it just minted holds exactly one role and that the role is the base role, and step 230's script does the same for the ephemeral administrator caller. Those assertions are part of the mint, so this suite needs no [Step 2](#step-2--verify-the-role-set-before-trusting-the-test) verification step and contributes none to that count. A `0` in that table means *no separate verification step*, never *unverified*.
 
 ### Cleanup and residue — one contract
 
@@ -1611,7 +1614,7 @@ The contract is stated once and applies to every test in this suite. It does not
 
 | # | Mechanism | What it guarantees | Where |
 | --- | --- | --- | --- |
-| 1 | **Convergence.** Every test's step 15 retires the shell and deletes every `sys_user` whose user name starts with `bst.atf.rest.` **before** minting its own, unconditionally and without reading any prior step's value. | Residue from a crashed run is removed at the head of the next run, whether or not that run's own retirement executed. | [Step 5](#step-15--mint-the-caller-and-bind-the-shell) |
+| 1 | **Convergence.** Every test's step 15 retires the shell and deletes every `sys_user` whose user name starts with `bst.atf.rest.` **before** minting its own, unconditionally and without reading any prior step's value. | Residue from a crashed run is removed at the head of the next run, whether or not that run's own retirement executed. | [Step 15](#step-15--mint-the-caller-and-bind-the-shell) |
 | 2 | **Guaranteed finally.** Steps 15 and 190 wrap their record work in `try`/`finally` with the shell retirement in the `finally`. | A throw part-way through minting or asserting still leaves the shell holding a user name that resolves to no account and a secret nobody holds. | [Technique (b)](#technique-b--the-disposable-rest-caller) |
 | 3 | **Detection.** The operator runs the residue queries after the suite, and the coverage gate reads the result. | If mechanisms 1 and 2 both failed, the gate refuses to pass rather than the leak going unnoticed. | [Post-suite residue queries](#post-suite-residue-queries) |
 
@@ -1690,9 +1693,11 @@ Each of the six tests follows this shape. Substitute the resource path, the fixt
 | 170 | **Run Server Side Script** | Server - Independent | Asserts `retry_after` is present and a **positive integer**, that the body carries exactly the two members `error` and `retry_after`, that exactly one of the two seeded rows is above the budget, and then **deletes every row carrying either key**, leaving the counter as it found it. Script under [Technique (c)](#technique-c--the-deterministic-429). |
 | 190 | **Run Server Side Script** | Server - Independent | **Retire the caller.** Returns the shell `BST ATF REST caller` to the user name `bst.atf.retired` with a fresh secret it discards, deletes this test's account and its role grant, and asserts the absence of both. The body is wrapped in `try`/`finally` with the shell retirement in the `finally`. Script under [Step 190 — retire the caller](#step-190--retire-the-caller). |
 
-**Twenty-eight display orders, and the two identity steps bracket every other one.** Step 5 mints the caller before anything else happens and step 190 retires it after every assertion has been made; the fixtures at step 20 are written by the operator's own session, for the reason under [This suite does not impersonate](#this-suite-does-not-impersonate-and-that-is-a-requirement-of-the-lifecycle).
+**Twenty-eight display orders, and the two identity steps bracket every other one.** Step 15 mints the caller before anything else happens and step 190 retires it after every assertion has been made; the fixtures at step 20 are written by the operator's own session, for the reason under [This suite does not impersonate](#this-suite-does-not-impersonate-and-that-is-a-requirement-of-the-lifecycle). Two tests move the retirement step so that a block appended after step 190 still runs before it: `BST REST — startups` renumbers it to **300** and `BST REST — founders` to **400**. Neither moves any other step, and the count is unchanged by a renumbering.
 
 The `BST REST — founders` test runs the whole sequence **twice**, once per token — `/founders` and the nested `/founders/{startup_id}/executives` — because the two account separately in the counter. The second pass substitutes the step 20 startup's `sys_id` for `{startup_id}` in the `end_point`, uses the path parameter itself as the filter, and sets `API_RESOURCE` to `/founders/{startup_id}/executives` in **all five** of its counter steps. Each pass takes its own ownership baseline, asserts its own increments, seeds its own threshold and cleans up after itself, so neither pass can affect the other's counts. That test therefore runs roughly twice the step count of the other five.
+
+**The second pass repeats display orders 25 to 170 with 200 added to each — 225 through 370 — and the retirement step moves from 190 to 400.** Two steps cannot share a display order inside one test, so the second pass cannot reuse the first pass's numbers; adding a constant keeps the mapping mechanical and keeps both passes in their built order. The caller-mint step at 15 and the fixture step at 20 are **not** repeated: one caller and one fixture set serve both passes, which is why the test is 53 steps and not 56. Step 190 becomes step **400** so the single retirement still runs after the second pass has finished.
 
 #### Why the filter has to isolate
 
@@ -2180,16 +2185,16 @@ Step 120 asserts the clamp with the same fixture:
 
 Add these two steps to **one** of the six tests — `BST REST — startups` by convention — because the parameter is parsed by the shared `RestQueryHelper` and one resource evidences it for all seven operations.
 
-**Four steps, both branches, and the numbering is fixed.** A non-numeric `sysparm_offset` and a negative one take the same refusal path but not the same parse path, so each needs its own request; leaving the second branch as an instruction to "repeat the step" leaves a build with one of the two covered.
+**Four steps, both branches, and the numbering is fixed.** A non-numeric `sysparm_offset` and a negative one take the same refusal path but not the same parse path, so each needs its own request; leaving the second branch as an instruction to "repeat the step" leaves a build with one of the two covered. The fourth step is **225** rather than 230 because [the authorization assertions](#the-authorization-assertions--bst-rest--startups-only) open at 230 in this same test, and two steps cannot share a display order.
 
 | Step | Step configuration | Category | Inputs |
 | --- | --- | --- | --- |
 | 200 | **Send REST Request - Inbound** | Server - REST | Identical to step 30 with `query_params` `sysparm_offset` `-1`. The **negative** branch. |
 | 210 | **Run Server Side Script** | Server - Independent | Asserts the status is **400**, that the body carries exactly one member named `error`, and that the message names `sysparm_offset`. |
 | 220 | **Send REST Request - Inbound** | Server - REST | Identical to step 30 with `query_params` `sysparm_offset` `abc`. The **non-numeric** branch. |
-| 230 | **Run Server Side Script** | Server - Independent | The same assertions as step 210. One script, entered twice. |
+| 225 | **Run Server Side Script** | Server - Independent | The same assertions as step 210. One script, entered twice. |
 
-A non-numeric or negative `sysparm_offset` is refused with `400`, not silently treated as `0`. Repeat step 200 with `sysparm_offset` `abc` to cover the non-numeric branch. These steps run **before** the caller retirement. In this one test the retirement step is renumbered to `300`, because the invalid-offset steps here **and** [the authorization assertions](#the-authorization-assertions--bst-rest--startups-only) at steps 230 to 290 all run ahead of it.
+A non-numeric or negative `sysparm_offset` is refused with `400`, not silently treated as `0`. Both branches are built as their own request — step 200 for the negative value and step 220 for the non-numeric one — each with its own assertion step, so neither is left as an instruction to repeat the other. These steps run **before** the caller retirement. In this one test the retirement step is renumbered to `300`, because the invalid-offset steps here **and** [the authorization assertions](#the-authorization-assertions--bst-rest--startups-only) at steps 230 to 290 all run ahead of it.
 
 
 ### The authorization assertions — `BST REST — startups` only
@@ -2232,12 +2237,12 @@ The base caller cannot be reused: it holds exactly one role by design, and grant
 | User name | `bst.atf.rest.<token>` | `bst.atf.rest.admin.<token>` |
 | `web_service_access_only` | `true` | `true` |
 | Basic Auth Configuration | `BST ATF REST caller` — precondition 14 | `BST ATF REST admin` — precondition 17 |
-| Minted by | step 30 | step 230 |
-| Removed by | the framework rollback, the next run's step 30 sweep, and step 220 | the framework rollback, the next run's step 230 sweep, and step 290 |
+| Minted by | step 15 | step 230 |
+| Removed by | the framework rollback, the next run's step 15 sweep, and the retirement step — 190 in the other five tests, 300 in this one | the framework rollback, the next run's step 230 sweep, and step 290 |
 
 **The administrator caller must not hold the platform `admin` role.** Warning **W1** applies here exactly as it applies to suite 8: a platform administrator overrides record ACLs, so a `201` obtained by one proves nothing about the scoped role. Step 230 asserts the role set is exactly one row and that it is not `admin`.
 
-Both prefixes begin `bst.atf.rest.`, so residue query `R1` and step 30's unconditional sweep already cover the administrator caller with no change: whichever of the two mint steps runs next removes what an aborted run left behind.
+Both prefixes begin `bst.atf.rest.`, so residue query `R1` and step 15's unconditional sweep already cover the administrator caller with no change: whichever of the two mint steps runs next removes what an aborted run left behind.
 
 #### The step sequence
 
@@ -2794,7 +2799,7 @@ The fixture writes are **Run Server Side Script** steps compiled in the `x_bst_s
 
 ### The shared test step sequence
 
-**The sequence starts at step 20, and there is no `Create a User` and no `Impersonate` step.** Suites 1 to 9 open with those three; this one does not, for the three reasons under [This suite does not impersonate](#this-suite-does-not-impersonate) — and concretely because steps 100 and 110 read `syslog`, `sys_hub_flow` and the action tables, which a user holding only `x_bst_startuptrk.admin` cannot read. An impersonation here would fail those two steps for a reason that is not a defect.
+**The sequence starts at step 20, and there is no `Create a User` and no `Impersonate` step.** Suites 1 to 8 open with those three — a `Create a User`, its role-set verification and an `Impersonate` — and suite 9 opens with a scripted caller mint at 15 instead; this one opens with none of them, for the three reasons under [This suite does not impersonate](#this-suite-does-not-impersonate) — and concretely because steps 100 and 110 read `syslog`, `sys_hub_flow` and the action tables, which a user holding only `x_bst_startuptrk.admin` cannot read. An impersonation here would fail those two steps for a reason that is not a defect.
 
 | Step | Step configuration | Category | Inputs |
 | --- | --- | --- | --- |
@@ -2842,7 +2847,7 @@ Each test seeds its own rows under the `import_run` token minted at step 20, so 
 
 **Both funding rounds carry both halves of the parent key, and they point at row 4's name rather than row 1's.** `IngestionMapper.resolveStartupKey()` requires the name **and** the headquarters location, because that pair is the same natural key cleaning rule 2 de-duplicates Startup rows on. A child row that names a parent but leaves `startup_headquarters_location` blank never reaches a match at all: it is rejected with `the row carries no parent headquarters location, and the startup key is the name together with the headquarters location`. Rows 11 and 12 therefore both carry `startup_headquarters_location` = `Boston, MA`, which is row 4's headquarters.
 
-**Row 4's name is the one that is unambiguous.** Rows 1 and 3 share the `name` `<T> Dedupe Target` and differ only in headquarters, which is what makes row 3 the deduplication negative control; two startups therefore carry that name after the run. `<T> Choice Coerce` is carried by exactly one. **Pointing the rounds at the ambiguous name rejects both of them for the wrong reason and breaks the join-row and `portfolio_count` assertions at step 98.**
+**Row 4's name is the one that is unambiguous.** Rows 1 and 3 share the `name` `<T> Dedupe Target` and differ only in headquarters, which is what makes row 3 the deduplication negative control; two startups therefore carry that name after the run. `<T> Choice Coerce` is carried by exactly one. **Pointing the rounds at the ambiguous name rejects both of them for the wrong reason and breaks the join-row and `portfolio_count` assertions at step 90.**
 
 **Row 12 carries the location even though it never resolves.** `clean()` runs all four cleaning rules — including the mandatory-field check — before `_applyEntry()` calls `resolveReferences()`, so row 12 is rejected for its missing `round_date` and the parent key is never read. The half is present so the asserted reason is unambiguously the missing `round_date` rather than a resolution failure that happens to arrive at the same state.
 
@@ -3651,7 +3656,7 @@ The check is `IngestionMapper.missingMandatory()`, which produces the reason `mi
 
 The founder case is the reference-resolution failure rather than a blank column, because a blank `startup_name` and an unresolvable one both end in the same place — `rejected`, nothing written — and the unresolvable name additionally proves the resolver's own reason text. Its outcome **code** differs accordingly: `parent_unresolved` rather than `missing_mandatory`, which is why the case table below carries the expected code as well as the expected field name.
 
-**The LinkedIn batch carries a second founder rejection, fixture row 9, which this step does not read.** Row 9 omits `startup_headquarters_location`, the second half of the parent natural key, and is refused before the resolver queries anything. Its reason belongs to `resolveStartupKey()` rather than to `missingMandatory()`, so both of its rejections — the unmatched complete key of row 3 and the missing half of row 9 — are asserted at step 85 under [The LinkedIn assertion](#the-linkedin-assertion--parent-resolution-and-its-failure). This step stays one row per record type.
+**The LinkedIn batch carries a second founder rejection, fixture row 9, which this step does not read.** Row 9 omits `startup_headquarters_location`, the second half of the parent natural key, and is refused before the resolver queries anything. Its reason belongs to `resolveStartupKey()` rather than to `missingMandatory()`, so both of its rejections — the unmatched complete key of row 3 and the missing half of row 9 — are asserted at step 50 under [The LinkedIn assertion](#the-linkedin-assertion--parent-resolution-and-its-failure). This step stays one row per record type.
 
 ```javascript
 (function(outputs, steps, params, stepResult, assertEqual) {
@@ -4014,7 +4019,7 @@ Step 110. It reads the delivered flow and action records out of the platform's o
 | 3 | All **seven** actions of that flow exist in the scope and every one is **published** | An unpublished action cannot be called by a flow |
 | 4 | The flow calls exactly **seven** actions and contains exactly **one** `If` | The delivered decomposition of [`02-flow-crunchbase-ingestion.md`](02-flow-crunchbase-ingestion.md#assembling-the-flow-from-the-published-actions) and [`03-flow-linkedin-ingestion.md`](03-flow-linkedin-ingestion.md#assembling-the-flow-from-the-published-actions): **eight builder elements**, the cadence guard outside the `If` and the other six action calls inside it. A different call count, or a missing `If`, is a different flow |
 | 5 | The **ingestion action is among the seven called** | The action that performs the ingestion must be the action the flow invokes |
-| 6 | The ingestion action declares the **thirteen** step-5 outputs the guide lists, and exactly as many outputs in total as that guide declares — **15** for Crunchbase, **13** for LinkedIn | A missing output breaks the downstream reconciliation. The two differ because only Crunchbase writes participant links, so only its step 5 declares `links_written` and `links_failed` |
+| 6 | The ingestion action declares the **fourteen** outputs both flow guides list for it, and exactly as many outputs in total as its own guide declares — **16** for Crunchbase, **14** for LinkedIn | A missing output breaks the downstream reconciliation. The two differ because only Crunchbase writes participant links, so only its ingestion action declares `links_written` and `links_failed` |
 | 7 | The fetch action references the credential alias **by its API ID**, and **no credential value appears** in any action or flow record | The alias binding of [`01-connection-credential-aliases.md`](01-connection-credential-aliases.md), and the secret-hygiene gate |
 | 8 | The cadence-guard action declares its **seven** outputs, including `proceed` | The `If` tests `proceed`; an absent output makes the guard unconditional |
 
@@ -4411,11 +4416,25 @@ The arithmetic is **7 + 21 + 6 + 2 = 36 tests across 10 suites**. Both totals mu
 
 Every one of the 21 tests in suite 8 **impersonates a purpose-created user holding exactly one scoped role and none of the elevated platform roles**. The three users are **created by the test setup steps at run time**, not shipped in the Update Set, because `sys_user` sits outside the application scope and the requirements forbid modifying anything outside `x_bst_startuptrk`. The mechanic is stated here; the decision is recorded in [`../../../docs/decisions/DECISION_LOG.md`](../../../docs/decisions/DECISION_LOG.md).
 
+### The identity lifecycle, once, for all ten suites
+
+**Eight suites impersonate and two do not. This table is the only statement of that, and every other mention in this guide points here.** Read it as the build contract: the display orders are the ones in each suite's own step table, and a suite whose build carries an identity step this table does not name is a build to correct.
+
+| Suite | `Create a User` step | Role-set verification step | `Impersonate` step | Who writes the fixtures |
+| --- | --- | --- | --- | --- |
+| 1 to 7 — table CRUD | One, at display order 5 — the scoped-admin fixture writer | One, at 8 | One, at 10 | The impersonated scoped administrator, which is what puts the write ACLs under test |
+| 8 — the 7 `*.1` cells | One, at 5 | One, at 8 | One, at 10 | The impersonated scoped administrator |
+| 8 — the 14 `*.2` and `*.3` cells | Two, at 5 and 35 | Two, at 8 and 38 | Two, at 10 and 40 | The scoped administrator impersonated at 10, before the step-40 switch to the role under test |
+| 9 — REST resources | **None** | **None as a separate step.** Step 15 asserts the minted caller's role set inline, and step 230 does the same for the ephemeral administrator caller | **None** | The operator's own session, through scoped `Run Server Side Script` steps — see [This suite does not impersonate](#this-suite-does-not-impersonate-and-that-is-a-requirement-of-the-lifecycle) |
+| 10 — ingestion flows | **None** | **None** | **None** | The operator's own session, through scoped `Run Server Side Script` steps — see [This suite does not impersonate](#this-suite-does-not-impersonate) |
+
+**Suite 9's identity is an HTTP caller, not an ATF session**, which is why it mints a `sys_user` in a script step instead of creating and impersonating one: `Send REST Request - Inbound` establishes its own session, and steps 15 and 190 write tables no scoped role may write. **Suite 10 has no caller identity at all**, because both flows carry **Run As: System User**. Neither omission is an oversight, and neither may be "corrected" by adding the steps.
+
 ### The three users
 
 | User | First / last name | The one role it holds | Used by |
 | --- | --- | --- | --- |
-| `BST ATF admin` | `BST ATF` / `admin` | `x_bst_startuptrk.admin` | Every fixture-writing step in all ten suites, and the seven `ACL-*.1` cells |
+| `BST ATF admin` | `BST ATF` / `admin` | `x_bst_startuptrk.admin` | Every fixture-writing step in suites 1 to 8, and the seven `ACL-*.1` cells. Suites 9 and 10 create no such user |
 | `BST ATF premium` | `BST ATF` / `premium` | `x_bst_startuptrk.premium_user` | The seven `ACL-*.2` cells |
 | `BST ATF base` | `BST ATF` / `base` | `x_bst_startuptrk.user` | The seven `ACL-*.3` cells |
 
@@ -4446,11 +4465,13 @@ The counts that follow from that rule, per suite:
 | 1 to 7, table CRUD | 7 | 1, at display order 5 | **7** |
 | 8, the `*.1` cells | 7 | 1, at display order 5 | **7** |
 | 8, the `*.2` and `*.3` cells | 14 | 2, at display orders 5 and 35 | **28** |
-| 9, REST resources | 6 | 1, at display order 5 | **6** |
+| 9, REST resources | 6 | **0 — the suite creates no user with this step** | **0** |
 | 10, ingestion | 2 | **0 — the suite creates no user** | **0** |
-| | | **Total** | **48** |
+| | | **Total** | **42** |
 
-**Suite 10 contributes nothing to this count, and that is deliberate.** Its sequence carries no `Create a User` step and no `Impersonate` step — see [The shared test step sequence](#the-shared-test-step-sequence), which begins at display order 20. Its fixture writes are `Run Server Side Script` steps compiled in the `x_bst_startuptrk` scope, so they reach the staging table without a role grant, and access control is suites 8 and 9's subject rather than this suite's. A suite-10 test that carries a role-set verification step is verifying a user that does not exist.
+**Forty-two, and suites 9 and 10 contribute nothing to it.** The total is the sum of the four rows above it and nothing else: 7 from the CRUD suites, 7 from the `*.1` cells and 28 from the two-user cells — **35 of the 42 are in suite 8**. A build that reaches any other number has either added a verification step where no user is created or dropped one where a user is.
+
+**Neither suite 9 nor suite 10 creates a user with the `Create a User` step, so neither carries a verification step.** Suite 10's sequence carries no `Create a User` step and no `Impersonate` step — see [The shared test step sequence](#the-shared-test-step-sequence), which begins at display order 20 — and its fixture writes are `Run Server Side Script` steps compiled in the `x_bst_startuptrk` scope, so they reach the staging table without a role grant. Suite 9 mints its caller in a script step instead, at 15 and again at 230, and **each of those two scripts asserts the role set it just granted inline**: see [This suite does not impersonate, and that is a requirement of the lifecycle](#this-suite-does-not-impersonate-and-that-is-a-requirement-of-the-lifecycle). A `0` in this table therefore means *no separate verification step in this suite*, never *an unverified role set*. Access control is suite 8's subject cell by cell and suite 9's over HTTP; a suite-9 or suite-10 test that carries a `Create a User` step and a role-set verification step is verifying a user the suite never needed, and it adds twelve steps the [step inventory](#the-step-inventory) does not account for.
 
 ```javascript
 (function(outputs, steps, params, stepResult, assertEqual) {
@@ -4883,11 +4904,10 @@ The table carries exactly five columns. **All five are written by every seed**, 
 
 | Column | Value |
 | --- | --- |
-| `window_key` | **The value `RateLimitService.windowKey(callerId, API_RESOURCE, windowStart)` returns for that window boundary.** Never composed by hand: the helper below calls the service's own method, so the test cannot drift from the implementation. It is mandatory and unique, and it is the only column the limiter queries. |
+| `window_key` | **The value `RateLimitService.windowKey(callerId, API_RESOURCE, windowStart)` returns for that window boundary** — `<caller>` then `<api_resource>` then `<bucket>`, joined by the pipe character and truncated at 200 characters. Never composed by hand: the helper below calls the service's own method, so the test cannot drift from the implementation. It is mandatory and **unique**, it is the only column the limiter queries, and every step in this technique queries it and nothing else. |
 | `caller` | The `sys_id` of **the REST caller** — the user the inbound REST request authenticates as, **not** any impersonated user. It is the `caller_id` output of [step 15](#step-15--mint-the-caller-and-bind-the-shell), the step that minted the account and bound the shell to it. `Send REST Request - Inbound` establishes its own session, so an earlier `Impersonate` step has no bearing on which caller the limiter accounts against. Seeding the wrong caller is the single most common reason this assertion fails to trip, and it produces the wrong key as well as the wrong row. |
 | `api_resource` | The exact token for the resource under test, from the table in [suite 9](#suite-9--bst-rest-suite--resources). Seven tokens exist; the nested executives sub-resource has its own. |
 | `window_start` | The boundary the row belongs to: the epoch second floored to a multiple of the window length. Not "now". Step 130 seeds one row on the **current** boundary and one on the **next**. |
-| `window_key` | `RateLimitService.windowKey(caller, api_resource, window_start)` — `<caller>|<api_resource>|<bucket>`, truncated at 200 characters. **Unique**, and the only column the limiter queries. Every step in this technique queries it and nothing else. |
 | `request_count` | The budget itself — `100` by default. The service rejects when the incremented count is **strictly greater than** the budget, so a row seeded at `100` becomes `101` on the next call and trips; a row seeded at `99` becomes `100` and does **not** trip. |
 
 ### The shared helper every counter step declares
@@ -5573,7 +5593,7 @@ Four jobs, in order: mint a token unique to **this execution**, derive the prove
     parked.setValue('error_message', 'code=rejected ref=atf:run_token');
     parked.setValue('run_provenance', PROVENANCE);
     parked.setValue('import_run', T + '-token');
-    // The OTHER source's marker entry, captured verbatim so step 160 can assert this
+    // The OTHER source's marker entry, captured verbatim so step 120 can assert this
     // test left it untouched. Empty when that source has no entry, which is itself the
     // value to assert. The marker is one entry per source inside a single property, in
     // the form source=provenance|state|stamp|run.
@@ -5838,7 +5858,7 @@ Record these artifacts against [`../validation-checklist.md`](../validation-chec
 | --- | --- | --- |
 | **2** — field-level ACLs on 100 % of the 7 premium fields, verified per role per field | The `BST ACL suite — premium fields by role` suite result, plus all **21** named test results | All 21 cells passing. For each of the seven `ACL-*.3` cells, the step 50 output message carrying `element.canRead()=false`, `key present=false`, the control column's value, and `platform admin held=false` — the three independent oracles plus the impersonation check in one line. Plus **all 35** role-set verification outputs of this suite, 21 at step 8 and 14 at step 38, one per created user, which are what prove no read was performed under an overriding role. |
 | **3** — 6 REST resources return correct paginated responses and a 429 with a retry value | The `BST REST suite — resources` suite result, plus all **6** named test results | Per resource: the 200 status; the step 60 output message naming the declared keys typed, the premium keys absent and **0 undeclared keys**; the step 70 and step 100 output messages carrying the **exact** `total_count` of 4, the exact row identifiers in sort order, the exact remainder and an overlap of 0; the step 120 clamp line naming the ceiling read from the property; the step 75 and step 105 increment lines showing 1 then 2 from a zero baseline; and the step 170 line carrying `retry_after`, the seeded row reaching budget + 1, and both window keys cleaned to 0 rows. For `BST REST — founders`, all of it twice — once for `/founders` and once for the nested `/founders/{startup_id}/executives` token. For `BST REST — startups`, additionally the authorization lines: step 237's `401` with no `result` and no `total_count` and both keys still at 0; step 243's `403` carrying the administrator-role message, 0 records written and the refused request counted once; step 252's `201` with both premium keys **present**; step 263's `403` with the record untouched and step 265's `404` on the identical request; step 272's `204` with an empty body and the record gone; and step 290's four-key, one-record, one-shell cleanup line. |
-| **4** — flows ingest and clean on the configured cadence with zero unhandled errors across three consecutive scheduled runs | The `BST FLOW suite — ingestion` suite result, plus the results of `BST FLOW — Crunchbase Ingestion [fallback]` and `BST FLOW — LinkedIn Ingestion [fallback]` **with their labels** | Both tests passing under their mode-suffixed names. Per test: the step 20 output message carrying `RESULT LABEL:` with the **derived** provenance and the three inputs it was derived from, and `no run summary written by setup`; the step 40 message carrying the exact `accepted`, `rejected`, `entries` and `summary.processed`; the step 100 message showing **exactly one** run summary for the run and **no** all-zero one; and the step 110 message naming the trigger type, the seven published actions, the seven action calls plus one `If`, the orchestrator's declared outputs — **15** for Crunchbase and **13** for LinkedIn, the substituted `INGEST_OUT` value that message prints — and the alias bound by name with no credential material. **This is not sufficient on its own.** Criterion 4's durable evidence is the run-summary records written by three consecutive guard-passing scheduled executions of each flow, which are a separate surface — see [Technique (c)](#technique-e--provenance-labelling) and [what counts as a scheduled run](../deployment-runbook.md#what-counts-as-a-scheduled-run). The suite result evidences the cleaning rules and the wiring; the run summaries evidence the cadence and the error count. |
+| **4** — flows ingest and clean on the configured cadence with zero unhandled errors across three consecutive scheduled runs | The `BST FLOW suite — ingestion` suite result, plus the results of `BST FLOW — Crunchbase Ingestion [fallback]` and `BST FLOW — LinkedIn Ingestion [fallback]` **with their labels** | Both tests passing under their mode-suffixed names. Per test: the step 20 output message carrying `RESULT LABEL:` with the **derived** provenance and the three inputs it was derived from, and `no run summary written by setup`; the step 40 message carrying the exact `accepted`, `rejected`, `entries` and `summary.processed`; the step 100 message showing **exactly one** run summary for the run and **no** all-zero one; and the step 110 message naming the trigger type, the seven published actions, the seven action calls plus one `If`, the orchestrator's declared outputs — **16** for Crunchbase and **14** for LinkedIn, the substituted `INGEST_OUT` value that message prints — and the alias bound by name with no credential material. **This is not sufficient on its own.** Criterion 4's durable evidence is the run-summary records written by three consecutive guard-passing scheduled executions of each flow, which are a separate surface — see [Technique (c)](#technique-e--provenance-labelling) and [what counts as a scheduled run](../deployment-runbook.md#what-counts-as-a-scheduled-run). The suite result evidences the cleaning rules and the wiring; the run summaries evidence the cadence and the error count. |
 | **1** — all 7 tables exist with 100 % of their fields | The seven `BST CRUD suite — *` suite results | One passing suite per table. Combined with `GATE-COL-01` and `GATE-TBL-01` through `GATE-TBL-07` from [`../validation-gates.md`](../validation-gates.md). |
 
 An execution that exited on the cadence guard is a **no-op**: it is not a scheduled run and is not evidence of anything. Do not count it among the three consecutive runs criterion 4 requires.
@@ -5948,10 +5968,10 @@ A token such as `atf-crunchbase-001`, hard-coded identically in every step, cann
 The three impersonation users are created at run time and rolled back with the rest of the test data. After a completed run, `sys_user` must carry no user whose first name is `BST ATF`. If one remains, a test errored in a way that left its transaction open; investigate before trusting any result in that run.
 
 **W9. A flow test that stamped the cadence marker would silently disable the next scheduled run. SILENT.**
-`ingest()` ends in `writeRunSummary()`, which emits the `run_summary` event and writes **no** property. The property write is `markRunComplete()`, whose `AppProperties.completeRun()` call turns this source's entry in `x_bst_startuptrk.ingestion.last_run_provenance` into a `succeeded` marker — and it is called by the **final phase of orchestrator action A4**, not by the mapper entry point these tests call. That marker's stamp is the value the flow's cadence guard compares, so a test that reached `markRunComplete()` at 09:00 would make every execution of that flow a no-op until the cadence had elapsed — up to 48 hours. The flow test would pass, the flow would then do nothing, and success criterion 4's three consecutive guard-passing runs would never start. Nothing reports an error at any point. **A batch that rejects rows would not protect you**: rejections are cleaning-rule outcomes rather than errors, so `succeeded` would still be `true` and the marker still written. Three properties of the delivered construction foreclose it: **no step in suite 10 writes any property**, step 40 calls `IngestionMapper.ingestStaging()` rather than A4's whole script, and step 100 asserts the marker is **byte-identical** to the value step 20 parked. Full detail under [The control state](#the-control-state-these-tests-read-and-the-one-they-do-not-write).
+`ingest()` ends in `writeRunSummary()`, which emits the `run_summary` event and writes **no** property. The property write is `markRunComplete()`, whose `AppProperties.completeRun()` call turns this source's entry in `x_bst_startuptrk.ingestion.last_run_provenance` into a `succeeded` marker — and it is called by the **final phase of orchestrator action A4**, not by the mapper entry point these tests call. That marker's stamp is the value the flow's cadence guard compares, so a test that reached `markRunComplete()` at 09:00 would make every execution of that flow a no-op until the cadence had elapsed — up to 48 hours. The flow test would pass, the flow would then do nothing, and success criterion 4's three consecutive guard-passing runs would never start. Nothing reports an error at any point. **A batch that rejects rows would not protect you**: rejections are cleaning-rule outcomes rather than errors, so `succeeded` would still be `true` and the marker still written. Three properties of the delivered construction foreclose it: **no step in suite 10 writes any property**, step 40 calls `IngestionMapper.ingestStaging()` rather than A4's whole script, and step 120 asserts the marker is **byte-identical** to the value step 20 parked. Full detail under [The control state](#the-control-state-these-tests-read-and-the-one-they-do-not-write).
 
-**W9. A flow test that stamped the completion marker would silently disable the next scheduled run. SILENT.**
-`ingest()` ends in `writeRunSummary()`, which emits the `run_summary` event and **writes no property**. The marker the cadence guard reads is stamped **only** by `IngestionLogger.markRunComplete()`, and that is reached **only** by part `8c` of a real flow execution. **No step of either flow test calls it, and none may be added that does.** A test that did would move this source's `succeeded` stamp to the moment the suite ran, and every subsequent execution of that flow would exit on the cadence guard — up to 48 hours of no-ops — while the test itself passed, the flow reported nothing, and success criterion 4's three consecutive guard-passing runs never started. Nothing would report an error at any point. **A batch that rejects rows does not protect you either**: rejections are cleaning-rule outcomes rather than errors, so a run that stamped the marker would still stamp it. Three things keep this closed: no test writes the property at all, [step 120](#the-control-state-verification-step) asserts that and publishes the value, and [residue query `R4`](#post-suite-residue-queries) confirms it after the suite. Full detail under [The control state each test reads](#the-control-state-these-tests-read-and-the-one-they-do-not-write).
+**W9b. The marker assertion is itself silent if it is not built. SILENT ON THE ASSERTION SIDE.**
+`W9` states the hazard; this is what proves it did not happen, and none of it is automatic. The marker the cadence guard reads is stamped **only** by `IngestionLogger.markRunComplete()`, reached **only** by part `8c` of a real flow execution — so a suite that simply omits the assertion still passes, and a marker write introduced later goes unnoticed until three consecutive scheduled runs fail to start. Three things must be present and recorded: **no step writes the property at all**, [step 120](#the-control-state-verification-step) asserts the parked value byte-for-byte and publishes it in its output message, and [residue query `R4`](#post-suite-residue-queries) confirms after the suite that neither source carries a `running` state. A build with step 120 missing, or a run with `R4` unrecorded, has the same evidence as a build that never had the hazard — which is none.
 
 **W10. A password or a run token built from `Math.random()` only looks random. SILENT.**
 `Math.random()` is not a cryptographically secure source: its output is drawn from a seeded pseudo-random generator, so a value built from it is predictable to anyone who can observe or guess the seed. A 32-character password assembled that way is exactly as long as a secure one and reads exactly the same in the record, and **every assertion in every suite passes either way** — which is why this is silent rather than a failure. Every random value this guide generates therefore comes from `GlideSecureRandomUtil`: `getSecureRandomString(n)` for the ephemeral caller's password, for the retirement secret and for the run-unique name suffix, and `getSecureRandomIntBound(n)` for the flow-provenance run token. `gs.generateGUID()` is not a substitute either — it is an identifier generator and its output is not guaranteed to be drawn from a cryptographically secure source. If a script in this guide reads `Math.random()`, it is not the script this guide specifies.
@@ -5992,7 +6012,7 @@ Work through every box before this guide is signed off.
 - [ ] **10** suites exist, named exactly as in [What this guide builds](#what-this-guide-builds).
 - [ ] **Exactly 10** `sys_atf_test_suite` records exist in the `x_bst_startuptrk` scope, and **every one of them has an empty Parent field**. Count them: `______`. A count of 11 means a parent suite was built; delete it and record the ten suite results as a batch instead.
 - [ ] **36** tests exist: 7 + 21 + 6 + 2.
-- [ ] **510** `sys_atf_step` records exist across the 36 tests, and each test's own count matches its row in [The step inventory](#the-step-inventory). Count them per test rather than in total: a total that happens to reach 510 while two tests are wrong cancels out. Record any test whose count differs and the step it is missing or carries extra: `______`.
+- [ ] **511** `sys_atf_step` records exist across the 36 tests, and each test's own count matches its row in [The step inventory](#the-step-inventory). Count them per test rather than in total: a total that happens to reach 511 while two tests are wrong cancels out. Record any test whose count differs and the step it is missing or carries extra: `______`.
 - [ ] Every one of the 36 tests is a member of its suite with an explicit **Order**.
 - [ ] Every test name matches [The canonical test names](#the-canonical-test-names-and-the-one-that-carries-a-mode-suffix) exactly, and **both suite-10 tests carry a `[fallback]` or `[live]` suffix** — neither exists in an unsuffixed form.
 - [ ] **0** new step configurations were created.
@@ -6027,13 +6047,15 @@ Work through every box before this guide is signed off.
 - [ ] Every cell asserts oracle 2 independently of oracle 1 — key presence on the object `serialize()` returned — and oracle 3, the control column, under **both** branches.
 - [ ] The 14 `*.1` and `*.2` cells assert the key is **present**, the value is **non-empty**, and the serialised value equals the element value.
 - [ ] The 7 `*.3` cells assert the key is **absent** via `hasOwnProperty` **and** that `typeof body[FIELD]` is `undefined` — never that the value is falsy, empty or null, either of which passes against the forbidden nulled response.
-- [ ] **Every one of the 21 cells carries its own role-set verification step**, and the 14 two-user cells carry two: 21 at display order 8 and 14 at display order 38, **35 in suite 8** and **48 across the whole guide**, per the table under [Step 2](#step-2--verify-the-role-set-before-trusting-the-test). Confirm no cell relies on another cell's verification and none is done once for the suite.
+- [ ] **Every one of the 21 cells carries its own role-set verification step**, and the 14 two-user cells carry two: 21 at display order 8 and 14 at display order 38, **35 in suite 8** and **42 across the whole guide** — the other 7 are the CRUD suites' fixture writers, and suites 9 and 10 contribute none — per the table under [Step 2](#step-2--verify-the-role-set-before-trusting-the-test). Confirm no cell relies on another cell's verification and none is done once for the suite.
 - [ ] Each verification asserts exactly one scoped role, names each forbidden platform role individually, and asserts **zero** group memberships.
 - [ ] Every cell asserts inside its step 50 that `gs.getUserID()` is the user under test and that `gs.hasRole('admin')` is `false`, so a silently ineffective `Impersonate` step cannot produce a false pass.
 
 **Suite 9 — REST resources**
 
 - [ ] All **6** resources have a test, and the nested `GET /founders/{startup_id}/executives` is exercised inside `BST REST — founders` as a full second pass with its own counter token.
+- [ ] **Neither REST test creates a user and neither impersonates.** There is no `Create a User` step, no role-set verification step and no `Impersonate` step in any of the six tests: the caller is minted by the script at step 15 — and the ephemeral administrator caller by the script at step 230 — in the operator's own session, because `sys_user`, `sys_user_has_role` and `sys_auth_profile_basic` are outside the scope and no scoped role may write them. Each mint script asserts inline that the account it created holds exactly one role and that the role is the expected one, so this suite contributes **0** to the 42 role-set verification steps under [Step 2](#step-2--verify-the-role-set-before-trusting-the-test) while leaving no role set unverified. Six `Create a User` steps and six verification steps added here would put the step inventory at 523 against a published 511.
+- [ ] **The founders test's second pass carries its own display orders** — the first pass's 25 to 170 with 200 added, so 225 to 370 — and its retirement step is renumbered to **400**. The startups test's retirement step is renumbered to **300** and its invalid-offset block ends at **225**, so nothing collides with the authorization block at 230 to 290. Confirm no test carries two steps at one display order.
 - [ ] Every `end_point` uses the physical base path `/api/x_bst_startuptrk/v1/`.
 - [ ] Pagination uses exactly `sysparm_limit` and `sysparm_offset`.
 - [ ] **Each test seeds five records — four the filter selects and one negative control it must not** — with distinct values in the resource's sort column, and passes the marker filter on every list call.
@@ -6064,7 +6086,7 @@ Work through every box before this guide is signed off.
 - [ ] Both `Crunchbase Ingestion` and `LinkedIn Ingestion` have a test, and **both test names carry the mode suffix** the step 20 derivation produced. Neither exists in an unsuffixed form.
 - [ ] **Each test's description states the coverage boundary before its label**, naming `IngestionMapper.ingestStaging` as the entry point under test and stating in terms that it does **not** execute the flow, per [The naming and annotation convention](#the-naming-and-annotation-convention). A reader of the test record must not be able to mistake it for an end-to-end flow execution test.
 - [ ] **Half A calls the orchestrator entry point, not a copy of its logic.** Each test's step 40 calls `IngestionMapper.ingestStaging(runId, sourceSystem, importRun, provenance)` — the identical call the delivered orchestrator action makes — exactly **once**. Search each test's scripts for `ingestStaging(` and confirm the only hits are step 40 and the deliberate second call inside the rule 3 update case.
-- [ ] **The suite writes no system property, and step 100 proves it.** Step 20 parks this source's entry from `x_bst_startuptrk.ingestion.last_run_provenance` and step 100 asserts it byte-identical. No step calls `markRunComplete()`, which is orchestrator action A4's final phase and not part of `ingestStaging()`. `W9` states what a marker write would cost.
+- [ ] **The suite writes no system property, and step 120 proves it.** Step 20 parks this source's entry from `x_bst_startuptrk.ingestion.last_run_provenance` and step 120, the last step of each test, asserts it byte-identical. No step calls `markRunComplete()`, which is orchestrator action A4's final phase and not part of `ingestStaging()`. `W9` states what a marker write would cost.
 - [ ] **Neither flow test creates a user or impersonates.** There is no step 5, no step 8 and no step 10 in this suite: steps 60, 100 and 110 read `syslog` and the `sys_hub_*` tables, which no scoped role can reach, and the flows carry **Run As: System User** so no caller identity is under test.
 - [ ] **Half B exists.** Each test carries a step 110 wiring assertion covering all eight rows of [The wiring assertions](#the-wiring-assertions). A test without it passes for a flow that never reaches its orchestrator.
 - [ ] **The exact returned object is asserted**, not a loose truthiness check: `accepted` and `rejected` at the **top level**, `processed` **only** under `summary`, and an explicit assertion that **no top-level `processed` member exists**.

@@ -1805,12 +1805,12 @@ flowchart TB
     <li class="kpi-card">
       <i class="kpi-icon" data-lucide="lock" aria-hidden="true"></i>
       <span class="kpi-value">7</span>
-      <span class="kpi-label">Paid-tier fields the platform gates</span>
+      <span class="kpi-label">Paid-tier fields gated</span>
     </li>
     <li class="kpi-card">
       <i class="kpi-icon" data-lucide="key" aria-hidden="true"></i>
       <span class="kpi-value">0</span>
-      <span class="kpi-label">Partner credentials inside the delivered package</span>
+      <span class="kpi-label">Partner credentials in the package</span>
     </li>
     <li class="kpi-card">
       <i class="kpi-icon" data-lucide="list-checks" aria-hidden="true"></i>
@@ -1826,8 +1826,8 @@ flowchart TB
     <i data-lucide="newspaper" aria-hidden="true"></i>
     <i data-lucide="gauge" aria-hidden="true"></i>
   </div>
-  <p class="icon-row-caption">Search, people, funding, roles, news and measures &mdash; the six record types the paid tier reaches.</p>
-  <p class="footnote">The prior codebase left role-based access control unwritten, so every signed-in caller reached every field of every record.</p>
+  <p class="icon-row-caption">Search, people, funding, roles, news, measures.</p>
+  <p class="footnote">The prior codebase left role-based access control unwritten &mdash; every caller read everything.</p>
 </section>
 
 <!-- 6 of 16 - Section divider -->
@@ -1856,11 +1856,8 @@ flowchart TB
       <tr><td>8 classes</td><td>10 tables</td></tr>
       <tr><td>Sign-in</td><td>49 rules</td></tr>
       <tr><td>Unserved routes</td><td>31 operations</td></tr>
-      <tr><td>5 intervals</td><td>1 cadence</td></tr>
       <tr><td>Hardcoded</td><td>2 connections</td></tr>
       <tr><td>17 components</td><td>5 pages, 8 widgets</td></tr>
-      <tr><td>27 dead</td><td>36 designed</td></tr>
-      <tr><td>Cache, search</td><td>Retired</td></tr>
     </tbody>
   </table>
   <p class="footnote">146 traced rows.</p>
@@ -2067,10 +2064,10 @@ flowchart LR
   PV --> Q{"Problems?"}
   Q -->|"none"| CM["Commit"]
   Q -->|"any"| FX["Fix and<br/>re-issue"]
-  CM --> GT["12 checks<br/>decide"]
+  CM --> GT["15 checks<br/>decide"]
   GT -->|"all pass"| OK["Accepted"]
-  GT -->|"a gate fails"| RB["Roll back"]
-  GT -->|"the 12th fails"| FX
+  GT -->|"a required gate fails"| RB["Roll back"]
+  GT -->|"one of the four fails"| FX
 </pre>
   <!-- The same diagram in words, for a reader whose browser is not running
        scripts and so cannot draw it. D-503. -->
@@ -2200,6 +2197,11 @@ timeline
   /* The one in-flight request for that bundle, or null before the first need. D-536. */
   var mermaidRequest = null;
 
+  /* The namespace of every element the annotation pass below creates. document
+     .createElement would produce an html element of the same local name, which an svg
+     does not render and which carries none of the accessibility meaning intended. */
+  var SVG_NS = 'http://www.w3.org/2000/svg';
+
   /* An icon placeholder that has not been replaced yet. Lucide copies data-lucide onto the
      svg it emits, so the factory's own selector keeps matching a rendered icon; excluding
      svg is what distinguishes work still to do from work already done. D-537. */
@@ -2223,6 +2225,17 @@ timeline
   containers().forEach(function (node) {
     sources.push(node.innerHTML);
     attempts.push(0);
+    /* While this container still holds diagram source it is hidden from assistive
+       technology, for the same reason the drawing's stylesheet is: reveal.js composes
+       the string it announces synchronously during slidechanged, whereas rendering is
+       asynchronous on the same event, so on a first arrival the announcement was the
+       raw Mermaid source - `flowchart TB`, the two accessibility directives and every
+       node declaration. annotateDrawings() exposes the container again the moment it
+       holds a drawing, and fail() exposes it to announce a reported failure, so
+       nothing a reader needs is ever hidden. With scripts off this line never runs and
+       the container keeps its own static note, which is the no-script equivalent.
+       D-586. */
+    node.setAttribute('aria-hidden', 'true');
   });
 
   /* Configures Mermaid in the same task as this script, ahead of any
@@ -2307,6 +2320,9 @@ timeline
     }
     var title = (sources[index] || '').match(/accTitle:\s*(.+)/);
     node.setAttribute('data-diagram-error', 'true');
+    /* The notice replacing the source carries role="alert", so the container has to be
+       exposed again or the failure would be reported to no one. D-586. */
+    node.removeAttribute('aria-hidden');
     node.textContent = '';
     var box = document.createElement('span');
     box.className = 'diagram-error';
@@ -2458,6 +2474,9 @@ timeline
     node.removeAttribute('data-processed');
     node.removeAttribute('data-diagram-error');
     node.innerHTML = sources[index];
+    /* The container holds source again, so it is source again for every purpose,
+       the announcement included. D-586. */
+    node.setAttribute('aria-hidden', 'true');
   }
 
   /* Equalises the drawings of a comparison group. Mermaid sizes each svg from its
@@ -2680,9 +2699,104 @@ timeline
     }
   }
 
+  /* A direct child of the svg by local name. A element of the same name nested inside a
+     marker or a definition is not the drawing's own, so the search does not descend. */
+  function svgChild(svg, name) {
+    var child = svg.firstChild;
+    while (child) {
+      if (child.nodeType === 1 && child.localName === name) {
+        return child;
+      }
+      child = child.nextSibling;
+    }
+    return null;
+  }
+
+  /* True when the drawing already carries an accessible name. Mermaid's flowchart
+     renderer emits a title and an aria-labelledby pointing at it, so four of the five
+     drawings answer true here and are left exactly as their renderer produced them. */
+  function named(svg) {
+    if (svg.getAttribute('aria-label')) {
+      return true;
+    }
+    var ref = svg.getAttribute('aria-labelledby');
+    if (!ref) {
+      return false;
+    }
+    return ref.split(/\s+/).some(function (id) {
+      var target = id && document.getElementById(id);
+      return !!(target && target.textContent.trim());
+    });
+  }
+
+  /* Two corrections to every completed drawing, both idempotent because each of the
+     four reveal.js passes below runs them again. D-586 and D-587.
+
+     reveal.js announces a slide change by walking the slide's nodes and appending the
+     text of every text node it reaches, skipping a subtree only when its element
+     carries aria-hidden="true" or computes to display: none. Mermaid writes the
+     drawing's own stylesheet into the svg as an SVG-namespaced style element, which
+     the user-agent rule that hides an html style element does not reach, so its entire
+     rule set was arriving in the live region as text. Marking it hidden from assistive
+     technology is the engine's own documented escape hatch, and it cannot affect
+     whether those rules apply: display governs box generation, and a style element
+     generates no box.
+
+     The second correction is a name. The timeline renderer emits neither a title nor an
+     aria-labelledby, so that drawing reached a reader as an unnamed graphic while the
+     four flowcharts were named. The accTitle and accDescr already authored in the
+     diagram source are the name and the description, and are read back from the stash
+     rather than restated here, so the drawn and the announced forms cannot diverge. */
+  function annotateDrawings() {
+    containers().forEach(function (node, index) {
+      var svg = node.querySelector('svg');
+      if (!svg) {
+        return;
+      }
+      /* It holds a drawing now, not source, and the drawing is named below. D-586. */
+      node.removeAttribute('aria-hidden');
+      Array.prototype.forEach.call(svg.querySelectorAll('style'), function (sheet) {
+        if (sheet.getAttribute('aria-hidden') !== 'true') {
+          sheet.setAttribute('aria-hidden', 'true');
+        }
+      });
+      if (named(svg)) {
+        return;
+      }
+      var source = sources[index] || '';
+      var name = source.match(/accTitle:\s*(.+)/);
+      var summary = source.match(/accDescr:\s*(.+)/);
+      if (!name) {
+        return;
+      }
+      var title = svgChild(svg, 'title');
+      if (!title) {
+        title = document.createElementNS(SVG_NS, 'title');
+        svg.insertBefore(title, svg.firstChild);
+      }
+      title.setAttribute('id', 'diagram-name-' + (index + 1));
+      title.textContent = name[1].trim();
+      if (summary) {
+        var about = svgChild(svg, 'desc');
+        if (!about) {
+          about = document.createElementNS(SVG_NS, 'desc');
+          svg.insertBefore(about, title.nextSibling);
+        }
+        about.setAttribute('id', 'diagram-summary-' + (index + 1));
+        about.textContent = summary[1].trim();
+        svg.setAttribute('aria-describedby', 'diagram-summary-' + (index + 1));
+      }
+      svg.setAttribute('aria-labelledby', 'diagram-name-' + (index + 1));
+      if (!svg.getAttribute('role')) {
+        svg.setAttribute('role', 'img');
+      }
+    });
+  }
+
   function paint() {
     queue = queue
       .then(renderDiagrams)
+      .then(annotateDrawings)
       .then(normalisePairs)
       .then(renderIcons)
       .catch(function (error) {

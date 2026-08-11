@@ -5688,10 +5688,12 @@ AppProperties.prototype = {
     },
 
     /* Records one source system's run as complete with its provenance and returns the
-       timestamp recorded. A provenance outside live and fallback is refused without
-       writing, and so is a run that does not hold the source's claim: ownership is
-       required, whatever state the marker on record is in, and the completion is applied
-       with the same compare-and-set the claim used. Prompt 4.0. */
+       timestamp recorded. Three conditions are refused without writing: a provenance
+       outside live and fallback; a run that does not hold a running claim on the source,
+       whether the marker names another run or no marker exists at all; and a source whose
+       marker already reads succeeded, so a completion is one-way and a recorded provenance
+       cannot be rewritten. A completion that passes those conditions is applied with the
+       same compare-and-set the claim used. Prompt 4.0 and prompt 10.0 criterion 4. */
     completeRun: function (sourceSystem, runId, provenance) {
         var source = this._sourceToken(sourceSystem);
         var run = this._runToken(runId);
@@ -5705,11 +5707,17 @@ AppProperties.prototype = {
             }
         }
         var held = this.readRunMarkers()[source];
-        if (held) {
-            if (held.run !== run) {
-                return { ok: false, stamp: '', provenance: '',
-                    reason: 'this run does not hold this source' };
-            }
+        if (!held) {
+            return { ok: false, stamp: '', provenance: '',
+                reason: 'this run does not hold this source' };
+        }
+        if (held.run !== run) {
+            return { ok: false, stamp: '', provenance: '',
+                reason: 'this run does not hold this source' };
+        }
+        if (held.state !== 'running') {
+            return { ok: false, stamp: '', provenance: held.provenance,
+                reason: 'this source has already completed' };
         }
         this._writeRunMarker(source, {
             source: source,

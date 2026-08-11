@@ -10,7 +10,7 @@ Operational warnings **are** in scope for this guide and are marked as such. The
 
 ## Referenced documents
 
-This guide is executable on its own. The portal, the theme, **every one of the fifty-four token declarations as a literal value**, all five pages, all eight widgets, the design-system contract, the access-control rules and the verification checklist are stated here in full. An operator needs no other file, and no external stylesheet reference, to build the portal: [The complete declaration block](#the-complete-declaration-block) can be pasted into the theme record as it stands.
+This guide is executable on its own. The portal, the theme, **every one of the seventy-three token declarations as a literal value**, all five pages, all eight widgets, the design-system contract, the access-control rules and the verification checklist are stated here in full. An operator needs no other file, and no external stylesheet reference, to build the portal: [The complete declaration block](#the-complete-declaration-block) can be pasted into the theme record as it stands.
 
 **Every document named below is delivered and readable.** Each link resolves to a file in this package, among them `../../update-set/x_bst_startuptrk_boston_startup_tracker_update_set.xml`, `../data-model.md`, `../access-control.md`, `../api-reference.md` and `../validation-gates.md`, so a reader can follow any link and read the content the statement around it describes; no link is a forward reference to something still to be written.
 
@@ -163,15 +163,15 @@ Create a **new** `sp_theme` record. Do not edit, clone or extend a stock theme; 
 
 ### The CSS-variables field
 
-Every token the widgets reference is declared here, in the theme's CSS-variables field, and **nowhere else**. Declare each variable in the table below with a SASS declaration of the form `$variable: value;`, one per line, grouped in the order the table gives. **The Value column below is the literal to type.** Nothing is left to be looked up elsewhere: every one of the fifty-four variables carries its exact value here, and [The complete declaration block](#the-complete-declaration-block) repeats all fifty-four as a single block that can be pasted into the field as it stands.
+Every token the widgets reference is declared here, in the theme's CSS-variables field, and **nowhere else**. Declare each variable in the table below with a SASS declaration of the form `$variable: value;`, one per line, grouped in the order the table gives. **The Value column below is the literal to type.** Nothing is left to be looked up elsewhere: every one of the seventy-three variables carries its exact value here, and [The complete declaration block](#the-complete-declaration-block) repeats all seventy-three as a single block that can be pasted into the field as it stands.
 
-The fifty-four values divide into five provenance classes, and every one of them is typed as a literal here regardless of class:
+The seventy-three values divide into five provenance classes, and every one of them is typed as a literal here regardless of class:
 
 - **Four are carried forward from the legacy stylesheet** — the body font stack, the page background, the link colour and the container maximum. They are marked *carried forward* below, and their provenance is recorded under [The legacy design-token surface](#the-legacy-design-token-surface).
 - **One repeats a carried-forward value**: `$sp-body-bg` is declared to the same `#f5f5f5` as `$body-bg`, so the portal chrome and the page agree.
 - **Two are this theme's own literals in the platform namespace**: `$sp-tagline-color` and `$sp-navbar-divider-color` are declared here rather than left to the platform default (`D-120`).
-- **Twenty-six are the Bootstrap 3.3.6 default, declared explicitly**, so the theme owns each value rather than inheriting it silently.
-- **Twenty-one are component tokens, each chosen against WCAG 2.1 AA.** Fifteen restate the Bootstrap default because the measured pair already passes; **six replace a default that fails** — `$text-muted`, `$link-color`, `$link-hover-color`, `$label-default-bg`, `$label-info-bg` and `$badge-bg`. Every ratio is stated in the row and verified by [The contrast check](#the-contrast-check).
+- **Thirty-three are the Bootstrap 3.3.6 default, declared explicitly**, so the theme owns each value rather than inheriting it silently. Seven of the thirty-three were added because the value they own was **not** in this table and therefore resolved to a release default the theme did not own: `$breadcrumb-bg`, `$input-bg`, `$input-color`, `$panel-default-heading-bg`, `$panel-inner-border`, `$list-group-border` and `$font-size-large`, the last of these because widget CSS references it by name.
+- **Thirty-two are component tokens, each chosen against WCAG 2.1 AA.** Fifteen restate the Bootstrap default because the measured pair already passes; **sixteen replace a default that fails** — `$text-muted`, `$link-color`, `$link-hover-color`, `$label-default-bg`, `$label-info-bg`, `$badge-bg`, `$gray-light`, `$navbar-default-color`, `$navbar-default-link-color`, `$navbar-default-link-hover-color`, `$navbar-default-link-active-color`, `$navbar-default-brand-color`, `$navbar-default-brand-hover-color`, `$breadcrumb-color`, `$breadcrumb-active-color` and `$input-color-placeholder`; **two more replace a default that fails the 3:1 a control boundary requires** — `$input-border` and `$btn-default-border`; and **one replaces a default that fails it on a container boundary** — `$panel-default-border`. Every ratio is stated in the row and verified by [The contrast check](#the-contrast-check). **One is not a Bootstrap or `$sp-*` variable at all**: `$bst-hit-target-min`, the control target size, declared here so no widget writes it as a literal.
 
 **Declare the rows in the order the table gives them.** Six rows resolve to another variable rather than to a literal — `$headings-font-family`, `$btn-primary-bg`, `$label-primary-bg`, `$badge-color`, `$badge-bg` and `$progress-bar-bg` — and each references a variable declared on an earlier row. A theme variables field is compiled ahead of Bootstrap's own variable file, so a reference to a Bootstrap variable this table does not itself declare would be undefined; reference only rows above.
 
@@ -185,7 +185,7 @@ The fifty-four values divide into five provenance classes, and every one of them
 | Surface | `$body-bg` | The page background of the whole portal. | `#f5f5f5` — the legacy page background, **carried forward**. |
 | Surface | `$sp-body-bg` | The Service Portal body background, in the platform's own `$sp-*` namespace. Declared to the same value as `$body-bg` so the portal chrome and the page agree. | `#f5f5f5` — the legacy page background, **carried forward**. |
 | Surface | `$panel-bg` | The fill of every `.panel`. Replaces the legacy surface elevation. | `#ffffff` |
-| Surface | `$panel-default-border` | The border of every `.panel.panel-default`. | `#dddddd` |
+| Surface | `$panel-default-border` | The border of every `.panel.panel-default`, and — applied in widget CSS — the boundary of the `.progress` track. | `#8c8c8c` — **replaces** Bootstrap's `#dddddd`, which measures **1.25:1** on `$body-bg`: a panel edge that a caller with low vision cannot find. This value measures **3.08:1** on `$body-bg` and **3.36:1** on `$panel-bg`. The panel's *internal* rules stay light, at `$panel-inner-border` and `$list-group-border` below. |
 | Typography | `$font-family-sans-serif` | The body typeface of the whole portal. | `'Roboto', 'Helvetica', 'Arial', sans-serif` — the legacy body font stack, **carried forward**. |
 | Typography | `$font-size-base` | The base type size from which every heading size is computed. No legacy value existed. | `14px` |
 | Typography | `$line-height-base` | The base line height and therefore the vertical rhythm. No legacy value existed. | `1.428571429` |
@@ -205,6 +205,12 @@ The fifty-four values divide into five provenance classes, and every one of them
 | Navbar | `$navbar-height` | The height of the header `.navbar` the stock Header widget renders. | `50px` |
 | Navbar | `$navbar-default-bg` | The fill of a default `.navbar`. | `#f8f8f8` |
 | Navbar | `$navbar-inverse-bg` | The fill of `.navbar-inverse`. Declare it even if the header uses the default variant, because Bootstrap derives the inverse navbar border from it. | `#222222` |
+| Navbar | `$navbar-default-color` | Plain, non-link text inside the header `.navbar`. | `#595959` — **replaces** Bootstrap's `$gray-light` `#777777`, which measures **4.22:1** on `$navbar-default-bg` and fails AA. This value measures **6.60:1**. |
+| Navbar | `$navbar-default-link-color` | Every navigation item the stock Header widget renders, including the menu items of [The header menu and its items](#the-header-menu-and-its-items). | `#1565c0` — **replaces** Bootstrap's `$gray-light` `#777777` at **4.22:1**. A navbar item is a link, so it takes the same value as `$link-color`, declared as a literal because the Links group is declared after this one. **5.41:1** on `$navbar-default-bg`. |
+| Navbar | `$navbar-default-link-hover-color` | The hover colour of a navbar item. | `#0d47a1` — the same value as `$link-hover-color`, as a literal. **8.13:1** on `$navbar-default-bg`. |
+| Navbar | `$navbar-default-link-active-color` | The colour of the navbar item for the page currently shown. | `#0d47a1` — declared rather than left to Bootstrap's `$gray` `#555555`, so the active item is the hover colour rather than a third grey. **8.13:1**. |
+| Navbar | `$navbar-default-brand-color` | The portal title in the header. | `#1565c0` — **replaces** the derived `$navbar-default-link-color` default of `#777777`. **5.41:1**. |
+| Navbar | `$navbar-default-brand-hover-color` | The portal title on hover. | `#0d47a1` — **replaces** Bootstrap's `darken($navbar-default-brand-color, 10%)`. **8.13:1**. |
 | Breakpoint | `$screen-sm-min` | The small breakpoint. Declared for completeness; **no `.col-sm-*` class is authored in this portal.** See [Responsive stance — the 1024-pixel floor](#responsive-stance--the-1024-pixel-floor). | `768px` |
 | Breakpoint | `$screen-md-min` | The medium breakpoint, at which `.col-md-*` engages. | `992px` |
 | Breakpoint | `$screen-lg-min` | The large breakpoint, at which `.col-lg-*` engages. | `1200px` |
@@ -223,7 +229,7 @@ The fifty-four values divide into five provenance classes, and every one of them
 | Badge | `$badge-bg` | The fill of every `.badge`. | `$label-default-bg` — referenced rather than repeated. **Replaces** Bootstrap's `$gray-light` `#777777`, on which white measures **4.48:1** and fails AA by 0.02 — the same failing default this table already replaces for `.label-default`, which `.badge` would otherwise keep because it reads a variable of its own. White on this value measures **7.00:1**. |
 | Button | `$btn-default-color` | The label colour of `.btn-default`, which is every **Retry**, **Clear**, pager and tab-strip control. | `#333333` — Bootstrap's default, declared explicitly. **12.63:1** on `$btn-default-bg`. |
 | Button | `$btn-default-bg` | The fill of `.btn-default`. | `#ffffff` |
-| Button | `$btn-default-border` | The border of `.btn-default`. | `#cccccc` — a non-text boundary, not a text pair. |
+| Button | `$btn-default-border` | The border of `.btn-default`, which is every **Retry**, **Clear**, pager and tab-strip control. | `#8c8c8c` — **replaces** Bootstrap's `#cccccc`, which measures **1.61:1** on `$btn-default-bg`. A control boundary is the visual information that identifies the control, so WCAG 2.1 requires **3:1** of it and the release default does not reach that. This value measures **3.36:1**. |
 | Alert | `$state-info-text` | The text colour of `.alert-info`, which carries every premium upsell and every empty state. | `#31708f` — Bootstrap's default, declared explicitly. **4.53:1** on `$state-info-bg`. |
 | Alert | `$state-info-bg` | The fill of `.alert-info`. | `#d9edf7` |
 | Alert | `$state-warning-text` | The text colour of `.alert-warning`, which carries the no-role and report-fallback notices. | `#8a6d3b` — Bootstrap's default, declared explicitly. **4.54:1** on `$state-warning-bg`. |
@@ -232,14 +238,27 @@ The fifty-four values divide into five provenance classes, and every one of them
 | Alert | `$state-danger-bg` | The fill of `.alert-danger`. | `#f2dede` |
 | Progress | `$progress-bg` | The track of every `.progress`, in the results loading indicator and the chart's companion table. | `#f5f5f5` |
 | Progress | `$progress-bar-bg` | The fill of every `.progress-bar`. | `$brand-primary` — **4.22:1** against the track, above the 3:1 that WCAG 2.1 requires of a meaningful non-text graphic. |
+| Base grey | `$gray-light` | Bootstrap's own grey, from which **every variable this table does not name** derives its secondary text and boundary colours — `.pagination` disabled text, a dropdown header, and any component a future page adds. It is declared so the ownership claim below is a property of the compile rather than of this table's completeness. | `#595959` — **replaces** `lighten($gray-base, 46.7%)` `#777777`, the single default behind the two navbar failures and the breadcrumb failure this table now closes individually. **6.42:1** on `$body-bg`, **7.00:1** on `$panel-bg`. |
+| Breadcrumb | `$breadcrumb-bg` | The fill of the `.breadcrumb` the stock Breadcrumbs widget renders on four of the five pages. | `#f5f5f5` — Bootstrap's default, declared explicitly so the theme owns it. |
+| Breadcrumb | `$breadcrumb-color` | The `/` separator between breadcrumb items. | `#595959` — **replaces** Bootstrap's `#cccccc`, which measures **1.61:1** on `$breadcrumb-bg`. This value measures **6.42:1**. |
+| Breadcrumb | `$breadcrumb-active-color` | The current page's own breadcrumb item, which is text rather than a link. | `#595959` — **replaces** Bootstrap's `$gray-light` `#777777`, which measures **4.11:1** on `$breadcrumb-bg` and fails AA. This value measures **6.42:1**. |
+| Form control | `$input-bg` | The fill of every `.form-control`: the search widget's three inputs. | `#ffffff` — Bootstrap's default, declared explicitly. |
+| Form control | `$input-color` | The text a caller types into a `.form-control`. | `#555555` — Bootstrap's `$gray` default, declared explicitly. **7.46:1** on `$input-bg`. |
+| Form control | `$input-border` | The border of every `.form-control`, which is the visual information that identifies the control's extent. | `#8c8c8c` — **replaces** Bootstrap's `#cccccc`, which measures **1.61:1** on `$input-bg` and fails the 3:1 WCAG 2.1 requires of a user-interface component boundary. This value measures **3.36:1** on `$input-bg` and **3.08:1** on `$body-bg`. |
+| Form control | `$input-color-placeholder` | Declared so the theme owns the value. **No control this portal renders resolves to it**: not one `placeholder` attribute appears in any of the eight templates, because every control carries a real `<label>`. | `#767676` — **replaces** Bootstrap's `#999999` at **2.85:1**, so the value is safe if a placeholder is ever added. **4.54:1** on `$input-bg`. |
+| Surface | `$panel-default-heading-bg` | The fill of every `.panel-heading`, which is the worst background the focus ring of [Busy, status and focus behaviour](#busy-status-and-focus-behaviour) is drawn on. | `#f5f5f5` — Bootstrap's default, declared explicitly because the contrast check measures against it. |
+| Surface | `$panel-inner-border` | The rule between a `.panel-heading` or `.panel-footer` and the panel body. | `#dddddd` — Bootstrap's default, declared explicitly. An **internal** rule, deliberately lighter than the panel's own outer border. |
+| Surface | `$list-group-border` | The rule between `.list-group-item` rows, which carry every key-and-value row of the two profile pages and the account page. | `#dddddd` — Bootstrap's default, declared explicitly. Also an internal rule. |
+| Typography | `$font-size-large` | The one type size widget CSS sets: the KPI figure and the two profile display headings. | `18px` — the value Bootstrap derives as `ceil($font-size-base * 1.25)`, declared explicitly **because widget CSS references it by name** and every token a widget references must be declared here. |
+| Application | `$bst-hit-target-min` | The minimum height and minimum width of every control this portal renders — buttons, form controls, pager and tab controls, and standalone action links. The one token in this table that is not a Bootstrap or `$sp-*` variable. | `44px` — the target size the checkpoint requires. Declared here rather than written into widget CSS, so the [zero-hard-coded-values rule](#theme-and-variable-authoring-rules) holds for it as for every other value. |
 
-**Fifty-four declarations, and no value this portal applies resolves to a release default — foregrounds included.** The `$sp-*` namespace carries further entries beyond the three named above. This portal applies only these three, so only these three are declared. The authoritative list for a given instance is served per portal by the compiled bootstrap stylesheet; read it from that instance if a fourth entry is ever needed, and declare it here rather than in a widget.
+**Seventy-three declarations, and no value this portal applies resolves to a release default — foregrounds, control boundaries and the portal chrome included.** The claim is checkable in one direction and enforced in the other: every value the eight templates and the portal chrome render is named by a row above, and `$gray-light` closes the residue by owning the grey from which every unnamed Bootstrap variable derives. An earlier revision of this guide made this claim over fifty-four declarations while `$navbar-default-link-color`, `$navbar-default-color`, `$navbar-default-brand-color`, `$breadcrumb-color`, `$breadcrumb-active-color` and `$input-border` were **not** among them and still resolved to the release defaults `#777777` and `#cccccc` — two navbar text pairs at **4.22:1**, a breadcrumb pair at **4.11:1** and a control boundary at **1.61:1**. Recorded at `D-576`. The `$sp-*` namespace carries further entries beyond the three named above. This portal applies only these three, so only these three are declared. The authoritative list for a given instance is served per portal by the compiled bootstrap stylesheet; read it from that instance if a fourth entry is ever needed, and declare it here rather than in a widget.
 
-Bootstrap's own derivation rules mean any variable **not** in the table above is computed from the ones that are, so the set above propagates consistently without being extended. `$navbar-inverse-border`, for example, is derived from `$navbar-inverse-bg`, and `$navbar-default-border` from `$navbar-default-bg`. **Declare exactly the fifty-four variables above and no others**; an extra declaration is a value the theme then owns and must maintain.
+Bootstrap's own derivation rules mean any variable **not** in the table above is computed from the ones that are, so the set above propagates consistently without being extended. `$navbar-inverse-border`, for example, is derived from `$navbar-inverse-bg`, and `$navbar-default-border` from `$navbar-default-bg`. **Declare exactly the seventy-three variables above and no others**; an extra declaration is a value the theme then owns and must maintain.
 
 ### The complete declaration block
 
-Paste this into the theme record's **CSS variables** field exactly as it stands. It is the table above, in the same order, with nothing omitted and nothing added — **fifty-four declarations**, which is the whole of this portal's token surface. Six of them resolve to another variable rather than to a literal, deliberately, so each pair cannot drift.
+Paste this into the theme record's **CSS variables** field exactly as it stands. It is the table above, in the same order, with nothing omitted and nothing added — **seventy-three declarations**, which is the whole of this portal's token surface. Six of them resolve to another variable rather than to a literal, deliberately, so each pair cannot drift; the nineteen added to close the ownership residue are all literals, so none of them depends on its position relative to a group declared later.
 
 ```scss
 // Brand
@@ -253,7 +272,7 @@ $brand-danger: #d9534f;
 $body-bg: #f5f5f5;
 $sp-body-bg: #f5f5f5;
 $panel-bg: #ffffff;
-$panel-default-border: #dddddd;
+$panel-default-border: #8c8c8c;
 
 // Typography
 $font-family-sans-serif: 'Roboto', 'Helvetica', 'Arial', sans-serif;
@@ -316,7 +335,7 @@ $badge-bg: $label-default-bg;
 // Default button
 $btn-default-color: #333333;
 $btn-default-bg: #ffffff;
-$btn-default-border: #cccccc;
+$btn-default-border: #8c8c8c;
 
 // Alert states
 $state-info-text: #31708f;
@@ -329,6 +348,40 @@ $state-danger-bg: #f2dede;
 // Progress
 $progress-bg: #f5f5f5;
 $progress-bar-bg: $brand-primary;
+
+// Base grey — the one derivation point for every Bootstrap variable this block
+// does not name, so none of them can resolve to the #777777 release default
+$gray-light: #595959;
+
+// Navbar text and links
+$navbar-default-color: #595959;
+$navbar-default-link-color: #1565c0;
+$navbar-default-link-hover-color: #0d47a1;
+$navbar-default-link-active-color: #0d47a1;
+$navbar-default-brand-color: #1565c0;
+$navbar-default-brand-hover-color: #0d47a1;
+
+// Breadcrumb
+$breadcrumb-bg: #f5f5f5;
+$breadcrumb-color: #595959;
+$breadcrumb-active-color: #595959;
+
+// Form control
+$input-bg: #ffffff;
+$input-color: #555555;
+$input-border: #8c8c8c;
+$input-color-placeholder: #767676;
+
+// Panel internals
+$panel-default-heading-bg: #f5f5f5;
+$panel-inner-border: #dddddd;
+$list-group-border: #dddddd;
+
+// The one type size widget CSS sets
+$font-size-large: 18px;
+
+// Application token — the minimum control target size
+$bst-hit-target-min: 44px;
 ```
 
 Three ordering rules govern the block, and each prevents a value that silently fails to apply:
@@ -339,11 +392,15 @@ Three ordering rules govern the block, and each prevents a value that silently f
 
 After saving the theme, confirm the values took effect by loading the portal and reading the computed `background-color` of `body`, which must be `rgb(245, 245, 245)`, and the computed `color` of a `.btn-primary`, whose background must be `rgb(25, 118, 210)`. A default-Bootstrap `#337ab7` on the button means the field did not compile; re-check that the block contains no CSS rule and no unclosed declaration.
 
-Bootstrap derives a variable that is left undeclared from the ones that are: `$navbar-inverse-border` is computed from `$navbar-inverse-bg`. Those derivations remain in force for every Bootstrap variable outside the fifty-four above. `$sp-tagline-color` is still declared as the literal `#333333` rather than as a reference to `$text-color`, for two reasons that each hold on their own: `$text-color` is declared **after** it in the block, and a SASS reference to a variable declared later resolves to nothing; and the `$sp-*` namespace is compiled from the platform's own partials, across which a reference is not guaranteed to resolve. The two carry the same literal deliberately, which the contrast table below records as one pair rather than two.
+Bootstrap derives a variable that is left undeclared from the ones that are: `$navbar-inverse-border` is computed from `$navbar-inverse-bg`. Those derivations remain in force for every Bootstrap variable outside the seventy-three above, and `$gray-light` is declared precisely so those derivations start from a value this theme owns rather than from `#777777`. `$sp-tagline-color` is still declared as the literal `#333333` rather than as a reference to `$text-color`, for two reasons that each hold on their own: `$text-color` is declared **after** it in the block, and a SASS reference to a variable declared later resolves to nothing; and the `$sp-*` namespace is compiled from the platform's own partials, across which a reference is not guaranteed to resolve. The two carry the same literal deliberately, which the contrast table below records as one pair rather than two.
 
 ### The contrast check
 
-**Every text pair this portal renders is measured, and the measurement is reproducible.** A colour choice defended in prose is a colour choice nobody checked; the twenty-one pairs below are the complete set of foreground-on-background combinations the eight widgets produce, and the script that follows recomputes every ratio from the declared token values. Run it whenever a token in the Text, Link, Label, Button, Alert or Progress group changes.
+**Every pair this portal renders is measured, and the measurement is reproducible.** A colour choice defended in prose is a colour choice nobody checked; the **thirty-two** pairs below are the complete set of foreground-on-background and boundary-on-surface combinations the eight widgets and the portal chrome produce, and the script that follows recomputes every ratio from the declared token values. Run it whenever any token in the table above changes.
+
+**Three thresholds appear, and which one applies is a property of what the pair is, not of how it looks.** Text and images of text take **4.5:1**, from WCAG 2.1 success criterion 1.4.3. A meaningful non-text graphic, and the visual information that identifies a **user-interface component** or its boundary, takes **3:1**, from 1.4.11 — which is why a `.form-control` border and a `.btn` border are measured against 3:1 while a decorative flourish would not be measured at all. The `.panel` border is measured against 3:1 as well: a panel is not itself a control, but on a `#f5f5f5` page a `#dddddd` edge at **1.25:1** is a card a caller with low vision cannot find, and nothing in the requirements or the design system pins that value, so it is raised rather than argued away. Recorded at `D-576`.
+
+**Rows 23 to 32 were added after a review found the ownership claim above overstated.** Six of them are pairs the release defaults governed and this table had never measured — two navbar text pairs, two breadcrumb pairs and two control boundaries. They are listed with the rest rather than in an appendix, because a contrast table that omits the pairs nobody chose is exactly how the omission survived.
 
 | # | Pair | Foreground | Background | Ratio | Threshold | Result |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -369,6 +426,16 @@ Bootstrap derives a variable that is left undeclared from the ones that are: `$n
 | 20 | KPI figure | `$brand-primary` `#1976d2` | `$panel-bg` `#ffffff` | 4.60:1 | 4.5:1 | PASS |
 | 21 | Chart zero line | `$text-muted` `#595959` | `$panel-bg` `#ffffff` | 7.00:1 | 3:1 graphic | PASS |
 | 22 | Focus ring, worst background | `$brand-primary` `#1976d2` | `$panel-default-heading-bg` `#f5f5f5` | 4.22:1 | 3:1 graphic | PASS |
+| 23 | Navbar item | `$navbar-default-link-color` `#1565c0` | `$navbar-default-bg` `#f8f8f8` | 5.41:1 | 4.5:1 | PASS |
+| 24 | Navbar item, hover and active | `$navbar-default-link-hover-color` `#0d47a1` | `$navbar-default-bg` `#f8f8f8` | 8.13:1 | 4.5:1 | PASS |
+| 25 | Navbar plain text | `$navbar-default-color` `#595959` | `$navbar-default-bg` `#f8f8f8` | 6.60:1 | 4.5:1 | PASS |
+| 26 | Portal title in the header | `$navbar-default-brand-color` `#1565c0` | `$navbar-default-bg` `#f8f8f8` | 5.41:1 | 4.5:1 | PASS |
+| 27 | Breadcrumb separator | `$breadcrumb-color` `#595959` | `$breadcrumb-bg` `#f5f5f5` | 6.42:1 | 4.5:1 | PASS |
+| 28 | Breadcrumb current page | `$breadcrumb-active-color` `#595959` | `$breadcrumb-bg` `#f5f5f5` | 6.42:1 | 4.5:1 | PASS |
+| 29 | Form-control boundary | `$input-border` `#8c8c8c` | `$input-bg` `#ffffff` | 3.36:1 | 3:1 component | PASS |
+| 30 | Default-button boundary | `$btn-default-border` `#8c8c8c` | `$btn-default-bg` `#ffffff` | 3.36:1 | 3:1 component | PASS |
+| 31 | Panel boundary on the page | `$panel-default-border` `#8c8c8c` | `$body-bg` `#f5f5f5` | 3.08:1 | 3:1 component | PASS |
+| 32 | Progress-track boundary in a panel | `$panel-default-border` `#8c8c8c` | `$panel-bg` `#ffffff` | 3.36:1 | 3:1 component | PASS |
 
 Row 22 carries no number that rows 18 and 19 do not already produce — the ring is `$brand-primary`, so on a panel it is row 18's 4.60:1 and on a panel heading it is row 19's 4.22:1. It is listed anyway because it is a **different requirement**, not a different colour: rows 18 to 21 are graphics that convey data, whereas the ring is the focus indicator that [Busy, status and focus behaviour](#busy-status-and-focus-behaviour) puts a 3:1 floor under, and it is the only pair in this table whose background varies by widget. The row is entered at the worse of its two backgrounds so that the check fails if either surface regresses. The two headings that receive focus — `bst-company-profile`'s and `bst-investor-profile`'s — sit on `.panel-heading`, which is why `#f5f5f5` is the governing case even though `$panel-bg` is white.
 
@@ -397,9 +464,10 @@ def ratio(fg, bg):
     return (hi + 0.05) / (lo + 0.05)
 
 
-# The twenty-one pairs the eight widgets render, each named as the table names it.
-# The last column is the WCAG 2.1 floor: 4.5 for text, 3.0 for a meaningful
-# non-text graphic.
+# The thirty-two pairs the eight widgets and the portal chrome render, each named
+# as the table names it. The last column is the WCAG 2.1 floor: 4.5 for text, 3.0
+# for a meaningful non-text graphic and for the boundary of a user-interface
+# component or a panel.
 PAIRS = [
     ('body text on page',     '#333333', '#f5f5f5', 4.5),
     ('body text in panel',    '#333333', '#ffffff', 4.5),
@@ -423,6 +491,16 @@ PAIRS = [
     ('KPI figure in panel',   '#1976d2', '#ffffff', 4.5),
     ('chart zero line',       '#595959', '#ffffff', 3.0),
     ('focus ring, worst bg',  '#1976d2', '#f5f5f5', 3.0),
+    ('navbar item',           '#1565c0', '#f8f8f8', 4.5),
+    ('navbar item hover',     '#0d47a1', '#f8f8f8', 4.5),
+    ('navbar plain text',     '#595959', '#f8f8f8', 4.5),
+    ('portal title',          '#1565c0', '#f8f8f8', 4.5),
+    ('breadcrumb separator',  '#595959', '#f5f5f5', 4.5),
+    ('breadcrumb current',    '#595959', '#f5f5f5', 4.5),
+    ('form-control boundary', '#8c8c8c', '#ffffff', 3.0),
+    ('button boundary',       '#8c8c8c', '#ffffff', 3.0),
+    ('panel boundary',        '#8c8c8c', '#f5f5f5', 3.0),
+    ('progress boundary',     '#8c8c8c', '#ffffff', 3.0),
 ]
 
 failures = 0
@@ -437,7 +515,7 @@ print('FAILURES: %d' % failures)
 EOF
 ```
 
-The expected last line is `FAILURES: 0`. Three release defaults are deliberately **absent** from `PAIRS` because this theme replaces them, and any one reintroduced would fail: white on `$brand-info` `#5bc0de` measures **2.09:1**, `#777777` on `$body-bg` measures **4.11:1**, and white on `$gray-light` `#777777` — the default `.badge` and `.label-default` fill — measures **4.48:1**. Add them to `PAIRS` to watch the check reject them.
+The expected last line is `FAILURES: 0`. **Six** release defaults are deliberately **absent** from `PAIRS` because this theme replaces them, and any one reintroduced would fail: white on `$brand-info` `#5bc0de` measures **2.09:1**; `#777777` on `$body-bg` measures **4.11:1**, which is also the breadcrumb pair; white on `$gray-light` `#777777` — the default `.badge` and `.label-default` fill — measures **4.48:1**; `#777777` on `$navbar-default-bg` `#f8f8f8` measures **4.22:1**, which is the navbar pair; `#cccccc` on `#ffffff` measures **1.61:1**, which is both the form-control and the default-button boundary; and `#dddddd` on `$body-bg` measures **1.25:1**, which is the panel boundary. Add them to `PAIRS` to watch the check reject them — that is the one way to confirm the check is measuring rather than agreeing.
 
 ### Theme and variable authoring rules
 
@@ -448,6 +526,27 @@ Follow all five. Each one prevents a failure that is silent — the portal compi
 3. **Mark any SASS variable declared inside a widget with `!default`.** A widget-local declaration is then a fallback, and the theme's value wins.
 4. **A variable defined in a widget record is not visible to a widget-instance record.** Do not declare a variable in a widget and expect to reference it from an instance's option values or from another widget.
 5. **Keep global CSS shallow — two or three selectors deep at most — and never globally restyle Bootstrap's `panel`, `well`, `form` or `alert` classes.** A global rule on one of those leaks into every widget on every page, including the stock widgets. Scope such a rule to the widget's own root class instead.
+
+**The one CSS include this portal authors, and the only reason it needs one.** [Rule 17](#rules-that-bind-all-eight) puts a 44-pixel floor under every control, and three of this portal's controls are rendered by **stock** widgets rather than by any of the eight — the header's navigation links, the breadcrumb's links and the footer's links. A stock widget is instantiated and never edited, so its markup cannot carry the rule and there is no widget CSS field to put it in; the floor has to come from a portal-level include. Create one `sp_css` record in the `x_bst_startuptrk` scope, name it `bst-chrome-targets`, attach it to the theme, and give it exactly this:
+
+```scss
+/* The portal chrome is rendered by stock widgets, which are instantiated and never
+   edited, so rule 17's target floor is applied here rather than in a widget. Three
+   selectors deep at most, and no Bootstrap panel, well, form or alert class is
+   touched, so nothing leaks into a widget's own surface. */
+.navbar-default .navbar-nav > li > a,
+.navbar-default .navbar-brand,
+.breadcrumb > li > a,
+footer a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: $bst-hit-target-min;
+    min-width: $bst-hit-target-min;
+}
+```
+
+Measured before it: a breadcrumb `Home` link is **37.7 by 16** pixels. It is the only rule in this build that is not scoped to a widget root class, and it is admissible under the rule above on both counts — it is two selectors deep and it names navigation classes rather than any of the four container classes a global rule may not restyle.
 
 ## Step 3 — The five pages
 
@@ -691,11 +790,11 @@ Both parts are load-bearing, and each fails differently.
 
     Both are behaviour keywords, so neither introduces a measured value. The rule matters most where the chip renders a **Multi-choice** value or a **role name**, because those are the two chip texts in this guide with no length bound: a focus area reading `Financial technology and payments infrastructure` overflowed its column by 97.63px at the 1024px floor, and a fully-qualified role name is longer still. It is stated separately from rule 12 because the two failures are unrelated — rule 12 restores a chip's shape when forced colours removes its background, and this rule keeps a chip inside the box it was given — and a widget can need one without the other. See the reasoning under [the investor widget's CSS](#css-3).
 
-14. **Every `.table-responsive` carries `tabindex="0"`.** All six of them do — two in `bst-company-profile`, three in `bst-investor-profile`, one in `bst-trends-charts`. Bootstrap makes the wrapper `overflow-x: auto` below its small breakpoint, and a region that scrolls but cannot be focused cannot be scrolled from the keyboard at all: the content is reachable with a mouse or a touch drag and by no other means, which is WCAG 2.1.1. Adding the attribute costs one tab stop before the table's own links and makes the region focusable and therefore arrow-scrollable.
+14. **Every `.table-responsive` carries `tabindex="0"`, `role="region"` and a name.** All six of them do — two in `bst-company-profile` (`Funding rounds`, `Open roles`), three in `bst-investor-profile` (`Portfolio companies`, `Rounds led`, `Rounds participated in`) and one in `bst-trends-charts`, which names itself from its own title option. **A focusable element with no role and no name is announced as a bare group**, so a caller who lands on it by Tab is told nothing about what they have reached and cannot tell it from the table's own first cell; the region role plus the label is what makes the stop meaningful. The name is a short noun phrase rather than the table's `.sr-only` caption sentence: the caption describes the table's rows and ordering and belongs to the table, while the region name identifies the stop. Bootstrap makes the wrapper `overflow-x: auto` below its small breakpoint, and a region that scrolls but cannot be focused cannot be scrolled from the keyboard at all: the content is reachable with a mouse or a touch drag and by no other means, which is WCAG 2.1.1. Adding the attribute costs one tab stop before the table's own links and makes the region focusable and therefore arrow-scrollable.
 
     The honest caveat is that **this portal's supported floor is 1024px** and the wrapper only overflows below Bootstrap's `768px`, so on the supported range the condition never arises. It is applied anyway, for two reasons. The construct is identical in all six places, and a rule that holds in one of six identical constructs is the kind of drift this section exists to prevent. And the floor is a statement about what is *designed for*, not a guarantee about what a caller's window will be — a browser zoomed to 200% at 1024 reports a 512px layout viewport, which is inside the overflow range without the caller ever resizing anything.
 
-15. **Every widget that renders an `.sr-only` node re-declares the three properties that hide it.** Five of the eight do — `bst-startup-results`, `bst-company-profile`, `bst-investor-profile`, `bst-trends-charts` and `bst-account-summary`. The other three carry no such rule, because they render no such node, and the roster is stated per widget so it can be audited by grep rather than trusted: `bst-startup-search` renders neither a status region nor a table caption — the status region belongs to [the four widgets whose content changes](#busy-status-and-focus-behaviour), and this widget submits a query rather than displaying a result; `bst-trends-kpi` renders no table and no status region; and `bst-premium-upsell` renders neither. A rule with no node to act on is dead weight in a stylesheet, so none of the three carries one:
+15. **Every widget that renders an `.sr-only` node re-declares the three properties that hide it.** Six of the eight do — `bst-startup-results`, `bst-company-profile`, `bst-investor-profile`, `bst-trends-charts`, `bst-trends-kpi` and `bst-account-summary`. The other two carry no such rule, because they render no such node, and the roster is stated per widget so it can be audited by grep rather than trusted: `bst-startup-search` renders neither a status region nor a table caption — the status region belongs to [the six widgets whose content comes from the server](#busy-status-and-focus-behaviour), and this widget submits a query rather than displaying a result; and `bst-premium-upsell` renders neither. A rule with no node to act on is dead weight in a stylesheet, so none of the three carries one:
 
     ```scss
     .bst-<widget> .sr-only {
@@ -748,6 +847,26 @@ Both parts are load-bearing, and each fails differently.
 
     **Why these chips use `overflow-wrap: anywhere` where [rule 13](#rules-that-bind-all-eight) uses `break-word`.** The two keywords differ in one respect that decides this case: `anywhere` contributes to a box's intrinsic **min-content** width and `break-word` does not. Rule 13's chips sit inside a `.list-group-item`, a block whose width the grid has already fixed, so the line box is bounded no matter what the text does and `break-word` fires — measured, a 46-character unbreakable token wrapped to two fragments and then three. These chips sit inside a `.list-inline > li`, which Bootstrap makes `display: inline-block` and which is therefore **shrink-to-fit**: its width is `min(max(min-content, available), max-content)`. With `break-word` the min-content width is still the whole token, so the `li` takes the token's full max-content width, the line box inside it is exactly as wide as the token, the text never overflows its own line box, and the declaration can never fire — measured, a 240-character token rendered as one fragment and overflowed the alert by **96.31px** with the rule fully present, and deleting the rule changed the layout by nothing at all. `anywhere` lowers min-content to a single character, so the `li` shrinks to the space available and the token breaks inside it — measured, the same token wrapped to two fragments and stayed inside the alert. Both are behaviour keywords, so neither introduces a measured value. **Do not harmonise the two rules onto one keyword**: `break-word` is inert here, and `anywhere` in a rule-13 position would let an ordinary multi-word value break mid-word when wrapping at its spaces would have sufficed.
 
+17. **Every control meets a 44-pixel minimum target, and the floor comes from `$bst-hit-target-min` rather than from padding.** Bootstrap 3.3.6 sizes `.btn` and `.form-control` from their own padding and line-height, which computes to about **34 pixels** high, and a bare link to the height of its text — measured, between **16 and 28 pixels**. Both are under the 44-by-44 target this build is held to, and on `bst_home` alone **14 of 18** interactive elements failed it before this rule. Each widget therefore declares, scoped beneath its own root class:
+
+    ```scss
+    .bst-<widget> .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: $bst-hit-target-min;
+        min-width: $bst-hit-target-min;
+    }
+    ```
+
+    Three properties of that rule are load-bearing. **`min-height` alone is not enough**: a `.btn` is `display: inline-block`, so raising its height leaves the label at the top of a 44-pixel box and the control reads as mis-drawn — `inline-flex` with centring on both axes is what keeps the label in the middle. **`min-width` matters for a short label**: `Next` is about 32 pixels wide, so the height floor alone would leave it failing on one axis. **Both floors apply to the links as well as to the buttons**, and a link is where the omission hides: because `inline-flex` makes an anchor shrink-to-fit, its width becomes a property of its own label, so a table's `Source` link measured **43.39** pixels wide — six tenths of a pixel under the floor — while `Harbor Ventures` at 101.75 and `Commonwealth Capital` at 122.42 in the same column passed. A rule that sets only `min-height` therefore passes or fails **by content length**, which is the kind of defect that survives a spot check; `justify-content: center` is declared with it so a short label sits in the middle of the wider box rather than against its left edge. And **the value is a token**, so [zero hard-coded values](#zero-hard-coded-values) holds here as everywhere else; `$bst-hit-target-min` is declared in [the CSS-variables field](#the-css-variables-field) precisely so this rule can exist without a literal.
+
+    **What else takes the floor, and what does not.** A `.form-control` takes `min-height` and no `display` change, because a form control already centres its own value vertically. The company profile's **tab strip** takes it — Bootstrap gives each tab about 40 pixels, so it fails by four. And every **standalone action link** takes it: the result card's company-name heading link, the website and source links in list rows and table cells, the job and article title links, the investor's company links in all three of its tables, and the participating-investor chip links. A link inside running prose is exempt under WCAG 2.1's own inline-target exception, and the exemption is never exercised here because **this portal has no link inside running prose** — every anchor in all eight templates sits alone in its cell, its row or its heading, which is why the rule can be applied by container rather than element by element. Recorded at `D-581`.
+
+    **This rule creates intrinsically-sized boxes, so every anchor it touches also carries `overflow-wrap: anywhere`.** `inline-flex` makes a box **shrink-to-fit** — its width is `min(max(min-content, available), max-content)` — so the anchor's own min-content now decides its width where previously the block around it did. An anchor that merely *inherits* `break-word` from its `.list-group-item` therefore takes the full width of an unbreakable token, and this was measured rather than reasoned about: with the target rule in place and the guard absent, the 255-character news headline anchor rendered **4,073 pixels** wide and drove the document to **4,131** at the 1024-pixel floor, while the block-level `<h3>` wrapping it stayed at 908 and wrapped correctly. The two rules are a pair and neither is safe alone — [Overflow guards at the floor](#overflow-guards-at-the-floor) is the other half, and its row-header case is the same lesson: a guard written for `thead > tr > th` and `tbody > tr > td` silently missed `tbody > tr > th`, which is where both the 150-character job title and the 255-character news title actually live.
+
+
+
 ### External locators in a binding
 
 Six of the values these widgets bind into an `ng-href` or `ng-src` target are **external locators stored by the application**, not internal page links: `Startup.website`, `Startup.logo_url`, `Founder.linkedin_url`, `Executive.linkedin_url`, `Investor.website` and `FundingRound.source_url`. `Founder.contact_email` and `Executive.contact_email` are the two stored addresses.
@@ -765,7 +884,7 @@ Three rules follow for these widgets, and each names what it prevents:
 
 ### Busy, status and focus behaviour
 
-Applies to **all eight** widgets. Two contracts: a busy state on the widget root, and — for the four widgets whose content changes after the first render — one polite status region.
+Applies to **all eight** widgets. Two contracts: a busy state on the widget root, and — for the **six** widgets that read from the server, so whose content changes rather than being fixed at construction — one polite status region and one visible busy affordance.
 
 **The busy state, on all eight.** Every client controller declares `c.busy`, `true` while there is no `data` payload to render and `false` once there is one, and every widget's root element carries `aria-busy="{{c.busy}}"`. A widget that later reloads from the server sets `c.busy` back to `true` for the duration of that reload. Four widgets — `bst-startup-search`, `bst-trends-kpi`, `bst-trends-charts` and `bst-premium-upsell` — never reload after their first render, so their `c.busy` transitions to `false` once and stays there.
 
@@ -781,7 +900,7 @@ c.busy = !c.data;
 
 Verify it rather than assume it: on each of the five routes, with the page settled, `aria-busy` must read `false` on every widget root, no `[role="progressbar"]` may remain in the document, and the polite region must state the widget's loaded or empty wording rather than `Loading`.
 
-**The visible busy affordance, on the three widgets that reload.** `bst-startup-results`, `bst-company-profile` and `bst-investor-profile` each render one indeterminate striped progress bar under `ng-if="c.busy"`, which is the gap **G3** resolution recorded in [`../gaps-and-flags.md`](../gaps-and-flags.md). The delivered markup is this, and the width is the load-bearing part of it:
+**The visible busy affordance, on all six widgets that read from the server.** `bst-startup-results`, `bst-company-profile`, `bst-investor-profile`, `bst-account-summary`, `bst-trends-kpi` and `bst-trends-charts` each render one indeterminate striped progress bar under `ng-if="c.busy"`, which is the gap **G3** resolution recorded in [`../gaps-and-flags.md`](../gaps-and-flags.md). **The roster is six, not three, and the two dashboard widgets are in it because they can reload:** each carries `aria-busy` bound to `c.busy` and a working **Retry** that re-runs its server script through `c.load()`, so each has a busy window a caller can observe — and a widget that announces `aria-busy="true"` while showing a sighted caller nothing has told the two channels different things. The delivered markup is this, and the width is the load-bearing part of it:
 
 ```html
 <div class="progress" ng-if="c.busy">
@@ -796,7 +915,8 @@ Three properties of that markup, each of which closes a way for the affordance t
 
 - **A full width is required, and it is bound on the element with `ng-style="c.indeterminate()"` rather than declared in widget CSS.** Bootstrap 3.3.6 declares `.progress-bar { float: left; width: 0; height: 100%; … }`, so a bar with no width is **zero pixels wide**: the stripe animation runs on a zero-area box, the trough's `overflow: hidden` guarantees nothing can escape it, and the caller sees an empty grey trough during every load and every retry. The value sits on the element for the same reason the chart's `width="100%"` does — [zero hard-coded values](#zero-hard-coded-values) forbids a percentage literal in **widget CSS**, and this is the same element-attribute route that rule already sanctions for `.bst-charts-svg`. It is also Bootstrap's own documented markup for an indeterminate bar.
 - **No `aria-valuenow`.** The bar reports no determinate position, so the attribute is omitted and `aria-valuetext="Loading"` carries the state instead. A `progressbar` with a full width and `aria-valuenow="100"` would announce a completed load.
-- **The stripe animation is switched off under `prefers-reduced-motion`.** Each of the three widgets carries the rule below in its own CSS, scoped beneath its own root class. Without it, giving the bar a width converts a motionless defect into a real WCAG 2.3.3 one: `progress-bar-stripes` is a 2-second infinite animation that would then be genuinely visible.
+- **The trough carries a boundary, because its own fill does not provide one.** `$progress-bg` is `#f5f5f5` and a `.panel` is `#ffffff`, so an empty trough measures **1.09:1** against the surface it sits on and a caller with low vision cannot see where the indicator is until the bar has painted. Each widget that renders a track therefore declares `border: thin solid $panel-default-border` beneath its own root class, which is **3.36:1** on a panel and **3.08:1** on the page — row 32 of [The contrast check](#the-contrast-check). `thin` is a keyword rather than a measured width, so the rule adds no literal that [zero hard-coded values](#zero-hard-coded-values) forbids, and darkening `$progress-bg` instead was rejected because it would drop the **bar's** own 4.22:1 against the track below the 3:1 the bar has to hold (`D-576`).
+- **The stripe animation is switched off under `prefers-reduced-motion`.** Each of the six widgets carries the rule below in its own CSS, scoped beneath its own root class, with its own root class substituted. Without it, giving the bar a width converts a motionless defect into a real WCAG 2.3.3 one: `progress-bar-stripes` is a 2-second infinite animation that would then be genuinely visible.
 
 ```scss
 @media (prefers-reduced-motion: reduce) {
@@ -808,7 +928,7 @@ Three properties of that markup, each of which closes a way for the affordance t
 
 `animation: none` is one of the permitted literals, so the guard adds no measured value to any widget CSS. `.progress-bar-striped` keeps its gradient, so the bar remains visibly a progress bar; only the movement stops.
 
-**The status region, on the four widgets whose content changes.** `bst-startup-results`, `bst-company-profile`, `bst-investor-profile` and `bst-account-summary` each carry exactly one region of the form below, placed as the first child of the `.panel-body` so it precedes the content it describes:
+**The status region, on all six widgets whose content comes from the server.** `bst-startup-results`, `bst-company-profile`, `bst-investor-profile`, `bst-account-summary`, `bst-trends-kpi` and `bst-trends-charts` each carry exactly one region of the form below, placed as the first child of the `.panel-body` — or, on the two widgets whose root is not a panel, `bst-account-summary` and `bst-trends-kpi`, as the first child of the root, after the `h1` where there is one — so that it precedes the content it describes:
 
 ```html
 <div class="sr-only" role="status" aria-live="polite" aria-atomic="true">{{c.statusText()}}</div>
@@ -816,7 +936,7 @@ Three properties of that markup, each of which closes a way for the affordance t
 
 `.sr-only` is Bootstrap's own screen-reader utility, so the region is announced without occupying layout. `c.statusText()` returns exactly one string, chosen in this order — the first condition that holds wins, so a caller never hears two states at once:
 
-**A widget that shows a busy affordance hides the stale view behind it.** All three reloading widgets gate their success block on `!c.busy`, not on `data` alone:
+**A widget that shows a busy affordance hides the stale view behind it.** All six widgets gate **every** success block on `!c.busy`, not on `data` alone:
 
 ```html
 <div ng-if="data.authorised &amp;&amp; !c.busy &amp;&amp; !data.error">
@@ -824,9 +944,22 @@ Three properties of that markup, each of which closes a way for the affordance t
 </div>
 ```
 
+**Where a widget's success view is one wrapper, one term does it; where it is several siblings, every one of them carries the term.** Only the two profile widgets have a single wrapper. The other four render their success view as siblings of the affordance, so a term on one of them leaves the rest on screen — which is the exact shape of the defect: an affordance that is *added above* stale content rather than *substituted for* it. The full roster, so it can be audited by grep rather than trusted:
+
+| Widget | Every element that carries `!c.busy` | Shape |
+| --- | --- | --- |
+| `bst-startup-results` | the `.text-muted` match count in the panel heading, the empty-state `.alert-info`, the count-denied `.alert-info`, `.bst-results-list`, the reconciliation `.alert-warning`, the gap-G5 upsell `.alert-info`, the `<hr>` and the pager `.row` | eight siblings |
+| `bst-company-profile` | the one wrapper around the whole tabbed view | one wrapper |
+| `bst-investor-profile` | the one `.row` around the whole two-column view | one wrapper |
+| `bst-account-summary` | the identity `.panel`, the no-role `.alert-warning`, the entitlements `.panel` and the embedded `<sp-widget>` upsell | four siblings |
+| `bst-trends-kpi` | the `.row` that repeats the panels | one sibling |
+| `bst-trends-charts` | the report-unavailable `.alert-warning`, the empty-breakdown `.alert-info`, the `<svg>`, the companion `.table-responsive` and the embedded report `<sp-widget>` | five siblings |
+
+**Two elements deliberately do *not* carry it**, on every widget: the heading and the error panel. A heading that disappears while a page loads leaves the page with no accessible name and no landmark to return to — which is why `bst-account-summary`'s literal `h1` is rendered on `c.busy || c.errorText()`, so exactly one `h1` is present in every one of the three states rather than none in the busy one. The error panel and its **Retry** are the caller's only way out of a failure, so they are owned by `c.errorText()` alone. Recorded at `D-578`.
+
 Without that term the progress bar and the previous payload render **at the same time**, under a root that is simultaneously announcing `aria-busy="true"` and a status region reading `Loading`. The result contradicts itself in three ways at once: a screen reader is told the region is busy while the accessibility tree still exposes the whole of the old record; a sighted caller sees a loading bar above content that looks current and has no way to tell which parts are stale; and every count, caption and truncation notice in the view is asserting a total that belongs to the *previous* record. The last of those is the dangerous one on the two profile widgets, because a reload here is how the caller moves **from one record to another** — so the figures on screen during the reload are not merely out of date, they belong to a different company or investor.
 
-`c.busy` is the only correct discriminator for this, and `data` is not: `data` still holds the previous payload for the whole duration of the reload, which is exactly why gating on it fails. The three widgets must agree, because a caller who learns the loading behaviour on one screen carries that expectation to the other two.
+`c.busy` is the only correct discriminator for this, and `data` is not: `data` still holds the previous payload for the whole duration of the reload, which is exactly why gating on it fails. The six widgets must agree, because a caller who learns the loading behaviour on one screen carries that expectation to the other two.
 
 | Order | Condition | Text returned |
 | --- | --- | --- |
@@ -902,7 +1035,9 @@ The `$brand-primary`-on-`$panel-bg` pair is measured at 4.60:1 in [The contrast 
 
 The same pair sizes the search controls' ring under [`bst-startup-search`](#bst-startup-search), so every focus indicator in the portal is one width and one offset.
 
-**An `<a class="btn">` must answer SPACE as well as ENTER.** A native `<button>` answers both; an anchor answers only ENTER, and SPACE instead performs its default page scroll — so a caller who has learned that the control is a button presses SPACE, the page jumps, and nothing is activated. Seven controls in this portal are anchors styled as buttons: **View profile** on every result card and the results upsell call to action, **Back to search** on the company, investor and account widgets, **Browse startups** on the KPI panel, and the upsell partial's own call to action. Each binds the shared handler:
+**An accessible name that replaces the visible label breaks the caller who speaks it.** Where a control carries both a visible label and an `aria-label`, the name **starts with the visible label text**, verbatim, and adds its context after a colon — `aria-label="View profile: Beacon Ledger"` beside the visible `View profile`, never `View the Beacon Ledger profile`. WCAG 2.1's success criterion 2.5.3 is the reason: a caller using speech input says what they can see, and a name that merely *mentions* the visible words in a different order does not match. This portal has exactly one control in that position — the **View profile** anchor on each result card, whose context is the company name — and one marker: a `Premium` chip standing alone in a table cell carries `<span class="sr-only"> field: <column></span>` inside the chip, so the announcement is `Premium field: Amount` rather than a bare `Premium` whose meaning depends on the caller having navigated by column header. The chips that sit in a `.list-group-item` beside their own visible column label need no such suffix and carry none.
+
+**An `<a class="btn">` must answer SPACE as well as ENTER.** A native `<button>` answers both; an anchor answers only ENTER, and SPACE instead performs its default page scroll — so a caller who has learned that the control is a button presses SPACE, the page jumps, and nothing is activated. **Eight** controls in this portal are anchors styled as buttons, and the roster is stated exactly because a miscount is how one of them went without the handler: **View profile** on every result card, the results upsell call to action, **Back to search** on the company widget's not-found alert, **two** on the investor widget — one in its not-entitled alert and one in its not-found alert — **Back to search** on the account widget, **Browse startups** on the KPI panel, and the upsell partial's own call to action. Each binds the shared handler:
 
 ```javascript
 // Space on an anchor scrolls the page and activates nothing. preventDefault() stops the
@@ -916,7 +1051,7 @@ c.onButtonKey = function (event) {
 };
 ```
 
-bound as `ng-keydown="c.onButtonKey($event)"`. The tab strip on `bst-company-profile` already does this for its own keys and is the precedent; these seven are the controls it was never extended to.
+bound as `ng-keydown="c.onButtonKey($event)"`. The tab strip on `bst-company-profile` already does this for its own keys and is the precedent; these eight are the controls it was extended to. **Audit it by grep rather than by reading**: every `<a` whose `class` contains `btn` carries the binding, in all eight places, and the count of the two patterns must be equal.
 
 **The indeterminate progress bar needs a width, or it paints nothing.** Bootstrap's `.progress-bar` ships `width: 0%` so that a determinate bar can be driven by an inline width, and the four widgets that render an indeterminate striped bar — `bst-startup-results`, `bst-company-profile`, `bst-investor-profile` and `bst-account-summary` — supply none — which means the stripe animation runs inside a bar that is zero pixels wide, and the caller sees an empty trough. The width comes from the controller, not the widget CSS, for the same reason `c.barStyle()` does under [`bst-trends-charts`](#bst-trends-charts): a percentage is a measured value and [Design system](#design-system) admits none in widget CSS, but a bound value is not a declaration.
 
@@ -929,7 +1064,7 @@ c.indeterminate = function () {
 };
 ```
 
-bound as `ng-style="c.indeterminate()"` on each of the four `.progress-bar.progress-bar-striped.active` elements. **Each of those four widgets' controller items must name `c.indeterminate()` explicitly, and the template markup alone is not enough.** AngularJS guards a null callee, so `ng-style="c.indeterminate()"` on a controller that never declared the method evaluates to `undefined` and applies nothing — without throwing, without a console message, and with the element still in the DOM carrying every one of its ARIA attributes. Bootstrap's `width: 0%` then stands and the caller sees an empty trough, which is indistinguishable from the defect this whole section exists to fix. A build that adds the bar to a template and forgets the controller half has moved from an absent element to an invisible one and fixed nothing. **All four asynchronous widgets carry one.** `bst-account-summary` declares `c.busy` and reflects it in `aria-busy`, so a build that gave it no bar told assistive technology that work was in progress and showed a sighted caller nothing at all on that route; the two channels must agree. The bar's `$progress-bar-bg` on `$progress-bg` is row 19 of [The contrast check](#the-contrast-check) at 4.22:1.
+bound as `ng-style="c.indeterminate()"` on each of the six `.progress-bar.progress-bar-striped.active` elements. **Each of those six widgets' controller items must name `c.indeterminate()` explicitly, and the template markup alone is not enough.** AngularJS guards a null callee, so `ng-style="c.indeterminate()"` on a controller that never declared the method evaluates to `undefined` and applies nothing — without throwing, without a console message, and with the element still in the DOM carrying every one of its ARIA attributes. Bootstrap's `width: 0%` then stands and the caller sees an empty trough, which is indistinguishable from the defect this whole section exists to fix. A build that adds the bar to a template and forgets the controller half has moved from an absent element to an invisible one and fixed nothing. **All six server-reading widgets carry one.** `bst-account-summary`, `bst-trends-kpi` and `bst-trends-charts` each declare `c.busy` and reflect it in `aria-busy`, so a build that gave any of them no bar told assistive technology that work was in progress and showed a sighted caller nothing at all on that route; the two channels must agree. The bar's `$progress-bar-bg` on `$progress-bg` is row 19 of [The contrast check](#the-contrast-check) at 4.22:1.
 
 ### Controller dependencies
 
@@ -978,7 +1113,19 @@ c.count = function (value) {
 };
 ```
 
-**The empty string, not a zero and not a dash.** A denied premium field is an *absent key*, and every template already branches on `=== undefined` to render its `Premium` marker, so these helpers only ever see a value that is present. They still return the empty string on an unparseable one, because a figure the portal cannot read is better shown as nothing than as `NaN` or as a `$0` that the caller would take for a real amount.
+**The empty string, not a zero and not a dash.** A denied premium field is an *absent key*, and every template already branches on `=== undefined` to render its `Premium` marker, so a denied field never reaches these helpers at all. They still return the empty string on an unparseable value, because a figure the portal cannot read is better shown as nothing than as `NaN` or as a `$0` that the caller would take for a real amount.
+
+**The empty string is a value the helper returns, not a state a template may render.** A column that is readable and simply has no value serialises as `null`, which is a *present* key, so it does reach `c.money()` — and gets the empty string back. Interpolating that produces a cell or a row carrying a label and nothing else, which reads as a rendering fault or as zero rather than as *no figure recorded*. **Every position that calls `c.money()` therefore branches on `=== null` as well as on `=== undefined`**, and renders `Not recorded` in `.text-muted` on the null arm:
+
+```html
+<td ng-if="round.amount_usd !== undefined">
+  <bdi class="bst-money" ng-if="round.amount_usd !== null">{{c.money(round.amount_usd)}}</bdi>
+  <span class="text-muted" ng-if="round.amount_usd === null">Not recorded</span>
+</td>
+<td ng-if="round.amount_usd === undefined"><span class="label label-info">Premium<span class="sr-only"> field: Amount</span></span></td>
+```
+
+There are **ten** such positions and every one of them carries all three arms: one in `bst-startup-results` (`total_funding_usd`), three in `bst-company-profile` (`total_funding_usd`, and `amount_usd` and `valuation_usd` in the funding table) and six in `bst-investor-profile` (`aum_usd`, the portfolio table's `total_funding_usd`, and `amount_usd` and `valuation_usd` in each of the rounds-led and rounds-participated tables). `c.day()` and `c.count()` return the empty string on the same input for the same reason, and the positions that call them branch the same way where the column is optional. Recorded at `D-577`.
 
 **Where each is used**, exhaustively — a position left unformatted is the defect returning. The truncation captions are the easiest to miss and were: they print a total rather than a field value, so they do not look like currency-or-date positions, and on a fixture whose totals are all below a thousand an unformatted caption is **indistinguishable from a formatted one**. Two of the eight rendered four-digit totals with no separator beside a page that formatted every other figure.
 
@@ -1028,7 +1175,7 @@ The three widgets whose `h1` is a literal already — `bst-startup-results`, `bs
 
 ### Error and empty behaviour
 
-Applies to the four widgets that load asynchronously — `bst-startup-results`, `bst-company-profile`, `bst-investor-profile` and `bst-account-summary` — **and to the initial load of the two dashboard widgets**, `bst-trends-kpi` and `bst-trends-charts`. Those two issue no server call after their first render, but the first render is itself a server call: every figure they publish comes from an aggregate, and an aggregate that throws would leave them rendering an empty panel, a bare `0` or a chart with no bars, with nothing to retry. They therefore carry the error panel and a working `c.retry()`, and no status region, because neither has a user-initiated action to announce.
+Applies to all six widgets that read from the server — `bst-startup-results`, `bst-company-profile`, `bst-investor-profile` and `bst-account-summary`, **and the two dashboard widgets**, `bst-trends-kpi` and `bst-trends-charts`. Those two issue no server call after their first render, but the first render is itself a server call: every figure they publish comes from an aggregate, and an aggregate that throws would leave them rendering an empty panel, a bare `0` or a chart with no bars, with nothing to retry. They therefore carry the error panel and a working `c.retry()`, and no status region, because neither has a user-initiated action to announce.
 
 **Every server call is handled on both outcomes.** A client controller that calls `c.server.update()` attaches a success handler **and** a rejection handler, and clears the busy flag from a single helper called by both:
 
@@ -1099,7 +1246,7 @@ One member is published unconditionally for this reason rather than bound normal
 
 **One helper, called from both handlers.** `finally` is a reserved word in the ECMAScript 3 syntax the platform's server-side interpreter accepts, so a promise-`finally` handler has to be reached through bracket notation to parse at all. The delivered form is one helper called from both handlers: the busy flag is cleared exactly once on either outcome, in one place, with no reserved word and no bracket notation, and it reads the same on the server and in the client controller. Recorded at `D-178`.
 
-**The visible error panel**, rendered by each of the four templates immediately after its status region:
+**The visible error panel**, rendered by each of the six templates immediately after its status region:
 
 ```html
 <div class="alert alert-danger" role="alert" ng-if="c.errorText()">
@@ -1144,7 +1291,7 @@ One member is published unconditionally for this reason rather than bound normal
 
 ```html
 <div class="alert alert-warning" role="alert"
-     ng-if="data.authorised &amp;&amp; !data.error &amp;&amp; c.unrendered('result')">
+     ng-if="data.authorised &amp;&amp; !c.busy &amp;&amp; !data.error &amp;&amp; c.unrendered('result')">
   <span class="icon-warning-triangle" aria-hidden="true">&nbsp;</span>
   <span>{{c.unrendered('result')}} of {{data.result.length}} rows could not be displayed. Reload the page; if it recurs, report it with this page address.</span>
 </div>
@@ -1154,7 +1301,7 @@ One member is published unconditionally for this reason rather than bound normal
 
 | Template | The repeat's enclosing guard | The notice's guard |
 | --- | --- | --- |
-| `bst-startup-results` | `data.authorised && !data.error` on the wrapper around the card repeat | `data.authorised && !data.error && c.unrendered('result')` |
+| `bst-startup-results` | `data.authorised && !c.busy && !data.error` on the wrapper around the card repeat | `data.authorised && !c.busy && !data.error && c.unrendered('result')` |
 | `bst-company-profile`, each of its five collections | `!c.isEmpty('<collection>')` on the table or list that holds the repeat | `!c.isEmpty('<collection>') && c.unrendered('<collection>')` |
 | `bst-investor-profile` | `c.hasPortfolio()` on the `.table-responsive` around the portfolio repeat | `c.hasPortfolio() && c.unrendered('portfolio')` |
 
@@ -1414,6 +1561,25 @@ c.filterColumns = function () {
    from the radius scale for the reason recorded under "Busy, status and focus
    behaviour": Bootstrap publishes no outline-width token, and these are the only
    3- and 4-pixel lengths available without writing a literal. */
+/* Target size. Bootstrap's .btn computes to about 34 pixels from its own padding and
+   line-height, and a bare link to the height of its text, so the floor is declared
+   here from $bst-hit-target-min rather than by adding padding literals. inline-flex
+   with centring keeps the label in the middle of the taller box instead of at its
+   top; min-width applies the same floor to a short label such as Next. */
+.bst-search .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: $bst-hit-target-min;
+    min-width: $bst-hit-target-min;
+}
+
+/* A form control centres its own value vertically, so it takes the floor and no
+   display change. */
+.bst-search .form-control {
+    min-height: $bst-hit-target-min;
+}
+
 .bst-search .form-control:focus {
     outline: $border-radius-base solid $brand-primary;
     outline-offset: $border-radius-small;
@@ -1710,7 +1876,7 @@ c.hasNext = function () {
         the range it is showing rather than a total. Paging continues while a full page arrives.</span>
     </div>
 
-    <div class="bst-results-list" ng-if="data.authorised &amp;&amp; !data.error">
+    <div class="bst-results-list" ng-if="data.authorised &amp;&amp; !c.busy &amp;&amp; !data.error">
       <div class="panel panel-default bst-results-card" data-bst-row="result"
            ng-repeat="item in data.result track by item.sys_id">
         <div class="panel-body">
@@ -1726,7 +1892,7 @@ c.hasNext = function () {
                 <a dir="auto"
                    ng-href="?id={{::options.detail_page}}&amp;sys_id={{::item.sys_id}}">{{::item.name}}</a>
               </h3>
-              <p dir="auto">{{::item.description}}</p>
+              <p class="bst-results-description" dir="auto">{{::item.description}}</p>
               <p>
                 <span class="label label-primary" ng-if="::item.funding_stage">{{::item.funding_stage}}</span>
                 <span class="label label-default" ng-if="::item.industry">{{::item.industry}}</span>
@@ -1738,7 +1904,7 @@ c.hasNext = function () {
                 </li>
                 <li class="list-group-item" ng-if="item.total_funding_usd !== undefined">
                   Total funding
-                  <bdi ng-if="item.total_funding_usd !== null">{{c.money(item.total_funding_usd)}}</bdi>
+                  <bdi class="bst-money" ng-if="item.total_funding_usd !== null">{{c.money(item.total_funding_usd)}}</bdi>
                   <span class="text-muted" ng-if="item.total_funding_usd === null">Not recorded</span>
                 </li>
                 <li class="list-group-item" ng-if="c.isGated(item, 'total_funding_usd')">
@@ -1757,7 +1923,7 @@ c.hasNext = function () {
                   <span class="label label-info">Premium</span>
                 </li>
               </ul>
-              <a class="btn btn-default" aria-label="View the {{::item.name}} profile" ng-keydown="c.onButtonKey($event)"
+              <a class="btn btn-default" aria-label="View profile: {{::item.name}}" ng-keydown="c.onButtonKey($event)"
                  ng-href="?id={{::options.detail_page}}&amp;sys_id={{::item.sys_id}}">View profile</a>
             </div>
           </div>
@@ -1766,7 +1932,7 @@ c.hasNext = function () {
     </div>
 
     <div class="alert alert-warning" role="alert"
-         ng-if="data.authorised &amp;&amp; !data.error &amp;&amp; c.unrendered('result')">
+         ng-if="data.authorised &amp;&amp; !c.busy &amp;&amp; !data.error &amp;&amp; c.unrendered('result')">
       <span class="icon-warning-triangle" aria-hidden="true">&nbsp;</span>
       <span>{{c.unrendered('result')}} of {{data.result.length}} rows could not be displayed.
         Reload the page; if it recurs, report it with this page address.</span>
@@ -1774,7 +1940,7 @@ c.hasNext = function () {
 
     <div class="alert alert-info bst-results-upsell" role="region"
          aria-labelledby="bst-results-upsell-title-{{::c.uid}}"
-         ng-if="data.authorised &amp;&amp; !data.error &amp;&amp; data.gatedAny &amp;&amp; data.result.length &gt; 0">
+         ng-if="data.authorised &amp;&amp; !c.busy &amp;&amp; !data.error &amp;&amp; data.gatedAny &amp;&amp; data.result.length &gt; 0">
       <h3 class="panel-title" id="bst-results-upsell-title-{{::c.uid}}">
         <span class="icon-locked" aria-hidden="true">&nbsp;</span>Premium fields are hidden in these results
       </h3>
@@ -1887,9 +2053,21 @@ This widget renders that treatment **inline rather than embedding `bst-premium-u
     overflow: hidden;
 }
 
+/* anywhere, not break-word: .media-body is display: table-cell in an auto-layout
+   table, so what decides the table's width is the cell's MIN-CONTENT. break-word
+   permits a mid-word break inside an already-bounded line box and contributes
+   nothing to min-content, so a 100-character name and a 4000-character
+   description each kept their full width and the card overflowed the column.
+   anywhere lowers min-content to one character, so the cell can shrink and the
+   text wraps. overflow-wrap inherits, so this one declaration reaches the
+   heading, the description and every list row inside the body. */
 .bst-results .media-body {
-    overflow-wrap: break-word;
+    overflow-wrap: anywhere;
     padding-left: $padding-base-horizontal;
+}
+
+.bst-results .bst-results-description {
+    overflow-wrap: anywhere;
 }
 
 .bst-results .media-heading {
@@ -1933,10 +2111,51 @@ This widget renders that treatment **inline rather than embedding `bst-premium-u
    declares its own, scoped to itself. The widget root carries the attribute too,
    as the fallback destination for a retry whose heading does not yet exist.
    See "Busy, status and focus behaviour". */
+/* Target size. Bootstrap's .btn computes to about 34 pixels from its own padding and
+   line-height, and a bare link to the height of its text, so the floor is declared
+   here from $bst-hit-target-min rather than by adding padding literals. inline-flex
+   with centring keeps the label in the middle of the taller box instead of at its
+   top; min-width applies the same floor to a short label such as Next. */
+.bst-results .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: $bst-hit-target-min;
+    min-width: $bst-hit-target-min;
+}
+
+.bst-results .media-heading a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: $bst-hit-target-min;
+    min-width: $bst-hit-target-min;
+    overflow-wrap: anywhere;
+}
+
+/* A currency figure is generated, bounded and read as one number, so it is the one
+   string on these surfaces that must never break mid-token. The cell guards above
+   set overflow-wrap: anywhere, which inherits, and in a starved column that broke the
+   figure 12,500,000 after its fifth character, onto three lines. normal restores word-level
+   breaking for the figure only; c.money() emits no space, so the figure stays whole.
+   Its min-content is the figure's own width, which is small and fixed, so the column
+   this takes width from is the one carrying anywhere and able to give it. */
+.bst-results .bst-money {
+    overflow-wrap: normal;
+    word-break: keep-all;
+}
+
 .bst-results [tabindex="-1"]:focus,
 .bst-results[tabindex="-1"]:focus {
     outline: $border-radius-base solid $brand-primary;
     outline-offset: $border-radius-small;
+}
+
+/* The track's fill is $progress-bg, which measures 1.09:1 against a panel, so the
+   track carries a boundary in the colour the theme owns for a container edge.
+   thin is a keyword width, so this adds no measured literal to widget CSS. */
+.bst-results .progress {
+    border: thin solid $panel-default-border;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2206,10 +2425,15 @@ $scope.$on('$destroy', releaseWatch);
    | 6 | otherwise | `{{c.data.startup.name}} loaded. {{c.data.rounds.total}} funding rounds, {{c.data.founders.total + c.data.executives.total}} people, {{c.data.jobs.total}} open roles, {{c.data.news.total}} articles.` | this region |
 
    Rows 2, 3 and 4 return nothing **because a visible element with a live-region role already owns each of those states**; a sentence here would be a second announcement of one fact. Row 6 states the collection **`total`, not `rows.length`**, so a screen-reader caller is told the size of the record rather than the size of the window; each pane's caption then states how much of it is rendered.
-8. **Expose `c.stateHeading()`, which names the page on the three paths that render no record.** The success path's `<h1>` is the company name inside the profile header, and that element is inside the `ng-if` that the unauthorised, not-found and failed paths all exclude — so on each of those three the document previously had **no heading at all**, and a caller navigating by heading landed on a page with nothing to land on. The helper returns a string on exactly those three paths and the empty string on the success path, so the `<h1 ng-if="c.stateHeading()">` and the profile header's `<h1>` are mutually exclusive and the page always renders **exactly one** `<h1>`, as [rule 9](#rules-that-bind-all-eight) requires:
+8. **Expose `c.stateHeading()`, which names the page on all four paths that render no record — including while one is loading.** The success path's `<h1>` is the company name inside the profile header, and that element is inside the `ng-if` that the unauthorised, not-found, failed **and busy** paths all exclude — so on each of those four the document previously had **no heading at all**, and a caller navigating by heading landed on a page with nothing to land on. The helper returns a string on exactly those three paths and the empty string on the success path, so the `<h1 ng-if="c.stateHeading()">` and the profile header's `<h1>` are mutually exclusive and the page always renders **exactly one** `<h1>`, as [rule 9](#rules-that-bind-all-eight) requires:
 
 ```javascript
 c.stateHeading = function () {
+    // Busy is tested FIRST and returns a heading: the success block that owns the
+    // record's own h1 is gated on !c.busy, so while a load runs there is no other
+    // heading in the document. Testing data first would return '' here, because a
+    // reload still holds the PREVIOUS record - authorised, no error, found.
+    if (c.busy)             { return 'Company profile'; }
     if (!c.data.authorised) { return 'Company profile'; }
     if (c.data.error)       { return 'Company profile'; }
     if (c.data.notFound)    { return 'Company not found'; }
@@ -2217,7 +2441,7 @@ c.stateHeading = function () {
 };
 ```
 
-   The not-found wording differs because that state is the answer to a specific request rather than a condition of the caller's account, and a heading that says so saves them reading the alert to find out. The other two return the page's own name: the reason the record is absent is the alert's job to state, not the heading's.
+   The not-found wording differs because that state is the answer to a specific request rather than a condition of the caller's account, and a heading that says so saves them reading the alert to find out. The other three return the page's own name: the reason the record is absent — or not yet present — is the alert's or the progress bar's job to state, not the heading's. The busy arm is recorded at `D-579`.
 9. Expose `c.unrendered(collection)` exactly as [rendered rows and model rows must agree](#rendered-rows-and-model-rows-must-agree) specifies, and inject `$element` into the controller so it can count the rendered rows of its own widget. **All five collections are reconciled here, and this is the widget that proves why the rule exists**: its three table-and-list repeats once iterated the four-member envelope instead of its `rows` array, which raises `ngRepeat:dupes` and abandons the repeat, and because `c.isEmpty()` reads `rows` correctly the empty state stayed hidden while every caption above the blank region kept asserting the rows it had. Each repeat's root element carries `data-bst-row="<collection>"` — `rounds`, `founders`, `executives`, `jobs`, `news` — and each notice carries its own region's guard as that section's table specifies.
 10. Expose `c.isEmpty(collection)`, returning `true` when the named collection's `rows` array has no entries, used by the five empty states in the template. It reads the four-member object, so it is defensive about a collection that never arrived:
 
@@ -2379,14 +2603,17 @@ $scope.$on('$destroy', stopLocationWatch);
             <span class="text-muted" ng-if="::!data.startup.website">Not recorded</span>
           </span></li>
           <li class="list-group-item" ng-if="data.startup.total_funding_usd !== undefined">
-            Total funding <span class="pull-right">{{c.money(data.startup.total_funding_usd)}}</span>
+            Total funding <span class="pull-right">
+              <bdi class="bst-money" ng-if="data.startup.total_funding_usd !== null">{{c.money(data.startup.total_funding_usd)}}</bdi>
+              <span class="text-muted" ng-if="data.startup.total_funding_usd === null">Not recorded</span>
+            </span>
           </li>
           <li class="list-group-item" ng-if="data.startup.institutional_funding_last_5yrs !== undefined">
             Institutional funding in the last five years
             <span class="pull-right"><span class="label label-default">{{data.startup.institutional_funding_last_5yrs ? 'Yes' : 'No'}}</span></span>
           </li>
         </ul>
-        <p dir="auto">{{::data.startup.description}}</p>
+        <p class="bst-company-description" dir="auto">{{::data.startup.description}}</p>
       </div>
 
       <div class="tab-pane" role="tabpanel"
@@ -2395,7 +2622,8 @@ $scope.$on('$destroy', stopLocationWatch);
         <div class="alert alert-info" ng-if="c.isEmpty('rounds')">
           <span>No funding round is recorded for this company.</span>
         </div>
-        <div class="table-responsive" tabindex="0" ng-if="!c.isEmpty('rounds')">
+        <div class="table-responsive" tabindex="0" role="region" aria-label="Funding rounds"
+             ng-if="!c.isEmpty('rounds')">
           <table class="table table-striped table-hover">
             <caption class="sr-only">Funding rounds for this company, most recent first, one row per round</caption>
             <thead>
@@ -2409,10 +2637,16 @@ $scope.$on('$destroy', stopLocationWatch);
                   ng-repeat="round in data.rounds.rows track by round.sys_id">
                 <th scope="row">{{c.day(round.round_date)}}</th>
                 <td><span class="label label-primary" ng-if="::round.round_type">{{::round.round_type}}</span></td>
-                <td ng-if="round.amount_usd !== undefined">{{c.money(round.amount_usd)}}</td>
-                <td ng-if="round.amount_usd === undefined"><span class="label label-info">Premium</span></td>
-                <td ng-if="round.valuation_usd !== undefined">{{c.money(round.valuation_usd)}}</td>
-                <td ng-if="round.valuation_usd === undefined"><span class="label label-info">Premium</span></td>
+                <td ng-if="round.amount_usd !== undefined">
+                  <bdi class="bst-money" ng-if="round.amount_usd !== null">{{c.money(round.amount_usd)}}</bdi>
+                  <span class="text-muted" ng-if="round.amount_usd === null">Not recorded</span>
+                </td>
+                <td ng-if="round.amount_usd === undefined"><span class="label label-info">Premium<span class="sr-only"> field: Amount</span></span></td>
+                <td ng-if="round.valuation_usd !== undefined">
+                  <bdi class="bst-money" ng-if="round.valuation_usd !== null">{{c.money(round.valuation_usd)}}</bdi>
+                  <span class="text-muted" ng-if="round.valuation_usd === null">Not recorded</span>
+                </td>
+                <td ng-if="round.valuation_usd === undefined"><span class="label label-info">Premium<span class="sr-only"> field: Valuation</span></span></td>
                 <td>
                   <a dir="auto" ng-if="::round.lead_investor"
                      ng-href="?id={{::options.investor_page}}&amp;sys_id={{::round.lead_investor.value}}">{{::round.lead_investor.display_value}}</a>
@@ -2459,7 +2693,7 @@ $scope.$on('$destroy', stopLocationWatch);
                     <span class="icon-user" aria-hidden="true">&nbsp;</span>LinkedIn
                   </a>
                   <span ng-if="person.contact_email !== undefined"><bdi dir="auto">{{person.contact_email}}</bdi></span>
-                  <span class="label label-info" ng-if="person.contact_email === undefined">Premium</span>
+                  <span class="label label-info" ng-if="person.contact_email === undefined">Premium<span class="sr-only"> field: contact email</span></span>
                 </li>
               </ul>
               <div class="alert alert-warning" role="alert"
@@ -2491,7 +2725,7 @@ $scope.$on('$destroy', stopLocationWatch);
                     <span class="icon-user" aria-hidden="true">&nbsp;</span>LinkedIn
                   </a>
                   <span ng-if="person.contact_email !== undefined"><bdi dir="auto">{{person.contact_email}}</bdi></span>
-                  <span class="label label-info" ng-if="person.contact_email === undefined">Premium</span>
+                  <span class="label label-info" ng-if="person.contact_email === undefined">Premium<span class="sr-only"> field: contact email</span></span>
                 </li>
               </ul>
               <div class="alert alert-warning" role="alert"
@@ -2516,7 +2750,8 @@ $scope.$on('$destroy', stopLocationWatch);
         <div class="alert alert-info" ng-if="c.isEmpty('jobs')">
           <span>No open role is recorded for this company.</span>
         </div>
-        <div class="table-responsive" tabindex="0" ng-if="!c.isEmpty('jobs')">
+        <div class="table-responsive" tabindex="0" role="region" aria-label="Open roles"
+             ng-if="!c.isEmpty('jobs')">
           <table class="table table-striped table-hover">
             <caption class="sr-only">Open roles at this company, one row per posting</caption>
             <thead>
@@ -2608,8 +2843,24 @@ $scope.$on('$destroy', stopLocationWatch);
     height: auto;
 }
 
+/* The cell, then the heading. .media-body is display: table-cell, so the table's
+   width follows the cell's min-content; a guard on the heading alone left the cell
+   demanding the whole 100-character name. Both carry anywhere, and overflow-wrap
+   inherits, so the chips' own white-space rule is the only thing below this that
+   can still forbid a break. */
+.bst-company .media-body {
+    overflow-wrap: anywhere;
+}
+
 .bst-company .media-heading {
-    overflow-wrap: break-word;
+    overflow-wrap: anywhere;
+}
+
+/* description is up to 4000 characters and may arrive as one token. It sits in the
+   tab pane rather than in the media body, so it inherits nothing from the rule
+   above and carries its own. */
+.bst-company .bst-company-description {
+    overflow-wrap: anywhere;
 }
 
 /* Same float containment as the investor overview, for the same reason: four of
@@ -2626,6 +2877,39 @@ $scope.$on('$destroy', stopLocationWatch);
 
 .bst-company .table-responsive {
     margin-bottom: 0;
+}
+
+/* A table cell is sized from its content's min-content in an auto-layout table, and
+   news title at 255 and job title at 150 may each be a single token. Measured with
+   break-word, the widest legal row drove the table - and the page - to about
+   36,792 pixels; with anywhere the cell shrinks and the row wraps. */
+.bst-company .table > thead > tr > th,
+.bst-company .table > tbody > tr > th,
+.bst-company .table > tbody > tr > td {
+    overflow-wrap: anywhere;
+}
+
+/* A column header is authored text and never record data: across all fourteen headers on
+   this widget the longest single token is Participating at thirteen characters, so the
+   header's min-content floor is small and fixed and it is not what the measurement above
+   was defending against. The cell guard above sets anywhere, which inherits, and in a
+   starved column that broke Working pattern and Participating investors mid-token; normal
+   restores word-level breaking for the column headers only. Body cells keep anywhere,
+   including tbody th, which carries a startup name of up to 100 characters. */
+.bst-company .table > thead > tr > th {
+    overflow-wrap: normal;
+}
+
+/* A currency figure is generated, bounded and read as one number, so it is the one
+   string on these surfaces that must never break mid-token. The cell guards above
+   set overflow-wrap: anywhere, which inherits, and in a starved column that broke the
+   figure 12,500,000 after its fifth character, onto three lines. normal restores word-level
+   breaking for the figure only; c.money() emits no space, so the figure stays whole.
+   Its min-content is the figure's own width, which is small and fixed, so the column
+   this takes width from is the one carrying anywhere and able to give it. */
+.bst-company .bst-money {
+    overflow-wrap: normal;
+    word-break: keep-all;
 }
 
 .bst-company .sr-only {
@@ -2667,6 +2951,13 @@ $scope.$on('$destroy', stopLocationWatch);
 }
 
 
+/* The track's fill is $progress-bg, which measures 1.09:1 against a panel, so the
+   track carries a boundary in the colour the theme owns for a container edge.
+   thin is a keyword width, so this adds no measured literal to widget CSS. */
+.bst-company .progress {
+    border: thin solid $panel-default-border;
+}
+
 @media (prefers-reduced-motion: reduce) {
     .bst-company .progress-bar {
         animation: none;
@@ -2677,6 +2968,49 @@ $scope.$on('$destroy', stopLocationWatch);
     .bst-company .label {
         border-style: solid;
     }
+}
+
+/* Target size. Bootstrap's .btn computes to about 34 pixels from its own padding and
+   line-height, and a bare link to the height of its text, so the floor is declared
+   here from $bst-hit-target-min rather than by adding padding literals. inline-flex
+   with centring keeps the label in the middle of the taller box instead of at its
+   top; min-width applies the same floor to a short label such as Next. */
+.bst-company .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: $bst-hit-target-min;
+    min-width: $bst-hit-target-min;
+}
+
+/* The tab strip is a control, not text: Bootstrap gives each tab about 40 pixels.
+   Both floors, for the same reason the buttons carry both: a short future label -
+   or dropping the count badge - would otherwise regress on width alone. */
+.bst-company .nav-tabs > li > a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: $bst-hit-target-min;
+    min-width: $bst-hit-target-min;
+}
+
+/* Standalone action links - the only interactive element in their cell, row or
+   heading - take the same floor. A link inside running prose does not, and this
+   portal has none: every anchor below sits alone in its container. */
+/* anywhere, not the break-word these anchors inherit from .list-group-item: the rule
+   above makes each of them inline-flex, and an inline-flex box is shrink-to-fit, so its
+   own min-content decides its width. Measured without this line, the 255-character news
+   headline anchor took its full 4073px and drove the document to 4131px at the 1024px
+   floor while the block-level <h3> around it wrapped correctly. */
+.bst-company .media-heading a,
+.bst-company .list-group-item a,
+.bst-company .table a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: $bst-hit-target-min;
+    min-width: $bst-hit-target-min;
+    overflow-wrap: anywhere;
 }
 
 .bst-company [tabindex="-1"]:focus,
@@ -2855,12 +3189,13 @@ data.upsell = $sp.getWidget('bst-premium-upsell', {
 | `investor` | Serialised record | server item 7's publication block | Template — the overview panel, including `portfolio_count`; controller item 3's record watch |
 | `focusAreas` | Array of string | server item 7's publication block | Template — the focus-area `.label` chips |
 | `roundsLed` | Array of serialised rounds | server item 7's publication block | Template — the Rounds led table; controller `c.hasLed()` |
-| `ledTotal` | Integer | server item 7's publication block | Template — the Rounds led caption |
-| `ledTruncated` | True/False | server item 7's publication block | Template — whether the Rounds led caption renders |
+| `roundsLedTotal` | Integer | server item 7's publication block | Template — the Rounds led caption |
+| `roundsLedLimit` | Integer | server item 7's publication block | Template — the ceiling stated in the Rounds led caption |
+| `roundsLedTruncated` | True/False | server item 7's publication block | Template — whether the Rounds led caption renders |
 | `roundsParticipated` | Array of serialised rounds | server item 7's publication block | Template — the Rounds participated table; controller `c.hasParticipated()` |
-| `participatedTotal` | Integer | server item 7's publication block | Template — the Rounds participated caption |
-| `participatedTruncated` | True/False | server item 7's publication block | Template — whether the Rounds participated caption renders |
-| `roundsLimit` | Integer | server item 7's publication block | Template — the ceiling stated in **both** rounds captions; one member, because one bound governs both reads |
+| `roundsParticipatedTotal` | Integer | server item 7's publication block | Template — the Rounds participated caption |
+| `roundsParticipatedLimit` | Integer | server item 7's publication block | Template — the ceiling stated in the Rounds participated caption |
+| `roundsParticipatedTruncated` | True/False | server item 7's publication block | Template — whether the Rounds participated caption renders |
 | `portfolio` | Array of serialised startups | server item 7's publication block | Template — the Portfolio table; controller `c.hasPortfolio()` |
 | `portfolioTruncated` | True/False | server item 7 | Template — whether the portfolio cap note renders |
 | `portfolioLimit` | Integer | server item 7 | Template — that note's figure |
@@ -2926,7 +3261,7 @@ $scope.$on('$destroy', releaseWatch);
    Rows 2, 3 and 4 return nothing because a visible element with a live-region role already owns each of those states; without them the order fell through to row 5 and announced a sentence about recorded rounds on a screen showing no record at all.
 
    **Row 6 states the totals, not the rendered array lengths.** With the caps in force, `roundsLed.length` and `roundsParticipated.length` are both the page limit, so the old wording announced "50 rounds led, 50 rounds joined" for an investor with 88 and 61 — telling a screen-reader caller the size of the window and calling it the size of the record. `portfolio_count` is the authoritative distinct-startup count of AAP §0.8.5 and is already on the record. Each table's own caption then states how much of its collection is rendered, which is the division the company profile uses for the same reason.
-5. **Expose `c.stateHeading()`**, returning `Investor profile` when the caller is not entitled or the load failed, `Investor not found` on the not-found path, and the empty string otherwise. The success path's `<h1>` is the investor name inside the panel heading, and that element sits inside the `ng-if` all three of those paths exclude — so each of them rendered **no heading at all**. Returning the empty string on the success path is what keeps the two sources mutually exclusive, so the page always renders exactly one `<h1>` as [rule 9](#rules-that-bind-all-eight) requires. The not-found wording differs because that state answers a specific request; the other two name the page and leave the reason to the alert.
+5. **Expose `c.stateHeading()`**, returning `Investor profile` **while `c.busy` is true** — tested first, before any `data` member — and also when the caller is not entitled or the load failed, `Investor not found` on the not-found path, and the empty string otherwise. The success path's `<h1>` is the investor name inside the panel heading, and that element sits inside the `ng-if` all four of those paths exclude — so each of them rendered **no heading at all**. **Busy is tested first because a reload still holds the previous investor**: `data` is authorised, carries no error and is not not-found for the whole duration, so a `data`-first order returns the empty string and the route spends its load with no heading at all. Recorded at `D-579`. Returning the empty string on the success path is what keeps the two sources mutually exclusive, so the page always renders exactly one `<h1>` as [rule 9](#rules-that-bind-all-eight) requires. The not-found wording differs because that state answers a specific request; the other two name the page and leave the reason to the alert.
 6. Recompute nothing. `portfolio_count` is read, not derived, in the client.
 7. Expose `c.unrendered(collection)` exactly as [rendered rows and model rows must agree](#rendered-rows-and-model-rows-must-agree) specifies, and inject `$element` into the controller so it can count the rendered rows of its own widget. The portfolio repeat carries `data-bst-row="portfolio"`, which is what the helper counts, and it is the **only** collection on this widget that is reconciled: it is the one assembled from two traversal paths, so it is the one whose key uniqueness rests on application logic rather than on a database constraint. The two rounds tables and the focus-area chips are single-path collections and are not reconciled.
 
@@ -2942,7 +3277,8 @@ $scope.$on('$destroy', releaseWatch);
 
   <div class="alert alert-warning" role="alert" ng-if="!data.authorised">
     <span>Your account holds no Boston Startup Tracker role.</span>
-    <a class="btn btn-default" ng-href="?id=bst_home">Back to search</a>
+    <a class="btn btn-default" ng-keydown="c.onButtonKey($event)"
+       ng-href="?id=bst_home">Back to search</a>
   </div>
 
   <div class="alert alert-warning" role="alert" ng-if="data.notFound">
@@ -2997,7 +3333,7 @@ $scope.$on('$destroy', releaseWatch);
             <div class="row">
               <div class="col-md-5 col-lg-5">Assets under management</div>
               <div class="col-md-7 col-lg-7 text-right">
-                <bdi ng-if="data.investor.aum_usd !== null">{{c.money(data.investor.aum_usd)}}</bdi>
+                <bdi class="bst-money" ng-if="data.investor.aum_usd !== null">{{c.money(data.investor.aum_usd)}}</bdi>
                 <span class="text-muted" ng-if="data.investor.aum_usd === null">Not recorded</span>
               </div>
             </div>
@@ -3034,7 +3370,8 @@ $scope.$on('$destroy', releaseWatch);
           <div class="alert alert-info" ng-if="!c.hasPortfolio()">
             <span>No portfolio company is recorded for this investor.</span>
           </div>
-          <div class="table-responsive" tabindex="0" ng-if="c.hasPortfolio()">
+          <div class="table-responsive" tabindex="0" role="region" aria-label="Portfolio companies"
+               ng-if="c.hasPortfolio()">
             <table class="table table-striped table-hover">
               <caption class="sr-only">Portfolio companies reached through the rounds on this page, one row per company</caption>
               <thead><tr><th scope="col">Company</th><th scope="col">Industry</th><th scope="col">Headquarters</th><th scope="col">Stage</th><th scope="col">Total funding</th></tr></thead>
@@ -3044,8 +3381,11 @@ $scope.$on('$destroy', releaseWatch);
                   <td><span class="label label-default" ng-if="::startup.industry">{{::startup.industry}}</span></td>
                   <td>{{::startup.headquarters_location}}</td>
                   <td><span class="label label-primary" ng-if="::startup.funding_stage">{{::startup.funding_stage}}</span></td>
-                  <td ng-if="startup.total_funding_usd !== undefined">{{c.money(startup.total_funding_usd)}}</td>
-                  <td ng-if="startup.total_funding_usd === undefined"><span class="label label-info">Premium</span></td>
+                  <td ng-if="startup.total_funding_usd !== undefined">
+                    <bdi class="bst-money" ng-if="startup.total_funding_usd !== null">{{c.money(startup.total_funding_usd)}}</bdi>
+                    <span class="text-muted" ng-if="startup.total_funding_usd === null">Not recorded</span>
+                  </td>
+                  <td ng-if="startup.total_funding_usd === undefined"><span class="label label-info">Premium<span class="sr-only"> field: Total funding</span></span></td>
                 </tr>
               </tbody>
             </table>
@@ -3066,7 +3406,8 @@ $scope.$on('$destroy', releaseWatch);
         <div class="panel-heading"><h2 class="panel-title">Rounds led</h2></div>
         <div class="panel-body">
           <div class="alert alert-info" ng-if="!c.hasLed()"><span>This investor has led no recorded round.</span></div>
-          <div class="table-responsive" tabindex="0" ng-if="c.hasLed()">
+          <div class="table-responsive" tabindex="0" role="region" aria-label="Rounds led"
+               ng-if="c.hasLed()">
             <table class="table table-striped table-hover">
               <caption class="sr-only">Funding rounds this investor led, one row per round</caption>
               <thead><tr><th scope="col">Company</th><th scope="col">Date</th><th scope="col">Round</th><th scope="col">Amount</th><th scope="col">Valuation</th></tr></thead>
@@ -3075,10 +3416,16 @@ $scope.$on('$destroy', releaseWatch);
                   <th scope="row"><a dir="auto" ng-href="?id={{::options.company_page}}&amp;sys_id={{::round.startup.value}}">{{::round.startup.display_value}}</a></th>
                   <td>{{c.day(round.round_date)}}</td>
                   <td><span class="label label-primary" ng-if="::round.round_type">{{::round.round_type}}</span></td>
-                  <td ng-if="round.amount_usd !== undefined">{{c.money(round.amount_usd)}}</td>
-                  <td ng-if="round.amount_usd === undefined"><span class="label label-info">Premium</span></td>
-                  <td ng-if="round.valuation_usd !== undefined">{{c.money(round.valuation_usd)}}</td>
-                  <td ng-if="round.valuation_usd === undefined"><span class="label label-info">Premium</span></td>
+                  <td ng-if="round.amount_usd !== undefined">
+                    <bdi class="bst-money" ng-if="round.amount_usd !== null">{{c.money(round.amount_usd)}}</bdi>
+                    <span class="text-muted" ng-if="round.amount_usd === null">Not recorded</span>
+                  </td>
+                  <td ng-if="round.amount_usd === undefined"><span class="label label-info">Premium<span class="sr-only"> field: Amount</span></span></td>
+                  <td ng-if="round.valuation_usd !== undefined">
+                    <bdi class="bst-money" ng-if="round.valuation_usd !== null">{{c.money(round.valuation_usd)}}</bdi>
+                    <span class="text-muted" ng-if="round.valuation_usd === null">Not recorded</span>
+                  </td>
+                  <td ng-if="round.valuation_usd === undefined"><span class="label label-info">Premium<span class="sr-only"> field: Valuation</span></span></td>
                 </tr>
               </tbody>
             </table>
@@ -3093,7 +3440,8 @@ $scope.$on('$destroy', releaseWatch);
         <div class="panel-heading"><h2 class="panel-title">Rounds participated in</h2></div>
         <div class="panel-body">
           <div class="alert alert-info" ng-if="!c.hasParticipated()"><span>This investor has participated in no recorded round.</span></div>
-          <div class="table-responsive" tabindex="0" ng-if="c.hasParticipated()">
+          <div class="table-responsive" tabindex="0" role="region" aria-label="Rounds participated in"
+               ng-if="c.hasParticipated()">
             <table class="table table-striped table-hover">
               <caption class="sr-only">Funding rounds this investor participated in, one row per round</caption>
               <thead><tr><th scope="col">Company</th><th scope="col">Date</th><th scope="col">Round</th><th scope="col">Amount</th><th scope="col">Valuation</th></tr></thead>
@@ -3102,10 +3450,16 @@ $scope.$on('$destroy', releaseWatch);
                   <th scope="row"><a dir="auto" ng-href="?id={{::options.company_page}}&amp;sys_id={{::round.startup.value}}">{{::round.startup.display_value}}</a></th>
                   <td>{{c.day(round.round_date)}}</td>
                   <td><span class="label label-primary" ng-if="::round.round_type">{{::round.round_type}}</span></td>
-                  <td ng-if="round.amount_usd !== undefined">{{c.money(round.amount_usd)}}</td>
-                  <td ng-if="round.amount_usd === undefined"><span class="label label-info">Premium</span></td>
-                  <td ng-if="round.valuation_usd !== undefined">{{c.money(round.valuation_usd)}}</td>
-                  <td ng-if="round.valuation_usd === undefined"><span class="label label-info">Premium</span></td>
+                  <td ng-if="round.amount_usd !== undefined">
+                    <bdi class="bst-money" ng-if="round.amount_usd !== null">{{c.money(round.amount_usd)}}</bdi>
+                    <span class="text-muted" ng-if="round.amount_usd === null">Not recorded</span>
+                  </td>
+                  <td ng-if="round.amount_usd === undefined"><span class="label label-info">Premium<span class="sr-only"> field: Amount</span></span></td>
+                  <td ng-if="round.valuation_usd !== undefined">
+                    <bdi class="bst-money" ng-if="round.valuation_usd !== null">{{c.money(round.valuation_usd)}}</bdi>
+                    <span class="text-muted" ng-if="round.valuation_usd === null">Not recorded</span>
+                  </td>
+                  <td ng-if="round.valuation_usd === undefined"><span class="label label-info">Premium<span class="sr-only"> field: Valuation</span></span></td>
                 </tr>
               </tbody>
             </table>
@@ -3165,8 +3519,39 @@ $scope.$on('$destroy', releaseWatch);
     overflow-wrap: break-word;
 }
 
+/* The name is up to 100 characters and may be one token. This element had no word
+   guard at all, so the token stayed on one line, overflowed the panel - which sets
+   no overflow of its own - and painted over the column beside it. */
 .bst-investor h1.panel-title {
     line-height: normal;
+    overflow-wrap: anywhere;
+}
+
+/* Same auto-layout table reasoning as the company profile's tables. */
+.bst-investor .table > thead > tr > th,
+.bst-investor .table > tbody > tr > th,
+.bst-investor .table > tbody > tr > td {
+    overflow-wrap: anywhere;
+}
+
+/* Same authored-header reasoning as the company profile: Headquarters at twelve characters
+   is the longest token in these three tables' headers, and with anywhere inherited it broke
+   as Head quart ers once the Company column was starved by a long portfolio name. Body
+   cells keep anywhere, including tbody th, which carries the portfolio company name. */
+.bst-investor .table > thead > tr > th {
+    overflow-wrap: normal;
+}
+
+/* A currency figure is generated, bounded and read as one number, so it is the one
+   string on these surfaces that must never break mid-token. The cell guards above
+   set overflow-wrap: anywhere, which inherits, and in a starved column that broke the
+   figure 12,500,000 after its fifth character, onto three lines. normal restores word-level
+   breaking for the figure only; c.money() emits no space, so the figure stays whole.
+   Its min-content is the figure's own width, which is small and fixed, so the column
+   this takes width from is the one carrying anywhere and able to give it. */
+.bst-investor .bst-money {
+    overflow-wrap: normal;
+    word-break: keep-all;
 }
 
 .bst-investor .bst-investor-state-heading {
@@ -3203,6 +3588,13 @@ $scope.$on('$destroy', releaseWatch);
 }
 
 
+/* The track's fill is $progress-bg, which measures 1.09:1 against a panel, so the
+   track carries a boundary in the colour the theme owns for a container edge.
+   thin is a keyword width, so this adds no measured literal to widget CSS. */
+.bst-investor .progress {
+    border: thin solid $panel-default-border;
+}
+
 @media (prefers-reduced-motion: reduce) {
     .bst-investor .progress-bar {
         animation: none;
@@ -3213,6 +3605,32 @@ $scope.$on('$destroy', releaseWatch);
     .bst-investor .label {
         border-style: solid;
     }
+}
+
+/* Target size. Bootstrap's .btn computes to about 34 pixels from its own padding and
+   line-height, and a bare link to the height of its text, so the floor is declared
+   here from $bst-hit-target-min rather than by adding padding literals. inline-flex
+   with centring keeps the label in the middle of the taller box instead of at its
+   top; min-width applies the same floor to a short label such as Next. */
+.bst-investor .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: $bst-hit-target-min;
+    min-width: $bst-hit-target-min;
+}
+
+/* Same coupling as the company profile: inline-flex is shrink-to-fit, so each anchor
+   carries the intrinsic guard rather than inheriting break-word from its row. */
+.bst-investor h1.panel-title a,
+.bst-investor .list-group-item a,
+.bst-investor .table a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: $bst-hit-target-min;
+    min-width: $bst-hit-target-min;
+    overflow-wrap: anywhere;
 }
 
 .bst-investor [tabindex="-1"]:focus,
@@ -3335,7 +3753,10 @@ try {
 1. Compute `c.columns($index)` as the Bootstrap column span for the panel at that position, from `c.data.kpis.length` and the index, using the table under [The KPI column spans](#the-kpi-column-spans). Choose only from `col-md-12`, `col-md-6`, `col-md-4` and `col-md-3`, and never a narrower class.
 2. Expose `c.breaksAfter($index)`, true only at the index the same table names in its **Break after index** column — index `2` when there are five panels, and nothing otherwise. The template renders a `.clearfix` where it is true; the reason it is needed at all is under that table.
 3. Expose `c.hasLink(kpi)` for the conditional `.btn.btn-link`.
-4. Declare `c.busy` per [Busy, status and focus behaviour](#busy-status-and-focus-behaviour), and implement `c.load()` and `c.retry()` exactly as [Error and empty behaviour](#error-and-empty-behaviour) specifies. This widget issues no server call **after** its first render, but that first render *is* a server call and its five aggregates can fail, so it carries the error panel and a working **Retry**. It carries no status region, because it has no user-initiated action to announce.
+4. Declare `c.busy`, `c.statusText()` and `c.indeterminate()` per [Busy, status and focus behaviour](#busy-status-and-focus-behaviour), and implement `c.load()` and `c.retry()` exactly as [Error and empty behaviour](#error-and-empty-behaviour) specifies. This widget's status wording is:
+   - loaded — `Trend figures for {{c.data.kpis.length}} measures.`
+   - every other state returns the empty string, because a visible element owns it, exactly as the ordered table in that section requires.
+   This widget issues no server call **after** its first render, but that first render *is* a server call and its five aggregates can fail, so it carries the error panel and a working **Retry**. It carries no status region, because it has no user-initiated action to announce.
 5. Read no data and issue no server call after the first render **except** `c.retry()`. The KPI figures are computed once, in the server script; `c.retry()` re-runs that script through `c.load()` and is the only later call this widget makes.
 
 ##### The KPI column spans
@@ -3390,6 +3811,15 @@ And the break is toggled with **`ng-class`, not `ng-if`**. `ng-if` on an `ng-rep
 <div class="bst-kpi" tabindex="-1" aria-busy="{{c.busy}}">
   <h1 class="h2">{{::options.title}}</h1>
 
+  <div class="sr-only" role="status" aria-live="polite" aria-atomic="true">{{c.statusText()}}</div>
+
+  <div class="progress" ng-if="c.busy">
+    <div class="progress-bar progress-bar-striped active" role="progressbar"
+         ng-style="c.indeterminate()"
+         aria-label="Loading the trend figures" aria-valuemin="0" aria-valuemax="100"
+         aria-valuetext="Loading"></div>
+  </div>
+
   <div class="alert alert-warning" role="alert" ng-if="!data.authorised">
     <span>Your account holds no Boston Startup Tracker role.</span>
   </div>
@@ -3400,7 +3830,7 @@ And the break is toggled with **`ng-class`, not `ng-if`**. `ng-if` on an `ng-rep
     <button type="button" class="btn btn-default" ng-click="c.retry()">Retry</button>
   </div>
 
-  <div class="row" ng-if="data.authorised &amp;&amp; !c.errorText()">
+  <div class="row" ng-if="data.authorised &amp;&amp; !c.busy &amp;&amp; !c.errorText()">
     <div ng-repeat-start="kpi in data.kpis track by kpi.id" ng-class="c.columns($index)">
       <div class="panel panel-default bst-kpi-panel">
         <div class="panel-heading">
@@ -3469,6 +3899,32 @@ And the break is toggled with **`ng-class`, not `ng-if`**. `ng-if` on an `ng-rep
     .bst-kpi .bst-kpi-panel {
         flex: auto;
     }
+}
+
+/* The track's fill is $progress-bg, which measures 1.09:1 against a panel, so the
+   track carries a boundary in the colour the theme owns for a container edge.
+   thin is a keyword width, so this adds no measured literal to widget CSS. */
+.bst-kpi .progress {
+    border: thin solid $panel-default-border;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .bst-kpi .progress-bar {
+        animation: none;
+    }
+}
+
+/* Target size. Bootstrap's .btn computes to about 34 pixels from its own padding and
+   line-height, and a bare link to the height of its text, so the floor is declared
+   here from $bst-hit-target-min rather than by adding padding literals. inline-flex
+   with centring keeps the label in the middle of the taller box instead of at its
+   top; min-width applies the same floor to a short label such as Next. */
+.bst-kpi .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: $bst-hit-target-min;
+    min-width: $bst-hit-target-min;
 }
 
 .bst-kpi [tabindex="-1"]:focus,
@@ -3786,7 +4242,10 @@ When any one of those checks does not pass — the mode is not `report`, the ide
    - `c.titleId()` returns `'bst-charts-title-' + c.data.dimension`.
    - `c.descId()` returns `'bst-charts-desc-' + c.data.dimension`.
    - `c.labelClipId()` returns `'bst-charts-labelclip-' + c.data.dimension`, and is referenced by every label `<text>` in that chart. A `clipPath` is resolved by identifier from the whole document, not from the enclosing `<svg>`, so two instances sharing one identifier would clip the second chart's labels against the first chart's rectangle — a rectangle whose height is the *other* chart's bucket count, which silently erases labels below that row.
-4. Declare `c.busy` per [Busy, status and focus behaviour](#busy-status-and-focus-behaviour), and implement `c.load()` and `c.retry()` exactly as [Error and empty behaviour](#error-and-empty-behaviour) specifies. This widget issues no server call **after** its first render, but that first render *is* a server call and its aggregate can fail, so it carries the error panel and a working **Retry** — `c.retry()` re-runs the server script through `c.load()`. It carries no status region, because it has no user-initiated action to announce.
+4. Declare `c.busy`, `c.statusText()` and `c.indeterminate()` per [Busy, status and focus behaviour](#busy-status-and-focus-behaviour), and implement `c.load()` and `c.retry()` exactly as [Error and empty behaviour](#error-and-empty-behaviour) specifies. This widget's status wording is:
+   - loaded — `Breakdown by {{c.data.dimension}}, {{c.data.buckets.length}} groups.`
+   - every other state returns the empty string, because a visible element owns it, exactly as the ordered table in that section requires.
+   This widget issues no server call **after** its first render, but that first render *is* a server call and its aggregate can fail, so it carries the error panel and a working **Retry** — `c.retry()` re-runs the server script through `c.load()`. It carries no status region, because it has no user-initiated action to announce.
 5. Perform no arithmetic on record data and compute no coordinate. Every count and every coordinate arrives from the server, and the template binds them with `ng-attr-*`.
 
 #### HTML template
@@ -3799,6 +4258,8 @@ When any one of those checks does not pass — the mode is not `report`, the ide
     </h2>
   </div>
   <div class="panel-body">
+    <div class="sr-only" role="status" aria-live="polite" aria-atomic="true">{{c.statusText()}}</div>
+
     <div class="alert alert-warning" role="alert" ng-if="!data.authorised">
       <span>Your account holds no Boston Startup Tracker role.</span>
     </div>
@@ -3809,16 +4270,23 @@ When any one of those checks does not pass — the mode is not `report`, the ide
       <button type="button" class="btn btn-default" ng-click="c.retry()">Retry</button>
     </div>
 
-    <div class="alert alert-warning" ng-if="data.authorised &amp;&amp; data.reportUnavailable">
+    <div class="progress" ng-if="c.busy">
+      <div class="progress-bar progress-bar-striped active" role="progressbar"
+           ng-style="c.indeterminate()"
+           aria-label="Loading the breakdown" aria-valuemin="0" aria-valuemax="100"
+           aria-valuetext="Loading"></div>
+    </div>
+
+    <div class="alert alert-warning" ng-if="data.authorised &amp;&amp; !c.busy &amp;&amp; data.reportUnavailable">
       <span>The configured report could not be read. Showing the built-in chart instead.</span>
     </div>
 
-    <div class="alert alert-info" role="status" ng-if="data.authorised &amp;&amp; !c.errorText() &amp;&amp; c.isSvg() &amp;&amp; !c.hasData()">
+    <div class="alert alert-info" role="status" ng-if="data.authorised &amp;&amp; !c.busy &amp;&amp; !c.errorText() &amp;&amp; c.isSvg() &amp;&amp; !c.hasData()">
       <span>No startup is recorded for this breakdown yet.</span>
     </div>
 
     <svg class="bst-charts-svg"
-         ng-if="data.authorised &amp;&amp; !c.errorText() &amp;&amp; c.isSvg() &amp;&amp; c.hasData()"
+         ng-if="data.authorised &amp;&amp; !c.busy &amp;&amp; !c.errorText() &amp;&amp; c.isSvg() &amp;&amp; c.hasData()"
          role="img"
          width="100%"
          preserveAspectRatio="xMinYMin meet"
@@ -3853,8 +4321,9 @@ When any one of those checks does not pass — the mode is not `report`, the ide
       </g>
     </svg>
 
-    <div class="table-responsive" tabindex="0"
-         ng-if="data.authorised &amp;&amp; !c.errorText() &amp;&amp; c.hasData()">
+    <div class="table-responsive" tabindex="0" role="region"
+         aria-label="{{::options.title}}, every value as a table"
+         ng-if="data.authorised &amp;&amp; !c.busy &amp;&amp; !c.errorText() &amp;&amp; c.hasData()">
       <table class="table table-striped bst-charts-table">
         <caption class="sr-only">{{::options.title}}, every value as a table</caption>
         <thead>
@@ -3884,7 +4353,7 @@ When any one of those checks does not pass — the mode is not `report`, the ide
       </table>
     </div>
 
-    <sp-widget widget="data.report" ng-if="c.isReport() &amp;&amp; data.report"></sp-widget>
+    <sp-widget widget="data.report" ng-if="!c.busy &amp;&amp; c.isReport() &amp;&amp; data.report"></sp-widget>
   </div>
 </div>
 ```
@@ -3898,7 +4367,7 @@ Seven properties of that template are what make the chart correct, and each is e
 - **The companion table carries `.table-responsive` and a `.sr-only` caption**, and every `.progress-bar` in it carries `aria-label`, `aria-valuenow`, `aria-valuemin` and `aria-valuemax`. A progress bar with no name and no value is announced as an unlabelled control, which is why the bindings are part of the specification rather than a refinement. `aria-valuenow` binds `bucket.share`, which the server clamps to `0`-`100` in place for exactly this reason, so the announced value always lies inside the range the same element declares.
 
 - **There is deliberately no `height` attribute on the `<svg>`.** With `width="100%"`, a `viewBox` and `preserveAspectRatio="… meet"`, an element that *also* carries a height equal to its viewBox height pins its scale at `min(renderedWidth / 720, 1)` and then keeps its full unscaled height regardless: below 720 rendered units the drawing shrinks inside a box that does not, and the difference is dead space. Measured, that was **127.05px and 94.05px** of permanently blank area in the two dashboard charts at 1024, and 35.0% of the box in a twenty-bucket case. Omitting the height lets the viewBox supply the intrinsic aspect ratio, so the box is exactly as tall as the drawing at every width and the scale is no longer capped at 1:1. This is also half of what makes the labels legible at the 1024 floor — see the CSS note below.
-- **The label `<text>` is clipped to the label band.** SVG paints in document order and each group is ordered label, bar, value, so an opaque bar draws **on top of** a label that overruns its 210-unit band — measured, an 83-character label lost **62.0%** of its rendered width behind its own bar, leaving a fragment that reads as a complete but wrong label. The `clipPath` cuts the label cleanly at the band edge instead, so an overrun is visibly an overrun. The clip is declared **once per chart** in `<defs>` and referenced by every row, and its identifier is derived from `data.dimension` for the same reason the title and description identifiers are: `bst_dashboard` renders **two** instances in one document, and a repeated `id` would make the second chart's labels clip against the first chart's rectangle. **No per-element `<title>` is added** to recover the full string: this chart is tooltip-free by design, a `<title>` child is exactly how an SVG tooltip is created, and the companion table already carries every label in full as the declared accessible alternative.
+- **The label `<text>` is clipped to the label band.** SVG paints in document order and each group is ordered label, bar, value, so an opaque bar draws **on top of** a label that overruns its 210-unit band — measured, an 83-character label lost **62.0%** of its rendered width behind its own bar, leaving a fragment that reads as a complete but wrong label. The `clipPath` cuts the label cleanly at the band edge instead, so an overrun is visibly an overrun. The clip is declared **once per chart** in `<defs>` and referenced by every row, and its identifier is derived from `data.dimension` for the same reason the title and description identifiers are: `bst_dashboard` renders **two** instances in one document, and a repeated `id` would make the second chart's labels clip against the first chart's rectangle. **No per-element `<title>` is added** to recover the full string: this chart is tooltip-free by design, a `<title>` child is exactly how an SVG tooltip is created, and the companion table already carries every label in full as the declared accessible alternative. **The label's on-screen size follows the column, and at this page's narrowest rectangle it is the smallest text on the page.** The chart is an `svg` with `width="100%"` over a 720-unit `viewBox`, so its user unit scales with the rectangle: measured on the delivered layout, a `6`-column rectangle at the 1024-pixel floor gives the chart 423 rendered pixels, a scale of 0.5875, and a label declared at `$font-size-large` in user units therefore paints at about **10.6 CSS pixels** — against 13.45 at 1366 and 1920, where the container's cap holds the rectangle at 600. Nothing is clipped or truncated at any width and every one of the fourteen labels was read complete off the render, so this is a size observation rather than a loss. It is not closed by raising the declaration, for two reasons: widget CSS carries **exactly one** `font-size` declaration by [zero hard-coded values](#zero-hard-coded-values), and the accessible alternative is already the answer — the companion table beneath the chart prints every label and every value at the surrounding body size, in a named focusable region, and is the surface a caller who cannot read the chart is meant to use. The lever, if a minimum rendered label size is ever required, is the `viewBox` width rather than the grid.
 - **The value `<text>` is anchored at the right edge, not the left.** `text-anchor="end"` with `x` at `PLOT_WIDTH` grows a long count leftward into the plot area. Left-anchored, the design's own 70-unit value budget implied text reaching 732 in a 720-unit box, and an eight-digit count measured 724.95 — clipped by the viewBox with no warning at any viewport, because the overflow is in user units rather than CSS pixels.
 
   **Anchoring at the right edge moves the problem rather than removing it, which is why the value band is derived.** Left-anchored, the design's own 70-unit value budget implied text reaching 732 in a 720-unit box, and an eight-digit count measured 724.95 — clipped by the viewBox with no warning at any viewport, because the overflow is in user units and therefore invisible to every CSS overflow check. End-anchored, the same count cannot leave the box, but it grows **inward**: measured, an eight-digit count reached 10.9 units past the bar's right edge, putting one digit on top of a `$brand-primary` bar at **2.75:1** where the rest of the string sits on white at 12.6:1. The digit is legible — the value text is the last child of its group, so it paints over the bar rather than under it — but it is the one character in the chart that fails contrast. Deriving `valueWidth` from `String(largest).length` reserves the room the count actually needs, so the bar ends before the value begins. **The derivation is a no-op for realistic data**: any count of five digits or fewer keeps `valueWidth` at the 70-unit minimum and `barSpan` at exactly 440, which is the geometry every other state is measured against.
@@ -3954,8 +4423,33 @@ Seven properties of that template are what make the chart correct, and each is e
    .progress-bar resolves against Bootstrap's own .progress-bar { color: #fff },
    not against the cell around it, so the fill painted white on a transparent
    track and measured 1.00:1. Neither override is reinstated. */
+/* Every trough in this widget - the loading affordance and the companion table's
+   bars - takes the boundary; only the table's troughs lose their margin. */
+.bst-charts .progress {
+    border: thin solid $panel-default-border;
+}
+
 .bst-charts .bst-charts-bar .progress {
     margin-bottom: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .bst-charts .progress-bar {
+        animation: none;
+    }
+}
+
+/* Target size. Bootstrap's .btn computes to about 34 pixels from its own padding and
+   line-height, and a bare link to the height of its text, so the floor is declared
+   here from $bst-hit-target-min rather than by adding padding literals. inline-flex
+   with centring keeps the label in the middle of the taller box instead of at its
+   top; min-width applies the same floor to a short label such as Next. */
+.bst-charts .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: $bst-hit-target-min;
+    min-width: $bst-hit-target-min;
 }
 
 .bst-charts [tabindex="-1"]:focus,
@@ -4036,9 +4530,14 @@ data.authorised = new RestResponseBuilder().hasAnyAppRole();
 | Create, update and delete records | `x_bst_startuptrk.admin` |
 | Read the ingestion staging table and the rate-limit counters | `x_bst_startuptrk.admin` |
 
-5. Publish `data.premiumDenied`, true when the caller holds neither `x_bst_startuptrk.admin` nor `x_bst_startuptrk.premium_user`. Embed the partial when it is true:
+5. Publish `data.premiumDenied`, true when the caller **holds one of the three roles** and it is neither `x_bst_startuptrk.admin` nor `x_bst_startuptrk.premium_user` — that is, `data.authorised && !admin && !premium`. Embed the partial when it is true:
 
 ```javascript
+// authorised is item 1's flag: at least one of the three roles is held. A caller with
+// NO role is a different state and takes a different message, from the template's own
+// not-entitled alert - see below.
+data.premiumDenied = data.authorised && !data.roles.admin && !data.roles.premium_user;
+
 if (data.premiumDenied) {
     data.upsell = $sp.getWidget('bst-premium-upsell', {
         context: 'account',
@@ -4064,7 +4563,7 @@ if (data.premiumDenied) {
 | `effectiveRole` | String | server item 3 | Template — the supporting role name; controller `c.statusText()` |
 | `effectiveRoleLabel` | String | server item 3 | Controller `c.roleLabel()`, which the template renders |
 | `entitlements` | Array of `{label,granted}` | server item 4 | Template — the entitlements list group |
-| `premiumDenied` | True/False | server item 5 | Controller `c.isDenied()`; server item 5's embed decision |
+| `premiumDenied` | True/False | server item 5 | Controller `c.isDenied()`; server item 5's embed decision. **True only for a caller who holds a role**, so it never coincides with `authorised` being false |
 | `upsell` | Widget model | server item 5 | Template — `<sp-widget widget="data.upsell">` |
 
 #### Client controller
@@ -4075,6 +4574,10 @@ if (data.premiumDenied) {
    - empty — `No entitlement is granted to this account.`, used when `data.effectiveRole` is `none`.
    - loaded — `Signed in as {{c.data.user.name}}. Effective role {{c.data.effectiveRoleLabel}}.`
 4. Issue no server call after the first render, other than a retry.
+
+**No role and a non-premium role are two different states, and they may not share one message.** Both are *denials*, which is why they were conflated, but they deny different things and the copy for one is false of the other. A caller holding `x_bst_startuptrk.user` reads the seven tables and every unreserved field, so telling them their account *reads the seven tables* and listing what is reserved is true and useful. A caller holding **no** role reads nothing at all, so the same sentence is simply false — and it appeared beside an entitlements list in which **every one of the six rows read `Not granted`**, which is the contradiction a caller would notice first. The split is therefore mechanical: `data.premiumDenied` requires `data.authorised`, so the upsell partial — whose `account` body opens *Your account reads the seven tables* — is embedded **only** for a caller who does read them; and the no-role caller is answered by the template's own `.alert.alert-warning`, which now states the consequence (`every entitlement below reads Not granted`, nothing readable on any page) and the remedy (an administrator grants a role, and which role reads what). Exactly one of the two renders, on every load, because the flags are complements. Recorded at `D-582`.
+
+**The two messages must not share a phrase, because the check that separates them is a text search.** The remedy sentence originally read *the free role reads the seven tables*, which is the upsell body's own opening clause, so the verification step below matched the warning and reported the upsell as present on a load where it was verifiably absent. Two things were changed rather than one: the remedy now reads *grants read access to all seven tables*, so no substring is shared, and the check now searches for the whole clause `Your account reads the seven tables` rather than a fragment of it. Either alone would pass today; together they also survive the next copy edit. Recorded at `D-584`.
 
 **This widget offers no request, upgrade or notification action, and claims no outcome it does not produce.** There is no request control, no message stating that a request has been noted, and no client-side notification: the application has no commerce, workflow or notification capability in scope, so an action of that kind would report a result that never happened. What the caller is told instead is exactly what is true — an administrator grants the role on the instance — and that wording is published once, by the embedded `bst-premium-upsell` partial, as **that widget's** `guidance` member. This widget publishes no `guidance` of its own and its template reads none; the wording reaches the page through `data.upsell`. See [`../gaps-and-flags.md`](../gaps-and-flags.md) flag **F1** and gap **G6**.
 
@@ -4091,7 +4594,7 @@ if (data.premiumDenied) {
          aria-valuetext="Loading"></div>
   </div>
 
-  <h1 class="h2" tabindex="-1" ng-if="c.errorText()">Your account</h1>
+  <h1 class="h2" tabindex="-1" ng-if="c.busy || c.errorText()">Your account</h1>
 
   <div class="alert alert-danger" role="alert" ng-if="c.errorText()">
     <span class="icon-cross-circle" aria-hidden="true">&nbsp;</span>
@@ -4099,7 +4602,7 @@ if (data.premiumDenied) {
     <button type="button" class="btn btn-default" ng-click="c.retry()">Retry</button>
   </div>
 
-  <div class="panel panel-default" ng-if="!data.error">
+  <div class="panel panel-default" ng-if="!c.busy &amp;&amp; !data.error">
     <div class="panel-heading">
       <h1 class="panel-title" tabindex="-1">
         <span class="icon-user" aria-hidden="true">&nbsp;</span>{{::options.title}}
@@ -4132,11 +4635,14 @@ if (data.premiumDenied) {
     </ul>
   </div>
 
-  <div class="alert alert-warning" role="alert" ng-if="!data.error &amp;&amp; !data.authorised">
-    <span>Your account holds none of the three Boston Startup Tracker roles. An administrator grants one on the instance.</span>
+  <div class="alert alert-warning" role="alert" ng-if="!c.busy &amp;&amp; !data.error &amp;&amp; !data.authorised">
+    <span>Your account holds none of the three Boston Startup Tracker roles, so every entitlement below reads
+      <strong>Not granted</strong> and no startup, investor or funding data is readable on any page of this portal.
+      An administrator grants a role on the instance; the free role grants read access to all seven tables, and the premium role
+      adds the seven reserved fields.</span>
   </div>
 
-  <div class="panel panel-default" ng-if="!data.error &amp;&amp; options.show_entitlements">
+  <div class="panel panel-default" ng-if="!c.busy &amp;&amp; !data.error &amp;&amp; options.show_entitlements">
     <div class="panel-heading"><h2 class="panel-title">Entitlements</h2></div>
     <ul class="list-group">
       <li class="list-group-item" ng-repeat="row in ::data.entitlements track by row.label">
@@ -4151,7 +4657,7 @@ if (data.premiumDenied) {
     </ul>
   </div>
 
-  <sp-widget widget="data.upsell" ng-if="!data.error &amp;&amp; data.upsell"></sp-widget>
+  <sp-widget widget="data.upsell" ng-if="!c.busy &amp;&amp; !data.error &amp;&amp; data.upsell"></sp-widget>
 
   <a class="btn btn-default" ng-keydown="c.onButtonKey($event)"
      ng-href="?id=bst_home">Back to search</a>
@@ -4222,6 +4728,32 @@ if (data.premiumDenied) {
     .bst-account .label {
         border-style: solid;
     }
+}
+
+/* The track's fill is $progress-bg, which measures 1.09:1 against a panel, so the
+   track carries a boundary in the colour the theme owns for a container edge.
+   thin is a keyword width, so this adds no measured literal to widget CSS. */
+.bst-account .progress {
+    border: thin solid $panel-default-border;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .bst-account .progress-bar {
+        animation: none;
+    }
+}
+
+/* Target size. Bootstrap's .btn computes to about 34 pixels from its own padding and
+   line-height, and a bare link to the height of its text, so the floor is declared
+   here from $bst-hit-target-min rather than by adding padding literals. inline-flex
+   with centring keeps the label in the middle of the taller box instead of at its
+   top; min-width applies the same floor to a short label such as Next. */
+.bst-account .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: $bst-hit-target-min;
+    min-width: $bst-hit-target-min;
 }
 
 .bst-account [tabindex="-1"]:focus,
@@ -4386,6 +4918,19 @@ Apply the `account` wording for any context value that is not one of the three, 
     margin-bottom: 0;
 }
 
+/* Target size. Bootstrap's .btn computes to about 34 pixels from its own padding and
+   line-height, and a bare link to the height of its text, so the floor is declared
+   here from $bst-hit-target-min rather than by adding padding literals. inline-flex
+   with centring keeps the label in the middle of the taller box instead of at its
+   top; min-width applies the same floor to a short label such as Next. */
+.bst-upsell .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: $bst-hit-target-min;
+    min-width: $bst-hit-target-min;
+}
+
 .bst-upsell .btn:focus {
     outline-style: auto;
 }
@@ -4402,7 +4947,7 @@ Apply the `account` wording for any context value that is not one of the three, 
 | # | Widget name and ID | Options | Placed on | Embeds |
 | --- | --- | --- | --- | --- |
 | 1 | `bst-startup-search` | `title`, `show_industry`, `show_location`, `results_page` | `bst_home` | — |
-| 2 | `bst-startup-results` | `title`, `page_size`, `detail_page`, `show_logo` | `bst_home` | — |
+| 2 | `bst-startup-results` | `title`, `page_size`, `detail_page`, `show_logo`, `upsell_page` | `bst_home` | — (renders the surface-level premium alert **inline**) |
 | 3 | `bst-company-profile` | `default_tab`, `investor_page`, `upsell_page`, `funding_limit`, `people_limit`, `jobs_limit`, `news_limit` | `bst_company` | `bst-premium-upsell` |
 | 4 | `bst-investor-profile` | `company_page`, `upsell_page`, `portfolio_limit`, `rounds_limit` | `bst_investor` | `bst-premium-upsell` |
 | 5 | `bst-trends-kpi` | `title`, `show_jobs`, `show_news` | `bst_dashboard` | — |
@@ -4420,7 +4965,7 @@ Apply the `account` wording for any context value that is not one of the three, 
 | `bst_company` | company profile, upsell | **12** | one record read (1), then two per child collection across five collections — a bounded read and its `COUNT` (10), plus one batched read of the join table covering every round on the page (1). 1 + 10 + 1 = 12. |
 | `bst_investor` | investor profile, upsell | **7** | the investor record; the led rounds and their count; the capped join rows and their count; the participated rounds; the portfolio companies. |
 | `bst_dashboard` | KPI row, two chart instances | **5 to 7** | one `COUNT` aggregate per KPI panel — three with neither optional panel shown, five with both, per [`bst-trends-kpi`](#bst-trends-kpi) — plus exactly one grouped aggregate per chart instance, so 3 + 2 = 5 at the low end and 5 + 2 = 7 at the high end. |
-| `bst_account` | account summary, upsell | **1 to 3** | the caller's role state, and a count only where the summary reports one. |
+| `bst_account` | account summary, upsell | **0** | neither widget on this page reads a record or runs an aggregate. The summary answers three `gs.hasRole()` calls, which are session role tests rather than queries, and takes the caller's name and user name from `gs.getUser()`; the upsell partial renders from the options and the flags its host already resolved. |
 
 Four properties hold across the whole table, and each is what a reviewer should verify:
 
@@ -4598,11 +5143,17 @@ The mechanic is stated here; the decision behind the floor is recorded in [`../.
 | --- | --- | --- | --- |
 | `x_bst_startuptrk_startup.logo_url` | The image behind it has no declared dimensions at all. A 2000-by-50 wordmark satisfies a height cap and stays two thousand pixels wide. | `max-height: $navbar-height` **and** `max-width: $navbar-height`, with `width: auto` and `height: auto` so the image scales inside that box rather than being squashed into it. | `.bst-results .media-object` and `.bst-company .bst-company-logo` |
 | `x_bst_startuptrk_startup.website`, `x_bst_startuptrk_investor.website` | 255 characters, and a URL has no spaces, so it is one unbreakable word. | The link is labelled **`Visit the company website`** and **`Visit the investor website`** rather than with the address itself. The address remains the `ng-href` target. | The Website row of the company and investor overview list groups |
-| `name` at 100, `title` at 150, news `title` and `summary` at 255 | Any of them may arrive with no space in it. | `overflow-wrap: break-word` on the containers that render them. | `.bst-results .media-body`, `.bst-company .list-group-item`, `.bst-company .media-heading`, `.bst-investor .list-group-item` and `.bst-account .list-group-item` |
+| `name` at 100, `title` at 150, news `title` and `summary` at 255, `description` at 4000 | Any of them may arrive with no space in it. | **`overflow-wrap: anywhere` wherever the box's own intrinsic size decides the layout, `break-word` where a grid has already fixed the width.** `anywhere` on `.media-body` and `.media-heading` (a table cell and its heading), on `h1.panel-title` (the investor name), on the two description paragraphs, on **every** cell of a data table — `thead > tr > th`, `tbody > tr > th` **and** `tbody > tr > td`, because a row-header cell is where the longest values in this schema sit — and on every anchor that [rule 17](#rules-that-bind-all-eight) makes `inline-flex`, each of which is shrink-to-fit and therefore sized by its own min-content; `break-word` on the `.list-group-item`s, whose width the grid fixes. | `anywhere`: `.bst-results .media-body`, `.bst-results .bst-results-description`, `.bst-results .media-heading a`, `.bst-company .media-body`, `.bst-company .media-heading`, `.bst-company .bst-company-description`, `.bst-company .table` `thead>th`/`tbody>th`/`tbody>td`, `.bst-company .media-heading a`/`.list-group-item a`/`.table a`, `.bst-investor h1.panel-title`, `.bst-investor .table` `thead>th`/`tbody>th`/`tbody>td`, `.bst-investor h1.panel-title a`/`.list-group-item a`/`.table a`. `break-word`: `.bst-company .list-group-item`, `.bst-investor .list-group-item`, `.bst-account .list-group-item`. `normal` with `word-break: keep-all`, as the one deliberate exception carved back out of the inherited `anywhere`: `.bst-results .bst-money`, `.bst-company .bst-money`, `.bst-investor .bst-money` |
+| `x_bst_startuptrk_startup.name` and `description` rendered inside a `.media` object | The media object is a `display: table`, so the width of the whole card follows the **min-content** of its body cell. | This is the case `break-word` cannot serve, and it is why the row above splits by context rather than by element. Measured at the 1024px floor with the widest legal data and `break-word` in force: the home card lost **52** characters of the name and **3,911** of the description off the right edge, the company overview drove the document to about **36,792px**, and the investor name painted over the panel beside it. With `anywhere` in the eight places named above, every one of those values wraps and none is lost. | The three surfaces named in the row above |
+| Every currency figure `c.money()` renders — `total_funding_usd`, `aum_usd`, `amount_usd`, `valuation_usd` | Bounded and short, about 80 to 120 pixels. It is not the *figure* that is at risk but its integrity: `overflow-wrap` inherits, so the cell guard above reaches inside the figure and licenses a break between any two digits. | **`overflow-wrap: normal` with `word-break: keep-all` on a `.bst-money` wrapper**, carved back out of the inherited `anywhere`. Measured on the investor portfolio table at both 1366 and 1920 with a 100-character single-token company name starving the other columns: the figure `12,500,000` rendered as `12,5 / 00,00 / 0` across **three** lines, which reads as three numbers rather than one. The figure carries no space, so `normal` alone keeps it whole; `keep-all` states the intent for a future figure that acquires one. Its min-content is the figure's own fixed width, and the width it claims comes from the column carrying `anywhere`, which can give it. | `.bst-results .bst-money`, `.bst-company .bst-money`, `.bst-investor .bst-money` — the eleven `<bdi class="bst-money">` positions, being the ten delivered ones plus the canonical sample |
 | Any value rendered in a `.pull-right` inside a `.list-group-item` — `aum_usd` as `$1,250,000,000`, a four-or-more-value `focus_areas` chip set, `employee_count_range`, a `sys_user` name | Wide enough to wrap onto a second line inside the float, at any viewport where the column is narrow. `Investor.focus_areas` is a multi-choice over six values, so the widest legitimate value is all six chips. | `display: flow-root`, which establishes a block formatting context so the float's full height is counted. | `.bst-company .list-group-item`, `.bst-investor .list-group-item` and `.bst-account .list-group-item` |
 | `x_bst_startuptrk_investor.focus_areas` rendered as a chip run — the only multi-valued field in any list item | Six chips measure about 342 pixels. The column's content box is about 291 at the `md` tier, so the run is wider than the box it sits in. | `display: inline-block` on the chip, which is what makes the run breakable at all, plus `text-align: right` on the float so the wrapped run stays where the float put it. | `.bst-investor .list-group-item .label` and `.bst-investor .list-group-item .pull-right` |
 
-**Float containment is a different guard from word breaking, and the two are not interchangeable.** `overflow-wrap: break-word` decides where a single unbreakable *word* may be split; it has nothing to say about a float. A `.pull-right` is `float: right`, so it is out of normal flow and contributes no height to the item that contains it. While its content fits on the label's own line the item looks correct by accident. The moment the content needs a second line the float extends below the item's box, the item keeps the height of its label line alone, and the next `.list-group-item` — which has an opaque background and paints later in document order — covers the overhanging half. The value is not pushed aside, it is **occluded**: the reader sees the top half of a figure and no indication that a bottom half exists. Establishing a block formatting context on the item makes the float's height part of the item's height, which is the only thing that fixes it; neither `overflow-wrap` nor a wider column does. Verify it by measuring rather than by eye — see the checklist row under [Overflow guards at the floor](#overflow-guards-at-the-floor).
+**Which of the two word-break keywords applies is decided by what sizes the box, and getting it wrong makes the declaration inert rather than wrong-looking.** `break-word` permits a mid-word break inside a line box that is *already* bounded, and contributes nothing to the box's intrinsic **min-content** width. `anywhere` does both. So in a grid column, whose width is fixed before the text is measured, `break-word` fires and is the narrower, more conservative choice — that is [rule 13](#rules-that-bind-all-eight)'s case. In a table cell, a shrink-to-fit inline-block, a float or any other box whose own content decides its width, `break-word` can never fire: the box simply grows to the token's width, the line box grows with it, and nothing ever overflows the line — which is why deleting the declaration in that position changes the rendering by nothing at all. That is [rule 16](#rules-that-bind-all-eight)'s case, and the eight positions in the table above are the same case: a `.media-body` is `display: table-cell`, so the card's width follows the cell's min-content, and the guard has to lower min-content or it does nothing. Recorded at `D-580`.
+
+**`overflow-wrap` inherits, which is what makes the guard cheap and is also its one hazard.** One declaration on `.media-body` reaches the heading, the description and every list row beneath it, which is why the rule set is eight declarations rather than thirty. The same inheritance carries `anywhere` into content that must **not** break arbitrarily, and a currency figure is the case that matters: a reader takes a broken figure for more than one number. So the guard is applied at the container and withdrawn at the one descendant that needs it withdrawn, rather than applied leaf by leaf. `.bst-money` is that withdrawal, and it is a class rather than a `bdi:not([dir])` selector because the same element type also isolates user-supplied text — `headquarters_location`, a `sys_user` name, a `contact_email`, a news `source` — every one of which *does* need `anywhere`. Recorded at `D-583`.
+
+**Float containment is a different guard again, and none of the three is interchangeable with the others.** `overflow-wrap` in either form decides where a single unbreakable *word* may be split; it has nothing to say about a float. A `.pull-right` is `float: right`, so it is out of normal flow and contributes no height to the item that contains it. While its content fits on the label's own line the item looks correct by accident. The moment the content needs a second line the float extends below the item's box, the item keeps the height of its label line alone, and the next `.list-group-item` — which has an opaque background and paints later in document order — covers the overhanging half. The value is not pushed aside, it is **occluded**: the reader sees the top half of a figure and no indication that a bottom half exists. Establishing a block formatting context on the item makes the float's height part of the item's height, which is the only thing that fixes it; neither `overflow-wrap` nor a wider column does. Verify it by measuring rather than by eye — see the checklist row under [Overflow guards at the floor](#overflow-guards-at-the-floor).
 
 `display: flow-root` is a permitted value under [Design system](#design-system): it names a containment behaviour rather than a measured length, in the same way `overflow-wrap: break-word` does, and it is not a substitute for a layout the grid provides. The grid lays out columns; nothing in it contains a float inside a list item.
 
@@ -4682,7 +5233,7 @@ Do not soften any item in this section. The portal and the REST API must not dis
 - **The secured read returns an empty string for a denied field, not an error**, so the failure is silent. Copying every column of a secured record onto `data` produces exactly the nulled behaviour the requirements forbid, and the widget renders without complaint.
 - To omit, the serialiser tests each field with an element-level read check and skips the key entirely when the check fails. That gate lives once, in `RestResponseBuilder.serialize()`, which obtains the element with `getElement()`, evaluates `canRead()` on it, and continues past the field without assigning a key when the evaluation is false.
 - **`RestResponseBuilder.serialize(record, fields)` is the only permitted way to put record data into a widget's `data` object.** A data object built by any other means is not permitted, including one built with `$sp.getRecordValues()`.
-- The template tests for **absence of the key**: `ng-if="item.total_funding_usd !== undefined"`. Do not test for an empty string, and do not test for `null` — a readable-but-empty currency, integer, string, date or reference column legitimately serialises as `null`, and confusing the two makes an empty premium field look denied and a denied field look empty.
+- The template tests for **absence of the key**: `ng-if="item.total_funding_usd !== undefined"`. Do not use an empty string, and do not use `null`, **as that test** — a readable-but-empty currency, integer, string, date or reference column legitimately serialises as `null`, and confusing the two makes an empty premium field look denied and a denied field look empty. `null` is tested separately, *inside* the readable arm, to choose between the figure and `Not recorded`; the two tests answer different questions and both are required, as [The display contract](#the-display-contract) sets out.
 
 ### The seven premium fields the widgets must gate
 
@@ -4879,25 +5430,32 @@ Run every check before this guide is signed off. A failed check is a defect in t
 - [ ] **Authorisation.** Under a user holding exactly one of the three scoped roles, every widget renders its content and none renders the "no Boston Startup Tracker role" alert. A widget showing that alert to a role-holding caller means its server script called `hasAnyAppRole()` without assigning the result to `data.authorised`.
 - [ ] **Busy.** Every one of the eight widget roots carries `aria-busy`, and it reads `true` while a load is in flight and `false` afterwards. Confirm on `bst-startup-results` by submitting a search.
 - [ ] **Status.** `bst-startup-results`, `bst-company-profile`, `bst-investor-profile` and `bst-account-summary` each carry exactly **one** `role="status"` region with `aria-live="polite"`, and its text changes as the widget loads, empties and completes.
-- [ ] **Failure.** Force a rejected server call — impersonate a user, remove the role mid-session, then retry a load. Each of the four asynchronous widgets renders one `.alert.alert-danger` with `role="alert"` and a working **Retry** button, and the striped progress bar clears rather than spinning on.
+- [ ] **Failure.** Force a rejected server call — impersonate a user, remove the role mid-session, then retry a load. Each of the six server-reading widgets renders one `.alert.alert-danger` with `role="alert"` and a working **Retry** button, and the striped progress bar clears rather than spinning on.
 - [ ] **Empty.** Load a company with no funding round, no founder, no executive, no open role and no news article. All five panes render their own empty wording, and no pane renders as nothing at all.
 - [ ] **Every published member has a consumer, and every consumed member is published.** For each of the eight widgets, read its **Data contract** table against its own server script, controller and template: every member the table names is assigned by the server item it names, and every `data.` expression in the controller and the template names a member in the table. The only expression exempt is `data.error`, which the shared `c.load()` helper sets on the client. A template expression naming an unpublished member is the failure this check exists to catch: Angular renders it as empty, so the widget looks merely sparse rather than broken.
 - [ ] **Bounded child collections state their size.** On a company with more funding rounds than `funding_limit`, the Funding pane renders the caption `Showing N of M, the L most recent`, and the same holds for the People, Jobs and News panes against their own limits. Each of the five collections is published as `{rows,total,limit,truncated}`, and **no pane renders `rows` without its `total`**. On the investor profile the two rounds tables carry the same caption from their own `Total`, `Limit` and `Truncated` members, and the portfolio panel states its cap against `data.investor.portfolio_count`.
 - [ ] **The tab badges agree with the panes.** Each of the four collection tabs carries a `.badge` whose number equals the `total` of the collection its pane renders, **People** carries the sum of the founders and executives totals, and **Overview** carries no badge.
 - [ ] **Pagination at zero.** Search for a name that matches nothing. The pager reads `No results to show` and never `1 to 0 of 0`, and **Next** is disabled.
 - [ ] **Tabs.** On the company profile, exactly one tab control carries `tabindex="0"` and `aria-selected="true"` at a time; each control's `aria-controls` resolves to the `id` of its own pane; and `ArrowRight`, `ArrowLeft`, `Home` and `End` all move the selection and the focus together. Tab moves out of the strip, not through it.
-- [ ] **Nothing overflows at 1024 pixels, with the widest data the schema permits.** Seed one startup whose `logo_url` is a 2000-by-50 wordmark, whose `website` is 255 characters, and whose `name` is 100 characters with no space in it; seed one job posting with a 150-character title and one news article with a 255-character title. At a 1024-pixel viewport no card, panel, table or list item is wider than its column, and no horizontal scrollbar appears on the document. The guards are listed under [Overflow guards at the floor](#overflow-guards-at-the-floor).
+- [ ] **Nothing overflows at 1024 pixels, with the widest data the schema permits.** Seed one startup whose `logo_url` is a 2000-by-50 wordmark, whose `website` is 255 characters, whose `name` is 100 characters with no space in it and whose `description` is **4000** characters with no space in it; seed one job posting with a 150-character title, one news article with a 255-character title, and one investor whose `name` is 100 characters with no space in it. At a 1024-pixel viewport no card, panel, table or list item is wider than its column, and no horizontal scrollbar appears on the document. The guards are listed under [Overflow guards at the floor](#overflow-guards-at-the-floor).
+- [ ] **The widest legal value is *readable*, not merely contained — measure it, do not look at it.** With the seed above in place, at 1024 pixels, on `bst_home`, `bst_company` and `bst_investor`:
+  - `document.documentElement.scrollWidth` is **not greater than** `document.documentElement.clientWidth`. A layout that overflows reports a larger scroll width even where the overflow is clipped and invisible; this is the only one of the three checks a screenshot cannot fake.
+  - For the name, the description and the investor name in turn, compare the **rendered** text against the model: `el.textContent.length` equals the seeded length, and `el.scrollWidth` is not greater than `el.clientWidth`. A clipped element reports the full `textContent` and a larger `scrollWidth`, which is how the delivered build lost 52 characters of a name and 3,911 of a description while appearing to render both.
+  - No element's painted box extends beyond its column: for each of `.bst-results .media-body`, `.bst-company .media-body`, `.bst-company .bst-company-description` and `.bst-investor h1.panel-title`, `getBoundingClientRect().right` is not greater than that of its nearest `.panel` or column ancestor.
 - [ ] **No floated value escapes its list item, at the floor, with the widest data the schema permits.** For every `li.list-group-item` that contains a `.pull-right`, on the company, investor and account overviews, measure `floatRect.bottom − liRect.bottom`. It must be **negative** on every row. A positive value means the item is not a block formatting context and the value's second line is hanging below the row, where the next item's opaque background covers it — the reader then sees the top half of a figure with nothing to indicate a bottom half exists. Probe the 992-to-1199 pixel band directly rather than by zooming out: at 200 percent zoom a 1024-pixel viewport becomes a 960-pixel one, which is below the `md` breakpoint, so the columns stack full-width and the defect disappears without being fixed.
 - [ ] **The widest chip run fits its column.** Seed an investor with all six `focus_areas` values and read the `.pull-right` in that row at a 1024-pixel viewport. Its `left` must be **greater than or equal to** the column's content-box left, and the chips must occupy two or more lines. A float `left` below zero means the run is unbreakable and part of it is off the left edge of the window, which no scrollbar can reach, so the value is permanently unreadable rather than merely awkward.
 - [ ] **Every data table names itself and its axes.** All six tables — funding rounds and open roles on the company profile, portfolio and the two rounds tables on the investor profile, and the chart's companion table — carry a `<caption class="sr-only">`, a `scope="col"` on every column header, and a `<th scope="row">` as the first cell of every body row. No `<th>` without a `scope` appears in any template.
 - [ ] **Each state is announced once, by one region.** With the error panel showing — `c.errorText()` returning a message — only the visible `.alert.alert-danger[role="alert"]` announces; `c.statusText()` returns the empty string and the polite region says nothing. Confirm with a screen reader that a failed load is announced once, not twice.
 - [ ] **No static notice claims to be an alert.** `bst-premium-upsell` and the results premium notice are `role="region"` with an `aria-labelledby` pointing at their own heading. Search the eight templates for `role="alert"`: it appears only on the six error panels, each of which is rendered in response to a failure.
 - [ ] **One submit control per form.** `bst-startup-search` renders exactly one `type="submit"` button — the `.input-group-btn` beside the name field — and one `type="button"` **Clear**. Tab through the form and confirm a screen reader announces `Search, button` once, not twice.
+- [ ] **The account page says one true thing per role state, and never both.** Load `bst_account` four times, as an administrator, a premium subscriber, a caller holding only `x_bst_startuptrk.user`, and a caller holding **none** of the three. Confirm: the premium upsell region is present for the base role and **absent** for the no-role caller; the `.alert.alert-warning` is present for the no-role caller and absent for the other three; the two never appear together; and on the no-role load no visible text claims the account reads anything — search the rendered text for `Your account reads the seven tables`, the upsell body's opening clause, and confirm it does not appear while every entitlement row reads `Not granted`. **Search for that whole clause and not for `reads the seven tables` alone:** the no-role warning's own remedy sentence names what the free role would grant, so a substring search matches correct output and the check reports a defect that is not there. This was measured — the shorter string returned a match on a no-role load whose upsell was verifiably absent, with `.bst-upsell` counting **0** and `bst-premium-upsell.html` never requested over the network.
+- [ ] **Every control clears 44 by 44 pixels, measured rather than eyeballed.** On each of the five routes, run one pass over every interactive element — `document.querySelectorAll('a[href], a[ng-href], button, input, select, [role="tab"]')` — and read `getBoundingClientRect()` on each. Every width and every height is **at least 44**. Report the failures as a list of selectors rather than a count, because a count cannot be acted on: the delivered build failed **14 of 18** on `bst_home`, all of them for the same two reasons — `.btn` and `.form-control` computing to about 34 pixels, and a bare link to its text height. The rule and the roster are [rule 17](#rules-that-bind-all-eight). A link inside running prose would be exempt; if this pass ever reports one, the exemption has to be argued in the report rather than assumed, because no template in this build contains such a link.
 - [ ] **One `h1` per page, and no skipped level.** Each of the five routes renders exactly one `<h1>` — the `.panel-title` of `bst-startup-search` on `bst_home`, the `.media-heading` carrying the company name on `bst_company`, the `.panel-title` carrying the investor name on `bst_investor`, the `<h1 class="h2">` of `bst-trends-kpi` on `bst_dashboard`, and the `.panel-title` of `bst-account-summary` on `bst_account`. Read the outline with the browser's accessibility tree and confirm it descends `h1` → `h2` → `h3` with no level skipped and no second `h1`. The owners are listed under [Heading hierarchy](#heading-hierarchy).
-- [ ] **One `h1` per page in every state, not only the loaded one.** On `bst_company` and `bst_investor`, drive each of the four states in turn — loaded, unauthorised, not found and a failed load — and confirm `document.querySelectorAll('h1').length` is **1** on all four. The record-bound heading and the static `Company profile` / `Investor profile` heading are gated on exact complements, so a count of `0` means one gate is wrong and a count of `2` means they overlap.
+- [ ] **One `h1` per page in every state, not only the loaded one.** On `bst_company` and `bst_investor`, drive each of the **five** states in turn — **loading**, loaded, unauthorised, not found and a failed load — and confirm `document.querySelectorAll('h1').length` is **1** on all five. **The loading state is the one that used to read `0`**: the record-bound heading lives inside the block gated on `!c.busy`, and `c.stateHeading()` returned the empty string during a reload because `data` still held the previous record, so the route spent every load with no heading at all. The two sources are gated on exact complements, so a count of `0` means one gate is wrong and a count of `2` means they overlap. On `bst_account` the same count holds across loading, loaded and failed, because its literal `h1` is rendered on `c.busy || c.errorText()` and its `.panel-title` `h1` on the complement.
 - [ ] **The retry handoff has a destination during the failure it is retrying.** With `data.error` set, confirm the static `h1.h2` is in the document and carries `tabindex="-1"`, then press **Retry** and confirm focus lands on a heading rather than on `document.body`.
 - [ ] **Focus is never lost to the document body, and the destination is visible when it arrives.** Three interactions remove the control that holds focus: **Retry** when a retry succeeds, the **Next** pager button when it becomes the last page, and **Previous** when it becomes the first. Drive each and read `document.activeElement` afterwards: it must be an element inside the acting widget, never `document.body`. Then screenshot the destination while it holds focus and confirm a ring is visible — a programmatic move with no indicator relocates the reading position and says nothing about it. Measure the ring against its background: at least 3:1.
-- [ ] **The indeterminate bar paints.** During the busy window on `bst-startup-results`, `bst-company-profile` and `bst-investor-profile`, read the `.progress-bar.progress-bar-striped.active`'s rendered width. It must equal its trough's width, not zero. `document.elementFromPoint()` at the trough's centre must return the bar rather than the `.progress` track behind it. Bootstrap ships `.progress-bar { width: 0% }`, so a bar with no bound width animates its stripes across nothing at all.
+- [ ] **The indeterminate bar paints.** During the busy window on each of the six server-reading widgets — `bst-startup-results`, `bst-company-profile`, `bst-investor-profile`, `bst-account-summary`, `bst-trends-kpi` and `bst-trends-charts` — read the `.progress-bar.progress-bar-striped.active`'s rendered width. It must equal its trough's width, not zero. `document.elementFromPoint()` at the trough's centre must return the bar rather than the `.progress` track behind it. Bootstrap ships `.progress-bar { width: 0% }`, so a bar with no bound width animates its stripes across nothing at all.
+- [ ] **The affordance substitutes for the stale view rather than adding to it.** With a widget mid-reload — `aria-busy` reading `true` on its root and one `[role="progressbar"]` in it — query the widget for the success elements the roster under [Busy, status and focus behaviour](#busy-status-and-focus-behaviour) names and confirm **none** is in the document: `.bst-results-list` and the pager `.row` on `bst-startup-results`, the two `.panel`s and the embedded upsell on `bst-account-summary`, the `.row` of KPI panels on `bst-trends-kpi`, and the `.bst-charts-svg` and companion `.table-responsive` on `bst-trends-charts`. Then confirm the widget still exposes **exactly one** heading while busy, so the page never loses its accessible name — one `h1` on `bst-account-summary`, `bst-trends-kpi`, `bst-company-profile` and `bst-investor-profile`, and the ungated `.panel-title` on `bst-startup-results` and `bst-trends-charts`.
 - [ ] **SPACE activates every control that looks like a button.** Tab to each of the seven `a.btn` controls — **View profile** on each result card, the results upsell call to action, **Back to search** on the company, investor and account widgets, **Browse startups** on the KPI panel, and the upsell partial's call to action — and press SPACE. Each must activate, and `window.scrollY` must not change: an unhandled SPACE scrolls the page and activates nothing, which is the opposite of what a caller pressing a button expects. Then press ENTER on each and confirm the same result.
 - [ ] **The three search controls show a focus ring that can be seen.** Focus the name input, the industry select and the location input in turn and measure the computed `outline` against the adjacent background. Bootstrap's own `.form-control:focus` sets `outline: 0` and substitutes a pale blue border and glow measuring 2.37:1 against white and 1.47:1 against the unfocused border, so both readings of the non-text contrast requirement fail unless the ring is restored.
 - [ ] **Error gating is substitutive on every widget, not additive on some.** Set `data.error` on each of the six widgets that carry a **Retry** and confirm that the stale content is **gone** rather than sitting under the error alert: on `bst-startup-results` no `.bst-results-card`, no upsell and no pager; on `bst-account-summary` no identity panel, no entitlements and no upsell, with only the **Back to search** escape hatch remaining. A widget that leaves its previous result set on screen beside a failure tells the caller that data is current when it is not.
@@ -4913,8 +5471,7 @@ Run every check before this guide is signed off. A failed check is a defect in t
 - [ ] **Each count sits beside its own bar.** For every bucket, the value `<text>`'s `x` equals `data.chart.labelWidth + barWidth + 12`, so the gap between a bar's end and its number is one `BAR_GAP` on every row rather than a fixed column the short bars never reach.
 - [ ] **The companion table's bars are visible.** Sample the fill of any `.bst-charts-bar .progress-bar`: it must be `rgb(25, 118, 210)` on an `rgb(245, 245, 245)` track — the `$progress-bar-bg` and `$progress-bg` pair that row 19 of [The contrast check](#the-contrast-check) measures at 4.22:1. A white fill means a widget rule has reintroduced `background-color: currentColor`, which on a `.progress-bar` resolves against Bootstrap's own `color: #fff`.
 - [ ] **Two clean KPI rows, and no ragged edge.** At any viewport at or above 992 pixels, with five panels, read every KPI column's rect: there must be exactly **two** distinct `top` values, the second row must start at `left` equal to the first column's `left`, and every column on a row must report the same `height`. Three distinct `top` values means the flex rule under [`bst-trends-kpi`](#bst-trends-kpi) is not in force and the float staircase is back.
-- [ ] **Both dashboard widgets state an initial failure.** Temporarily rename `RestResponseBuilder` so `countWith()` and `countByGroup()` throw, then load `bst_dashboard`. `bst-trends-kpi` and `bst-trends-charts` each render one `.alert.alert-danger` with a working **Retry**, and neither renders an empty panel, a zero, nor a chart with no bars. Restore the name and use Retry: both widgets render their figures without a page reload.
-- [ ] **Both dashboard widgets state an initial failure.** Temporarily rename `RestResponseBuilder` so `countWith()` and `countByGroup()` throw, then load `bst_dashboard`. `bst-trends-kpi` and `bst-trends-charts` each render one `.alert.alert-danger` with a working **Retry**, and neither renders an empty panel, a zero, a chart with no bars, nor the "No startup is recorded for this breakdown yet" notice — a data-availability message may never stand in for a failure.
+- [ ] **Both dashboard widgets state an initial failure.** Temporarily rename `RestResponseBuilder` so `countWith()` and `countByGroup()` throw, then load `bst_dashboard`. `bst-trends-kpi` and `bst-trends-charts` each render one `.alert.alert-danger` with a working **Retry**, and neither renders an empty panel, a zero, a chart with no bars, nor the "No startup is recorded for this breakdown yet" notice — a data-availability message may never stand in for a failure. Restore the name and use Retry: both widgets render their figures without a page reload.
 - [ ] **A failing retry stays recoverable, and a succeeding one repaints.** With the name still renamed, press **Retry** on each widget. The aggregate fails again, and each widget **still** renders its `.alert.alert-danger` and its **Retry** button — a widget left showing only its heading, with no figures, no error and nothing to press, is the failure this step exists to catch. Now restore the name and press **Retry** again: the panel disappears and the figures and bars appear, without a page reload. Both directions are required; a widget that recovers only on reload fails this step.
 - [ ] **The chart falls back on an unconfigured report.** Set `render_mode` to `report` with an empty `report_id`. The widget renders the warning alert and the SVG chart, not an empty panel.
 - [ ] **The chart falls back on a report outside the allowlist.** Set `render_mode` to `report` and `report_id` to a readable report whose `title` is not one of the two allowlisted names — any stock report will do. The widget renders the warning alert and the SVG chart, and embeds nothing. Repeat with an allowlisted report whose `aggregate` has been changed away from `COUNT`: same result. Neither case may embed.
